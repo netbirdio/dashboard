@@ -1,5 +1,5 @@
 import type { Meta } from "@storybook/nextjs-vite";
-import { screen } from "storybook/test";
+import { expect, screen } from "storybook/test";
 import PeerPage from "@/app/(dashboard)/peer/page";
 import {
   click,
@@ -15,6 +15,7 @@ import {
   text,
   until,
 } from "@/storybook/core";
+import { currentUser } from "../../../../.storybook/mocks/fixtures/users";
 
 const peer = (id: string) => nav("/peer", { id });
 
@@ -93,6 +94,54 @@ export const RemoteJobsTab: Story = {
 export const CloudTrafficEventsTab: Story = {
   tags: ["cloud"],
   play: openTab(/Traffic Events/),
+};
+
+export const ConnectionHistoryTab: Story = {
+  play: async () => {
+    await openTab(/Connection History/)();
+    await text("203.0.113.24");
+  },
+};
+
+export const ConnectionHistoryEmpty: Story = {
+  parameters: { api: { "GET /events/audit": [] } },
+  play: async () => {
+    await openTab(/Connection History/)();
+    await text("No recent connection events");
+  },
+};
+
+export const CloudConnectionHistoryTab: Story = {
+  tags: ["cloud"],
+  play: openTab(/Connection History/),
+};
+
+export const WithoutEventPermission: Story = {
+  parameters: {
+    api: {
+      "GET /users/current": {
+        ...currentUser,
+        permissions: {
+          ...currentUser.permissions,
+          modules: {
+            ...currentUser.permissions.modules,
+            events: {
+              create: false,
+              read: false,
+              update: false,
+              delete: false,
+            },
+          },
+        },
+      },
+    },
+  },
+  play: async () => {
+    await loaded();
+    await expect(
+      screen.queryByRole("tab", { name: /Connection History/ }),
+    ).not.toBeInTheDocument();
+  },
 };
 
 export const EditNameModal: Story = {

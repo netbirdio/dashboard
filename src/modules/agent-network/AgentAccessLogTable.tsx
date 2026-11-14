@@ -1,6 +1,7 @@
 "use client";
 
 import Badge from "@components/Badge";
+import ButtonGroup from "@components/ButtonGroup";
 import { DatePickerWithRange } from "@components/DatePickerWithRange";
 import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
@@ -17,14 +18,14 @@ import {
   GroupsPicker,
 } from "@components/table/filters/GroupsPicker";
 import {
+  formatTextChip,
+  TextInputPicker,
+} from "@components/table/filters/TextInputPicker";
+import {
   formatUsersChip,
   UserOption,
   UsersPicker,
 } from "@components/table/filters/UsersPicker";
-import {
-  formatTextChip,
-  TextInputPicker,
-} from "@components/table/filters/TextInputPicker";
 import {
   TableFilterChips,
   TableFilterDef,
@@ -32,9 +33,8 @@ import {
 } from "@components/table/TableFilters";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import MultipleGroups from "@components/ui/MultipleGroups";
-import ButtonGroup from "@components/ButtonGroup";
-import { cn, formatDuration } from "@utils/helpers";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
+import { cn, formatDuration, formatSessionSpan } from "@utils/helpers";
 import dayjs from "dayjs";
 import {
   ArrowDownIcon,
@@ -53,6 +53,14 @@ import { usePeers } from "@/contexts/PeersProvider";
 import { useServerPagination } from "@/contexts/ServerPaginationProvider";
 import { useUsers } from "@/contexts/UsersProvider";
 import { Group } from "@/interfaces/Group";
+import { formatDateChip } from "@/modules/agent-network/AccessLogFilters";
+import {
+  accessLogFromAgentAPI,
+  accessLogSessionFromAgentAPI,
+  APIAgentNetworkAccessLog,
+  APIAgentNetworkAccessLogSession,
+} from "@/modules/agent-network/agentAccessLogApi";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import {
   AIAccessLogEntry,
   AIAccessLogSession,
@@ -63,14 +71,6 @@ import {
   resolveBlockedBy,
   sessionReasonEntry,
 } from "@/modules/agent-network/data/mockData";
-import { formatDateChip } from "@/modules/agent-network/AccessLogFilters";
-import {
-  accessLogFromAgentAPI,
-  accessLogSessionFromAgentAPI,
-  APIAgentNetworkAccessLog,
-  APIAgentNetworkAccessLogSession,
-} from "@/modules/agent-network/agentAccessLogApi";
-import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 
 // Self-scoped callers keep the non-identity filters: the server pins
 // user/group to the caller regardless, while the provider and model
@@ -81,14 +81,14 @@ const SELF_SCOPED_LOG_FILTER_IDS = new Set([
   "provider",
   "model",
 ]);
-import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
-import { useProviderCatalog } from "@/modules/agent-network/useProviderCatalog";
+import TextWithTooltip from "@components/ui/TextWithTooltip";
+import { generateColorFromUser } from "@utils/helpers";
 import AgentAccessLogExpandedRow, {
   BlockedByLink,
 } from "@/modules/agent-network/AgentAccessLogExpandedRow";
+import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
+import { useProviderCatalog } from "@/modules/agent-network/useProviderCatalog";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
-import TextWithTooltip from "@components/ui/TextWithTooltip";
-import { generateColorFromUser } from "@utils/helpers";
 
 type Props = {
   headingTarget?: HTMLHeadingElement | null;
@@ -1454,28 +1454,6 @@ function SessionProviderCell({
       </div>
     </div>
   );
-}
-
-// formatSessionSpan renders an elapsed session duration in compact, readable
-// units ("8s", "5m 12s", "1h 26m", "2d 3h") — unlike formatDuration, which is
-// tuned for sub-second/per-request timings and would show e.g. "1.4h".
-function formatSessionSpan(ms: number): string {
-  if (!Number.isFinite(ms) || ms <= 0) return "";
-  const totalSeconds = Math.round(ms / 1000);
-  if (totalSeconds < 60) return `${totalSeconds}s`;
-  const totalMinutes = Math.floor(totalSeconds / 60);
-  if (totalMinutes < 60) {
-    const seconds = totalSeconds % 60;
-    return seconds ? `${totalMinutes}m ${seconds}s` : `${totalMinutes}m`;
-  }
-  const totalHours = Math.floor(totalMinutes / 60);
-  if (totalHours < 24) {
-    const minutes = totalMinutes % 60;
-    return minutes ? `${totalHours}h ${minutes}m` : `${totalHours}h`;
-  }
-  const days = Math.floor(totalHours / 24);
-  const hours = totalHours % 24;
-  return hours ? `${days}d ${hours}h` : `${days}d`;
 }
 
 // SessionRequestsCell shows the request count and how long the session ran

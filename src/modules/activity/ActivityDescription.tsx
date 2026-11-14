@@ -5,10 +5,12 @@ import { cn } from "@utils/helpers";
 import { isLocalDev, isProduction } from "@utils/netbird";
 import { isEmpty } from "lodash";
 import { GlobeIcon } from "lucide-react";
+import Link from "next/link";
 import React, { useMemo } from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import { useCountries } from "@/contexts/CountryProvider";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
+import { sessionDurationText } from "@/modules/peer/connectionHistory";
 
 type Props = {
   event: ActivityEvent;
@@ -34,6 +36,27 @@ export default function ActivityDescription({ event }: Props) {
   }, [event.meta]);
 
   if (!m) return null;
+
+  if (
+    event.activity_code === "peer.connect" ||
+    event.activity_code === "peer.disconnect"
+  ) {
+    return (
+      <div className="inline">
+        Peer{" "}
+        <Link href={`/peer?id=${encodeURIComponent(event.target_id)}`}>
+          <Value>{m.name || event.target_id}</Value>
+        </Link>{" "}
+        {event.activity_code === "peer.connect"
+          ? "connected to"
+          : "disconnected from"}{" "}
+        Management
+        <PeerConnectionInfo meta={m} />
+        {event.activity_code === "peer.disconnect" &&
+          sessionDurationText(m) && <> after {sessionDurationText(m)}</>}
+      </div>
+    );
+  }
 
   /**
    * Setup Key
@@ -95,6 +118,7 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         <Value>{m.username}</Value> logged in to the dashboard
+        <PeerConnectionInfo meta={m} />
       </div>
     );
 

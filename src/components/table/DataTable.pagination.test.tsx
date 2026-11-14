@@ -68,3 +68,35 @@ describe("DataTable server-side pagination", () => {
     });
   });
 });
+
+describe("DataTable automatic page reset", () => {
+  // An empty table must settle: with autoResetPageIndex, every new data reference
+  // resets the page, and each reset re-renders the table.
+  it("settles when rendering an empty table", async () => {
+    let renders = 0;
+    const empty: Row[] = [];
+    render(
+      <DataTable
+        columns={columns}
+        data={empty}
+        autoResetPageIndex
+        keepStateInLocalStorage={false}
+        showSearchAndFilters
+      >
+        {() => {
+          renders++;
+          return null;
+        }}
+      </DataTable>,
+    );
+    await act(async () => {});
+    const settled = renders;
+    await act(async () => {});
+    await act(async () => {});
+    expect(renders, "an empty table must not keep re-rendering").toBe(settled);
+    expect(
+      settled,
+      "an empty table renders a bounded number of times",
+    ).toBeLessThan(5);
+  });
+});
