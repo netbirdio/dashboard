@@ -78,6 +78,10 @@ declare module "@tanstack/table-core" {
   }
 }
 
+// A shared empty array keeps the data reference stable while data is undefined,
+// so the table does not rebuild its rows on every render.
+const NO_ROWS: never[] = [];
+
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   try {
     const val = row.getValue(columnId);
@@ -214,6 +218,7 @@ interface DataTableProps<TData, TValue> {
   tableHeadClassName?: string;
   initialSelectionState?: RowSelectionState;
   initialPageSize?: number;
+  autoResetPageIndex?: boolean;
   uniqueKey?: string;
   resetRowSelectionOnSearch?: boolean;
   resetRowSelectionOnFilter?: boolean;
@@ -282,6 +287,7 @@ export function DataTable<TData, TValue>({
   tableCellClassName,
   tableHeadClassName,
   initialPageSize = 10,
+  autoResetPageIndex = false,
   uniqueKey,
   resetRowSelectionOnSearch = true,
   resetRowSelectionOnFilter = false,
@@ -352,7 +358,7 @@ export function DataTable<TData, TValue>({
   };
 
   const table = useReactTable({
-    data: hasInitialData ? data : [],
+    data: data ?? NO_ROWS,
     columns,
     filterFns: {
       fuzzy: fuzzyFilter,
@@ -360,8 +366,7 @@ export function DataTable<TData, TValue>({
       exactMatch,
       arrIncludesSomeExact,
     },
-    autoResetPageIndex: false,
-    autoResetAll: false,
+    autoResetPageIndex,
     autoResetExpanded: false,
     manualPagination: manualPagination,
     manualSorting: serverSidePagination,

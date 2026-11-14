@@ -29,7 +29,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
-import { userEvent } from "storybook/test";
+import { expect, userEvent, waitFor, within } from "storybook/test";
 import {
   clickOpen,
   Controlled,
@@ -220,12 +220,14 @@ function PeersTable({
   selected = { 1: true },
   isLoading = false,
   withFilters = false,
+  autoResetPageIndex = false,
 }: {
   data?: PeerRow[];
   pageSize?: number;
   selected?: Record<string, boolean>;
   isLoading?: boolean;
   withFilters?: boolean;
+  autoResetPageIndex?: boolean;
 }) {
   const [sorting, setSorting] = useState<SortingState>([
     { id: "name", desc: false },
@@ -242,6 +244,7 @@ function PeersTable({
       setRowSelection={setRowSelection}
       keepStateInLocalStorage={false}
       initialPageSize={pageSize}
+      autoResetPageIndex={autoResetPageIndex}
       isLoading={isLoading}
       searchPlaceholder={"Search by name or IP..."}
       showResetFilterButton={false}
@@ -344,6 +347,36 @@ export const Loading: StoryObj = {
 
 export const Empty: StoryObj = {
   render: () => <PeersTable data={[]} />,
+};
+
+export const AutoResetAfterRefresh: StoryObj = {
+  render: function AutoResetAfterRefresh() {
+    const [data, setData] = useState(rows);
+    return (
+      <>
+        <Button onClick={() => setData(rows.slice(0, 1))}>
+          Show fewer peers
+        </Button>
+        <PeersTable data={data} autoResetPageIndex />
+      </>
+    );
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const nextPage = canvasElement
+      .querySelector("svg.lucide-chevron-right")
+      ?.closest("button");
+    await expect(nextPage).not.toBeNull();
+    await userEvent.click(nextPage!);
+    await expect(canvas.getByRole("button", { name: "2 of 2" })).toBeVisible();
+    await userEvent.click(
+      canvas.getByRole("button", { name: "Show fewer peers" }),
+    );
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll("tbody tr")).toHaveLength(1),
+    );
+    await expect(canvas.getByText(rows[0].name)).toBeVisible();
+  },
 };
 
 export const MultiSelectPopup: StoryObj = {

@@ -14,6 +14,7 @@ import {
 } from "./core-data";
 import { PEER } from "./ids";
 import type { Handler, HandlerContext } from "./index";
+import { peerConnectionEvents } from "./peer-connections";
 
 const byId =
   <T extends { id?: string }>(list: T[]) =>
@@ -53,7 +54,7 @@ export const coreFixtures: Record<string, Handler> = {
   "GET /setup-keys": setupKeys,
   "GET /setup-keys/:id": byId(setupKeys),
 
-  "GET /events/audit": auditEvents,
+  "GET /events/audit": [...peerConnectionEvents, ...auditEvents],
   "GET /events/network-traffic": paginated(trafficEvents),
 
   "GET /locations/countries": countries,

@@ -9,6 +9,13 @@ vi.mock("@utils/config", () => ({
   default: () => ({ apiOrigin: "http://localhost", redirectURI: "/" }),
 }));
 
+vi.mock("@/contexts/CountryProvider", () => ({
+  useCountries: () => ({
+    countries: [{ country_code: "DE", country_name: "Germany" }],
+    isLoading: false,
+  }),
+}));
+
 // Management emits resource.group.add / resource.group.delete with the group as the
 // event target: meta.name is the group, meta.resource_name is the network resource
 // (management/server/types/group.go, Group.EventMetaResource). The description must
@@ -34,6 +41,70 @@ const textOf = (container: HTMLElement) =>
   container.textContent?.replace(/\s+/g, " ").trim();
 
 afterEach(cleanup);
+
+describe("ActivityDescription peer connection events", () => {
+  it.each([
+    ["peer.connect", "connected to"],
+    ["peer.disconnect", "disconnected from"],
+  ])("describes %s and links to the peer", (code, action) => {
+    const { container, getByRole } = render(
+      <ActivityDescription
+        event={{
+          ...baseEvent,
+          target_id: "peer-1",
+          activity: "Peer connection",
+          activity_code: code,
+          meta: {
+            name: "office-laptop",
+            location_connection_ip: "203.0.113.24",
+          },
+        }}
+      />,
+    );
+    expect(textOf(container)).toBe(
+      `Peer office-laptop ${action} Management from 203.0.113.24`,
+    );
+    expect(getByRole("link").getAttribute("href")).toBe("/peer?id=peer-1");
+  });
+
+  it("shows where a connection came from when its location was recorded", () => {
+    const { container } = render(
+      <ActivityDescription
+        event={{
+          ...baseEvent,
+          target_id: "peer-1",
+          activity: "Peer connected",
+          activity_code: "peer.connect",
+          meta: {
+            name: "office-laptop",
+            location_connection_ip: "203.0.113.24",
+            location_country_code: "DE",
+            location_city_name: "Berlin",
+          },
+        }}
+      />,
+    );
+    expect(textOf(container)).toBe(
+      "Peer office-laptop connected to Management from 203.0.113.24 Germany, Berlin",
+    );
+  });
+
+  it("does not invent an address when the source IP is unavailable", () => {
+    const { container } = render(
+      <ActivityDescription
+        event={{
+          ...baseEvent,
+          activity: "Peer disconnected",
+          activity_code: "peer.disconnect",
+          meta: { name: "office-laptop" },
+        }}
+      />,
+    );
+    expect(textOf(container)).toBe(
+      "Peer office-laptop disconnected from Management",
+    );
+  });
+});
 
 describe("ActivityDescription resource group events", () => {
   it("names the group and the resource in the right slots when a resource is added to a group", () => {
