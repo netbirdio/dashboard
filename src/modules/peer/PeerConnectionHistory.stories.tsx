@@ -29,7 +29,8 @@ export const SearchBySourceIP: Story = {
       canvas.getByPlaceholderText("Search events, source IPs or locations..."),
       "198.51.100.12",
     );
-    await expect(canvas.getByText("198.51.100.12")).toBeVisible();
+    // The Amsterdam connection and the disconnect that ended it share this IP.
+    await expect(canvas.getAllByText("198.51.100.12")).toHaveLength(2);
     await waitFor(() =>
       expect(canvas.queryByText("203.0.113.24")).not.toBeInTheDocument(),
     );

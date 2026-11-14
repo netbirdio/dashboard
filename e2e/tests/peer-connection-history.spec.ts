@@ -29,31 +29,45 @@ const peer: MockPeer = {
   accessible_peers_count: 0,
 };
 
+const ownerID = "e2e-mock-owner";
+
+// Shaped like Management's peer.connect / peer.disconnect events: the initiator is the
+// peer's owner, meta carries the source IP of that connection, and only a disconnect
+// has session_duration (whole seconds, as a string).
 function connectionEvent(
   id: string,
   code: "peer.connect" | "peer.disconnect",
   timestamp: string,
-  sourceIP?: string,
+  sourceIP: string,
+  sessionDuration?: string,
 ): ActivityEvent {
   return {
     id,
     timestamp,
     activity: code === "peer.connect" ? "Peer connected" : "Peer disconnected",
     activity_code: code,
-    initiator_id: "system",
+    initiator_id: ownerID,
     initiator_email: "",
     initiator_name: "",
     target_id: peer.id,
     meta: {
       name: peer.name,
-      ...(sourceIP ? { location_connection_ip: sourceIP } : {}),
+      user_id: ownerID,
+      location_connection_ip: sourceIP,
+      ...(sessionDuration ? { session_duration: sessionDuration } : {}),
     },
   };
 }
 
 const peerConnectionEvents = [
   connectionEvent("3", "peer.connect", "2026-11-13T09:42:18Z", "203.0.113.24"),
-  connectionEvent("2", "peer.disconnect", "2026-11-13T09:40:03Z"),
+  connectionEvent(
+    "2",
+    "peer.disconnect",
+    "2026-11-13T09:40:03Z",
+    "198.51.100.12",
+    "55473",
+  ),
   connectionEvent("1", "peer.connect", "2026-11-12T18:15:30Z", "198.51.100.12"),
 ];
 
@@ -90,20 +104,38 @@ test.describe("Peer connection history", () => {
     await navigateTo(page, `/peer?id=${peer.id}`);
     await page.getByTestId("peer-tab-connection-history").click();
     await expect(page.getByText("203.0.113.24", { exact: true })).toBeVisible();
-    await expect(
-      page.getByText("198.51.100.12", { exact: true }),
-    ).toBeVisible();
+    // The 198.51.100.12 connection and the disconnect that ended it.
+    await expect(page.getByText("198.51.100.12", { exact: true })).toHaveCount(
+      2,
+    );
     await expect(page.getByText("192.0.2.99", { exact: true })).toHaveCount(0);
     await expect(
       page.getByText("2026-11-13 09:42:18", { exact: true }),
     ).toBeVisible();
     await page.getByTestId("table-search-input").fill("198.51.100.12");
-    await expect(
-      page.getByText("198.51.100.12", { exact: true }),
-    ).toBeVisible();
+    await expect(page.getByText("198.51.100.12", { exact: true })).toHaveCount(
+      2,
+    );
     await expect(page.getByText("203.0.113.24", { exact: true })).toHaveCount(
       0,
     );
+  });
+
+  test("shows how long a disconnected session lasted", async ({
+    dashboardAsOwner: page,
+  }) => {
+    await page.route(isAuditEvents, (route) =>
+      route.fulfill({ json: peerConnectionEvents }),
+    );
+    await navigateTo(page, `/peer?id=${peer.id}`);
+    await page.getByTestId("peer-tab-connection-history").click();
+    await expect(
+      page.getByRole("columnheader", { name: "Session" }),
+    ).toBeVisible();
+    const disconnectRow = page
+      .getByRole("row")
+      .filter({ hasText: "2026-11-13 09:40:03" });
+    await expect(disconnectRow).toContainText("15h 24m");
   });
 
   test("explains an empty history", async ({ dashboardAsOwner: page }) => {

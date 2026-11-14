@@ -738,7 +738,7 @@ export const auditEvents = [
     USER.owner,
     {
       username: "Olivia Owner",
-      email: "olivia.owner@netbird.io",
+      email: "owner@netbird.io",
       location_connection_ip: "203.0.113.24",
       location_country_code: "DE",
       location_city_name: "Berlin",
