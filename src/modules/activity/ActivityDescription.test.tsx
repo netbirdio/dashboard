@@ -66,3 +66,21 @@ describe("ActivityDescription resource group events", () => {
     );
   });
 });
+
+describe("ActivityDescription user email mapping events", () => {
+  it.each([
+    ["account.settings.extra.user-email-mapping.enable", "enabled"],
+    ["account.settings.extra.user-email-mapping.disable", "disabled"],
+  ])("describes %s", (code, verb) => {
+    const { container } = render(
+      <ActivityDescription
+        event={{
+          ...baseEvent,
+          activity: `Account user email mapping ${verb}`,
+          activity_code: code,
+        }}
+      />,
+    );
+    expect(textOf(container)).toBe(`Account user email mapping ${verb}`);
+  });
+});

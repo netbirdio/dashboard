@@ -889,6 +889,18 @@ export default function ActivityDescription({ event }: Props) {
     );
 
   /**
+   * Event Streaming Settings
+   */
+
+  if (event.activity_code == "account.settings.extra.user-email-mapping.enable")
+    return <div className={"inline"}>Account user email mapping enabled</div>;
+
+  if (
+    event.activity_code == "account.settings.extra.user-email-mapping.disable"
+  )
+    return <div className={"inline"}>Account user email mapping disabled</div>;
+
+  /**
    * Identity Provider
    */
 
