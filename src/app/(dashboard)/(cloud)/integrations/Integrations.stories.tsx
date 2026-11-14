@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import IntegrationsPage from "@/app/(dashboard)/(cloud)/integrations/page";
 import DashboardLayout from "@/layouts/DashboardLayout";
-import { edr, eventStreams, freeSubscription, idp } from "@/storybook/fixtures";
+import {
+  account,
+  edr,
+  eventStreams,
+  freeSubscription,
+  idp,
+} from "@/storybook/fixtures";
 import { cards, modalTab, openCard, walk } from "@/storybook/integrations";
 import { click, dialogCount, findText, settle } from "@/storybook/platform";
 
@@ -166,6 +172,17 @@ export const EventStreamingNoneConfigured = overview(
 );
 export const EventStreamingDisabled = overview("event-streaming", {
   "GET /integrations/event-streaming": off(eventStreams),
+});
+export const EventStreamingUserEmailsEnabled = overview("event-streaming", {
+  "GET /accounts": [
+    {
+      ...account,
+      settings: {
+        ...account.settings,
+        extra: { ...account.settings.extra, user_email_mapping_enabled: true },
+      },
+    },
+  ],
 });
 export const EventStreamingLocked = overview("event-streaming", freePlan);
 export const EDR = overview("edr");

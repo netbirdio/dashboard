@@ -11,6 +11,7 @@ export const account = {
       network_traffic_logs_enabled: true,
       network_traffic_packet_counter_enabled: true,
       network_traffic_logs_groups: [],
+      user_email_mapping_enabled: false,
     },
     peer_login_expiration_enabled: true,
     peer_login_expiration: 86400,
