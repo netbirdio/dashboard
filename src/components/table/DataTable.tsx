@@ -214,6 +214,7 @@ interface DataTableProps<TData, TValue> {
   tableHeadClassName?: string;
   initialSelectionState?: RowSelectionState;
   initialPageSize?: number;
+  autoResetPageIndex?: boolean;
   uniqueKey?: string;
   resetRowSelectionOnSearch?: boolean;
   resetRowSelectionOnFilter?: boolean;
@@ -282,6 +283,7 @@ export function DataTable<TData, TValue>({
   tableCellClassName,
   tableHeadClassName,
   initialPageSize = 10,
+  autoResetPageIndex = false,
   uniqueKey,
   resetRowSelectionOnSearch = true,
   resetRowSelectionOnFilter = false,
@@ -360,8 +362,7 @@ export function DataTable<TData, TValue>({
       exactMatch,
       arrIncludesSomeExact,
     },
-    autoResetPageIndex: false,
-    autoResetAll: false,
+    autoResetPageIndex,
     autoResetExpanded: false,
     manualPagination: manualPagination,
     manualSorting: serverSidePagination,
