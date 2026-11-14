@@ -88,9 +88,7 @@ test.describe("Peer connection history", () => {
       }),
     );
     await navigateTo(page, `/peer?id=${peer.id}`);
-    await page
-      .getByRole("tab", { name: "Connection History", exact: true })
-      .click();
+    await page.getByTestId("peer-tab-connection-history").click();
     await expect(page.getByText("203.0.113.24", { exact: true })).toBeVisible();
     await expect(
       page.getByText("198.51.100.12", { exact: true }),
@@ -99,9 +97,7 @@ test.describe("Peer connection history", () => {
     await expect(
       page.getByText("2026-11-13 09:42:18", { exact: true }),
     ).toBeVisible();
-    await page
-      .getByPlaceholder("Search events, source IPs or locations...")
-      .fill("198.51.100.12");
+    await page.getByTestId("table-search-input").fill("198.51.100.12");
     await expect(
       page.getByText("198.51.100.12", { exact: true }),
     ).toBeVisible();
@@ -113,9 +109,7 @@ test.describe("Peer connection history", () => {
   test("explains an empty history", async ({ dashboardAsOwner: page }) => {
     await page.route(isAuditEvents, (route) => route.fulfill({ json: [] }));
     await navigateTo(page, `/peer?id=${peer.id}`);
-    await page
-      .getByRole("tab", { name: "Connection History", exact: true })
-      .click();
+    await page.getByTestId("peer-tab-connection-history").click();
     await expect(
       page.getByText("No recent connection events", { exact: true }),
     ).toBeVisible();
@@ -134,14 +128,12 @@ test.describe("Peer connection history", () => {
         : route.fulfill({ json: peerConnectionEvents }),
     );
     await navigateTo(page, `/peer?id=${peer.id}`);
-    await page
-      .getByRole("tab", { name: "Connection History", exact: true })
-      .click();
-    await expect(page.getByRole("alert")).toContainText(
-      "Unable to load connection history.",
-    );
+    await page.getByTestId("peer-tab-connection-history").click();
+    await expect(
+      page.getByTestId("peer-connection-history-error"),
+    ).toContainText("Unable to load connection history.");
     fail = false;
-    await page.getByRole("button", { name: "Retry", exact: true }).click();
+    await page.getByTestId("peer-connection-history-retry").click();
     await expect(page.getByText("203.0.113.24", { exact: true })).toBeVisible();
   });
 });

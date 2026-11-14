@@ -380,7 +380,10 @@ const PeerOverviewTabs = () => {
         )}
 
         {permission.events.read && (
-          <TabsTrigger value="connection-history">
+          <TabsTrigger
+            value="connection-history"
+            data-testid="peer-tab-connection-history"
+          >
             <History size={16} />
             Connection History
           </TabsTrigger>

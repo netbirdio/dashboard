@@ -18,7 +18,6 @@ import React, { useMemo, useState } from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import { useCountries } from "@/contexts/CountryProvider";
 import type { ActivityEvent } from "@/interfaces/ActivityEvent";
-import type { Country } from "@/interfaces/Country";
 import {
   connectionLocationText,
   peerConnectionEvents,
@@ -26,9 +25,11 @@ import {
 
 dayjs.extend(utc);
 
-const historyColumns = (
-  countries: Country[] | undefined,
-): ColumnDef<ActivityEvent>[] => [
+// The location text depends on the loaded country list, so it is computed when the
+// rows are built: the table caches accessor values until its data changes.
+type ConnectionRow = ActivityEvent & { location: string };
+
+const columns: ColumnDef<ConnectionRow>[] = [
   {
     accessorKey: "timestamp",
     sortingFn: "datetime",
@@ -71,8 +72,7 @@ const historyColumns = (
       (row.original.activity_code === "peer.disconnect" ? "—" : "Unavailable"),
   },
   {
-    id: "location",
-    accessorFn: (event) => connectionLocationText(event.meta, countries),
+    accessorKey: "location",
     header: ({ column }) => (
       <DataTableHeader column={column}>Location</DataTableHeader>
     ),
@@ -135,7 +135,14 @@ export function PeerConnectionHistoryContent({
     { id: "timestamp", desc: true },
   ]);
   const { countries } = useCountries();
-  const columns = useMemo(() => historyColumns(countries), [countries]);
+  const rows = useMemo<ConnectionRow[]>(
+    () =>
+      events.map((event) => ({
+        ...event,
+        location: connectionLocationText(event.meta, countries),
+      })),
+    [events, countries],
+  );
 
   return (
     <div className="pb-10 px-8">
@@ -173,9 +180,17 @@ export function PeerConnectionHistoryContent({
         </div>
       </div>
       {hasError ? (
-        <div role="alert" className="py-6">
+        <div
+          role="alert"
+          className="py-6"
+          data-testid="peer-connection-history-error"
+        >
           <Paragraph>Unable to load connection history.</Paragraph>
-          <Button variant="secondary" onClick={onRefresh}>
+          <Button
+            variant="secondary"
+            onClick={onRefresh}
+            data-testid="peer-connection-history-retry"
+          >
             Retry
           </Button>
         </div>
@@ -191,7 +206,7 @@ export function PeerConnectionHistoryContent({
           autoResetPageIndex={true}
           text="Connection History"
           columns={columns}
-          data={events}
+          data={rows}
           isLoading={isLoading}
           sorting={sorting}
           setSorting={setSorting}

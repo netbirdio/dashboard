@@ -3,10 +3,18 @@ import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ActivityEvent } from "@/interfaces/ActivityEvent";
+import type { Country } from "@/interfaces/Country";
 import { PeerConnectionHistoryContent } from "./PeerConnectionHistory";
 
 vi.mock("@utils/config", () => ({
   default: () => ({ apiOrigin: "http://localhost", redirectURI: "/" }),
+}));
+
+const countryState = vi.hoisted(() => ({
+  countries: undefined as Country[] | undefined,
+}));
+vi.mock("@/contexts/CountryProvider", () => ({
+  useCountries: () => ({ countries: countryState.countries }),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -17,6 +25,7 @@ vi.mock("next/navigation", () => ({
 
 afterEach(() => {
   cleanup();
+  countryState.countries = undefined;
   localStorage.clear();
 });
 
@@ -139,5 +148,37 @@ describe("peer connection history table", () => {
     await waitFor(() =>
       expect(container.querySelectorAll("time")).toHaveLength(1),
     );
+  });
+
+  it("shows country names once the country list finishes loading", async () => {
+    const located = event("2026-11-13T09:42:18Z", "1");
+    located.meta = {
+      location_connection_ip: "203.0.113.24",
+      location_country_code: "DE",
+      location_city_name: "Berlin",
+    };
+    const events = [located];
+    const { getByRole, getByPlaceholderText, queryByRole, rerender } = render(
+      renderHistory(events),
+    );
+    expect(getByRole("cell", { name: "DE, Berlin" })).toBeTruthy();
+
+    // The events arrive before the country list; the same events must then show
+    // the country name and be searchable by it.
+    countryState.countries = [{ country_code: "DE", country_name: "Germany" }];
+    rerender(renderHistory(events));
+    expect(getByRole("cell", { name: "Germany, Berlin" })).toBeTruthy();
+
+    fireEvent.change(getByPlaceholderText(/Search events/), {
+      target: { value: "Germany" },
+    });
+    await waitFor(
+      () => expect(getByRole("cell", { name: "203.0.113.24" })).toBeTruthy(),
+      { timeout: 2000 },
+    );
+    expect(
+      queryByRole("cell", { name: "DE, Berlin" }),
+      "the stale country code must not remain after the list loads",
+    ).toBeNull();
   });
 });
