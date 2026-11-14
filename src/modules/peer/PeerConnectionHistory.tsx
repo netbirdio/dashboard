@@ -20,8 +20,8 @@ import { useCountries } from "@/contexts/CountryProvider";
 import type { ActivityEvent } from "@/interfaces/ActivityEvent";
 import {
   connectionLocationText,
-  peerConnectionEvents,
   formatSessionSeconds,
+  peerConnectionEvents,
   sessionSeconds,
 } from "./connectionHistory";
 
