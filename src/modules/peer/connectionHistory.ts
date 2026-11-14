@@ -1,3 +1,4 @@
+import { formatSessionSpan } from "@utils/helpers";
 import type { ActivityEvent } from "@/interfaces/ActivityEvent";
 import type { Country } from "@/interfaces/Country";
 
@@ -31,4 +32,29 @@ export function connectionLocationText(
     countries?.find((c) => c.country_code === code)?.country_name ?? code;
   const city: string | undefined = meta?.location_city_name;
   return city ? `${country}, ${city}` : country;
+}
+
+/**
+ * Reads meta.session_duration, which Management sends as whole seconds in a
+ * string and only when it knows them. Missing or invalid values give undefined.
+ */
+export function sessionSeconds(
+  meta: ActivityEvent["meta"] | undefined,
+): number | undefined {
+  const raw: unknown = meta?.session_duration;
+  if (raw === undefined || raw === null || raw === "") return undefined;
+  const seconds = Number(raw);
+  return Number.isFinite(seconds) && seconds >= 0 ? seconds : undefined;
+}
+
+/** Formats a session length in seconds as "45s", "12m 3s", "1h 2m" or "2d 3h". */
+export function formatSessionSeconds(seconds: number | undefined): string {
+  if (seconds === undefined) return "";
+  return seconds === 0 ? "0s" : formatSessionSpan(seconds * 1000);
+}
+
+export function sessionDurationText(
+  meta: ActivityEvent["meta"] | undefined,
+): string {
+  return formatSessionSeconds(sessionSeconds(meta));
 }

@@ -10,6 +10,7 @@ import React, { useMemo } from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import { useCountries } from "@/contexts/CountryProvider";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
+import { sessionDurationText } from "@/modules/peer/connectionHistory";
 
 type Props = {
   event: ActivityEvent;
@@ -51,6 +52,8 @@ export default function ActivityDescription({ event }: Props) {
           : "disconnected from"}{" "}
         Management
         <PeerConnectionInfo meta={m} />
+        {event.activity_code === "peer.disconnect" &&
+          sessionDurationText(m) && <> after {sessionDurationText(m)}</>}
       </div>
     );
   }

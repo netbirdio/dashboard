@@ -21,13 +21,15 @@ import type { ActivityEvent } from "@/interfaces/ActivityEvent";
 import {
   connectionLocationText,
   peerConnectionEvents,
+  formatSessionSeconds,
+  sessionSeconds,
 } from "./connectionHistory";
 
 dayjs.extend(utc);
 
 // The location text depends on the loaded country list, so it is computed when the
 // rows are built: the table caches accessor values until its data changes.
-type ConnectionRow = ActivityEvent & { location: string };
+type ConnectionRow = ActivityEvent & { location: string; session?: number };
 
 const columns: ColumnDef<ConnectionRow>[] = [
   {
@@ -98,6 +100,14 @@ const columns: ColumnDef<ConnectionRow>[] = [
       );
     },
   },
+  {
+    accessorKey: "session",
+    header: ({ column }) => (
+      <DataTableHeader column={column}>Session</DataTableHeader>
+    ),
+    cell: ({ getValue }) =>
+      formatSessionSeconds(getValue<number | undefined>()) || "—",
+  },
 ];
 
 export function PeerConnectionHistory({ peerID }: { peerID: string }) {
@@ -140,6 +150,10 @@ export function PeerConnectionHistoryContent({
       events.map((event) => ({
         ...event,
         location: connectionLocationText(event.meta, countries),
+        session:
+          event.activity_code === "peer.disconnect"
+            ? sessionSeconds(event.meta)
+            : undefined,
       })),
     [events, countries],
   );

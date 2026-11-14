@@ -106,6 +106,48 @@ describe("ActivityDescription peer connection events", () => {
   });
 });
 
+describe("ActivityDescription peer session duration", () => {
+  const disconnect = (meta: Record<string, string>): ActivityEvent => ({
+    ...baseEvent,
+    target_id: "peer-1",
+    activity: "Peer disconnected",
+    activity_code: "peer.disconnect",
+    meta: { name: "office-laptop", ...meta },
+  });
+
+  it("says how long the session lasted when Management reported it", () => {
+    const { container } = render(
+      <ActivityDescription event={disconnect({ session_duration: "3723" })} />,
+    );
+    expect(textOf(container)).toBe(
+      "Peer office-laptop disconnected from Management after 1h 2m",
+    );
+  });
+
+  it.each(["", "-3", "soon"])("omits an unusable duration %j", (value) => {
+    const { container } = render(
+      <ActivityDescription event={disconnect({ session_duration: value })} />,
+    );
+    expect(textOf(container)).toBe(
+      "Peer office-laptop disconnected from Management",
+    );
+  });
+
+  it("does not add a duration to connect events", () => {
+    const { container } = render(
+      <ActivityDescription
+        event={{
+          ...disconnect({ session_duration: "60" }),
+          activity_code: "peer.connect",
+        }}
+      />,
+    );
+    expect(textOf(container)).toBe(
+      "Peer office-laptop connected to Management",
+    );
+  });
+});
+
 describe("ActivityDescription dashboard login events", () => {
   const login = (meta: Record<string, string>): ActivityEvent => ({
     ...baseEvent,

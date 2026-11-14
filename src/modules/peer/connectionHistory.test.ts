@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { ActivityEvent } from "@/interfaces/ActivityEvent";
-import { peerConnectionEvents } from "./connectionHistory";
+import {
+  formatSessionSeconds,
+  peerConnectionEvents,
+  sessionDurationText,
+} from "./connectionHistory";
 
 const event = (
   id: string,
@@ -42,5 +46,30 @@ describe("peer connection history", () => {
         "peer-1",
       ),
     ).toEqual([]);
+  });
+});
+
+describe("session duration", () => {
+  it.each([
+    ["0", "0s"],
+    ["45", "45s"],
+    ["723", "12m 3s"],
+    ["3600", "1h"],
+    ["3723", "1h 2m"],
+    ["183600", "2d 3h"],
+  ])("formats %s seconds as %s", (seconds, text) => {
+    expect(sessionDurationText({ session_duration: seconds })).toBe(text);
+  });
+
+  it.each([undefined, "", "abc", "-1", "NaN", "Infinity"])(
+    "ignores the unusable value %j",
+    (value) => {
+      expect(sessionDurationText({ session_duration: value })).toBe("");
+    },
+  );
+
+  it("ignores events without meta", () => {
+    expect(sessionDurationText(undefined)).toBe("");
+    expect(formatSessionSeconds(undefined)).toBe("");
   });
 });

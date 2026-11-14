@@ -33,7 +33,7 @@ import {
 import GetStartedTest from "@components/ui/GetStartedTest";
 import MultipleGroups from "@components/ui/MultipleGroups";
 import ButtonGroup from "@components/ButtonGroup";
-import { cn, formatDuration } from "@utils/helpers";
+import { cn, formatDuration, formatSessionSpan } from "@utils/helpers";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import {
@@ -1454,28 +1454,6 @@ function SessionProviderCell({
       </div>
     </div>
   );
-}
-
-// formatSessionSpan renders an elapsed session duration in compact, readable
-// units ("8s", "5m 12s", "1h 26m", "2d 3h") — unlike formatDuration, which is
-// tuned for sub-second/per-request timings and would show e.g. "1.4h".
-function formatSessionSpan(ms: number): string {
-  if (!Number.isFinite(ms) || ms <= 0) return "";
-  const totalSeconds = Math.round(ms / 1000);
-  if (totalSeconds < 60) return `${totalSeconds}s`;
-  const totalMinutes = Math.floor(totalSeconds / 60);
-  if (totalMinutes < 60) {
-    const seconds = totalSeconds % 60;
-    return seconds ? `${totalMinutes}m ${seconds}s` : `${totalMinutes}m`;
-  }
-  const totalHours = Math.floor(totalMinutes / 60);
-  if (totalHours < 24) {
-    const minutes = totalMinutes % 60;
-    return minutes ? `${totalHours}h ${minutes}m` : `${totalHours}h`;
-  }
-  const days = Math.floor(totalHours / 24);
-  const hours = totalHours % 24;
-  return hours ? `${days}d ${hours}h` : `${days}d`;
 }
 
 // SessionRequestsCell shows the request count and how long the session ran

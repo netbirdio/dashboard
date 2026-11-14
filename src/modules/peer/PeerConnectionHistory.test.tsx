@@ -1,5 +1,11 @@
 import { TooltipProvider } from "@components/Tooltip";
-import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ActivityEvent } from "@/interfaces/ActivityEvent";
@@ -81,10 +87,44 @@ describe("peer connection history table", () => {
     expect(getByRole("cell", { name: "203.0.113.24" })).toBeTruthy();
     expect(getByRole("cell", { name: "2001:db8::1" })).toBeTruthy();
     expect(getByRole("cell", { name: "Unavailable" })).toBeTruthy();
+    const disconnectRow = getAllByRole("row").find((row) =>
+      row.querySelector('time[datetime="2026-11-13T09:42:21Z"]'),
+    )!;
     expect(
-      getAllByRole("cell", { name: "—" }),
-      "a disconnect has neither a source IP nor a location",
-    ).toHaveLength(2);
+      within(disconnectRow).getAllByRole("cell", { name: "—" }),
+      "a disconnect has neither a source IP, a location nor a known duration",
+    ).toHaveLength(3);
+  });
+
+  it("shows how long a session lasted on disconnect rows only", () => {
+    const connect = event("2026-11-13T09:00:00Z", "1");
+    // A connect carrying a duration must not show it: only disconnects end a session.
+    connect.meta = { session_duration: "99" };
+    const disconnect = (id: string, timestamp: string, duration?: string) => ({
+      ...event(timestamp, id),
+      activity_code: "peer.disconnect",
+      activity: "Peer disconnected",
+      meta: duration === undefined ? {} : { session_duration: duration },
+    });
+    const events = [
+      connect,
+      disconnect("2", "2026-11-13T10:00:00Z", "3723"),
+      disconnect("3", "2026-11-13T11:00:00Z", "45"),
+      disconnect("4", "2026-11-13T12:00:00Z", "-5"),
+      disconnect("5", "2026-11-13T13:00:00Z"),
+    ];
+    const { getAllByRole, getByRole, queryByRole } = render(
+      renderHistory(events),
+    );
+    expect(getByRole("columnheader", { name: /Session/ })).toBeTruthy();
+    expect(getByRole("cell", { name: "1h 2m" })).toBeTruthy();
+    expect(getByRole("cell", { name: "45s" })).toBeTruthy();
+    expect(queryByRole("cell", { name: "1m 39s" })).toBeNull();
+    const sessionCells = getAllByRole("row")
+      .slice(1)
+      .map((row) => within(row).getAllByRole("cell").at(-1)?.textContent);
+    // Newest first: missing, invalid, 45s, 1h 2m, then the connect row.
+    expect(sessionCells).toEqual(["—", "—", "45s", "1h 2m", "—"]);
   });
 
   it("shows the location recorded for each connection and makes it searchable", async () => {
