@@ -1,5 +1,5 @@
-import type { Node, ReactFlowInstance, Rect, Viewport } from "@xyflow/react";
 import { useSyncExternalStore } from "react";
+import type { Node, ReactFlowInstance, Rect, Viewport } from "@xyflow/react";
 import {
   DEFAULT_MIN_ZOOM,
   EMPTY_STATE_ZOOM,

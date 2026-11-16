@@ -1,3 +1,4 @@
+import React, { useEffect, useMemo, useState } from "react";
 import Button from "@components/Button";
 import { Input } from "@components/Input";
 import {
@@ -8,7 +9,6 @@ import {
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { trim } from "lodash";
-import React, { useEffect, useMemo, useState } from "react";
 import { Group } from "@/interfaces/Group";
 
 type Props = {

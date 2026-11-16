@@ -470,7 +470,3 @@ export function useAssistant(): UseAssistantResult {
   }
   return engine;
 }
-
-export function useAssistantRuntime(): AssistantRuntime {
-  return useAssistant().runtime;
-}

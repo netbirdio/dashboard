@@ -2,15 +2,11 @@
 
 export const ROUTE_PREFIX = "/assistant/v1";
 
-export const HEALTH_PATH = `${ROUTE_PREFIX}/health`;
-
 export const SESSION_PATH = `${ROUTE_PREFIX}/session`;
 
 export const PREWARM_PATH = `${ROUTE_PREFIX}/prewarm`;
 
 export const SESSION_ID_HEADER = "x-assistant-session-id";
-
-export const STREAM_TAIL_INDEX_HEADER = "x-assistant-stream-tail-index";
 
 export const CHAT_HEADER = "x-assistant-chat";
 
@@ -137,8 +133,6 @@ export interface BrowserResults {
 
 export const BROWSER_RESULT_MAX_CHARS = 300_000;
 
-export const OMITTED_OUTPUT = { omitted: true } as const;
-
 export function isOmittedOutput(value: unknown): boolean {
   return (
     typeof value === "object" &&
@@ -177,8 +171,6 @@ export const SESSION_UNAVAILABLE_CODE = "session_unavailable";
 export const ACCESS_PATH = `${ROUTE_PREFIX}/access`;
 
 export type AccessResponse = { ok: boolean };
-
-export const ACCOUNT_NOT_ALLOWED_CODE = "account_not_allowed";
 
 export type ToolKind = "browser" | "server";
 
@@ -354,8 +346,6 @@ const namesOfKind = (kind: ToolKind): string[] =>
 
 export const BROWSER_TOOLS: readonly string[] = namesOfKind("browser");
 
-export const SERVER_TOOLS: readonly string[] = namesOfKind("server");
-
 // Scrubbed from typed text before it leaves the browser. Order matters: enveloping shapes
 // (PEM, JWT, credential URLs) go first, or the narrower patterns tear them apart.
 // Lookbehinds and bounded runs replace `\b` and length caps to stay linear on a hostile paste without letting long secrets through.
@@ -381,15 +371,3 @@ export const SECRET_PATTERNS: readonly RegExp[] = [
   // WireGuard keys: exactly 32 bytes of base64 (43 chars + padding).
   /(?<![A-Za-z0-9+/=])[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=(?![A-Za-z0-9+/=])/g,
 ];
-
-export function scrubSecrets(text: string): { text: string; found: boolean } {
-  let out = text;
-  let n = 0;
-  for (const pattern of SECRET_PATTERNS) {
-    out = out.replace(pattern, () => {
-      n += 1;
-      return `[SECRET_${n}]`;
-    });
-  }
-  return { text: out, found: n > 0 };
-}

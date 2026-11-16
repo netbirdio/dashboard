@@ -1,4 +1,3 @@
-import type { XYPosition } from "@xyflow/react";
 import {
   createContext,
   MutableRefObject,
@@ -9,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import type { XYPosition } from "@xyflow/react";
 import type { Network, NetworkRouter } from "@/interfaces/Network";
 import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
 

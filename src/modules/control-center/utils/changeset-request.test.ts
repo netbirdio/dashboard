@@ -1,16 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
-import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
+import { Group } from "@/interfaces/Group";
 import {
   CreateGroupChange,
   CreatePolicyChange,
   CreateResourceChange,
   DeletePolicyChange,
-  DraftChange,
   InstallPeerChange,
   UpdateGroupChange,
   UpdatePolicyChange,
   UpdateResourceChange,
+  DraftChange,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
   buildBeforeRequest,

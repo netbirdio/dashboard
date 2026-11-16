@@ -1,4 +1,6 @@
 import { Node, useReactFlow, XYPosition } from "@xyflow/react";
+import { isFrameNode } from "@/modules/control-center/utils/helpers";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   createContext,
   Dispatch,
@@ -9,8 +11,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { isFrameNode } from "@/modules/control-center/utils/helpers";
 
 export type OnDropAction = ({
   position,

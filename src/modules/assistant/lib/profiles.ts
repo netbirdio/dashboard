@@ -943,8 +943,6 @@ export const AUDIT_RESULT: Profile = {
   fields: { window_days: true, matched: true, shown: true, note: true, rows: AUDIT_EVENT_ROW },
 };
 
-export const NETBIRD_OPERATIONS = Object.keys(PROFILES) as [string, ...string[]];
-
 export function allowlist(value: unknown, profile: Profile): unknown {
   if (Array.isArray(value)) return value.map((v) => allowlist(v, profile));
   if (!value || typeof value !== "object") return profile.handle || typeof value !== "string" ? value : undefined;

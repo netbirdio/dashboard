@@ -2,8 +2,6 @@ import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
-import TextWithTooltip from "@components/ui/TextWithTooltip";
-import TruncatedText from "@components/ui/TruncatedText";
 import useFetchApi from "@utils/api";
 import { cn, generateColorFromUser } from "@utils/helpers";
 import { Handle, type Node, Position } from "@xyflow/react";
@@ -11,6 +9,8 @@ import { sortBy } from "lodash";
 import { ChevronsUpDown, Cog } from "lucide-react";
 import * as React from "react";
 import { User } from "@/interfaces/User";
+import TruncatedText from "@components/ui/TruncatedText";
+import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
