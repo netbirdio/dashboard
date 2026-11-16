@@ -19,7 +19,6 @@ import Paragraph from "@components/Paragraph";
 import { SelectDropdown } from "@components/select/SelectDropdown";
 import SettingCard from "@components/SettingCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
-import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
 import {
   AlertCircleIcon,
@@ -46,11 +45,6 @@ import React, {
   useState,
 } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
-import { usePermissions } from "@/contexts/PermissionsProvider";
-import {
-  ReverseProxyDomain,
-  ReverseProxyDomainType,
-} from "@/interfaces/ReverseProxy";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import {
   type ProviderConnectInput,
@@ -217,11 +211,8 @@ export default function AIProviderModal({
     providers,
     addProvider,
     updateProvider,
-    settings,
-    settingsLoading,
     bootstrapAgentNetworkSettings,
   } = useAIProviders();
-  const { permission } = usePermissions();
   const { confirm } = useDialog();
 
   const isEdit = !!provider;

@@ -52,7 +52,6 @@ import {
   isNewGroup,
   useDraftGroupActions,
 } from "@/modules/control-center/hooks/useDraftGroupActions";
-import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { useDraftNodeActions } from "@/modules/control-center/hooks/useDraftNodeActions";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
 import { useEdgeAwareMenuPosition } from "@/modules/control-center/hooks/useEdgeAwareMenuPosition";
@@ -61,8 +60,6 @@ import { menuItemSlug } from "@/modules/control-center/menus/menuItemTestId";
 import { getNodeRect } from "@/modules/control-center/utils/canvas-transition";
 import {
   getPlaceholderPeer,
-  getResourceDraftGroupIds,
-  getResourceLiveBaseline,
   getResourceNodeEnabled,
   isDraftNetworkNode,
   isFocusWorthy,
