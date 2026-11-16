@@ -80,7 +80,7 @@ export default function NetworkTrafficPage() {
           <PeersProvider>
             <ServerPaginationProvider
               url={"/events/network-traffic"}
-              defaultPageSize={10}
+              defaultPageSize={25}
               defaultFilters={defaultFilters}
               enabled={!isTrafficEventsLocked}
             >

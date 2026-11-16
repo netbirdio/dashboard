@@ -1,3 +1,4 @@
+import { DEFAULT_PAGE_SIZE } from "@components/table/pageSizes";
 import { ColumnDef, Table } from "@tanstack/react-table";
 import { act, cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -49,7 +50,7 @@ describe("DataTable server-side pagination", () => {
     expect(() => act(() => table.setPageIndex(0))).not.toThrow();
     expect(onPaginationChange).toHaveBeenLastCalledWith({
       pageIndex: 0,
-      pageSize: 10,
+      pageSize: DEFAULT_PAGE_SIZE,
     });
   });
 

@@ -12,7 +12,6 @@ import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import * as Tabs from "@radix-ui/react-tabs";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
@@ -274,10 +273,6 @@ export default function IdentityProvidersTab() {
       >
         {(table) => (
           <>
-            <DataTableRowsPerPage
-              table={table}
-              disabled={!providers || providers.length === 0}
-            />
             <DataTableRefreshButton
               isDisabled={!providers || providers.length === 0}
               onClick={() => mutate("/identity-providers")}

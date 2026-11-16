@@ -4,7 +4,6 @@ import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { PlusCircle, ReceiptTextIcon } from "lucide-react";
@@ -177,10 +176,6 @@ export default function DistributorCustomersTable({
       {(table) => {
         return (
           <>
-            <DataTableRowsPerPage
-              table={table}
-              disabled={customers?.length == 0}
-            />
             <DataTableRefreshButton
               isDisabled={customers?.length == 0}
               onClick={refreshCustomers}

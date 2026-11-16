@@ -7,7 +7,6 @@ import { ClipboardList } from "lucide-react";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import DataTableRefreshButton from "@/components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@/components/table/DataTableRowsPerPage";
 import { Job } from "@/interfaces/Job";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
@@ -127,7 +126,6 @@ export default function PeerRemoteJobsTable({
     >
       {(table) => (
         <>
-          <DataTableRowsPerPage table={table} disabled={jobs?.length == 0} />
           <DataTableRefreshButton
             isDisabled={jobs?.length == 0}
             onClick={() => {

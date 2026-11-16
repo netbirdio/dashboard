@@ -239,7 +239,8 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   },
   {
     id: "status",
-    meta: { fit: true },
+    // Only expired or unapproved peers show a status, so most rows leave it empty.
+    meta: { skeleton: false, fit: true },
     accessorFn: (peer) => {
       let statusCount = 0;
       if (peer.login_expired) statusCount++;
@@ -503,6 +504,8 @@ export default function PeersTable({
         initialPageSize={25}
         showResetFilterButton={false}
         columns={PeersTableColumns}
+        // Slightly tighter than the default p-4, so more peers fit on screen.
+        tableCellClassName={"py-2.5"}
         data={showBrowserPeers ? browserPeers : regularPeers}
         searchPlaceholder={"Search by name, IP, MAC, owner or group..."}
         columnVisibility={{
@@ -548,7 +551,6 @@ export default function PeersTable({
 
             <ButtonGroup disabled={isLoading}>
               <ButtonGroup.Button
-                className={"h-[42px]"}
                 variant={kind === "users" ? "tertiary" : "secondary"}
                 onClick={() => {
                   // Reset to the first page: the new subset may have fewer
@@ -563,7 +565,7 @@ export default function PeersTable({
               <ButtonGroup.Button
                 // Drop the left border so it doesn't stack with the first
                 // button's right border into a doubled divider.
-                className={"h-[42px] !border-l-0"}
+                className={"!border-l-0"}
                 variant={kind === "servers" ? "tertiary" : "secondary"}
                 onClick={() => {
                   table.setPageIndex(0);
