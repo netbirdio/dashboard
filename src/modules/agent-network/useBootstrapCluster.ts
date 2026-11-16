@@ -20,7 +20,7 @@ import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
  * further bootstrap runs and `/domains` is not even fetched.
  *
  * Shared rather than local to the Connect Provider wizard because the wizard is
- * no longer the only thing that needs the verdict: the assistant has to know
+ * not the only thing that needs the verdict: the assistant has to know
  * whether opening that wizard can lead anywhere before it opens one and waits
  * on a person (see CanvasAgentBridge's `new_provider`).
  */
@@ -76,7 +76,10 @@ export function useBootstrapCluster() {
   // Wait for both requests before claiming there is nothing to pick, otherwise
   // the warning flashes while the settings row is still loading.
   const noClustersAvailable =
-    !bootstrapped && !settingsLoading && !domainsLoading && bootstrapClusters.length === 0;
+    !bootstrapped &&
+    !settingsLoading &&
+    !domainsLoading &&
+    bootstrapClusters.length === 0;
 
   // Clusters exist, but none of them has private capabilities: a different
   // problem from having no proxy at all, and a different fix, so it gets its

@@ -27,7 +27,10 @@ import UsersProvider from "@/contexts/UsersProvider";
 import { PANEL_ON_LEFT, PANEL_WIDTH } from "@/interfaces/Assistant";
 import Navigation from "@/layouts/Navigation";
 import { AssistantChatContextProvider } from "@/modules/assistant/AssistantChatContextProvider";
-import { AssistantSidebarProvider, useAssistantSidebar } from "@/modules/assistant/AssistantSidebarProvider";
+import {
+  AssistantSidebarProvider,
+  useAssistantSidebar,
+} from "@/modules/assistant/AssistantSidebarProvider";
 import AssistantChatPanel from "@/modules/assistant/chat/AssistantChatPanel";
 import { OnboardingProvider } from "@/modules/onboarding/OnboardingProvider";
 import Header, { headerHeight } from "./Header";
@@ -48,10 +51,10 @@ export default function DashboardLayout({
                   <CountryProvider>
                     <AssistantSidebarProvider>
                       <AssistantChatContextProvider>
-                      <NetBirdCloudProvider />
-                      {!isNetBirdCloud() && <OnboardingProvider />}
-                      <DashboardPageContent>{children}</DashboardPageContent>
-                    </AssistantChatContextProvider>
+                        <NetBirdCloudProvider />
+                        {!isNetBirdCloud() && <OnboardingProvider />}
+                        <DashboardPageContent>{children}</DashboardPageContent>
+                      </AssistantChatContextProvider>
                     </AssistantSidebarProvider>
                   </CountryProvider>
                 </GroupsProvider>
@@ -122,9 +125,9 @@ function DashboardPageContent({
           // z-10 keeps the card above the panel for the whole transition, not
           // just at rest.
           "relative z-10",
-          // Transition the geometry only. `transition-all` also animated
-          // border-color and border-width from their initial values, which read
-          // as the border flashing/changing colour as the panel opened.
+          // Transition the geometry only. `transition-all` also animates
+          // border-color and border-width from their initial values, which reads
+          // as the border flashing/changing colour as the panel opens.
           "transition-[margin,height] duration-300 ease-out",
           // ...except while the window is being resized. The height is derived
           // from `100vh`, so every resize tick would otherwise animate for
@@ -134,9 +137,8 @@ function DashboardPageContent({
           // layout that existed before the panel: no clipping that could cut off
           // a non-portaled dropdown, no background change.
           //
-          // This single border/rounding is now the whole outline — the header is
-          // an in-flow child, so `overflow-hidden` clips its top corners and it
-          // no longer draws any part of the edge itself.
+          // This single border/rounding is the whole outline — the header is
+          // an in-flow child, so `overflow-hidden` clips its top corners.
           reveal &&
             "overflow-hidden rounded-2xl border border-nb-gray-900 bg-nb-gray-950 shadow-2xl",
         )}
@@ -262,9 +264,7 @@ function DashboardPageContent({
                   {/*
                     Renders for every role: Peers is visible to all of them, so
                     there is always at least one item, and each remaining item
-                    decides for itself in Navigation. Gating the sidebar here on
-                    `isRestricted` once emptied it for the limited (user role)
-                    view, whose items were the Agent Network ones.
+                    decides for itself in Navigation.
                   */}
                   <Navigation hideOnMobile />
                   <React.Fragment key={"page"}>{children}</React.Fragment>

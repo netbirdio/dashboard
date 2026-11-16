@@ -51,6 +51,7 @@ export const useSSH = (client: any) => {
             config.port,
             SSH_DETECTION_TIMEOUT_MS,
           );
+          console.log("Detection:", { requiresJwt, hasToken: !!accessToken });
         } catch (detectionErr) {
           console.error("Detection failed, falling back to pubkey:", detectionErr);
         }

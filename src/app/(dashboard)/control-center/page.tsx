@@ -261,7 +261,6 @@ function ControlCenterCanvas() {
       <DraftNetworkDestinationModal />
       <DraftNetworkEditModal />
       <DraftLeaveGuard />
-      {/* Publishes the canvas to the assistant for as long as this page is up. */}
       <CanvasAgentBridge onConnect={draft.onNodeConnect} />
       <ReactFlow
         className={highlightArmed ? "cc-focus-armed" : undefined}

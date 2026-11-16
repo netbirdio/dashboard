@@ -24,10 +24,6 @@ export interface AssistantProviderProps {
   pageContext?: () => string | null;
   /** Executors for browser tools the SDK has no built-in for, such as dashboard_page_redirect. */
   extraExecutors?: Record<string, BrowserToolExecutor>;
-  /**
-   * Reads the management API as the signed-in user, for the assistant's account reads.
-   * The agent never holds the user's token, so without it the assistant cannot read the account.
-   */
   fetchManagement?: ManagementFetch;
   /** Keys the session persisted in sessionStorage; defaults to one conversation per app. */
   conversationId?: string;

@@ -52,12 +52,9 @@ export const DraftRoutingPeerModal = () => {
   /**
    * The draft's placeholder peers, offered alongside the account's own.
    *
-   * An office router the user is about to install is the most natural routing
-   * peer there is, and before this they had to install it first, then come back
-   * — so a draft that described the whole network couldn't express the one thing
-   * that makes it work. The router is recorded against the placeholder's draft
-   * id; its own install-peer step blocks the deploy until the peer exists, and
-   * installing it rewrites the router with the real id (useDraftPeerUpgrade).
+   * The router is recorded against the placeholder's draft id;
+   * its own install-peer step blocks the deploy until the peer exists,
+   * and installing it rewrites the router with the real id (useDraftPeerUpgrade).
    */
   const placeholderPeers = React.useMemo(
     () =>

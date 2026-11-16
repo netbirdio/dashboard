@@ -27,7 +27,8 @@ import { useLoggedInUser } from "@/contexts/UsersProvider";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import type { PageContextEntry } from "@/interfaces/Assistant";
 import { CHAT_PAD } from "@/interfaces/Assistant";
-import { acceptsFreeText, useAssistant } from "@/modules/assistant";
+import { useAssistant } from "@/modules/assistant/hooks/useAssistant";
+import { acceptsFreeText } from "@/modules/assistant/hooks/useBrowserToolLoop";
 import {
   AssistantApprovalGate,
   AssistantOpenQuestionCard,
@@ -142,9 +143,9 @@ function CopyAction() {
 }
 
 // Always mounted: the bar's height is part of the message's layout, and
-// mounting it late (the old `hideWhenRunning`) shifted the thread at every
-// turn boundary and made finished messages uncopyable mid-turn. It stays
-// invisible until hover; only its buttons know about running state.
+// mounting it late would shift the thread at every turn boundary and make
+// finished messages uncopyable mid-turn. It stays invisible until hover; only
+// its buttons know about running state.
 function MessageActions() {
   return (
     <ActionBarPrimitive.Root className="mt-1 flex items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/message:opacity-100">
@@ -272,11 +273,9 @@ function AssistantMessage() {
           </ActionBarPrimitive.Reload>
         </MessagePrimitive.Error>
 
-        {/* Only where there is an answer to copy. Gated on `parts.length` this
-            mounted under a message that is still all tool calls, reserving a
-            row of height for a button that could never do anything — which is
-            the gap that used to sit between the last step and the working
-            line. */}
+        {/* Only where there is an answer to copy. Under a message that is
+            still all tool calls this would reserve a row of height for a
+            button that could never do anything. */}
         <AuiIf
           condition={(s) =>
             s.message.parts.some(

@@ -29,7 +29,6 @@ import type { PendingInputRequest } from "./useBrowserToolLoop";
 import { TURN_SETTLE_MS, useBrowserToolLoop } from "./useBrowserToolLoop";
 import { useChatSession } from "./useChatSession";
 
-/** Session lifecycle. */
 export type AssistantStatus = ChatStatus;
 
 // sessionStorage is scoped to the tab rather than the sign-in,

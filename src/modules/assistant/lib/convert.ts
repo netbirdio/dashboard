@@ -125,10 +125,7 @@ export function restoreEveMessage(vault: Vault, message: EveMessage): EveMessage
   return { ...message, parts };
 }
 
-/**
- * Maps one eve message to a ThreadMessageLike.
- * Question parts are dropped, since the host renders them as cards rather than tool rows.
- */
+/** Question parts are dropped, since the host renders them as cards rather than tool rows. */
 export function convertEveMessage(message: EveMessage): ThreadMessageLike {
   const content: MessagePart[] = [];
   for (const part of message.parts) {
@@ -144,7 +141,7 @@ export function convertEveMessage(message: EveMessage): ThreadMessageLike {
         content.push(toToolCallPart(part));
         break;
       default:
-        // file, step-start and authorization parts are not rendered
+        // File, step-start and authorization parts are not rendered.
         break;
     }
   }

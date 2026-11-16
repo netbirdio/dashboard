@@ -116,7 +116,6 @@ describe("netbird_api", () => {
       peer(`p${i}`, `workstation-${i}.office.example.com`, { groups: GROUPS, os: "Windows 11 Enterprise 24H2", login_expired: true }),
     );
     const outcome = await readNetbirdApi({ operation: "get_api_peers", query: { login_expired: true } }, fakeFetch({ "/api/peers": wide }));
-    // What the old 128k cap cut.
     expect(outcome.content.length).toBeGreaterThan(128_000);
     const read = JSON.parse(outcome.content);
     expect(read.shown).toBeUndefined();

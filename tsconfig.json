@@ -28,15 +28,6 @@
       "@/*": [
         "./src/*"
       ],
-      "@assistant-ui/react": [
-        "./node_modules/@assistant-ui/react"
-      ],
-      "@assistant-ui/core": [
-        "./node_modules/@assistant-ui/core"
-      ],
-      "assistant-stream": [
-        "./node_modules/assistant-stream"
-      ],
       "@/config/production": [
         "./config.json"
       ],

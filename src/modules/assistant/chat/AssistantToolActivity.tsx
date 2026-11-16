@@ -4,11 +4,9 @@
 import { cn } from "@utils/helpers";
 import { Check, ChevronRight, Info, Loader2 } from "lucide-react";
 import { type ReactNode, useState } from "react";
-import {
-  CONTROL_CENTER_TOOLS,
-  describeToolCall,
-  isOmittedOutput,
-} from "@/modules/assistant";
+import { isOmittedOutput } from "@/modules/assistant/lib/contract";
+import { CONTROL_CENTER_TOOLS } from "@/modules/assistant/lib/control-center";
+import { describeToolCall } from "@/modules/assistant/lib/tools";
 import { useTurnActive } from "@/modules/assistant/chat/AssistantTurnContext";
 import { navigateToPage } from "@/modules/assistant/lib/page-redirect";
 
@@ -86,18 +84,16 @@ export function AssistantToolActivity({
   const failed = isError === true || status?.type === "incomplete";
   /*
     A result in hand outranks the status. The status is the host's word for
-    what the runtime last said, and a call that failed used to keep the
-    spinner: the error was already here, and the row was the last thing still
-    claiming to be waiting for it.
+    what the runtime last said, and a failed call must not keep the spinner
+    when the error is already here.
   */
   /*
     A row cannot still be running once the turn that owns it is over.
 
     eve resolves its own framework tools — `ask_question` among them — without
     sending back the tool result a dispatched tool returns, so `result` never
-    arrives and the status stays "running" forever: the ask sat there spinning
-    while the steps after it ticked off below. The turn ending is the honest
-    end of anything it started.
+    arrives and the status stays "running" forever. The turn ending is the
+    honest end of anything it started.
   */
   const turnActive = useTurnActive();
   const settled = failed || result !== undefined || !turnActive;
@@ -189,7 +185,7 @@ export function AssistantToolActivity({
           {icon}
         </span>
 
-        {/* `min-w-0 truncate` rather than `shrink-0`: the line now carries the
+        {/* `min-w-0 truncate` rather than `shrink-0`: the line carries the
             subject, so a long peer name has to ellipse at the end of the
             phrase instead of pushing the outcome mark off the row. */}
         <span

@@ -152,9 +152,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     ]);
     expect(group.ok).toBe(true);
 
-    // The label on the canvas and the name that will deploy must agree — a
-    // create-then-rename produced a node reading "Group (2)" that deployed as
-    // something else, plus a second create change.
+    // The label on the canvas and the name that will deploy must agree.
     const canvas = await readDraftCanvas(page);
     const node = (canvas?.nodes ?? []).find(
       (n: { id: string }) => n.id === group.nodeId,
@@ -175,8 +173,8 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
       { kind: "new_group", name: "Agent Self Rename" },
     ]);
 
-    // Renaming to the SAME name it already has must not report "already exists"
-    // against its own pending create.
+    // The rename must not report "already exists" against its own pending
+    // create.
     const renamed = await agent<Step[]>(page, "editNodes", [
       { node: group.nodeId, action: "rename", name: "Agent Self Rename 2" },
     ]);
@@ -196,8 +194,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     ]);
     expect(server.ok).toBe(true);
 
-    // The card read "Server" while the changeset said "Minecraft Server": the
-    // rename went through a different setter than the create and was dropped.
     const canvas = await readDraftCanvas(page);
     const node = (canvas?.nodes ?? []).find(
       (n: { id: string }) => n.id === server.nodeId,
@@ -225,8 +221,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     const xOf = (id?: string) =>
       (canvas?.nodes ?? []).find((n: { id: string }) => n.id === id)?.position?.x;
 
-    // A destination peer used to land on the sources side and only move once
-    // the layout settled, which read as the node jumping across the canvas.
     expect(xOf(source.nodeId)).toBeLessThan(xOf(policy.nodeId));
     expect(xOf(destination.nodeId)).toBeGreaterThan(xOf(policy.nodeId));
   });
@@ -411,7 +405,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
 
     expect(step.ok).toBe(false);
     expect(step.detail).toContain("control_center_add");
-    // Still in the draft, still holding the change.
     await expect(page.getByTestId("cc-draft-cancel")).toBeVisible();
     await expectChangeCount(page, 1);
   });
@@ -426,7 +419,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
 
     expect(step.ok).toBe(true);
     expect(step.detail).toContain("empty draft");
-    // Back in live mode, on the requested view.
     await expect(page.getByTestId("cc-draft-cancel")).not.toBeVisible();
     await expect(page.getByTestId("cc-flow-groups")).toHaveAttribute(
       "data-state",
@@ -445,8 +437,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
       { kind: "new_group", name: "Agent Visible Destinations", role: "destination" },
     ]);
 
-    // The destination column used to walk off the right-hand edge: each node was
-    // placed relative to the last, and the camera never covered the whole build.
     for (const step of [source, policy, destination]) {
       expect(
         await nodeOnScreen(page, step.nodeId!),
@@ -539,8 +529,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     const [group] = await add(page, [{ kind: "new_group", name: "Agent Join Group" }]);
 
     // A draft resource's node data holds a resource with NO id (it's derived from
-    // the node id), so reading the raw field made this a silent no-op that still
-    // reported success — the group came out empty.
+    // the node id).
     const joined = await agent<Step[]>(page, "editNodes", [
       { node: resource.nodeId, action: "add_to_group", group: group.nodeId },
     ]);
@@ -637,13 +626,13 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     await add(page, [{ kind: "existing_peer", ref: peer.id }]);
 
     // Named by its ACCOUNT id, not its canvas node id — the natural thing to
-    // pass after reading list_peers, and the path that left the card behind.
+    // pass after reading list_peers.
     const assigned = await agent<Step[]>(page, "editNodes", [
       { node: peer.id, action: "add_to_group", group: group.nodeId },
     ]);
 
     expect(assigned[0].ok).toBe(true);
-    // The group counts it AND the card is gone — those went out of sync before.
+    // The group counts it AND the card is gone.
     await expect(canvasNode(page, `peer-${peer.id}`)).toHaveCount(0);
     const after = await readDraftCanvas(page);
     const groupNode = (after?.nodes ?? []).find(

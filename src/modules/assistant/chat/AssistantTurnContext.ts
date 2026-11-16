@@ -15,10 +15,10 @@ import { createContext, useContext } from "react";
  */
 /*
   Defaults to true: "in flight" is the conservative answer when nobody has
-  said otherwise. A false default meant the mere ABSENCE of a provider settled
-  every tool row and collapsed every panel, which is a claim the context was
-  never asked to make — outside a provider the row's own status should decide,
-  exactly as it did before this context existed.
+  said otherwise. A false default would let the mere ABSENCE of a provider
+  settle every tool row and collapse every panel, which is a claim the context
+  was never asked to make — outside a provider the row's own status should
+  decide.
 */
 export const TurnActiveContext = createContext(true);
 

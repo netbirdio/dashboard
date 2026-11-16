@@ -33,7 +33,7 @@ import {
   isDraftPeerId,
 } from "@/modules/control-center/utils/helpers";
 import { e2eHooksEnabled } from "@utils/netbird";
-import { useAgentBusy } from "@/modules/assistant";
+import { useAgentBusy } from "@/modules/assistant/hooks/useAgentBusy";
 import { markAssistantChanges } from "@/modules/control-center/utils/assistant-changes";
 
 export {

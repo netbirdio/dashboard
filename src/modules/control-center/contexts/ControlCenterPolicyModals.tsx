@@ -727,32 +727,13 @@ export function ControlCenterPolicyProvider({
     }
 
     /*
-      Write through the CONTROLLED state, not `reactFlow.setNodes`.
-
-      `<ReactFlow nodes={canvas.nodes} …>` is controlled by `useNodesState`, so
-      that array is the source of truth and React Flow syncs it into its own
-      store whenever the reference changes. A programmatic `reactFlow.setNodes`
-      reaches the store but never the array and emits no `onNodesChange`, so the
-      next sync silently reinstates the node as the array still has it.
-
-      That is why narrowing a policy looked like it did nothing: the changeset
-      recorded tcp/25565 correctly — it is React state — while the policy node
-      on the canvas snapped back to "All", because the data update lived only in
-      the store and the array it was re-synced from had never heard about it.
-    */
-    /*
       One writer, and idempotent.
 
       This goes through `reactFlow.setNodes`/`setEdges` ONLY. React Flow batches
       the resulting changes and replays them onto the controlled `useNodesState`
       array through `onNodesChange` in a layout effect, so the array follows on
       its own — and a second, direct write to that array races the replay rather
-      than reinforcing it. That race is what made a narrowed policy flash the
-      right rule for one commit and revert: the direct write landed tcp, then
-      the queued `replace` change, holding the node as it was when the store
-      write happened, put "all" back. Writing edges from both paths duplicated
-      them too, which is where the "two children with the same key" warnings
-      and the stray lines across the canvas came from.
+      than reinforcing it.
 
       The updaters stay idempotent because they can run against an array that
       already holds part of the result.

@@ -29,11 +29,7 @@ export default function NavbarWithDropdown() {
   return (
     /*
       A normal in-flow child of the dashboard card — deliberately not `fixed`.
-      Fixed positioning took the header out of the card's box, so it couldn't
-      inherit the card's margin and had to be animated separately with matching
-      insets. Two elements animating in lockstep is what produced the vertical
-      jump, the flashing border, the mismatched corners and the missing bottom
-      border. In flow it simply moves with the card, and the card's own border,
+      In flow it simply moves with the card, and the card's own border,
       rounding and `overflow-hidden` clip it for free.
 
       Safe because the card's contents already sum to exactly its height (header
@@ -50,9 +46,9 @@ export default function NavbarWithDropdown() {
           "border-b dark:border-zinc-700/40 px-3 md:px-4 w-full",
           // `transition-colors`, not `transition-all`: this bar is `w-full`, so
           // when the wrapper's insets animate its own computed width changes
-          // every frame. Under `transition-all` it animated that width too, on
-          // a separate default timeline, so it visibly lagged and juddered
-          // behind the wrapper. Colour transitions are what this was for.
+          // every frame. Under `transition-all` it animates that width too, on
+          // a separate default timeline, so it visibly lags and judders
+          // behind the wrapper.
           "flex justify-between items-center transition-colors",
         )}
       >

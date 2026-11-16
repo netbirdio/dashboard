@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  BROWSER_TOOLS,
-  CONTROL_CENTER_TOOLS,
-  READ_TOOLS,
-  TOOL_MANIFEST,
-} from "@/modules/assistant";
+import { BROWSER_TOOLS, READ_TOOLS, TOOL_MANIFEST } from "@/modules/assistant/lib/contract";
+import { CONTROL_CENTER_TOOLS } from "@/modules/assistant/lib/control-center";
 import { pageRedirect } from "@/modules/assistant/lib/page-redirect";
 
 // What the dashboard registers via the provider's extraExecutors.

@@ -53,7 +53,6 @@ export function useDraftNodeActions() {
     [setNodes, reactFlow, trackInstallPeer],
   );
 
-  // Rename a draft resource node (canvas + changeset re-sync for saved ones).
   const renameResource = useCallback(
     (id: string, name: string) => {
       setNodes((prev) =>

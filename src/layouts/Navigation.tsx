@@ -116,8 +116,8 @@ export default function Navigation({
         // Taken out of flow so hover-expanding the rail overlays the page
         // instead of pushing it (`PageContainer` reserves the 64px). Absolute
         // rather than fixed: a fixed rail escapes the dashboard card's
-        // `overflow-hidden`, so it painted over the card's rounded edge once the
-        // assistant panel inset it. The row it sits in is `relative`, and its
+        // `overflow-hidden`, so it paints over the card's rounded edge once the
+        // assistant panel insets it. The row it sits in is `relative`, and its
         // static position is that row's top-left, so this is the same geometry.
         isNavigationCollapsed &&
           "md:w-[64px] md:min-w-[64px] md:absolute md:left-0 md:top-0 md:overflow-hidden md:hover:w-[15rem] md:hover:max-w-[15rem] md:hover:min-w-[15rem] md:z-50",
@@ -128,8 +128,8 @@ export default function Navigation({
     >
       {/*
         In flow, not positioned out of it: the `ScrollArea` below is already
-        sized to the viewport, so taking this out of flow only made the rail
-        escape the card's clipping (when fixed) or add scrollable overflow to
+        sized to the viewport, so taking this out of flow only makes the rail
+        escape the card's clipping (when fixed) or adds scrollable overflow to
         the rail itself (when absolute). `relative` keeps it the containing
         block for the submenu popovers.
       */}

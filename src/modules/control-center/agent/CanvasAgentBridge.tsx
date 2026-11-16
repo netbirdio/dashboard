@@ -13,23 +13,7 @@ import type {
 } from "@/modules/agent-network/data/mockData";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { useBootstrapCluster } from "@/modules/agent-network/useBootstrapCluster";
-import {
-  AgentAddItem,
-  AgentCanvasAction,
-  AgentCanvasSnapshot,
-  AgentDraftAction,
-  AgentLink,
-  AgentNavigateInput,
-  AgentNode,
-  AgentNodeAction,
-  AgentNodeKind,
-  AgentPolicyEdit,
-  AgentStepResult,
-  beginAgentActivity,
-  beginAgentTurn,
-  CanvasAgentApi,
-  registerCanvasAgent,
-} from "@/modules/assistant";
+import { AgentAddItem, AgentCanvasAction, AgentCanvasSnapshot, AgentDraftAction, AgentLink, AgentNavigateInput, AgentNode, AgentNodeAction, AgentNodeKind, AgentPolicyEdit, AgentStepResult, beginAgentActivity, beginAgentTurn, CanvasAgentApi, registerCanvasAgent } from "@/modules/assistant/lib/canvas";
 import {
   useCanvasState,
   useControlCenterUI,
@@ -211,7 +195,6 @@ const ARRANGE_IDLE_MS = 3500;
 /*
   Where a new node lands.
 
-  Everything used to drop at the origin, on top of whatever was already there.
   The canvas has a reading direction — sources on the left, policies in the
   middle, destinations on the right (see Views in CLAUDE.md) — so placement
   follows it: each kind has a lane, each lane stacks downward, and groups
@@ -398,9 +381,9 @@ function buildApi(deps: Deps): CanvasAgentApi {
         }
       } else if (VIEWS[view] === d.canvas.currentView) {
         /*
-          Asking for the view you're already on is a no-op, not a failure — this
-          used to answer "leave draft mode first", which is both wrong and the
-          worst possible advice: following it would discard the user's work.
+          Asking for the view you're already on is a no-op, not a failure:
+          answering "leave draft mode first" would be wrong, and following it
+          would discard the user's work.
         */
         return ok(
           `Already on the ${view} view. In a draft the canvas is what you've built, ` +
@@ -483,8 +466,7 @@ function buildApi(deps: Deps): CanvasAgentApi {
 
     /*
       The rebuild redraws the graph around the new subject but can leave the
-      selector node showing the view's default pick, so the canvas read
-      "Production" while drawing Developers' policies. Set the selector's value
+      selector node showing the view's default pick. Set the selector's value
       directly, and again once the rebuild has settled in case it wrote an
       older copy of the node back.
     */
@@ -663,9 +645,6 @@ function buildApi(deps: Deps): CanvasAgentApi {
       symptom is a draft with its sources and destinations intact and its
       protocol and ports quietly back at "all" — the assistant having truthfully
       called the tool and the canvas having dropped the result.
-
-      The `add` path already polls with `settle()` for the same reason. This one
-      did not, which is the whole bug.
     */
     await settle();
     let d = deps();
@@ -720,8 +699,7 @@ function buildApi(deps: Deps): CanvasAgentApi {
 
   /*
     The public surface. Everything except `getSnapshot` (a pure read) runs
-    inside `acting`, so the pane is dimmed and locked for exactly as long as
-    the step takes — the user can still reach the header, toolbar and Cancel.
+    inside `acting`, so the canvas is dimmed and locked while the step runs.
   */
   return {
     getSnapshot: snapshot,
@@ -773,9 +751,8 @@ const requireDraft = (d: BridgeDeps): AgentStepResult | null =>
  * Arrange once the steps stop coming. Every call restarts the timer, so ten
  * individual adds cost one re-layout instead of ten.
  *
- * It shows itself twice over: the busy pill names it while it runs, and it leaves
- * a notice for the next report so the assistant's step trail accounts for the
- * movement it caused (see drainNotices).
+ * It leaves a notice for the next report so the assistant's step trail accounts
+ * for the movement it caused (see drainNotices).
  */
 let arrangeTimer: ReturnType<typeof setTimeout> | undefined;
 const notices: string[] = [];
@@ -1161,20 +1138,6 @@ const noClusterToBootstrap = (d: BridgeDeps): AgentStepResult | null => {
 };
 
 /**
- * Puts a new group's initial members in it, and returns how many landed.
- *
- * Same writer as a drop and as `control_center_node` `add_to_group` (`addMemberToGroup`), so
- * the changeset can't tell the difference — this only saves the round trips. It
- * exists because a group is nearly always created FOR something: "the databases",
- * "the printers". Naming those in the same call is one step the user watches
- * instead of four, and it stops a policy being drawn at an empty group.
- *
- * A member may be a canvas node id or the real id of a peer/resource that was
- * never drawn (what the components panel's drag does). Unknown ids are skipped
- * rather than failing the group — the group is the thing the caller asked for, and
- * the count in the reply says what actually happened.
- */
-/**
  * The peer or resource a member reference points at, with the id membership is
  * keyed on.
  *
@@ -1182,8 +1145,7 @@ const noClusterToBootstrap = (d: BridgeDeps): AgentStepResult | null => {
  * draft-resource case is why this is a function: such a node's `data.resource` is
  * a PARTIAL with no id (the id is synthesized from the node id by
  * getDraftResource), and `addMemberToGroup` silently drops a member with no
- * itemId — so reading the raw field made grouping a freshly drawn resource a
- * no-op that still reported success.
+ * itemId.
  */
 function resolveMember(
   id: string,
@@ -1222,6 +1184,20 @@ function resolveMember(
   };
 }
 
+/**
+ * Puts a new group's initial members in it, and returns how many landed.
+ *
+ * Same writer as a drop and as `control_center_node` `add_to_group` (`addMemberToGroup`), so
+ * the changeset can't tell the difference — this only saves the round trips. It
+ * exists because a group is nearly always created FOR something: "the databases",
+ * "the printers". Naming those in the same call is one step the user watches
+ * instead of four, and it stops a policy being drawn at an empty group.
+ *
+ * A member may be a canvas node id or the real id of a peer/resource that was
+ * never drawn (what the components panel's drag does). Unknown ids are skipped
+ * rather than failing the group — the group is the thing the caller asked for, and
+ * the count in the reply says what actually happened.
+ */
 async function fillGroup(
   groupNodeId: string,
   members: string[],
@@ -1683,11 +1659,6 @@ const GROUPS_NEED_DRAFT =
   "Group membership is a draft action — start a draft first.";
 
 /**
- * Puts a peer or resource that isn't on the canvas into a group, the way the
- * group panel's drop zone does. `action.node` is the entity's own id here, not a
- * canvas node's.
- */
-/**
  * Puts an account USER in a group, the way the group panel's Users tab does.
  *
  * Deliberately not `addMemberToGroup`. Peer and resource membership is a
@@ -1742,6 +1713,11 @@ function assignUserToGroup(
   return ok(`Added the user ${label} to “${groupData?.name}”.`);
 }
 
+/**
+ * Puts a peer or resource that isn't on the canvas into a group, the way the
+ * group panel's drop zone does. `action.node` is the entity's own id here, not a
+ * canvas node's.
+ */
 function assignEntityToGroup(
   action: AgentNodeAction,
   d: BridgeDeps,
@@ -1825,7 +1801,7 @@ function groupNameTaken(
       .getNodes()
       .some((n) => n.id !== exceptNodeId && getNodeGroup(n)?.name === name) ||
     // A pending create for the group being renamed is not a collision with
-    // itself — that read "already exists" for a group the caller had just made.
+    // itself.
     d.changes.some(
       (c) =>
         c.type === "create-group" &&
@@ -1935,8 +1911,7 @@ function editPolicy(edit: AgentPolicyEdit, d: BridgeDeps): AgentStepResult {
   /*
     Report the rule as it now stands, not the edit that was asked for. The
     model describes the draft from these results, and a bare "Updated policy X"
-    let it narrate its own intent — it said it had made the rule TCP whether or
-    not the protocol survived the write. Echoing the landed values gives it
+    lets it narrate its own intent. Echoing the landed values gives it
     something that can contradict it.
   */
   const landed = `${protocol}${

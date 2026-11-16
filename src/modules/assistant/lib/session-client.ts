@@ -49,7 +49,7 @@ export const serverFailure = (
   try {
     parsed = JSON.parse(body);
   } catch {
-    // not JSON, e.g. a proxy error page
+    // Not JSON, e.g. a proxy error page.
   }
   if (parsed?.code && parsed?.message) {
     return { code: parsed.code, message: parsed.message };

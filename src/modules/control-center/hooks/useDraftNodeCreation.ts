@@ -116,8 +116,7 @@ export function useDraftNodeCreation() {
       position?: XYPosition,
       // Names it at birth. Renaming right after creating goes through a
       // different setter than the create (React state vs the flow store), so the
-      // patch could land before the node did and be silently dropped — leaving
-      // the card reading "Server" while the changeset said "Minecraft Server".
+      // patch could land before the node did and be silently dropped.
       preferredName?: string,
     ) => {
       const nodeId = `peer-draft-${draftUid()}`;

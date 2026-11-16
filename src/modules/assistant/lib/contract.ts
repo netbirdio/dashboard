@@ -517,7 +517,7 @@ export const SECRET_PATTERNS: readonly RegExp[] = [
   // The lookbehind gives the scheme run one start, where `\b` would rescan it after every hyphen.
   /(?<![a-z0-9+.-])[a-z][a-z0-9+.-]*:\/\/[^\s:@/"']+:[^\s@/"']+@[^\s"'<>]+/gi,
   // Secret assignments from pasted env files and configs.
-  // The key-name lookbehind keeps `[\w-]*` linear, as for URLs above (a 128KB paste once took ~57s).
+  // The key-name lookbehind keeps `[\w-]*` linear, as for URLs above.
   // A value of 257+ delimiter-free characters is taken whole, since prose never produces one;
   // a shorter value must carry a digit, so prose like "the secret: management" cannot match.
   /(?<![\w-])[\w-]*(?:password|passwd|pwd|secret|token|api[_-]?key|enc[_-]?key|auth[_-]?key|access[_-]?key|account[_-]?key)["']?\s*[=:]\s*["']?(?:[^\s"',;]{257,}|(?=[^\s"',;]{0,255}\d)[^\s"',;]{8,256})/gi,

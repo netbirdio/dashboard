@@ -11,11 +11,8 @@ import Button from "@components/Button";
 import { cn } from "@utils/helpers";
 import { MessageCircleQuestion, ShieldQuestion } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  acceptsFreeText,
-  type PendingInputRequest,
-  toolLabel,
-} from "@/modules/assistant";
+import { acceptsFreeText, type PendingInputRequest } from "@/modules/assistant/hooks/useBrowserToolLoop";
+import { toolLabel } from "@/modules/assistant/lib/tools";
 
 /**
  * What the card asks, in the words the rest of the thread uses.
@@ -274,11 +271,7 @@ export function AssistantApprovalCard({
           return (
             /* The dashboard's own Button, so these two read as the same kind of
                control as every other pair of actions in the product, and pick
-               up its focus ring and disabled treatment for free. Refusing is
-               `danger-outline` rather than another neutral box: the two halves
-               of the pair have to be told apart at a glance, and outlined-red
-               against filled-orange is the contrast the rest of the dashboard
-               already uses for an action and its refusal. */
+               up its focus ring and disabled treatment for free. */
             <Button
               key={option.id}
               size="xs"

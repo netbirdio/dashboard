@@ -209,8 +209,6 @@ export const NodeContextMenu = ({
     return Array.from(names);
   }, [groups, nodes, renameTarget]);
 
-  // Canvas/changeset writes shared with the assistant's control_center_node — see
-  // useDraftNodeActions.
   const {
     renamePlaceholder,
     renameResource,

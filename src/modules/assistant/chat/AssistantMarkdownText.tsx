@@ -241,9 +241,9 @@ const components = {
   hr: ({ className, ...props }: any) => (
     <hr {...props} className={cn("my-6 border-nb-gray-800", className)} />
   ),
+  img: ({ alt }: any) => (alt ? <span>{alt}</span> : null),
   // The external-link icon marks absolute http(s) targets only; relative links
   // stay inside the dashboard.
-  img: ({ alt }: any) => (alt ? <span>{alt}</span> : null),
   a: ({ className, children, href, ...props }: any) =>
     isTrustedHref(href) ? (
       <a

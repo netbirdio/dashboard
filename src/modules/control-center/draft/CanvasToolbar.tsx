@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useEffect } from "react";
-import { useAgentBusy } from "@/modules/assistant";
+import { useAgentBusy } from "@/modules/assistant/hooks/useAgentBusy";
 import { useDraftHistory } from "@/modules/control-center/draft/DraftHistoryContext";
 import {
   CanvasTool,
@@ -64,8 +64,6 @@ export const CanvasToolbar = () => {
   } = useDraftMode();
   const { undo, redo, canUndo, canRedo } = useDraftHistory();
   const agentBusy = useAgentBusy();
-  // Zoom / fit / arrange are shared with the assistant's control_center_canvas — see
-  // useAutoArrange.
   const {
     arrange: handleArrange,
     fitView: handleFitView,

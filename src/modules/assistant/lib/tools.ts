@@ -88,7 +88,6 @@ const FRAMEWORK_PREFIX = /^(?:eve|assistant)__/;
 export const toolLabel = (name: string, _running = false): string => {
   const entry = ownEntry(TOOL_MANIFEST, name);
   if (entry) return entry.label;
-  // an unlisted tool falls back to its name in sentence case
   const words = name.replace(FRAMEWORK_PREFIX, "").replaceAll("_", " ");
   return words.charAt(0).toUpperCase() + words.slice(1);
 };

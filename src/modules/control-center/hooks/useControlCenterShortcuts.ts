@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useAgentBusy } from "@/modules/assistant";
+import { useAgentBusy } from "@/modules/assistant/hooks/useAgentBusy";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
 type ShortcutMap = Record<string, () => void>;

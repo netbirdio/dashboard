@@ -357,7 +357,6 @@ export class Vault {
       return entry && !ONE_WAY.has(entry.kind) ? entry[as] : m;
     });
 
-  /** Every string in a value, restored. */
   restoreValue(value: unknown, as: RestoreAs): unknown {
     return mapStrings(value, (s) => this.restoreString(s, as));
   }

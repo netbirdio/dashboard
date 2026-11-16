@@ -317,7 +317,7 @@
     /*
      * The box full-screen overlays (modals) may occupy. Zero by default — it only
      * differs from the viewport while the assistant panel is revealed beside the
-     * dashboard card, which writes these from AssistantPanelProvider so an overlay
+     * dashboard card, which writes these from AssistantSidebarProvider so an overlay
      * stays inside the card instead of covering the panel.
      */
     --nb-overlay-top: 0px;

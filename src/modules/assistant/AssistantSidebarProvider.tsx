@@ -19,7 +19,7 @@ import {
   PANEL_ON_LEFT,
   PANEL_WIDTH,
 } from "@/interfaces/Assistant";
-import { useAssistantAvailable } from "@/modules/assistant";
+import { useAssistantAvailable } from "@/modules/assistant/hooks/useAssistantAvailable";
 import { useAssistantHeaders } from "@/modules/assistant/useAssistantHeaders";
 
 interface AssistantSidebarState {

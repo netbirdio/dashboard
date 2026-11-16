@@ -14,7 +14,8 @@ import {
   PANEL_ON_LEFT,
   PANEL_WIDTH,
 } from "@/interfaces/Assistant";
-import { AssistantProvider, useAssistant } from "@/modules/assistant";
+import { AssistantProvider } from "@/modules/assistant/contexts/AssistantContext";
+import { useAssistant } from "@/modules/assistant/hooks/useAssistant";
 import {
   useActivePageContext,
   usePageContextString,

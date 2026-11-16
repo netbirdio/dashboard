@@ -1,7 +1,5 @@
-import type {
-  BrowserToolExecutor,
-  ToolOutcome,
-} from "@/modules/assistant";
+import type { ToolOutcome } from "@/modules/assistant/lib/contract";
+import type { BrowserToolExecutor } from "@/modules/assistant/lib/tools";
 import { getCanvasAgent } from "./canvas";
 import { CONTROL_CENTER_HREF } from "./control-center";
 
@@ -121,9 +119,7 @@ export const pageRedirect: BrowserToolExecutor = async (
   /*
     Leaving the control center drops an open draft, so the user decides here,
     in the canvas's own "Discard draft changes?" dialog, and the answer is this
-    call's result. Refusing and leaving the choice to the chat took two
-    confirmations (the model asked, then the canvas asked again when it
-    discarded), and a click into the chat closed the second one as "Cancel".
+    call's result.
   */
   const pending = ctx.onControlCenterPage() && !target.href.startsWith(CONTROL_CENTER_HREF) ? unsavedDraftChanges() : 0;
   if (pending > 0) {

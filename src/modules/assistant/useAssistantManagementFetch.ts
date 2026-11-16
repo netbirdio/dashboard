@@ -2,7 +2,7 @@ import loadConfig from "@utils/config";
 import { useCallback, useRef } from "react";
 import { useSWRConfig } from "swr";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
-import type { ManagementFetch } from "@/modules/assistant";
+import type { ManagementFetch } from "@/modules/assistant/lib/reads";
 import { mergeUrlParams, useNetBirdFetch } from "@/utils/api";
 
 /**

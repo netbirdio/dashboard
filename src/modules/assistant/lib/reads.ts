@@ -175,7 +175,7 @@ const listResult = (operation: string, rows: unknown[], total: number, cap: numb
     data: rows.slice(0, cap),
   });
 
-// For the model, which narrows the read itself: relayed, "narrow the query" told the user to do what only the model can.
+// For the model, which narrows the read itself.
 const CUT_NOTE = "Cut to fit. To see the rest, read again with a filter or `fields`; the user cannot narrow it.";
 
 /**

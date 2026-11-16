@@ -167,8 +167,7 @@ export function useDraftGroupActions() {
   //
   // `preferredName` names the group AT BIRTH. Creating it and renaming it after
   // the fact is a different thing entirely: two changeset writes, the second one
-  // reading state the first hasn't committed yet — which is how a group ended up
-  // deploying as one name while the canvas still showed the generated one.
+  // reading state the first hasn't committed yet.
   const addNewGroup = useCallback(
     (position: XYPosition, preferredName?: string) => {
       const taken = new Set<string>();

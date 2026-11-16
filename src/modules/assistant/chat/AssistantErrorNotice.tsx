@@ -7,13 +7,12 @@ import React from "react";
  *
  * ## Why this exists
  *
- * The SDK has always computed an `error` — it records `step.failed` and
- * `turn.failed`, which the framework's own client store drops, precisely so a
- * mid-turn framework failure is not invisible. Nothing rendered it. So a turn
- * that died on a provider outage, an exhausted quota or a billing problem
- * looked identical to the assistant deciding it had nothing to say: the status
- * line cleared, no message appeared, and the reason sat in a server log the
- * user cannot read.
+ * The SDK computes an `error` — it records `step.failed` and `turn.failed`,
+ * which the framework's own client store drops, precisely so a mid-turn
+ * framework failure is not invisible. Unrendered, a turn that died on a
+ * provider outage, an exhausted quota or a billing problem looks identical to
+ * the assistant deciding it had nothing to say: the status line clears, no
+ * message appears, and the reason sits in a server log the user cannot read.
  *
  * ## Why it looks like a message
  *

@@ -33,7 +33,7 @@ afterEach(cleanup);
 
 describe("AssistantApprovalCard", () => {
   it("names the tool the way the rest of the thread does", () => {
-    // the framework's prompt carries the wire name; the manifest label is
+    // The framework's prompt carries the wire name; the manifest label is
     // what the activity trail shows, so the two must not disagree.
     render(<AssistantApprovalCard request={request()} onRespond={vi.fn()} />);
 
@@ -42,7 +42,7 @@ describe("AssistantApprovalCard", () => {
   });
 
   it("relabels a tool approval as a single-call grant", () => {
-    // the framework's own labels are "Approve"/"Cancel"; what this actually
+    // The framework's own labels are "Approve"/"Cancel"; what this actually
     // grants is one call, and the copy has to say so.
     render(<AssistantApprovalCard request={request()} onRespond={vi.fn()} />);
 
@@ -97,8 +97,8 @@ describe("AssistantApprovalCard", () => {
   });
 
   it("takes a typed answer for a question with no options", () => {
-    // The case that used to dead-end: a value the model cannot enumerate, so
-    // eve raises a `text` question and there is no option to click.
+    // A value the model cannot enumerate, so eve raises a `text` question and
+    // there is no option to click.
     const onRespond = vi.fn();
     render(
       <AssistantApprovalCard

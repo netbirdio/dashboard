@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@utils/helpers";
-import { useAgentBusy } from "@/modules/assistant";
+import { useAgentBusy } from "@/modules/assistant/hooks/useAgentBusy";
 
 /**
  * What the control centre looks like while the assistant is writing to it: dimmed
@@ -22,8 +22,7 @@ import { useAgentBusy } from "@/modules/assistant";
  * this module, and it is where the user stops the turn — locking it would leave
  * them with no way out.
  *
- * Mounted by ControlCenterUIProvider, whose container spans the module. It used
- * to live inside <ReactFlow>, which only ever covered the pane.
+ * Mounted by ControlCenterUIProvider, whose container spans the module.
  */
 export const AgentBusyOverlay = () => {
   const locked = useAgentBusy();

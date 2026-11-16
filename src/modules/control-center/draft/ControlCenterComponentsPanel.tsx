@@ -281,8 +281,6 @@ const PanelContent = React.memo(
     const { groupUserCounts } = useCanvasUI();
     const { openProviderWizard, setAgentSourceGroup } =
       useControlCenterPolicy();
-    // Placing an existing entity is shared with the assistant's control_center_add — see
-    // useDraftEntityDrop.
     const {
       dropExistingPeer,
       dropExistingGroup,
