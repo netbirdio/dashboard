@@ -8,12 +8,12 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import { IconSettings2 } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
-import { ExternalLinkIcon } from "lucide-react";
+import { ExternalLinkIcon, User2 } from "lucide-react";
 import React, { lazy, Suspense } from "react";
-import TeamIcon from "@/assets/icons/TeamIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
+import UsersTabs from "@/modules/users/UsersTabs";
 
 const ServiceUsersTable = lazy(
   () => import("@/modules/users/ServiceUsersTable"),
@@ -33,9 +33,9 @@ export default function ServiceUsers() {
       <div className={"p-default py-6"}>
         <Breadcrumbs>
           <Breadcrumbs.Item
-            href={"/team"}
-            label={"Team"}
-            icon={<TeamIcon size={13} />}
+            href={"/team/users"}
+            label={"Users"}
+            icon={<User2 size={16} />}
           />
           <Breadcrumbs.Item
             href={"/team/service-users"}
@@ -57,6 +57,7 @@ export default function ServiceUsers() {
           </InlineLink>
         </Paragraph>
       </div>
+      <UsersTabs current={"service-users"} />
       <RestrictedAccess
         page={"Service Users"}
         hasAccess={permission.users.read}

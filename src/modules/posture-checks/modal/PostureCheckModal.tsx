@@ -70,6 +70,7 @@ export default function PostureCheckModal({
     <>
       <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
         <ModalContent
+          flow={useSave ? "posture_check" : undefined}
           maxWidthClass={cn("relative", "max-w-2xl")}
           showClose={true}
         >

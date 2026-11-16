@@ -321,7 +321,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
   }, [routingPeer]);
 
   return (
-    <ModalContent maxWidthClass={"max-w-2xl"}>
+    <ModalContent flow="route_update" maxWidthClass={"max-w-2xl"}>
       <ModalHeader
         icon={<NetworkRoutesIcon className={"fill-netbird"} />}
         title={"Update " + route.network_id}

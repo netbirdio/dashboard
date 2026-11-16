@@ -224,7 +224,7 @@ export function SetupKeyModalContent({
   };
 
   return (
-    <ModalContent maxWidthClass={"max-w-xl"}>
+    <ModalContent flow="setup_key" maxWidthClass={"max-w-xl"}>
       <ModalHeader
         icon={<SetupKeysIcon className={"fill-netbird"} />}
         title={"Create New Setup Key"}

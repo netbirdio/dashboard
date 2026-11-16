@@ -6,6 +6,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from "@utils/helpers";
 import { X } from "lucide-react";
 import * as React from "react";
+import { ModalInsights } from "@/cloud/analytics/MatomoProvider";
 import { headerHeight } from "@/layouts/Header";
 
 /*
@@ -125,6 +126,7 @@ ModalOverlay.displayName = DialogPrimitive.Overlay.displayName;
 type ModalContentProps = {
   showClose?: boolean;
   maxWidthClass?: string;
+  flow?: string;
 };
 
 const ModalContent = React.forwardRef<
@@ -141,6 +143,7 @@ const ModalContent = React.forwardRef<
       onPointerDownOutside,
       onInteractOutside,
       onEscapeKeyDown,
+      flow,
       ...props
     },
     ref,
@@ -175,6 +178,7 @@ const ModalContent = React.forwardRef<
           <VisuallyHidden asChild>
             <DialogPrimitive.Title>Dialog</DialogPrimitive.Title>
           </VisuallyHidden>
+          {flow && <ModalInsights flow={flow} />}
           {children}
           {showClose && (
             <DialogPrimitive.Close

@@ -33,6 +33,8 @@ interface Config {
   hubspotSignupFormId?: string;
   hubspotOnboardingFormId?: string;
   hubspotSurveyFormId?: string;
+  matomoUrl?: string;
+  matomoSiteId?: string;
   analyticsExcludedEmails: string[];
   // announcement: text the operator wants every user of this deployment to
   // see in a permanent banner (NETBIRD_ANNOUNCEMENT), e.g. which environment
@@ -104,6 +106,8 @@ const loadConfig = (): Config => {
     hubspotSignupFormId: configJson?.hubspotSignupFormId || undefined,
     hubspotOnboardingFormId: configJson?.hubspotOnboardingFormId || undefined,
     hubspotSurveyFormId: configJson?.hubspotSurveyFormId || undefined,
+    matomoUrl: configJson?.matomoUrl?.replace(/\/+$/, "") || undefined,
+    matomoSiteId: configJson?.matomoSiteId || undefined,
     analyticsExcludedEmails: (configJson?.analyticsExcludedEmails || "")
       .split(",")
       .map((email: string) => email.trim())

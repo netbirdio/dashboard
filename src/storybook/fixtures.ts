@@ -25,6 +25,7 @@ export {
   tenantSwitcher,
   trialSubscription,
 } from "../../.storybook/mocks/fixtures/platform-cloud";
+export { currentUser } from "../../.storybook/mocks/fixtures/users";
 import type { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 import type { User } from "@/interfaces/User";

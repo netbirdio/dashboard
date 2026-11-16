@@ -268,18 +268,18 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
             filters={filterDefs}
             disabled={reverseProxies?.length == 0}
           />
+          <DataTableRefreshButton
+            isDisabled={reverseProxies?.length == 0}
+            onClick={() => {
+              mutate("/reverse-proxies/services").then();
+            }}
+          />
           <DataTableResetFilterButton
             table={table}
             onClick={() => {
               table.setPageIndex(0);
               table.resetColumnFilters();
               table.resetGlobalFilter();
-            }}
-          />
-          <DataTableRefreshButton
-            isDisabled={reverseProxies?.length == 0}
-            onClick={() => {
-              mutate("/reverse-proxies/services").then();
             }}
           />
         </>

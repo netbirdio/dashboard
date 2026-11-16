@@ -307,7 +307,11 @@ export function UserInviteModalContent({
   };
 
   return (
-    <ModalContent maxWidthClass={"max-w-lg relative"} showClose={true}>
+    <ModalContent
+      flow="user_invite"
+      maxWidthClass={"max-w-lg relative"}
+      showClose={true}
+    >
       <div
         className={
           "h-full w-full absolute left-0 top-0 rounded-md overflow-hidden z-0"
