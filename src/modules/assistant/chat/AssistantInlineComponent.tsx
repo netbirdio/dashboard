@@ -1,5 +1,3 @@
-// Renders a `render_component` tool call's args inline. Payloads are
-// validated server-side; unknown names render nothing.
 "use client";
 
 import type { ToolCallMessagePartProps } from "@assistant-ui/react";
@@ -16,14 +14,11 @@ interface ResourceTable {
   component: "resource_table";
   columns: string[];
   ids: string[];
-  // One entry per id, column → display value.
   rows?: Record<string, string>[];
 }
 
 type UIComponent = CanvasPreview | ResourceTable;
 
-// Cell values up to this length never wrap; the panel is narrow, so longer
-// ones still may rather than forcing the whole table to scroll sideways.
 const NOWRAP_UP_TO = 28;
 
 const prettyKey = (key: string) =>
@@ -43,7 +38,7 @@ function renderValue(value: unknown): string {
 function CanvasPreviewCard({
   component,
 }: Readonly<{ component: CanvasPreview }>) {
-  // Streaming args arrive as partial JSON — fields exist one at a time.
+  // Streaming args arrive as partial JSON, so any field may still be missing.
   const entries = Object.entries(component.data ?? {});
   if (!component.title) return null;
 
@@ -75,13 +70,10 @@ function CanvasPreviewCard({
 function ResourceTableCard({
   component,
 }: Readonly<{ component: ResourceTable }>) {
-  // Streaming args arrive as partial JSON — the columns land before the ids.
   const columns = component.columns ?? [];
   const ids = component.ids ?? [];
   const rows = component.rows ?? [];
 
-  // Cell values ride in the args (the browser never fetched the raw rows —
-  // management reads are server tools). Without a rows entry only the id is known.
   const cell = (id: string, column: string, index: number): string => {
     const provided = rows[index]?.[column];
     if (typeof provided === "string" && provided.length) return provided;
@@ -92,8 +84,6 @@ function ResourceTableCard({
   if (columns.length === 0 || ids.length === 0) return null;
 
   return (
-    // Deliberately identical to a Markdown table: the user shouldn't have to
-    // tell prose and tool results apart.
     <div className="my-3 overflow-x-auto rounded-lg border border-nb-gray-850 bg-nb-gray-920">
       <table className="w-full border-collapse text-chat">
         <thead className="border-b border-nb-gray-850 text-nb-gray-200">
@@ -118,8 +108,6 @@ function ResourceTableCard({
                     key={column}
                     className={cn(
                       "px-3.5 py-2.5 align-top text-nb-gray-200",
-                      // A short value (a time, a name, a status) stays on one
-                      // line; only long text wraps, so a date never breaks in two.
                       value.length <= NOWRAP_UP_TO && "whitespace-nowrap",
                     )}
                   >

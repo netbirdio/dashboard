@@ -75,10 +75,9 @@ export NETBIRD_HUBSPOT_SURVEY_FORM_ID=${NETBIRD_HUBSPOT_SURVEY_FORM_ID}
 export NETBIRD_MATOMO_URL=${NETBIRD_MATOMO_URL}
 export NETBIRD_MATOMO_SITE_ID=${NETBIRD_MATOMO_SITE_ID}
 export NETBIRD_ANALYTICS_EXCLUDED_EMAILS=${NETBIRD_ANALYTICS_EXCLUDED_EMAILS}
-# No default: an unset endpoint is what turns the assistant off.
 export NETBIRD_ASSISTANT_API_ENDPOINT=${NETBIRD_ASSISTANT_API_ENDPOINT}
-# It goes into the CSP header and config.json verbatim, so anything but a bare
-# http(s) origin is refused rather than allowed to widen the policy.
+
+# Bare origin only: the value is written into the CSP connect-src below.
 if [[ -n "${NETBIRD_ASSISTANT_API_ENDPOINT}" && ! "${NETBIRD_ASSISTANT_API_ENDPOINT}" =~ ^https?://[A-Za-z0-9.-]+(:[0-9]{1,5})?/?$ ]]; then
     echo "NETBIRD_ASSISTANT_API_ENDPOINT is not a bare http(s) origin; the assistant stays off." >&2
     export NETBIRD_ASSISTANT_API_ENDPOINT=""
@@ -145,10 +144,6 @@ if [[ -n "${NETBIRD_MGMT_API_ENDPOINT}" ]]; then
     fi
 fi
 
-# Add NETBIRD_ASSISTANT_API_ENDPOINT to connect-src only: the browser streams
-# the chat straight from this origin, so without it connect-src blocks every
-# request, but the assistant serves no scripts and no frames, and the shared
-# list would let it into script-src and frame-src as well.
 if [[ -n "${NETBIRD_ASSISTANT_API_ENDPOINT}" ]]; then
     CSP_DOMAINS_CONNECT_SRC="$CSP_DOMAINS_CONNECT_SRC $NETBIRD_ASSISTANT_API_ENDPOINT"
 fi

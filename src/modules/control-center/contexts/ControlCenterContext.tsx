@@ -121,8 +121,6 @@ export function useIsContextMenuTarget(nodeId: string): boolean {
 interface CanvasUIState {
   placeholderIp: string;
   groupUserCounts: Map<string, number>;
-  // The group the live group view is built around. The selector node shows
-  // this rather than its own data, so it can never disagree with the graph.
   selectedGroup: string;
 }
 
@@ -474,8 +472,6 @@ export function ControlCenterUIProvider({
   return (
     <ControlCenterUIContext.Provider value={value}>
       <div className={"relative h-full w-full flex overflow-hidden"}>
-        {/* Spans the module, so a step locks the header and panels too — not
-            just the canvas. */}
         <AgentBusyOverlay />
         {sidebar}
         <div className={"w-full h-full relative overflow-hidden"}>

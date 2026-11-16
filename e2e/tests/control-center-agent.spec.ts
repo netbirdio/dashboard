@@ -10,17 +10,8 @@ import {
   resetDraftState,
 } from "../helpers/control-center";
 
-/**
- * The assistant's control-center actions, driven the way the assistant drives
- * them — through the canvas API the page publishes (`window.__controlCenterAgent` in the
- * test build), with no model in the loop. What's under test is that those
- * actions really build a draft: nodes appear, changes get tracked, connects
- * land on a policy.
- */
-
 type Step = { ok: boolean; detail: string; nodeId?: string };
 
-/** Calls one method on the page's canvas API and returns its result. */
 async function agent<T>(page: Page, method: string, arg?: unknown): Promise<T> {
   return (await page.evaluate(
     async ([m, a]) => {
@@ -36,7 +27,6 @@ async function agent<T>(page: Page, method: string, arg?: unknown): Promise<T> {
 const add = (page: Page, items: unknown[]) =>
   agent<Step[]>(page, "addNodes", items);
 
-/** Whether a node's card is inside the visible canvas — the user's own test. */
 async function nodeOnScreen(page: Page, nodeId: string): Promise<boolean> {
   const pane = await page.locator(".react-flow").boundingBox();
   const node = await page
@@ -81,8 +71,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     expect(steps.every((s) => s.ok)).toBe(true);
     await expect(canvasNode(page, "peer-draft-")).toHaveCount(2);
     await expect(canvasNode(page, "policy-new-")).toHaveCount(1);
-    // Both placeholders need installing, so both are tracked; a one-sided
-    // policy isn't trackable yet.
+    // The two placeholders; a one-sided policy is not tracked yet.
     await expectChangeCount(page, 2);
 
     const canvas = await readDraftCanvas(page);
@@ -108,8 +97,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     ]);
 
     expect(links[0].ok).toBe(true);
-    // A connect onto a policy node is applied directly — the create-policy
-    // wizard (which a node↔node connect would open) never appears.
     await expect(page.getByTestId("policy-continue")).not.toBeVisible();
     const canvas = await readDraftCanvas(page);
     expect(canvas?.nodes?.length).toBeGreaterThanOrEqual(2);
@@ -138,7 +125,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     ]);
     expect(removed[0].ok).toBe(true);
     await expect(canvasNode(page, group.nodeId!)).toHaveCount(0);
-    // Removing a pending create cancels it rather than recording a delete.
     await expectChangeCount(page, 0);
   });
 
@@ -152,7 +138,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     ]);
     expect(group.ok).toBe(true);
 
-    // The label on the canvas and the name that will deploy must agree.
     const canvas = await readDraftCanvas(page);
     const node = (canvas?.nodes ?? []).find(
       (n: { id: string }) => n.id === group.nodeId,
@@ -173,8 +158,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
       { kind: "new_group", name: "Agent Self Rename" },
     ]);
 
-    // The rename must not report "already exists" against its own pending
-    // create.
     const renamed = await agent<Step[]>(page, "editNodes", [
       { node: group.nodeId, action: "rename", name: "Agent Self Rename 2" },
     ]);
@@ -322,7 +305,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     ]);
 
     expect(assigned[0].ok).toBe(true);
-    // The peer's own card is absorbed into the group.
     await expect(canvasNode(page, server.nodeId!)).toHaveCount(0);
     const canvas = await readDraftCanvas(page);
     const grouped = (canvas?.nodes ?? []).find(
@@ -346,8 +328,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     const xOf = (id?: string) =>
       (canvas?.nodes ?? []).find((n: { id: string }) => n.id === id)?.position?.x;
 
-    // Sources land left of the policy, the second group right of it — the same
-    // reading order the arranged layout uses.
     expect(xOf(left.nodeId)).toBeLessThan(xOf(policy.nodeId));
     expect(xOf(right.nodeId)).toBeGreaterThan(xOf(policy.nodeId));
   });
@@ -363,7 +343,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
       { kind: "new_resource", name: "Agent Locked Subnet", address: "10.60.0.0/24" },
     ]);
 
-    // policy → node puts the node on the DESTINATION side.
+    // Connecting from the policy puts the node on its destination side.
     const links = await agent<Step[]>(page, "connectNodes", [
       { from: policy.nodeId, to: resource.nodeId },
     ]);
@@ -374,7 +354,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
       bidirectional: true,
     });
 
-    // Same lock the policy editor applies: a subnet has nothing to initiate from.
     expect(edited.ok).toBe(false);
     expect(edited.detail).toContain("one-way");
   });
@@ -387,8 +366,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
 
     const step = await agent<Step>(page, "goToView", { view: "peers" });
 
-    // Never a failure, and never advice to leave the draft — that would discard
-    // the user's work.
     expect(step.ok).toBe(true);
     expect(step.detail).toContain("control_center_add");
     expect(step.detail).not.toContain("Leave draft");
@@ -460,7 +437,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     await expect(overlay).toHaveAttribute("data-busy", "true");
 
     await pending;
-    // Released again once the step is done (after a short linger).
     await expect(overlay).toHaveAttribute("data-busy", "false", {
       timeout: 5000,
     });
@@ -489,8 +465,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
       },
     ]);
 
-    // The whole point of `members`: the group is never drawn empty, and a policy
-    // pointed at it isn't pointed at nothing.
     const [group] = await add(page, [
       {
         kind: "new_group",
@@ -506,7 +480,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
       (c) => c.type === "create-group" && c.name === "Agent Databases",
     );
     expect(create?.resourceIds?.length).toBe(2);
-    // Both are frame children, so both rows stay in the network.
+    // Frame children keep their rows when grouped.
     await expect(canvasNode(page, postgres.nodeId!)).toHaveCount(1);
     await expect(canvasNode(page, sqlite.nodeId!)).toHaveCount(1);
   });
@@ -528,8 +502,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     ]);
     const [group] = await add(page, [{ kind: "new_group", name: "Agent Join Group" }]);
 
-    // A draft resource's node data holds a resource with NO id (it's derived from
-    // the node id).
     const joined = await agent<Step[]>(page, "editNodes", [
       { node: resource.nodeId, action: "add_to_group", group: group.nodeId },
     ]);
@@ -540,8 +512,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
       (c) => c.type === "create-group" && c.name === "Agent Join Group",
     );
     expect(create?.resourceIds?.length).toBe(1);
-    // The resource lives in a network frame, so its row STAYS: the frame is its
-    // home, and a network that still deploys it must still show it.
     await expect(canvasNode(page, resource.nodeId!)).toHaveCount(1);
   });
 
@@ -572,8 +542,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     expect(group.ok).toBe(true);
     expect(group.nodeId).toContain("resourcegroup-new-");
 
-    // The group is a CHILD of the frame — that's what makes it read as part of
-    // the network rather than something floating beside it.
     const canvas = await readDraftCanvas(page);
     const node = (canvas?.nodes ?? []).find(
       (n: { id: string }) => n.id === group.nodeId,
@@ -588,8 +556,6 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     await enterDraft(page);
     const overlay = page.getByTestId("cc-agent-busy");
 
-    // The runtime's latch: without it the overlay dropped in every gap between
-    // steps, which is seconds long — the model has to answer in between.
     await page.evaluate(() => {
       const api = window as unknown as {
         __controlCenterAgent?: { beginTurn: () => () => void };
@@ -599,8 +565,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     });
 
     await add(page, [{ kind: "new_group", name: "Agent Turn Group" }]);
-    // The step has finished and the linger has passed — still locked, because the
-    // turn hasn't.
+    // Outlasts the overlay's post-step linger.
     await page.waitForTimeout(1200);
     await expect(overlay).toHaveAttribute("data-busy", "true");
 
@@ -625,14 +590,11 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     ]);
     await add(page, [{ kind: "existing_peer", ref: peer.id }]);
 
-    // Named by its ACCOUNT id, not its canvas node id — the natural thing to
-    // pass after reading list_peers.
     const assigned = await agent<Step[]>(page, "editNodes", [
       { node: peer.id, action: "add_to_group", group: group.nodeId },
     ]);
 
     expect(assigned[0].ok).toBe(true);
-    // The group counts it AND the card is gone.
     await expect(canvasNode(page, `peer-${peer.id}`)).toHaveCount(0);
     const after = await readDraftCanvas(page);
     const groupNode = (after?.nodes ?? []).find(

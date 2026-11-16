@@ -41,8 +41,6 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
   );
 
   const { groupUserCounts, selectedGroup } = useCanvasUI();
-  // The view is built around `selectedGroup`; the node's own data can lag
-  // behind it when the selection is set from outside (the assistant).
   const currentGroup = selectedGroup || data.currentGroup;
   const group = groups?.find((g) => g.id === currentGroup);
   const countLabel = getGroupCountLabel(

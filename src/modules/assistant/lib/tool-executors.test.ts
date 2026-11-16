@@ -3,14 +3,12 @@ import { BROWSER_TOOLS, READ_TOOLS, TOOL_MANIFEST } from "@/modules/assistant/li
 import { CONTROL_CENTER_TOOLS } from "@/modules/assistant/lib/control-center";
 import { pageRedirect } from "@/modules/assistant/lib/page-redirect";
 
-// What the dashboard registers via the provider's extraExecutors.
 const LOCAL_EXECUTORS: Record<string, unknown> = {
   dashboard_page_redirect: pageRedirect,
 };
 
 describe("the browser tools and their executors", () => {
   it("covers every browser tool in the manifest", () => {
-    // The SDK runs the account reads itself, through the provider's fetchManagement.
     const unfulfilled = BROWSER_TOOLS.filter(
       (name) =>
         !(name in CONTROL_CENTER_TOOLS) &&

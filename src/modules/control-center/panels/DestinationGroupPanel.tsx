@@ -470,12 +470,6 @@ export const DestinationGroupPanel = ({
     return byId;
   }, [nodes]);
 
-  /*
-    Draft resources still ON the canvas, the resource twin of
-    canvasPlaceholderPeers: a resource the user (or the assistant) just drew has
-    no API row, so without this the panel offered no way to put "Postgres DB" in
-    "Databases" — the group could only be filled by dragging its card onto it.
-  */
   const canvasDraftResources = useMemo(() => {
     const byId = new Map<string, { resource: NetworkResource; nodeId: string }>();
     nodes.forEach((n) => {
@@ -535,15 +529,6 @@ export const DestinationGroupPanel = ({
     });
   }, [users, userGroupRef, isDraft, changes]);
 
-  /*
-    A group whose members are all people opens on Users.
-
-    The same rule the resources tab already follows: the panel opens where the
-    members actually are. Group membership for a user is stored on the USER, so
-    a group built for an agent-network policy has no peers and no resources at
-    all — it would otherwise open on an empty Peers list with its real contents
-    one click away and nothing saying so.
-  */
   const preferUsersTab =
     groupUsers.length > 0 && groupPeers.length === 0 && resources.length === 0;
 
@@ -1010,14 +995,8 @@ export const DestinationGroupPanel = ({
   const [search, setSearch] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  /*
-    Whether the reader has picked a tab for THIS group. The preferred tab is
-    applied until they do: `/users` resolves separately from the group itself,
-    so a users-only group is briefly indistinguishable from an empty one, and
-    keying the choice to `groupId` alone would settle on Peers before the list
-    that decides it has arrived. Once they have chosen, their choice stands
-    however the counts move under it.
-  */
+  // `/users` resolves after the group, so the preferred tab is re-applied until
+  // the user picks one; keying it to `groupId` alone settles on Peers too early.
   const tabPicked = useRef(false);
 
   useEffect(() => {
@@ -1064,7 +1043,6 @@ export const DestinationGroupPanel = ({
     return [
       ...draftMemberResources,
       ...(networkResources ?? []).filter((r) => memberResourceIds.has(r.id)),
-      // Draft resources on the canvas that aren't in the group yet.
       ...[...canvasDraftResources.values()]
         .map(({ resource }) => resource)
         .filter((r) => !addedMembers.has(r.id)),

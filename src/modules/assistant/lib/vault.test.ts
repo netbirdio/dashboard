@@ -31,7 +31,6 @@ describe("vault", () => {
     expect(sent).not.toContain("203.0.113.7");
     expect(sent).not.toContain("do-not-send");
     expect(sent).toContain("d1mo4ug6lnn4g9hqv7p0");
-    // An admin-chosen label stays readable.
     expect(sent).toContain("Developers");
     expect(sent).toContain("macOS 15.4");
   });
@@ -41,11 +40,9 @@ describe("vault", () => {
     const sent = JSON.parse(await peersRead(vault));
     const name = sent.data[0].name as string;
     expect(name).toMatch(/^\[PEER_[a-z2-7]{6,}\]$/);
-    // The hostname is the same name, so it is the same token.
     expect(sent.data[0].hostname).toBe(name);
     expect(vault.scrub("why is alice-laptop offline?")).toBe(`why is ${name} offline?`);
     expect(vault.scrub("who has 203.0.113.7")).toBe(`who has ${sent.data[0].connection_ip}`);
-    // A name nothing has read yet arrives as written, for the model to look up.
     expect(vault.scrub("and bob-desktop?")).toBe("and bob-desktop?");
   });
 
@@ -60,7 +57,6 @@ describe("vault", () => {
       operation: "get_api_peers",
       query: { name: "alice-laptop" },
     });
-    // An id was never a token, so it reaches the tool as the model wrote it.
     expect(restoreToolInput(vault, "netbird_api", { operation: "get_api_peers_peerId", id: "d1mo4ug6lnn4g9hqv7p0" })).toEqual({
       operation: "get_api_peers_peerId",
       id: "d1mo4ug6lnn4g9hqv7p0",
@@ -98,7 +94,6 @@ describe("vault", () => {
         `[x](https://docs.netbird.io/?q=${blank}${name}) and alice-laptop`,
       );
     }
-    // In prose the same blank is just a blank.
     expect(vault.restoreText(`The peer\u00a0${name} is offline.`)).toBe("The peer\u00a0alice-laptop is offline.");
   });
 
@@ -109,7 +104,6 @@ describe("vault", () => {
     expect(vault.restoreText(`[x](\n//evil.example/?q=${name}) and ${name}`)).toBe(`[x](\n//evil.example/?q=${name}) and alice-laptop`);
     expect(vault.restoreText(`![x](\n  /peers?search=${name})`)).toBe(`![x](\n  /peers?search=${name})`);
     expect(vault.restoreText(`see [r]\n\n[r]:\n//evil.example/?q=${name}`)).toBe(`see [r]\n\n[r]:\n//evil.example/?q=${name}`);
-    // A line that merely follows a link, or a URL, is prose.
     expect(vault.restoreText(`See https://docs.netbird.io/peers\n${name} is offline.`)).toBe(
       "See https://docs.netbird.io/peers\nalice-laptop is offline.",
     );
@@ -124,7 +118,6 @@ describe("vault", () => {
     const scrubbed = vault.scrub("my key is nbp_abcdefghijklmnopqrstuvwxyz0123456789");
     expect(scrubbed).not.toContain("nbp_");
     expect(vault.restoreText(scrubbed)).toBe("my key is [redacted credential]");
-    // Nor does it reach a tool.
     expect(vault.restoreString(scrubbed, "real")).toBe(scrubbed);
   });
 

@@ -8,12 +8,6 @@ import {
 } from "@/modules/control-center/utils/drilled-layout";
 import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
 
-/**
- * Auto Arrange — the toolbar button, the `A` shortcut and the assistant's
- * `control_center_canvas`. Re-arranges with the layout the draft was entered with, so
- * arranging an untouched canvas reproduces the initial positions instead of
- * drifting, then fits the camera to the result.
- */
 export function useAutoArrange() {
   const reactFlow = useReactFlow();
   const { drillDownNetworkNodeId } = useDraftMode();
@@ -43,9 +37,6 @@ export function useAutoArrange() {
 
     // Reads and writes through the ReactFlow instance, never useCanvasState: that
     // context changes identity on every nodes update and re-renders every consumer.
-    //
-    // Drilled into a network: the frame is re-anchored so the resource grid lands
-    // on the layout's resource column, as in useNetworkDrillDown.
     if (drillDownNetworkNodeId) {
       const frameId = drillDownNetworkNodeId;
       const keptTop = nodes

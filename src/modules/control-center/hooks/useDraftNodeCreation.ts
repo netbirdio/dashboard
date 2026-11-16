@@ -114,9 +114,8 @@ export function useDraftNodeCreation() {
     (
       kind: PeerPlaceholderKind,
       position?: XYPosition,
-      // Names it at birth. Renaming right after creating goes through a
-      // different setter than the create (React state vs the flow store), so the
-      // patch could land before the node did and be silently dropped.
+      // Name it here, not with a rename afterwards: the rename uses a different
+      // store and can land before the node, where it is silently dropped.
       preferredName?: string,
     ) => {
       const nodeId = `peer-draft-${draftUid()}`;
@@ -155,9 +154,6 @@ export function useDraftNodeCreation() {
   const addBlankPolicy = useCallback(
     (
       position?: XYPosition,
-      // Names it at birth (the assistant always does). Naming a policy after
-      // creating it means a second write against state the first hasn't
-      // committed — and a node still showing "Policy (1)" if that races.
       preset?: {
         name?: string;
         description?: string;
@@ -182,18 +178,8 @@ export function useDraftNodeCreation() {
             enabled: true,
             sources: [],
             destinations: [],
-            // Bidirectional is the UI's default; a caller that knows the
-            // direction says so here rather than editing it a step later, where
-            // the canvas would show two lines it then has to take back.
             bidirectional: preset?.bidirectional ?? true,
             action: "accept",
-            /*
-              Born narrow when the caller knows the service, for the same
-              reason as `bidirectional` above: narrowing afterwards is a second
-              write against state the first has not committed, and it leaves a
-              window where the canvas shows a rule open to everything that the
-              next call has to take back.
-            */
             protocol: preset?.protocol ?? "all",
             // Ports mean nothing outside tcp/udp and the API rejects them there.
             ports:
@@ -255,9 +241,6 @@ export function useDraftNodeCreation() {
   const addBlankAgentPolicy = useCallback(
     (
       position?: XYPosition,
-      // Names it at birth, for the same reason a placeholder peer is named
-      // there: the rename setter and the create setter are different stores,
-      // so a rename issued right after the create can land before the node.
       preset?: { name?: string; description?: string },
     ) => {
       const clientId = `new-${draftUid()}`;
@@ -325,13 +308,9 @@ export function useDraftNodeCreation() {
     [placeNode, reactFlow, networks, trackCreateNetwork],
   );
 
-  // Stays out of the changeset until a network is picked; it can't deploy
-  // without one.
   const addDraftResource = useCallback(
     (
       position?: XYPosition,
-      // Same reason as addPeerPlaceholder: born with its details rather than
-      // stamped with them a tick later.
       preset?: { name?: string; address?: string; description?: string },
     ) => {
       const takenResources = new Set<string>();

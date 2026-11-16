@@ -50,8 +50,7 @@ type ProviderProps = {
   url: string;
   defaultPageSize?: number;
   defaultFilters?: Record<string, string>;
-  // Search the list opens with, e.g. from a `?search=` link. Read once; key
-  // the provider on it to re-open on a different one.
+  // Read once on mount; key the provider on it to apply a different one.
   initialSearch?: string;
   // When false the underlying request is suppressed (e.g. while a feature lock
   // resolves). Defaults to true so existing consumers are unaffected.

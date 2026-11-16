@@ -18,12 +18,7 @@ export function isInputFocused(): boolean {
   return false;
 }
 
-/**
- * Ignored while an input is focused, and while the assistant is acting on the
- * canvas — the blocking overlay stops the pointer, but a keydown listener lives
- * on `window` and would happily undo or re-arrange underneath it. Reads the map
- * through a ref so callers needn't memoize it.
- */
+// Reads the map through a ref so callers needn't memoize it.
 export function useControlCenterShortcuts(
   shortcuts: ShortcutMap,
   enabled: boolean = true,

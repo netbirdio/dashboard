@@ -7,7 +7,7 @@ import { ChatSession, type ChatSnapshot, type StoredSession } from "../lib/chat-
 interface UseChatSessionOptions {
   host: string;
   headers: () => Promise<Record<string, string>>;
-  /** A chat to resume, read on mount only. */
+  /** Read on mount only. */
   initialSession?: StoredSession;
   onEvent?: (event: MessageStreamEvent) => void;
   onSessionChange?: (session: StoredSession | undefined) => void;
@@ -21,9 +21,7 @@ export interface UseChatSessionResult extends ChatSnapshot {
   reset: ChatSession["reset"];
 }
 
-/** One chat for the life of the component: its transcript, status, and the calls that drive it. */
 export function useChatSession(options: UseChatSessionOptions): UseChatSessionResult {
-  // The callbacks and headers change every render; the chat reads the latest through here.
   const latest = useRef(options);
   latest.current = options;
 

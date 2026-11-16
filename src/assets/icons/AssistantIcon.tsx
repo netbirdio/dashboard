@@ -1,8 +1,5 @@
-/**
- * Lucide's `message-square-dot` with the corner dot swapped for the `sparkle`
- * glyph. The sparkle is scaled down, so its stroke width is scaled up by the
- * inverse to keep the rendered weight matching the message outline.
- */
+// The sparkle is scaled down, so its stroke width is scaled up by the inverse
+// to match the outline's weight.
 export function AssistantIcon({
   size = 15,
   className,

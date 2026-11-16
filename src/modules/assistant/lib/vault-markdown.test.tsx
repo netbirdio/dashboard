@@ -1,8 +1,3 @@
-/*
-  A name restored into an answer is a value someone else wrote: a peer's
-  hostname comes from the device. Rendered through the same markdown engine
-  the chat uses, it must read as the name and nothing more.
-*/
 import { renderToStaticMarkup } from "react-dom/server";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";

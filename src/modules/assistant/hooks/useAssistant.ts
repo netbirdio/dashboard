@@ -33,7 +33,6 @@ export type AssistantStatus = ChatStatus;
 
 // sessionStorage is scoped to the tab rather than the sign-in,
 // so the key names the deployment and the signed-in user as well as the conversation.
-// The agent only resumes a chat for the user who started it, whatever the browser holds.
 const storageKey = (
   host: string,
   currentUserId: string | undefined,
@@ -43,7 +42,6 @@ const storageKey = (
     currentUserId ?? "anonymous",
   )}.${encodeURIComponent(conversationId)}`;
 
-/** A chat as the browser keeps it: the id it names the chat by, and eve's resume state once there is one. */
 interface StoredChat {
   chatId: string;
   session?: StoredSession;
@@ -51,7 +49,6 @@ interface StoredChat {
 
 type CarriedResult = MessageContext["carriedResults"][number];
 
-/** The newest results that fit what one message may carry, oldest first. */
 function carriedWithin(results: readonly CarriedResult[]): CarriedResult[] {
   const kept: CarriedResult[] = [];
   let chars = 0;
@@ -64,7 +61,7 @@ function carriedWithin(results: readonly CarriedResult[]): CarriedResult[] {
   return kept;
 }
 
-// 18 random bytes, base64url: what the agent's CHAT_ID_PATTERN accepts.
+// The shape must match the agent's CHAT_ID_PATTERN.
 function newChatId(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(18));
   return btoa(String.fromCodePoint(...bytes)).replaceAll("+", "-").replaceAll("/", "_");
@@ -111,31 +108,17 @@ function encodeHeaderValue(value: string): string | undefined {
 export interface UseAssistantResult {
   runtime: AssistantRuntime;
   status: AssistantStatus;
-  /** One line describing what the assistant is doing, or null when idle. */
   statusLine: string | null;
   /**
-   * The eve input request this session is paused on:
-   * an `ask_question` (with `options`, a card of choices), a runtime-limit continuation or a tool approval.
-   * Browser tools never appear here; the SDK answers those itself.
-   * Every later message queues behind it, so a host that renders nothing here
-   * shows a chat that silently stopped replying.
+   * Every later message queues behind it,
+   * so a host that renders nothing here shows a chat that silently stopped replying.
    */
   pendingInput: PendingInputRequest | null;
-  /** Every outstanding input request, oldest first; `pendingInput` is its head. */
   pendingInputs: PendingInputRequest[];
-  /** Answers `pendingInput` with an option id, or with `{ text }` when it `acceptsFreeText`. */
   respondToInput: (answer: string | { text: string }) => Promise<void>;
-  /** True from send until the turn really settles, spanning client-tool gaps. */
   turnActive: boolean;
-  /** Friendly one-sentence error for the last failure, or null. */
   error: string | null;
-  /** Starts a fresh conversation: resets the session and clears persistence. */
   newChat: () => void;
-  /**
-   * Creates the chat's session before its first message, so that message
-   * starts its turn at once. Call it when the person is about to type, such
-   * as when the panel opens; a chat that has a session ignores it.
-   */
   prewarm: () => void;
   sessionId: string | undefined;
 }
@@ -145,8 +128,7 @@ function useAssistantEngine(): UseAssistantResult {
   const { host, conversationId, currentUserId } = ctx;
 
   // Repinned only by the principal effect below, not on every render:
-  // following the render would point the ref at the new user's key while the old session is still live,
-  // and the next `onSessionChange` would persist the old user's session id there.
+  // the next `onSessionChange` would otherwise persist the old user's session under the new user's key.
   const sessionKey = storageKey(host, currentUserId, conversationId);
   const sessionKeyRef = useRef(sessionKey);
 
@@ -156,22 +138,17 @@ function useAssistantEngine(): UseAssistantResult {
 
   const sessionIdRef = useRef<string | undefined>(initialSession?.sessionId);
   const statusRef = useRef<AssistantStatus>("ready");
-  // True while the only thing that has happened to this chat is the attempt to resume it.
   const resumingStoredRef = useRef(initialSession !== undefined);
 
-  /*
-    Held in memory only, never stored: a chat resumed after a reload shows its
-    earlier answers' tokens as they are, and new reads restore as usual.
-    Replaced, never cleared, when a chat ends: the old chat's tokens mean nothing in the next.
-  */
+  // Held in memory only, never stored.
+  // Replaced, not cleared, when a chat ends: the old chat's tokens mean nothing in the next.
   const [vault, setVault] = useState(() => new Vault());
   const vaultRef = useRef(vault);
   vaultRef.current = vault;
   const [vaultRevision, setVaultRevision] = useState(vault.revision);
-  // Reads of this chat, already tokenised, that the next message carries.
   const carriedRef = useRef<CarriedResult[]>([]);
 
-  // A read mints a token per value, so the redraw waits for the read to finish.
+  // A read mints a token per value, so the redraw is batched until the read finishes.
   useEffect(() => {
     let scheduled = false;
     return vault.subscribe(() => {
@@ -195,16 +172,11 @@ function useAssistantEngine(): UseAssistantResult {
     },
   });
 
-  // The store's callbacks fire between renders.
   const loopRef = useRef(loop);
   loopRef.current = loop;
 
-  /*
-    The chat turns only `session.failed` into `agent.error`,
-    so `step.failed` and `turn.failed` would end the turn with no text and no error,
-    and the assistant would look like it simply stopped answering.
-    Cleared on `turn.started` rather than on send, so the failure stays readable until it is certainly stale.
-  */
+  // The chat turns only `session.failed` into `agent.error`,
+  // so `step.failed` and `turn.failed` would otherwise end the turn with no text and no error.
   const [turnFailure, setTurnFailure] = useState<Error | null>(null);
   const noteTurnFailure = useCallback((ev: MessageStreamEvent) => {
     if (ev.type === "turn.started") {
@@ -212,7 +184,6 @@ function useAssistantEngine(): UseAssistantResult {
       return;
     }
     if (!isTurnFailureEvent(ev) || ev.type === "session.failed") return;
-    // Shaped like the chat's `session.failed` error, so `describeAssistantError` reads both the same way.
     const failure = new Error(ev.data.message);
     failure.name = ev.data.code;
     setTurnFailure(failure);
@@ -237,28 +208,22 @@ function useAssistantEngine(): UseAssistantResult {
     },
   });
 
-  /** The page the user is on, as the header each message carries; empty when there is none to send. */
   const pageHeaders = useCallback((): Record<string, string> => {
     const marker = ctx.pageContext();
-    // The page names its resource by id and name, which leave the browser as the token its reads give it.
     const pageContext = marker && redactPageContext(vaultRef.current, marker);
-    // A lone surrogate makes encodeURIComponent throw;
-    // dropping the page context beats dropping the message with it.
+    // A lone surrogate makes encodeURIComponent throw; the page context is dropped, not the message.
     const encoded = pageContext ? encodeHeaderValue(pageContext) : undefined;
     return encoded === undefined ? {} : { [PAGE_CONTEXT_HEADER]: encoded };
   }, [ctx]);
   statusRef.current = agent.status;
   sessionIdRef.current = agent.session?.sessionId ?? sessionIdRef.current;
 
-  // Calls a resumed session is still parked on run once its history has replayed.
   const flushReplayed = loop.flushReplayed;
   useEffect(() => {
     if (agent.status !== "resuming") flushReplayed();
   }, [agent.status, flushReplayed]);
 
-  // A user change tears the conversation down.
-  // `AssistantProvider` already remounts the engine on it;
-  // this is the fallback if that key is ever loosened.
+  // A fallback: `AssistantProvider` already remounts the engine on a user change.
   const principalRef = useRef(currentUserId);
   useEffect(() => {
     const changed = principalRef.current !== currentUserId;
@@ -283,24 +248,18 @@ function useAssistantEngine(): UseAssistantResult {
     sessionKeyRef.current = sessionKey;
   }, [currentUserId, sessionKey]);
 
-  /*
-    The transcript as it stood when Stop was pressed, held until eve confirms
-    the cancel. eve cancels asynchronously, so without it the thread kept
-    spinning and streaming after Stop. Stop reads as done the moment it is pressed.
-  */
+  // The transcript as it stood when Stop was pressed: eve cancels asynchronously,
+  // so the live one would keep streaming until the cancel is confirmed.
   const [stoppedAt, setStoppedAt] = useState<EveMessage[] | null>(null);
   const agentRunning =
     agent.status === "submitted" || agent.status === "streaming" || loop.busy;
-  // Adjusted during render: the turn is over, so the live transcript is final again.
   if (stoppedAt !== null && !agentRunning) setStoppedAt(null);
   const isRunning = agentRunning && stoppedAt === null;
 
-  // Activity reports immediately, idleness only after TURN_SETTLE_MS without a change.
   const [turnActive, setTurnActive] = useState(false);
   const settleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (stoppedAt !== null) {
-      // A stopped turn is over at once, so its steps collapse without the settle delay.
       if (settleRef.current !== null) clearTimeout(settleRef.current);
       settleRef.current = null;
       setTurnActive(false);
@@ -343,19 +302,14 @@ function useAssistantEngine(): UseAssistantResult {
   const agentRef = useRef(agent);
   agentRef.current = agent;
 
-  /*
-    Browser results the agent refused, or that never reached it, leave the turn
-    parked on a request nothing will answer, so the thread spun until a reload.
-    Delivery has already retried what may pass, so the turn is cancelled; the
-    error stays shown until the next turn starts.
-  */
+  // A browser result the agent refused or never received leaves the turn parked
+  // on a request nothing will answer, so the turn is cancelled.
   const deliveryError = loop.deliveryError;
   useEffect(() => {
     if (!deliveryError) return;
     agentRef.current.cancel().catch(() => {});
   }, [deliveryError]);
 
-  /** What a message carries: the chat's latest reads and the record of the page it is sent from. */
   const messageContext = useCallback(async (vault: Vault): Promise<MessageContext | undefined> => {
     const marker = ctx.pageContext();
     const page = marker ? parsePageContextMarker(marker) : null;
@@ -376,30 +330,25 @@ function useAssistantEngine(): UseAssistantResult {
       .trim();
     if (!text) return;
     const vault = vaultRef.current;
-    // Read first, so the names in the page's record are known when the text is tokenised.
+    // The page record is read before scrubbing, so its names are known when the text is tokenised.
     const clientContext = await messageContext(vault);
-    // Account values and credential-shaped values leave the browser as tokens.
     const scrubbed = vault.scrub(text);
     setStoppedAt(null);
     await agentRef.current.send(scrubbed, { clientContext, headers: pageHeaders() });
   }, [messageContext, pageHeaders]);
 
-
   const onCancel = useCallback(async () => {
     setStoppedAt(agentRef.current.messages);
-    // A browser tool still executing keeps `loop.busy` set,
-    // which would leave the thread spinning after Stop.
+    // A browser tool still executing would keep `loop.busy` set after Stop.
     loopRef.current.reset();
     try {
       await agentRef.current.cancel();
     } catch (err) {
-      // The turn is still running, so the thread shows it again.
       setStoppedAt(null);
       throw err;
     }
   }, []);
 
-  // Answers awaiting the session's echo, so the reply joins the transcript as soon as it is sent.
   const [sentAnswers, setSentAnswers] = useState<SentAnswers>(() => new Map());
   const shownMessages = stoppedAt ?? agent.messages;
   const transcript = useMemo(
@@ -416,7 +365,6 @@ function useAssistantEngine(): UseAssistantResult {
     onCancel,
   });
 
-  // `endRun` is false when the session is already out of reach, so there is nothing to end.
   const startChat = useCallback((endRun: boolean) => {
     const ending = sessionIdRef.current;
     if (ending && endRun) {
@@ -438,14 +386,9 @@ function useAssistantEngine(): UseAssistantResult {
   }, [ctx]);
   const newChat = useCallback(() => startChat(true), [startChat]);
 
-  /*
-    A stored chat the agent will not resume starts a new chat instead of showing an error.
-    The agent refuses every chat it cannot resume for this user with one code,
-    whether it expired or was never theirs; the common cause is an expired chat.
-    Only a failed resume recovers this way: once the chat has heard from its session,
-    the same code is a failed request in a live conversation, which is shown rather than wiped.
-    The recovery is remembered by error identity, so it neither loops nor shows the error afterwards.
-  */
+  // A stored chat the agent will not resume starts a new chat instead of showing an error.
+  // Only a failed resume recovers this way: in a live conversation the same code is shown, not wiped.
+  // The recovery is remembered by error identity, so it does not loop.
   const recoveredFromRef = useRef<unknown>(null);
   const heldSessionId = sessionIdRef.current;
   const agentError = agent.error;
@@ -460,7 +403,6 @@ function useAssistantEngine(): UseAssistantResult {
     startChat(false);
   }, [unresumable, agentError, startChat]);
 
-  // A session-level failure is the more specific answer when several are present.
   const failure = agentError ?? (loop.deliveryError || undefined) ?? turnFailure;
   const error = !failure || (failure === agentError && unresumable) ? null : describeAssistantError(failure);
 
@@ -481,7 +423,6 @@ function useAssistantEngine(): UseAssistantResult {
       try {
         await agentRef.current.respond([{ requestId, ...response }]);
       } catch (err) {
-        // The session is still parked on it, so the card must come back to be answered again.
         setSentAnswers((sent) => {
           const next = new Map(sent);
           next.delete(requestId);
@@ -530,7 +471,6 @@ export function useAssistant(): UseAssistantResult {
   return engine;
 }
 
-/** Just the assistant-ui runtime, for AssistantRuntimeProvider. */
 export function useAssistantRuntime(): AssistantRuntime {
   return useAssistant().runtime;
 }

@@ -1,18 +1,6 @@
-/**
- * Field allowlists for every management API result the model may read. They
- * are also the operation allowlist: an operation without a profile cannot be
- * called. In a profile, `true` passes a field through, a string tokenises
- * it under that kind, a nested profile recurses, a function keeps only what
- * it returns, and any unlisted field is dropped. Ids pass through as they are: they say nothing about anyone, and
- * the model needs them to read further. A `handle` marks a record, keeping its
- * `id` and `name`; a `personal` record's name (a peer's, a person's) becomes a
- * token of the handle's kind, while an admin-chosen label (a group or policy
- * name) stays readable, since it says what a thing is for.
- *
- * The dashboard applies them when it reads the account, before tokenising, and
- * the agent applies them again to what arrives, so a result the dashboard got
- * wrong still carries no more than its profile lists.
- */
+// Field allowlists for what the model may read; an operation without a profile cannot be called.
+// `true` passes a field through, a string tokenises it under that kind, a function keeps what it returns,
+// and any unlisted field is dropped. A `personal` handle's name becomes a token too.
 export type FieldRule = true | string | Profile | ((value: unknown) => unknown);
 
 export interface Profile {
@@ -386,7 +374,6 @@ const NETWORK_RESOURCE: Profile = {
 const DNS_RECORD: Profile = {
   fields: {
     id: true,
-    // A record's name is often a machine's, and its content an address.
     name: "domain",
     content: "domain",
     type: true,
@@ -423,7 +410,6 @@ const SERVICE_TARGET: Profile = {
     path: true,
     access_action: true,
     protocol: true,
-    // An address or a domain, the same kind a network resource's address is.
     host: "domain",
     port: true,
     enabled: true,
@@ -444,7 +430,6 @@ const SERVICE_TARGET: Profile = {
 const PROXY_SERVICE: Profile = {
   handle: "service",
   fields: {
-    // The same kind as an access log's `host`, so a service and its requests share a token.
     domain: "domain",
     proxy_cluster: "domain",
     mode: true,
@@ -619,7 +604,6 @@ const AGENT_SETTINGS: Profile = {
   },
 };
 
-// The cost and token columns an agent request, a session and a usage bucket share.
 const AGENT_USAGE_FIELDS: Record<string, FieldRule> = {
   input_tokens: true,
   output_tokens: true,
@@ -695,8 +679,6 @@ const AGENT_CONSUMPTION: Profile = {
 
 const AGENT_USAGE_BUCKET: Profile = { fields: { period_start: true, ...AGENT_USAGE_FIELDS } };
 
-// NetBird's own catalog, not account data. Not `auth_header_template` or `extra_headers`, which only
-// describe where a key goes.
 const AGENT_CATALOG_PROVIDER: Profile = {
   handle: "catalog_provider",
   fields: {
@@ -719,13 +701,13 @@ const AGENT_CATALOG_PROVIDER: Profile = {
   },
 };
 
-// Not `client_id`: no question needs it, and it names the account's app at the provider.
+// Not `client_id`: it names the account's app at the provider.
 const IDENTITY_PROVIDER: Profile = {
   handle: "idp",
   fields: { type: true, issuer: "domain" },
 };
 
-// What a directory sync does, never its `auth_token`, nor the tenant, customer or client ids it signs in with.
+// Never `auth_token`, nor the tenant, customer or client ids the sync signs in with.
 const IDP_INTEGRATION: Profile = {
   fields: {
     id: true,
@@ -744,7 +726,7 @@ const EVENT_STREAM: Profile = {
   fields: { id: true, enabled: true, platform: true, created_at: true, updated_at: true },
 };
 
-// Which events go where, by kind: a webhook's URL and headers can carry a secret, so neither is read.
+// Not a webhook's URL or headers: either can carry a secret.
 const NOTIFICATION_CHANNEL: Profile = {
   fields: {
     id: true,
@@ -755,7 +737,7 @@ const NOTIFICATION_CHANNEL: Profile = {
   },
 };
 
-// One profile for every EDR integration: how it matches and syncs, never its API URL or the tenant it signs in to.
+// Never the integration's API URL or the tenant it signs in to.
 const EDR_INTEGRATION: Profile = {
   fields: {
     id: true,
@@ -853,7 +835,6 @@ const USER_INVITE: Profile = {
   },
 };
 
-// A token's metadata. The API never returns the secret after creation, and nothing here would keep it.
 const ACCESS_TOKEN: Profile = {
   handle: "token",
   fields: {
@@ -876,14 +857,11 @@ const INSTANCE_VERSION: Profile = {
 };
 
 export interface OperationProfile {
-  /** GET path; `{id}` is filled from the call's `id`. */
   path: string;
   profile: Profile;
-  /** Narrows the raw payload before the profile applies. */
   select?: (raw: unknown) => unknown;
 }
 
-// The read-only operations `netbird_api` may call.
 export const PROFILES: Record<string, OperationProfile> = {
   get_api_peers: { path: "/api/peers", profile: PEER },
   get_api_peers_peerId: { path: "/api/peers/{id}", profile: PEER },
@@ -961,17 +939,12 @@ export const PROFILES: Record<string, OperationProfile> = {
   },
 };
 
-/** What `audit_events` returns: an envelope around rows profiled as AUDIT_EVENT_ROW. */
 export const AUDIT_RESULT: Profile = {
   fields: { window_days: true, matched: true, shown: true, note: true, rows: AUDIT_EVENT_ROW },
 };
 
 export const NETBIRD_OPERATIONS = Object.keys(PROFILES) as [string, ...string[]];
 
-/**
- * The same walk as the vault's, without tokenising: drops every field the
- * profile does not list.
- */
 export function allowlist(value: unknown, profile: Profile): unknown {
   if (Array.isArray(value)) return value.map((v) => allowlist(v, profile));
   if (!value || typeof value !== "object") return profile.handle || typeof value !== "string" ? value : undefined;

@@ -1,12 +1,5 @@
-/**
- * The account reads, run in the dashboard with the user's own session.
- *
- * The agent never reads the management API itself, although the user's token
- * authenticates every chat request to it: it asks, the dashboard reads the
- * management API the way its own pages do, keeps only the fields the
- * operation's profile lists, filters and cuts the result, and the browser tool
- * loop tokenises it before it leaves the tab.
- */
+// The agent never reads the management API itself: the dashboard reads it here,
+// keeps only the fields the operation's profile lists, and the result is tokenised before it leaves the tab.
 import { BROWSER_RESULT_MAX_CHARS, type ToolOutcome } from "./contract";
 import { fuzzyScore, fuzzySearch } from "./fuzzy";
 import { allowlist, PROFILES } from "./profiles";
@@ -15,26 +8,17 @@ export type ManagementResponse =
   | { ok: true; body: unknown }
   | { ok: false; status: number; statusText: string };
 
-/**
- * One GET against the management API as the signed-in user, `path` starting
- * at `/api`. With `preferCache`, the host may answer from what its own pages
- * already loaded; without it, the read is fresh, since the model reads again
- * exactly when something may have changed.
- */
 export type ManagementFetch = (
   path: string,
   query: Record<string, string>,
   options?: { preferCache?: boolean },
 ) => Promise<ManagementResponse>;
 
-// A list longer than this is cut so one call cannot fill the context.
-// Rows narrowed with `fields` are small, so this many can fit one result.
 const MAX_ROWS = 1_000;
-// What a list must fit, with room for tokenising, which can lengthen a row.
+// Leaves room for tokenising, which can lengthen a row.
 const LIST_CHARS = Math.floor(BROWSER_RESULT_MAX_CHARS * 0.75);
-// The most values a count answers with; the rest are summed into `other`.
 const MAX_COUNTS = 100;
-// `|` for a user id from an identity provider (`google-oauth2|1133…`), encoded into the path.
+// `|` for a user id from an identity provider (`google-oauth2|1133…`).
 const ID = /^[A-Za-z0-9_|-]{1,128}$/;
 
 type Value = string | number | boolean;
@@ -48,15 +32,8 @@ const same = (field: unknown, wanted: string) =>
   typeof field === "string" && field.toLowerCase() === wanted.toLowerCase();
 const named = (row: Row, v: Value) => same(row.id, String(v)) || same(row.name, String(v));
 
-/*
-  Filters the management API does not offer, applied after the fetch so a
-  question about a subset ("which peers are offline") reads that subset rather
-  than the first MAX_ROWS of everything. Keyed by operation, then by the query
-  parameter that selects them; these parameters never reach management.
-*/
 const LOCAL_FILTERS: Record<string, Record<string, (row: Row, value: Value) => boolean>> = {
   get_api_peers: {
-    // A name the model has as a token arrives restored to the peer's name, or to its id.
     name: (row, v) => named(row, v) || same(row.hostname, String(v)),
     connected: (row, v) => row.connected === asBool(v),
     login_expired: (row, v) => row.login_expired === asBool(v),
@@ -81,12 +58,10 @@ const LOCAL_FILTERS: Record<string, Record<string, (row: Row, value: Value) => b
   get_api_reverse_proxies_clusters: { online: (row, v) => row.online === asBool(v) },
 };
 
-// The query keys an operation may send to the management API. Anything else
-// the model asks for is dropped rather than forwarded: a key such as `account`
-// would otherwise reach the API and, for an MSP parent, read another tenant.
+// The only query keys forwarded to the management API. A key such as `account`
+// would otherwise, for an MSP parent, read another tenant.
 const PAGED = ["page", "page_size"];
 const REMOTE_QUERY: Record<string, readonly string[]> = {
-  // The peers endpoint filters by address server-side; every other peer filter is local.
   get_api_peers: [...PAGED, "ip"],
   get_api_users: [...PAGED, "service_user"],
   get_api_events_network_traffic: [...PAGED, "start_date", "end_date", "destination_id", "source_id", "protocol"],
@@ -111,13 +86,7 @@ function splitQuery(operation: string, query: Query = {}) {
   return { remote, filters, search, fields, countBy };
 }
 
-/**
- * How many rows hold each value of `field`, so a question over the whole list
- * ("how many peers run each OS") is answered exactly without sending the rows.
- * Each count is shaped like a row, `{os: "macOS", count: 12}`, so the field is
- * tokenised as it would be in the row; a list field such as `groups` counts
- * each of its items.
- */
+// Each count is shaped like a row, `{os: "macOS", count: 12}`, so the field is tokenised as it would be in the row.
 function countedBy(operation: string, rows: Row[], field: string): string {
   const buckets = new Map<string, { value: unknown; count: number }>();
   let missing = 0;
@@ -147,12 +116,6 @@ function countedBy(operation: string, rows: Row[], field: string): string {
   });
 }
 
-/**
- * The rows with only the columns asked for, so a list that is about one or two
- * of them carries many more rows in the same room. `id` and `name` always stay,
- * so a row can still be named and read again; a field the profile does not
- * keep was never there to pick.
- */
 function picked(rows: Row[], fields: string[] | undefined): Row[] {
   if (!fields?.length) return rows;
   const keep = new Set(["id", "name", ...fields]);
@@ -164,8 +127,6 @@ const failed = (operation: string, body: Record<string, unknown>): ToolOutcome =
   content: JSON.stringify({ operation, ...body }),
 });
 
-// `total` is always there, so a count is read off the result rather than
-// taken from a group's `peers_count`, which counts something else.
 const listResult = (operation: string, rows: unknown[], total: number, cap: number, note?: string) =>
   JSON.stringify({
     operation,
@@ -175,20 +136,13 @@ const listResult = (operation: string, rows: unknown[], total: number, cap: numb
     data: rows.slice(0, cap),
   });
 
-// For the model, which narrows the read itself.
 const CUT_NOTE = "Cut to fit. To see the rest, read again with a filter or `fields`; the user cannot narrow it.";
 
-/**
- * The list whole when it fits LIST_CHARS, which almost every list does,
- * else as many of its rows as fit, marked as cut so the model narrows the read
- * rather than answering from part of it.
- */
 function fittedList(operation: string, rows: Row[], note?: string): string {
   const at = (cap: number) => listResult(operation, rows, rows.length, cap, cap < rows.length ? CUT_NOTE : note);
   let low = 0;
   let high = Math.min(rows.length, MAX_ROWS);
   if (at(high).length <= LIST_CHARS) return at(high);
-  // The most rows that fit.
   while (low < high) {
     const mid = Math.ceil((low + high) / 2);
     if (at(mid).length <= LIST_CHARS) low = mid;
@@ -203,7 +157,6 @@ export interface NetbirdApiInput {
   query?: unknown;
 }
 
-/** `netbird_api`: one allowlisted read, with the filters and the search management lacks. */
 export async function readNetbirdApi(
   input: NetbirdApiInput,
   fetch: ManagementFetch,
@@ -247,14 +200,8 @@ export async function readNetbirdApi(
 const DEFAULT_DAYS = 7;
 const MAX_DAYS = 90;
 const MAX_AUDIT_ROWS = 50;
-// A match this good or better counts when filtering the audit log by a name.
 const AUDIT_MATCH = 50;
 
-/*
-  High-volume system activity that drowns every real change. Left out unless
-  the caller's `activity` filter names it, because "what changed" never means
-  "every usage report and every sign-in".
-*/
 const NOISE = [/^billing\./, /^dashboard\.login$/];
 
 interface RawEvent {
@@ -268,24 +215,18 @@ interface RawEvent {
 }
 
 interface AuditEventRow {
-  /** Opens the audit log on this row: `dashboard_page_redirect` page `activity`. */
   id: string;
   timestamp: string;
   activity: string;
   activity_code: string;
   initiator_name?: string;
   initiator_email?: string;
-  /** Name of a policy, group, network, route, setup key, resource… */
   target?: string;
-  /** A peer the event is about. */
   peer?: string;
-  /** A person a `user.*` event is about. */
   user?: string;
-  /** The group in a membership change (`peer.group.add`, `setupkey.group.add`). */
   group?: string;
   old_name?: string;
   new_name?: string;
-  /** A user the event is about (invites, service users, tokens). */
   email?: string;
 }
 
@@ -326,7 +267,6 @@ export interface AuditEventsInput {
 
 const text = (v: unknown, max: number) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : undefined);
 
-/** `audit_events`: the account's audit log, cut to the rows the question is about. */
 export async function readAuditEvents(input: AuditEventsInput, fetch: ManagementFetch): Promise<ToolOutcome> {
   let res: ManagementResponse;
   try {
@@ -376,10 +316,8 @@ export async function readAuditEvents(input: AuditEventsInput, fetch: Management
   return { ok: true, content: result(MAX_AUDIT_ROWS) };
 }
 
-// A message waits this long for the page's record before going without it.
 const PAGE_RECORD_WAIT_MS = 800;
 
-/** The read that returns the record a page is about, keyed by the page marker's kind. */
 const PAGE_READS: Record<string, (ref: string) => NetbirdApiInput> = {
   peer: (id) => ({ operation: "get_api_peers_peerId", id }),
   group: (ref) => ({ operation: "get_api_groups", query: { name: ref } }),
@@ -387,11 +325,6 @@ const PAGE_READS: Record<string, (ref: string) => NetbirdApiInput> = {
   user: (ref) => ({ operation: "get_api_users", query: { name: ref } }),
 };
 
-/**
- * The record of the resource the user is looking at, read before their
- * message goes, so a question about "this peer" needs no read of its own.
- * Null when the page is about no one resource or the read is slow or fails.
- */
 export async function readPageRecord(kind: string, ref: string, fetch: ManagementFetch): Promise<ToolOutcome | null> {
   const read = Object.hasOwn(PAGE_READS, kind) ? PAGE_READS[kind] : undefined;
   if (!read) return null;
@@ -400,7 +333,6 @@ export async function readPageRecord(kind: string, ref: string, fetch: Managemen
     timer = setTimeout(() => resolve(null), PAGE_RECORD_WAIT_MS);
   });
   try {
-    // The page on screen loaded this record already, so its copy is as fresh as what the user sees.
     const outcome = await Promise.race([readNetbirdApi(read(ref), fetch, { preferCache: true }), slow]);
     return outcome?.ok ? outcome : null;
   } finally {
@@ -408,7 +340,6 @@ export async function readPageRecord(kind: string, ref: string, fetch: Managemen
   }
 }
 
-/** The lists `account_search` looks through, by the kind the model names. */
 export const SEARCH_KINDS: Record<string, string> = {
   peer: "get_api_peers",
   user: "get_api_users",
@@ -430,12 +361,6 @@ export interface AccountSearchInput {
 
 const MAX_SEARCH_TERMS = 5;
 
-/**
- * `account_search`: what in the account a name the user typed refers to.
- * One call looks through every list it names, from what the dashboard's pages
- * already loaded where it can, so the model learns in a single quick step that
- * "anna's laptop" is a peer, and which one, before it reads anything in full.
- */
 export async function searchAccount(input: AccountSearchInput, fetch: ManagementFetch): Promise<ToolOutcome> {
   const terms = [
     ...new Set(
@@ -449,13 +374,10 @@ export async function searchAccount(input: AccountSearchInput, fetch: Management
   const kinds = (Array.isArray(input.kinds) ? input.kinds : DEFAULT_SEARCH_KINDS).filter(
     (k): k is string => typeof k === "string" && Object.hasOwn(SEARCH_KINDS, k),
   );
-  // Filters narrow peers only, the one list with state to filter on ("the offline one").
   const filters =
     input.filters && typeof input.filters === "object" && !Array.isArray(input.filters) ? (input.filters as Query) : {};
 
-  // The search is local, over each kind's whole list, so with several terms the
-  // same list would be fetched once per term, all in flight before the cache
-  // has it: one fetch per list serves every term of this call.
+  // With several terms the same list would be fetched once per term, all in flight before the cache has it.
   const inFlight = new Map<string, ReturnType<ManagementFetch>>();
   const fetchOnce: ManagementFetch = (path, query, options) => {
     const key = `${path}?${JSON.stringify(query)}`;
@@ -466,7 +388,6 @@ export async function searchAccount(input: AccountSearchInput, fetch: Management
     }
     return pending;
   };
-  // Each result names the term it answers, since one call may look up several.
   const results = await Promise.all(
     terms.flatMap((term) =>
       kinds.map(async (kind) => {

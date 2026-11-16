@@ -7,11 +7,6 @@ import { rendersTrailRow } from "../lib/contract";
 import { isRunningToolPart } from "../lib/convert";
 import { toolLabel } from "../lib/tools";
 
-// The one-line status under the running message.
-// It reports only what is not already on screen:
-// streamed answer text and a tool with its own trail row are their own progress indicators,
-// so the line covers thinking and tools that render as a card instead of a row.
-
 const STATUS_TEXT = {
   thinking: "Thinking",
   working: "Working",
@@ -19,12 +14,7 @@ const STATUS_TEXT = {
 } as const;
 
 const STATUS_MAX_CHARS = 52;
-// Only the tail can hold the clause being written,
-// and bounding it keeps the per-delta cost flat while the block grows.
 const REASONING_TAIL_CHARS = 4_000;
-// Filler stripping runs to a fixed point,
-// and every pass either removes a character or is the last,
-// so the clause cap also bounds the iterations.
 const CLAUSE_MAX_CHARS = STATUS_MAX_CHARS * 4;
 
 const STATUS_FILLER = [
@@ -36,7 +26,6 @@ const STATUS_FILLER = [
   /^(i think|it (looks|seems) like|apparently|presumably)\s+/i,
 ];
 
-/** The latest reasoning clause compressed to one status line, or null when nothing readable is left. */
 export function thinkingStatus(reasoning: string): string | null {
   const clauses = reasoning
     .slice(-REASONING_TAIL_CHARS)
@@ -64,9 +53,7 @@ export function thinkingStatus(reasoning: string): string | null {
 interface StatusLineInput {
   messages: readonly EveMessage[];
   status: ChatStatus;
-  /** Browser tools still executing — the turn is live even if the stream idles. */
   toolLoopBusy: boolean;
-  /** A question card is on screen, waiting for the user. */
   questionShown: boolean;
 }
 
@@ -92,7 +79,6 @@ function deriveStatusLine({
     if (part.type === "dynamic-tool") {
       const name = part.toolName;
       if (isRunningToolPart(part)) {
-        // The card appears only once eve raises the request; until then the model is still writing it.
         if (name === "ask_question" && !questionShown) return STATUS_TEXT.preparingQuestion;
         if (rendersTrailRow(name)) return null;
         return toolLabel(name, true);
@@ -100,8 +86,8 @@ function deriveStatusLine({
       return STATUS_TEXT.working;
     }
     if (part.type === "reasoning" && part.text) {
-      // Reasoning is signed by the provider, so the agent cannot restore its `[PEER_1]` tokens,
-      // and a token makes no status line.
+      // Reasoning is signed by the provider, so its `[PEER_1]` tokens cannot be restored:
+      // a line that still holds one is not shown.
       const line = thinkingStatus(part.text);
       return line && !/\[[A-Z][A-Z_]*_[a-z2-7]{6,}\]/.test(line) ? line : STATUS_TEXT.thinking;
     }

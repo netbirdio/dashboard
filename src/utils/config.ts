@@ -26,8 +26,7 @@ interface Config {
   // agentNetworkEnabled: the regular UI plus the Agent Network menu item (Beta).
   agentNetworkOnly: boolean;
   agentNetworkEnabled: boolean;
-  // Empty when no assistant server is configured, which is what disables the
-  // feature — there is no separate on/off flag.
+  // Empty disables the assistant; there is no separate flag.
   assistantApiOrigin: string;
   hubspotPortalId?: string;
   hubspotSignupFormId?: string;

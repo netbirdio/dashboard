@@ -6,7 +6,6 @@ type MessageContent = Exclude<ThreadMessageLike["content"], string>;
 type MessagePart = MessageContent[number];
 type ToolCallPart = Extract<MessagePart, { type: "tool-call" }>;
 
-/** True while a tool part still owes its real result, including a browser tool the dashboard is running. */
 export function isRunningToolPart(part: EveDynamicToolPart): boolean {
   switch (part.state) {
     case "input-streaming":
@@ -29,11 +28,8 @@ function objectArgs(value: unknown): ToolCallPart["args"] {
     : undefined;
 }
 
-/**
- * The `render_component` card is drawn from the call's args,
- * so they must be the payload the agent validated, not the model's raw input.
- * An empty object, which renders nothing, stands in until that payload exists.
- */
+// The `render_component` card is drawn from the call's args,
+// so they must be the payload the agent validated, never the model's raw input.
 function validatedComponentArgs(part: EveDynamicToolPart): ToolCallPart["args"] {
   if (part.state !== "output-available" || isRunningToolPart(part)) return {};
   const output = part.output as { ok?: unknown; component?: unknown } | undefined;
@@ -85,18 +81,10 @@ function messageStatus(
   }
 }
 
-/**
- * The message as a person reads it: the model's tokens back to names.
- * Text still streaming holds back a token it has not finished writing.
- * Tool inputs restore as the browser runs them, ids to ids and names to names,
- * so a card or a trail row reads what the call did.
- */
 export function restoreEveMessage(vault: Vault, message: EveMessage): EveMessage {
   if (vault.size === 0) return message;
   const streaming = message.metadata?.status === "streaming";
   const text = streaming ? vault.restoreStreamingText : vault.restoreText;
-  // The model's text parts render as markdown; the person's own render as
-  // typed, and reasoning is never shown as markup.
   const markdown = streaming ? vault.restoreStreamingMarkdown : vault.restoreMarkdown;
   const prose = message.role === "user" ? text : markdown;
   const parts = message.parts.map((part) => {
@@ -125,7 +113,6 @@ export function restoreEveMessage(vault: Vault, message: EveMessage): EveMessage
   return { ...message, parts };
 }
 
-/** Question parts are dropped, since the host renders them as cards rather than tool rows. */
 export function convertEveMessage(message: EveMessage): ThreadMessageLike {
   const content: MessagePart[] = [];
   for (const part of message.parts) {
@@ -141,7 +128,6 @@ export function convertEveMessage(message: EveMessage): ThreadMessageLike {
         content.push(toToolCallPart(part));
         break;
       default:
-        // File, step-start and authorization parts are not rendered.
         break;
     }
   }

@@ -183,8 +183,6 @@ const PeerSettingsProvider = ({ children }: { children: React.ReactNode }) => {
   const { peer, peerGroups, update } = usePeer();
   const { permission } = usePermissions();
   const [name, setName] = useState(peer.name);
-  // `?tab=` opens a tab directly (the assistant links to `network-routes` to
-  // set up an exit node); anything unknown falls back to the overview.
   const requestedTab = useSearchParams().get("tab") ?? "";
   const [tab, setTab] = useState(
     PEER_TABS.has(requestedTab) ? requestedTab : "overview",

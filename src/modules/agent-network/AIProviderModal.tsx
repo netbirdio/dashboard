@@ -834,14 +834,8 @@ export default function AIProviderModal({
       <ModalContent
         maxWidthClass={"max-w-2xl"}
         data-testid={"agent-network-provider-modal"}
-        /*
-          A click outside does not dismiss this one. It holds an API key the
-          operator typed by hand and which the API never gives back, spread
-          over several tabs — so an accidental click on whatever is behind the
-          dialog (the assistant's message box, a page control) threw away work
-          that cannot be recovered by reopening it. Escape, Cancel and the
-          close button still work, and all three are deliberate.
-        */
+        // A stray outside click must not discard the typed API key,
+        // which the API never returns.
         onInteractOutside={(e) => e.preventDefault()}
       >
         <ModalHeader

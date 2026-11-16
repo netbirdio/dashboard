@@ -56,46 +56,21 @@ import {
 } from "@/modules/control-center/utils/node-pulse";
 import { NodeType } from "@/modules/control-center/utils/nodes";
 
-/**
- * Publishes the canvas as an imperative API for the assistant, for as long as
- * the control-center page is mounted (see the SDK's canvas registry for why a
- * module-level registry and not a context).
- *
- * Every action routes through the same hooks the human UI uses — the components
- * panel's drops, the context menu's edits, the toolbar's camera, the canvas's
- * own connect handler — so an assistant-built draft is indistinguishable from a
- * hand-built one, changeset entries included.
- */
 export const CanvasAgentBridge = ({
   onConnect,
 }: {
-  /** The canvas's own `onConnect` — the draft connect rules live behind it. */
   onConnect: (connection: Connection) => void;
 }) => {
   const deps = useBridgeDeps(onConnect);
 
-  /*
-    The API object is registered ONCE — a fresh one per render would make the
-    assistant's in-flight calls race the re-render — but its handlers must see
-    the current canvas, so they read everything through this ref.
-
-    Assigned during RENDER, not in an effect: a step that acts on what the
-    previous step just created (name a group, connect a node) would otherwise
-    run against hooks whose closures predate it, and write the changeset from
-    stale state. Same pattern as the view refs on CanvasStateProvider.
-  */
+  // Assigned during render, not in an effect: a step acting on what the
+  // previous step just created would otherwise run against stale closures.
   const latest = useRef(deps);
   // eslint-disable-next-line react-hooks/refs
   latest.current = deps;
 
-  // Built inside the effect so the API — and the registration — happen once,
-  // no matter how often the canvas re-renders behind it.
   useEffect(() => {
     const api = buildApi(() => latest.current);
-    // Test-only handle: e2e drives these actions directly, with no model in the
-    // loop (same idea as __ccDraftCanvas in CanvasStateProvider). `beginTurn` is
-    // the runtime's turn latch, exposed so a test can check the overlay survives
-    // the gaps between steps.
     if (process.env.APP_ENV === "test") {
       (
         globalThis as unknown as {
@@ -132,12 +107,9 @@ function useBridgeDeps(onConnect: (connection: Connection) => void) {
   const { addMemberToGroup } = useDragToGroup();
   const { updateDraftPolicy, requestProvider, drawAgentPolicyOnCanvas } =
     useControlCenterPolicy();
-  // Agent Network is a separate surface and not every deployment or account
-  // has it, so the kinds that touch it check this before doing anything.
   const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
   const { providers: agentProviders, policies: agentPolicies } =
     useAIProviders();
-  // Whether a first provider can be created at all — see `new_provider`.
   const bootstrapCluster = useBootstrapCluster();
 
   return {
@@ -176,60 +148,21 @@ type Deps = () => BridgeDeps;
 
 // ── pacing ───────────────────────────────────────────────────────────────────
 
-/**
- * The assistant works at human speed on purpose: a step lands, the canvas
- * shows it, then the next one runs. Applied in one commit they would just blink
- * into their final state.
- */
 const STEP_MS = 260;
-/**
- * How long after the last structural step the canvas re-arranges.
- *
- * Deliberately longer than the gap between two tool calls (model round trip plus
- * streaming), so a whole build coalesces into ONE arrange after the last step
- * instead of one per connect. Watching the canvas re-lay itself out between
- * every step is worse than a slightly late tidy-up.
- */
+// Longer than a model round trip, so a whole build settles into one arrange.
 const ARRANGE_IDLE_MS = 3500;
 
-/*
-  Where a new node lands.
-
-  The canvas has a reading direction — sources on the left, policies in the
-  middle, destinations on the right (see Views in CLAUDE.md) — so placement
-  follows it: each kind has a lane, each lane stacks downward, and groups
-  alternate sides because a policy usually has a group on each end. The
-  debounced arrange still has the last word; this is about the minute the user
-  spends watching it get built.
-*/
-/*
-  The columns the draft layout itself uses (sources 0 → policies 500 →
-  destinations 1000; see Views in CLAUDE.md). Placing a node straight into its
-  column is the difference between "it appeared, then jumped" and "it appeared
-  where it belongs" — the arrange that follows only has to tidy the spacing.
-*/
+// The same columns the draft layout uses.
 const LANE_X = { left: 0, center: 500, right: 1000 } as const;
 const LANE_PITCH = 170;
-/** Slack around the columns when framing the build area. */
 const BUILD_AREA_MARGIN = 260;
-/** Enough vertical room for a few nodes per column before the camera re-fits. */
 const BUILD_AREA_HEIGHT = 620;
 
 type Lane = keyof typeof LANE_X;
 
-/**
- * Per-draft placement state: where the lanes start, and how full each is. Keyed
- * by the draft session so it resets itself — the user may have opened the draft
- * from the UI, in which case no assistant call marked the beginning of it.
- */
 let placement = {
   key: "",
   anchor: null as { x: number; y: number } | null,
-  /**
-   * The lane span the camera has already been set to cover, in LANE_X units.
-   * Null until the first node claims a lane; widened (never narrowed) when a
-   * later step reaches past it.
-   */
   framed: null as { min: number; max: number } | null,
   left: 0,
   center: 0,
@@ -239,7 +172,6 @@ let placement = {
 const quoted = (name?: string) => (name ? ` “${name}”` : "");
 const plural = (count: number, word: string) => (count === 1 ? word : `${word}s`);
 
-/** The selector node pointed at `subjectId`, or `prev` untouched when it already is. */
 function withSelectorSubject(prev: Node[], selectorId: string | undefined, key: string | undefined, subjectId: string): Node[] {
   if (!key) return prev;
   const stale = prev.some((n) => n.id === selectorId && n.data?.[key] !== subjectId);
@@ -250,12 +182,8 @@ function withSelectorSubject(prev: Node[], selectorId: string | undefined, key: 
 const wait = (ms: number) => new Promise((r) => globalThis.setTimeout(r, ms));
 const nextFrame = () =>
   new Promise((r) => globalThis.requestAnimationFrame(() => r(undefined)));
-/**
- * Lets a just-created node reach the React Flow store before it's edited.
- * Two animation frames straddle at least one React commit; the trailing
- * macrotask lets any commit-scheduled effects run too. A bare zero-timeout
- * is not enough — under concurrent rendering it can fire pre-commit.
- */
+// Two frames straddle a React commit; a bare zero-timeout can fire before it
+// under concurrent rendering.
 const settle = async () => {
   await nextFrame();
   await nextFrame();
@@ -271,12 +199,6 @@ const fail = (detail: string): AgentStepResult => ({ ok: false, detail });
 
 // ── the API ──────────────────────────────────────────────────────────────────
 
-/**
- * Wraps one action so the canvas holds still while the assistant writes to it:
- * dimmed and not interactive. Every entry point goes through this — one that
- * forgot to would let the user drag a node out from under a layout mid-build.
- * What's happening is narrated in the assistant panel, not here.
- */
 async function acting<T>(run: () => Promise<T>): Promise<T> {
   const done = beginAgentActivity();
   try {
@@ -291,11 +213,6 @@ function buildApi(deps: Deps): CanvasAgentApi {
     const d = deps();
     const nodes = d.reactFlow.getNodes();
 
-    /*
-      The view's subject, with the NAME it should display: a token's display
-      value is set by whoever mints it first, and an id-as-display leaks a raw
-      id into the answer the moment the model mentions the subject.
-    */
     const subject = (): AgentCanvasSnapshot["subject"] => {
       const named = (
         kind: NonNullable<AgentCanvasSnapshot["subject"]>["kind"],
@@ -350,14 +267,11 @@ function buildApi(deps: Deps): CanvasAgentApi {
     const { view, target } = input;
 
     if (d.draft.isDraft) {
-      // Leaving a drill-down is the one "view change" a draft really has.
       if (d.draft.drillDownNetworkNodeId && view === "networks") {
         d.draft.setDrillDownNetworkNodeId(null);
         return ok("Left the network, back to the full draft.");
       }
 
-      // Entering a network means drilling into its frame — which only exists if
-      // that frame is on the canvas.
       if (view === "network") {
         const network = resolveNetwork(target, d);
         if (!network?.id)
@@ -380,11 +294,6 @@ function buildApi(deps: Deps): CanvasAgentApi {
           );
         }
       } else if (VIEWS[view] === d.canvas.currentView) {
-        /*
-          Asking for the view you're already on is a no-op, not a failure:
-          answering "leave draft mode first" would be wrong, and following it
-          would discard the user's work.
-        */
         return ok(
           `Already on the ${view} view. In a draft the canvas is what you've built, ` +
             `not a tab — bring anything else you need onto it with control_center_add ` +
@@ -398,12 +307,6 @@ function buildApi(deps: Deps): CanvasAgentApi {
         );
       }
 
-      /*
-        An empty draft with nothing recorded has nothing to lose, so navigating
-        is free: drop it, go where asked, and say so. The caller can come back in
-        with `from_current_view` around whatever it finds — which is usually what
-        it wanted in the first place.
-      */
       await d.discardAndExit();
       await wait(STEP_MS);
       d = deps();
@@ -416,7 +319,6 @@ function buildApi(deps: Deps): CanvasAgentApi {
     return navigateLive(view, target, d);
   };
 
-  /** The live-mode half of navigate: pick the tab, then its subject. */
   const navigateLive = async (
     view: AgentNavigateInput["view"],
     target: string | undefined,
@@ -436,21 +338,14 @@ function buildApi(deps: Deps): CanvasAgentApi {
     const resolved = resolveSubject(view, target, d);
     if (target && !resolved.id) return fail(resolved.detail);
 
-    /*
-      Two steps, the same two a human takes: switch the tab, then pick from its
-      selector. The switch is what CREATES that selector node (with its own
-      change handler), and the view-init effect patches the selection INTO it —
-      so setting a selection while the node is missing would leave the canvas
-      showing the old view's graph.
-    */
+    // The view switch creates the selector node; selecting a subject before it
+    // exists leaves the old view's graph on screen.
     const selectorId = SELECTOR_NODES[view];
     const hasSelector = () =>
       !selectorId || d.reactFlow.getNodes().some((n) => n.id === selectorId);
     if (d.canvas.currentView !== VIEWS[view] || !hasSelector()) {
       d.ui.onViewChange(VIEWS[view]);
       if (!resolved.id) return ok(resolved.detail);
-      // Bounded: an account with no peers/users never gets a selector, and the
-      // empty state is the honest answer there.
       for (let i = 0; i < 40 && !hasSelector(); i++) await wait(50);
       if (!hasSelector()) return ok(`Opened the ${view} view (it's empty).`);
     }
@@ -461,15 +356,10 @@ function buildApi(deps: Deps): CanvasAgentApi {
     if (view === "peers") d.canvas.setSelectedPeer(resolved.id);
     if (view === "users") d.canvas.setSelectedUser(resolved.id);
     if (view === "groups") d.canvas.setSelectedGroup(resolved.id);
-    // Invalidating the layout is what makes the view rebuild around it.
     d.canvas.setLayoutInitialized(false);
 
-    /*
-      The rebuild redraws the graph around the new subject but can leave the
-      selector node showing the view's default pick. Set the selector's value
-      directly, and again once the rebuild has settled in case it wrote an
-      older copy of the node back.
-    */
+    // Synced twice: the rebuild can write an older copy of the selector node
+    // back over the first one.
     const subjectId = resolved.id;
     const key = SELECTOR_DATA_KEYS[view];
     const syncSelector = () =>
@@ -491,12 +381,6 @@ function buildApi(deps: Deps): CanvasAgentApi {
         ? ok("Left draft mode; the draft was discarded.")
         : fail("The user chose to keep the draft — still in draft mode.");
     }
-    /*
-      Already drafting is the state the caller wanted, not an error — the user
-      may have opened the draft themselves. Saying "done" keeps the assistant
-      moving; treating it as a failure invited it to exit and start over, which
-      would throw the user's work away.
-    */
     if (d.draft.isDraft) {
       return ok("Already in a draft — kept it and its changes.");
     }
@@ -505,9 +389,8 @@ function buildApi(deps: Deps): CanvasAgentApi {
       await wait(STEP_MS);
       return ok("Started a new empty draft.");
     }
-    // A draft from the current view copies what's on the canvas, so there has to
-    // BE something on it: right after a navigation the live view is still
-    // building, and starting too early would carry over an empty world.
+    // Right after a navigation the live view is still building, and a draft
+    // started now would copy an empty canvas.
     for (let i = 0; i < 40 && d.reactFlow.getNodes().length === 0; i++) {
       await wait(50);
     }
@@ -537,9 +420,6 @@ function buildApi(deps: Deps): CanvasAgentApi {
       }
       await wait(STEP_MS);
     }
-    // No arrange for an ordinary add: the node already sits in its column, and
-    // re-laying the canvas out under the user is the jump this placement avoids.
-    // A caller that says it's finished gets one, though — that's the point of it.
     if (final && results.some((r) => r.ok)) results.push(arrangeNow(deps));
     return results;
   };
@@ -573,17 +453,12 @@ function buildApi(deps: Deps): CanvasAgentApi {
       d.onConnect({
         source: from.id,
         target: to.id,
-        // The draft connect rules read the side off the handle the drag started
-        // from, so a programmatic connect has to name one (see draft-connect):
-        // the right handle means "source side", the left one "destination".
         sourceHandle: startHandle(from, to),
         targetHandle: null,
       });
       results.push(
         ok(`Connected ${refOf(from)} → ${refOf(to)}.${dialogNote(from, to)}`),
       );
-      // The edge is created inside onConnect's own state update, so it only
-      // exists once that has committed — hence the settle before the flash.
       await settle();
       const fresh = d.reactFlow
         .getEdges()
@@ -611,8 +486,6 @@ function buildApi(deps: Deps): CanvasAgentApi {
       results.push(result);
       if (result.ok) {
         const d = deps();
-        // The node itself is gone after a remove/delete — ring the group that
-        // absorbed it, or nothing at all.
         const highlight =
           action.action === "add_to_group" ? action.group : action.node;
         if (highlight && d.reactFlow.getNodes().some((n) => n.id === highlight)) {
@@ -623,8 +496,6 @@ function buildApi(deps: Deps): CanvasAgentApi {
       if (result.ok && LAYOUT_ACTIONS.has(action.action)) movedThings = true;
       await wait(STEP_MS);
     }
-    // Removing or absorbing nodes leaves holes in the layout; renaming and
-    // focusing don't, and an explicit `move` shouldn't be undone by arranging.
     if (final && results.some((r) => r.ok)) results.push(arrangeNow(deps));
     else if (movedThings) scheduleArrange(deps);
     return results;
@@ -634,29 +505,15 @@ function buildApi(deps: Deps): CanvasAgentApi {
     edit: AgentPolicyEdit,
     final = false,
   ): Promise<AgentStepResult> => {
-    /*
-      Settle BEFORE reading the canvas, and re-read `deps()` afterwards.
-
-      `editPolicy` is a read-modify-write on `node.data.policy`, and so is every
-      `connect` — each takes the whole policy, changes one part and writes it
-      back. A batch normally arrives as add, connect, connect, policy in one
-      message, so without a flush in between this read sees the policy as it was
-      before the connects landed. The write that lands last then wins, and the
-      symptom is a draft with its sources and destinations intact and its
-      protocol and ports quietly back at "all" — the assistant having truthfully
-      called the tool and the canvas having dropped the result.
-    */
+    // Settle before reading: `editPolicy` and every connect read-modify-write
+    // the whole policy, so an unflushed connect and this edit overwrite each other.
     await settle();
     let d = deps();
     const blocked = requireDraft(d);
     if (blocked) return blocked;
     let result = editPolicy(edit, d);
-    /*
-      Read the policy back and write it again while the edit has not stuck.
-      Settling first narrows the race above but does not close it: a write of
-      the same policy still in flight can land after this one and put the
-      protocol back at "all", and the result would still say tcp.
-    */
+    // A write still in flight can land after this one and revert it, so it is
+    // re-applied until it sticks.
     for (let attempt = 0; result.ok && attempt < 3; attempt++) {
       await settle();
       await wait(STEP_MS);
@@ -697,10 +554,6 @@ function buildApi(deps: Deps): CanvasAgentApi {
     }
   };
 
-  /*
-    The public surface. Everything except `getSnapshot` (a pure read) runs
-    inside `acting`, so the canvas is dimmed and locked while the step runs.
-  */
   return {
     getSnapshot: snapshot,
     drainNotices: () => notices.splice(0, notices.length),
@@ -720,7 +573,6 @@ const VIEWS: Record<string, FlowView> = {
   networks: FlowView.NETWORKS,
 };
 
-/** The "pick a peer/user/group" node each live view builds around. */
 const SELECTOR_NODES: Record<string, string | undefined> = {
   peers: "select-peer-node",
   users: "select-user-node",
@@ -728,17 +580,14 @@ const SELECTOR_NODES: Record<string, string | undefined> = {
   networks: undefined,
 };
 
-/** The field on each selector node that holds what it currently shows. */
 const SELECTOR_DATA_KEYS: Record<string, string | undefined> = {
   peers: "currentPeer",
   users: "currentUser",
   groups: "currentGroup",
 };
 
-/** Node actions after which the canvas wants re-arranging. */
 const LAYOUT_ACTIONS = new Set(["remove", "delete", "add_to_group"]);
 
-/** A draft with nothing on it and nothing recorded — safe to walk away from. */
 const draftIsUntouched = (d: BridgeDeps): boolean =>
   d.reactFlow.getNodes().length === 0 && d.changes.length === 0;
 
@@ -747,20 +596,9 @@ const requireDraft = (d: BridgeDeps): AgentStepResult | null =>
     ? null
     : fail("Only possible in draft mode — start a draft first.");
 
-/**
- * Arrange once the steps stop coming. Every call restarts the timer, so ten
- * individual adds cost one re-layout instead of ten.
- *
- * It leaves a notice for the next report so the assistant's step trail accounts
- * for the movement it caused (see drainNotices).
- */
 let arrangeTimer: ReturnType<typeof setTimeout> | undefined;
 const notices: string[] = [];
 
-/**
- * Arrange right now, as part of the step that asked for it. Cancels any pending
- * idle arrange so the canvas doesn't settle twice.
- */
 function arrangeNow(deps: Deps): AgentStepResult {
   globalThis.clearTimeout(arrangeTimer);
   arrangeTimer = undefined;
@@ -777,8 +615,6 @@ function scheduleArrange(deps: Deps) {
       deps().arrange();
       notices.push("Auto-arranged the canvas and fitted the view.");
     } finally {
-      // The arrange itself is synchronous; the animation that follows is the
-      // canvas's business, not a reason to keep the pane locked.
       done();
     }
   }, ARRANGE_IDLE_MS);
@@ -791,8 +627,6 @@ async function addOne(
   d: BridgeDeps,
 ): Promise<AgentStepResult> {
   const { kind, ref, name } = item;
-  // Its spot in the reading order, claimed before anything is created — and on
-  // the first one, the camera is set to cover the whole area first.
   const { lane, ...at } = nextPlacement(kind, item.role, d);
   frameBuildArea(d, lane);
 
@@ -827,8 +661,6 @@ async function addOne(
       if (onCanvas(`group-${group.id}`, d))
         return fail(`Group “${group.name}” is already on the canvas.`);
       const nodeId = d.dropExistingGroup(group, at);
-      // `members` works here too: "put the databases in the group they already
-      // have" is the same intent as creating one for them.
       const joined =
         nodeId && item.members?.length
           ? await fillGroup(nodeId, item.members, d)
@@ -843,13 +675,6 @@ async function addOne(
       );
     }
 
-    /*
-      A group INSIDE a network frame — the frame's own "Add Resource Group". Same
-      group as far as the API is concerned; the difference is that a group of one
-      network's resources reads as part of that network instead of floating beside
-      it. Named after creation because the frame's creator picks the unique name
-      itself (like the context menu does), then rename applies the caller's.
-    */
     case "new_resource_group": {
       const frame = d.reactFlow
         .getNodes()
@@ -880,9 +705,7 @@ async function addOne(
     case "new_group": {
       const taken = name ? groupNameTaken(name, d) : null;
       if (taken) return fail(taken);
-      // placeNode centres a card on its drop point; addNewGroup takes the
-      // top-left, so mirror the offset the components panel applies. The name
-      // goes in HERE — see addNewGroup on why not afterwards.
+      // `addNewGroup` takes the top-left corner, not the centre like the others.
       const nodeId = d.addNewGroup({ x: at.x - 100, y: at.y - 30 }, name);
       if (!nodeId) return fail("Could not add the group.");
 
@@ -903,25 +726,12 @@ async function addOne(
         protocol: item.protocol,
         ports: item.ports,
       });
-      // The node lands in reactFlow only after React commits; one settle tick
-      // is not guaranteed to run after that, so poll briefly for it.
       let created: Node | undefined;
       for (let i = 0; i < 20 && !created; i++) {
         await settle();
         created = d.reactFlow.getNodes().find((n) => !before.has(n.id));
         if (!created) await wait(25);
       }
-      /*
-        The rule's current state is stated here, not left implied.
-
-        A policy the caller did not narrow starts at all protocols and all
-        ports, and the guidance to narrow it lives in a skill the model may
-        have read many turns ago. That produced the failure worth designing
-        against: a draft left wide open while the message above it described a
-        narrow rule the model had only intended. A tool result is read in the
-        moment, so saying what the rule actually holds makes the gap between
-        the draft and the claim much harder to miss.
-      */
       const narrowed = item.protocol && item.protocol !== "all";
       const ports = item.ports?.length ? ` on ${item.ports.join(", ")}` : ", all ports";
       const holds = narrowed ? `${item.protocol}${ports}` : "ALL protocols on ALL ports";
@@ -966,9 +776,6 @@ async function addOne(
     }
 
     case "new_resource": {
-      // A resource IS its address — the canvas cannot draw one without it. The
-      // reply steers the model toward assuming one over asking: the user can
-      // edit the address on the node, and nothing deploys without their click.
       if (!item.address) {
         return fail(
           "A resource needs an address (IP, CIDR or domain) — nothing was added. Add it again with a plausible address (inside the network's range if known) and tell the user what you assumed; they can correct it on the node.",
@@ -989,8 +796,6 @@ async function addOne(
             description: item.description,
           });
       if (!nodeId) return fail("Could not add the resource.");
-      // The node is born in this commit — stamp its data once it's committed,
-      // exactly like the resource editor's own save does.
       await settle();
       const network = frame ? frameRef(frame) : { name: "" };
       d.saveDraftResource({
@@ -1001,8 +806,6 @@ async function addOne(
         groupIds: [],
         network,
       });
-      // The address stays OUT of the detail: the node id is the honest
-      // reference, and the model already knows the address it asked for.
       return ok(
         `Added the resource${
           frame ? ` to “${network.name}”` : " — it still needs a network"
@@ -1011,15 +814,8 @@ async function addOne(
       );
     }
 
-    /*
-      The one kind that cannot be created on the caller's behalf: a provider is
-      an upstream plus its API key, and the key is the operator's. So the canvas
-      opens the same Connect Provider modal the components panel does and this
-      step WAITS on it — `requestProvider` settles when the operator saves or
-      dismisses. Blocking the step is what keeps a build in order: the policy
-      that points at this provider is a later call, and a step that returned
-      early would have it drawn against a node that may never arrive.
-    */
+    // Blocks until the operator saves or dismisses the Connect Provider modal:
+    // a later step may connect a policy to this node.
     case "new_provider": {
       const off = agentNetworkOff(d);
       if (off) return off;
@@ -1067,8 +863,6 @@ async function addOne(
         description: item.description,
       });
       await settle();
-      // No protocol, no ports and no direction to state — the whole rule is
-      // which groups reach which providers, and both sides are connects.
       return ok(
         `Added an agent policy${
           name ? ` “${name}”` : ""
@@ -1098,10 +892,6 @@ async function addOne(
   }
 }
 
-/**
- * Agent Network is off for this deployment or account — said once, here, so
- * every kind that needs it fails with a reason instead of a silent no-op.
- */
 const agentNetworkOff = (d: BridgeDeps): AgentStepResult | null =>
   d.agentNetworkEnabled
     ? null
@@ -1109,22 +899,10 @@ const agentNetworkOff = (d: BridgeDeps): AgentStepResult | null =>
         "Agent Network isn't enabled on this account, so there are no AI providers or agent policies to work with.",
       );
 
-/**
- * The account's first provider also creates its endpoint, and the endpoint has
- * to be bootstrapped onto a proxy cluster — so with no usable cluster there is
- * nothing the Connect Provider wizard could save.
- *
- * Checked BEFORE the wizard opens rather than left to the disabled submit
- * button inside it: this step blocks on a person, and asking someone to fill in
- * a form whose only outcome is a greyed-out button wastes their time and ends
- * as an indistinguishable "dismissed".
- */
 const noClusterToBootstrap = (d: BridgeDeps): AgentStepResult | null => {
   const { bootstrapped, canReadDomains, noClustersAvailable, clustersLackPrivateCapability } =
     d.bootstrapCluster;
   if (bootstrapped || !noClustersAvailable) return null;
-  // A role without Services read cannot see the cluster list at all, so this
-  // says what is missing rather than asserting there is none.
   if (!canReadDomains) {
     return fail(
       "This account has no Agent Network endpoint yet, and the first provider has to create one on a proxy cluster — which this role can't read. Tell the user an account admin has to connect the first provider, and stop.",
@@ -1137,25 +915,15 @@ const noClusterToBootstrap = (d: BridgeDeps): AgentStepResult | null => {
   );
 };
 
-/**
- * The peer or resource a member reference points at, with the id membership is
- * keyed on.
- *
- * `id` may be a canvas node id or the real id of something never drawn. The
- * draft-resource case is why this is a function: such a node's `data.resource` is
- * a PARTIAL with no id (the id is synthesized from the node id by
- * getDraftResource), and `addMemberToGroup` silently drops a member with no
- * itemId.
- */
+// A draft resource's `data.resource` has no id (`getDraftResource` synthesizes
+// it), and `addMemberToGroup` silently drops a member without an `itemId`.
 function resolveMember(
   id: string,
   d: BridgeDeps,
 ): {
   peer?: Peer;
   resource?: NetworkResource;
-  /** What membership is keyed on — absent means nothing resolved. */
   itemId?: string;
-  /** The card to absorb, when the member is on the canvas. */
   nodeId?: string;
 } {
   const node = d.reactFlow
@@ -1184,27 +952,11 @@ function resolveMember(
   };
 }
 
-/**
- * Puts a new group's initial members in it, and returns how many landed.
- *
- * Same writer as a drop and as `control_center_node` `add_to_group` (`addMemberToGroup`), so
- * the changeset can't tell the difference — this only saves the round trips. It
- * exists because a group is nearly always created FOR something: "the databases",
- * "the printers". Naming those in the same call is one step the user watches
- * instead of four, and it stops a policy being drawn at an empty group.
- *
- * A member may be a canvas node id or the real id of a peer/resource that was
- * never drawn (what the components panel's drag does). Unknown ids are skipped
- * rather than failing the group — the group is the thing the caller asked for, and
- * the count in the reply says what actually happened.
- */
 async function fillGroup(
   groupNodeId: string,
   members: string[],
   d: BridgeDeps,
 ): Promise<number> {
-  // The group node is created in the commit before this one; commits land
-  // asynchronously, so poll briefly instead of trusting a single tick.
   let group: Node | undefined;
   for (let i = 0; i < 20 && !group; i++) {
     await settle();
@@ -1218,13 +970,8 @@ async function fillGroup(
     const { peer, resource, itemId, nodeId } = resolveMember(member, d);
     if (!itemId) continue;
 
-    // draggedNodeId is the card to absorb; addMemberToGroup keeps a framed
-    // resource's row where it is (its network needs to still show it).
     d.addMemberToGroup(group, { peer, resource, itemId, draggedNodeId: nodeId });
-    // Counted from the canvas, not from having called it: every early return in
-    // addMemberToGroup (already a member, the system "All" group) is silent, and
-    // a step reporting "2 of 2" when nothing joined is worse than one that admits
-    // it did nothing.
+    // Counted from the canvas: `addMemberToGroup`'s early returns are silent.
     for (let i = 0; i < 20; i++) {
       await settle();
       const after = d.reactFlow.getNodes().find((n) => n.id === groupNodeId);
@@ -1246,12 +993,6 @@ async function nodeOne(
 ): Promise<AgentStepResult> {
   const target = d.reactFlow.getNodes().find((n) => n.id === action.node);
 
-  /*
-    Group membership is the one action whose subject needn't be on the canvas:
-    the group panel has a drop zone for exactly this, so a peer or resource that
-    was never drawn can still join a group. Falls through to the node path when
-    the id IS a canvas node (its card then flies into the group).
-  */
   if (!target && action.action === "add_to_group") {
     if (!d.draft.isDraft) return fail(GROUPS_NEED_DRAFT);
     return assignEntityToGroup(action, d);
@@ -1366,8 +1107,6 @@ async function nodeOne(
         itemId,
         draggedNodeId: target.id,
       });
-      // Membership lands in reactFlow only after React commits; one settle
-      // tick is not guaranteed to run after that, so poll briefly for it.
       let filled: Node | undefined;
       for (let i = 0; i < 20; i++) {
         await settle();
@@ -1386,15 +1125,6 @@ async function nodeOne(
       );
     }
 
-    /*
-      Routing peer for a network. Goes through the same writer as the
-      routing-peer modal's save, so the changeset entry is identical to a hand
-      pick — including a placeholder peer, whose router carries a blocking
-      "Install" issue until the peer exists.
-
-      Nothing is drawn: a router lives on the frame's routing-peers bar, not on
-      the canvas, so there is no node to place and none to tidy away afterwards.
-    */
     case "route_network": {
       const blocked = draftOnly();
       if (blocked) return blocked;
@@ -1436,8 +1166,6 @@ async function nodeOne(
 function rename(target: Node, name: string, d: BridgeDeps): AgentStepResult {
   if (isGroupNode(target)) {
     const group = getNodeGroup(target);
-    // Group names must stay unique: a collision only surfaces at deploy, as
-    // "group already exists", long after the rename looked like it worked.
     const taken = groupNameTaken(name, d, target.id);
     if (taken) return fail(taken);
     d.renameGroup(target, name);
@@ -1467,11 +1195,6 @@ function rename(target: Node, name: string, d: BridgeDeps): AgentStepResult {
   );
 }
 
-/**
- * Delete = mark for deletion, applied when the draft deploys. Nothing leaves
- * the account here, which is why — unlike the context menu — this doesn't stop
- * to confirm.
- */
 function deleteInDraft(target: Node, d: BridgeDeps): AgentStepResult {
   if (isGroupNode(target)) {
     const group = getNodeGroup(target);
@@ -1487,28 +1210,17 @@ function deleteInDraft(target: Node, d: BridgeDeps): AgentStepResult {
     d.deleteResource(target.id);
     return ok(`Marked ${refOf(target)} for deletion.`);
   }
-  // Everything else has nothing account-side to delete (placeholders, draft
-  // nodes) — taking it off the canvas IS the whole operation.
   if (!d.canRemoveNode(target))
     return fail(`${refOf(target)} can't be removed.`);
   d.removeNode(target);
   return ok(`Removed ${refOf(target)} from the draft.`);
 }
 
-/**
- * The lane a kind belongs in. Groups alternate: the first goes left (a source),
- * the next right (a destination), which is how a two-sided policy reads.
- */
 function laneFor(kind: AgentAddItem["kind"], role?: AgentAddItem["role"]): Lane {
   if (kind === "new_policy" || kind === "existing_policy") return "center";
   if (kind === "new_agent_policy" || kind === "existing_agent_policy")
     return "center";
-  // A provider is what the traffic goes TO, whatever the caller says its role
-  // is — there is no direction in which one is a source.
   if (kind === "new_provider" || kind === "existing_provider") return "right";
-  // The caller knows which end of the policy this is; the canvas can't guess.
-  // Without it a destination server lands on the sources side and only finds
-  // its column when the arrange runs, which reads as the node jumping.
   if (role === "source") return "left";
   if (role === "destination") return "right";
   if (
@@ -1524,12 +1236,6 @@ function laneFor(kind: AgentAddItem["kind"], role?: AgentAddItem["role"]): Lane 
   return "left";
 }
 
-/**
- * Next free spot in a lane. The anchor is computed once per draft from what's
- * already on the canvas: an empty draft builds around the origin, while a draft
- * carried over from a live view gets its new nodes below the existing world
- * rather than on top of it.
- */
 function nextPlacement(
   kind: AgentAddItem["kind"],
   role: AgentAddItem["role"],
@@ -1568,22 +1274,6 @@ function nextPlacement(
   };
 }
 
-/**
- * Frames the area the build occupies, before the node lands in it.
- *
- * Placing incrementally and letting the camera chase each node is how a
- * destination group ended up off-screen: the first node looked centred, and
- * every one after it walked further right. So the viewport covers whole
- * columns rather than nodes — after which nothing added inside them needs the
- * camera to move again.
- *
- * It covers the columns actually in use, not all three. A build that only ever
- * fills one — a lone provider, which is always a destination — would otherwise
- * be framed across a left and centre column that stay empty, and the one node
- * on screen sits a third of the way in from the right instead of in the middle.
- * The span only ever widens, so a later step reaching into a new column
- * re-frames to include it and the earlier nodes keep their place on screen.
- */
 function frameBuildArea(d: BridgeDeps, lane: Lane) {
   if (!placement.anchor) return;
   const at = LANE_X[lane];
@@ -1597,27 +1287,16 @@ function frameBuildArea(d: BridgeDeps, lane: Lane) {
     {
       x: x + min - BUILD_AREA_MARGIN,
       y: y - BUILD_AREA_MARGIN,
-      // The trailing node width is what makes this centre on the nodes rather
-      // than on their left edges.
-      width: max - min + BUILD_AREA_MARGIN * 2 + 300,
+      width: max - min + BUILD_AREA_MARGIN * 2 + 300, // plus one node width
       height: BUILD_AREA_HEIGHT,
     },
     { duration: 500 },
   );
 }
 
-/**
- * Keeps the step the user is watching on screen — and only then. A node already
- * in view moves nothing (a camera that twitches on every step is worse than one
- * that sits still); a node outside it FITS the whole graph rather than centring
- * on the newcomer, which would push everything it connects to off the far edge.
- */
 async function revealNode(nodeId: string, d: BridgeDeps) {
-  /*
-    Wait for measurement first. React Flow computes bounds from measured nodes
-    only, so fitting the instant a node is created quietly leaves the newcomer
-    out of the bounds it was supposed to bring into view.
-  */
+  // React Flow computes fit bounds from measured nodes only, so fitting before
+  // the new node is measured leaves it out.
   for (let i = 0; i < 12; i++) {
     const n = d.reactFlow.getNodes().find((x) => x.id === nodeId);
     if ((n?.measured?.width ?? 0) > 0 || Number(n?.style?.width) > 0) break;
@@ -1631,8 +1310,7 @@ async function revealNode(nodeId: string, d: BridgeDeps) {
   if (!rect || rect.width === 0) return;
 
   const vp = d.reactFlow.getViewport();
-  // `Number(undefined)` is NaN, and NaN survives `??` — which made every
-  // comparison below false, so "is it visible" always answered no.
+  // `||`, not `??`: `Number(undefined)` is NaN, which `??` lets through.
   const width = node.measured?.width || Number(node.style?.width) || 200;
   const height = node.measured?.height || Number(node.style?.height) || 100;
   const cx = node.position.x + width / 2;
@@ -1658,20 +1336,8 @@ async function revealNode(nodeId: string, d: BridgeDeps) {
 const GROUPS_NEED_DRAFT =
   "Group membership is a draft action — start a draft first.";
 
-/**
- * Puts an account USER in a group, the way the group panel's Users tab does.
- *
- * Deliberately not `addMemberToGroup`. Peer and resource membership is a
- * property of the GROUP and lands on the group's own record; a user's is a
- * property of the USER (`auto_groups`) and deploys as a user update — which is
- * why routing a user through the peer writer silently dropped it (it returns
- * early unless a peer or resource was passed). There is no card to absorb
- * either: users are not drawn as members on this canvas.
- *
- * A draft group has no id yet, so it is referenced by NAME, exactly as the
- * panel's `userGroupRef` does, and the deploy resolves it once the group is
- * real.
- */
+// Not `addMemberToGroup`: a user's membership lives on the user (`auto_groups`),
+// and that writer silently ignores anything but a peer or resource.
 function assignUserToGroup(
   user: { id?: string; name?: string; email?: string; auto_groups?: string[] },
   group: Node,
@@ -1687,8 +1353,8 @@ function assignUserToGroup(
       `Can't reference “${groupData?.name ?? "that group"}” for user membership.`,
     );
 
-  // The changeset wins over the server list: a user added earlier in this same
-  // draft has no `auto_groups` entry for it yet.
+  // A draft group has no id yet, so the ref above is its name. The changeset
+  // wins over `auto_groups`, which misses groups added earlier in this draft.
   const pending = d.changes.find(
     (c) => c.type === "update-user-groups" && c.userId === user.id,
   );
@@ -1713,11 +1379,6 @@ function assignUserToGroup(
   return ok(`Added the user ${label} to “${groupData?.name}”.`);
 }
 
-/**
- * Puts a peer or resource that isn't on the canvas into a group, the way the
- * group panel's drop zone does. `action.node` is the entity's own id here, not a
- * canvas node's.
- */
 function assignEntityToGroup(
   action: AgentNodeAction,
   d: BridgeDeps,
@@ -1732,9 +1393,6 @@ function assignEntityToGroup(
     : d.data.networkResources?.find(
         (r: NetworkResource) => r.id === action.node,
       );
-  // Users last, and down their own path: an agent-network policy authorises a
-  // user's groups, so "put the caller in this group" names a user here far more
-  // often than a peer.
   if (!peer && !resource) {
     const user = d.data.users?.find((u) => u.id === action.node);
     if (user) return assignUserToGroup(user, group, d);
@@ -1747,20 +1405,11 @@ function assignEntityToGroup(
 
   const itemId = action.node;
   if (groupContainsItem(group, itemId)) {
-    // Already a member — the same no-op a drag onto its own group is. Said out
-    // loud rather than reported as an absorb that didn't happen.
     return ok(
       `Already in “${getNodeGroup(group)?.name}” — nothing to change.`,
     );
   }
 
-  /*
-    The entity may ALSO be on the canvas — the caller can name a peer either way,
-    and passing its account id is the natural thing to do when it has just read
-    `list_peers`. Its card still has to be absorbed into the group, exactly as a
-    drag would: without `draggedNodeId` the group counted the peer while its card
-    stayed sitting on the canvas.
-  */
   const card = d.reactFlow.getNodes().find((n) => {
     if (peer) {
       const nodePeer =
@@ -1783,7 +1432,6 @@ function assignEntityToGroup(
   return ok(`Added ${what} to “${getNodeGroup(group)?.name}”${note}.`);
 }
 
-/** Whether a group name is already in use (API, canvas, or pending creates). */
 function groupNameTaken(
   name: string,
   d: BridgeDeps,
@@ -1800,8 +1448,6 @@ function groupNameTaken(
     d.reactFlow
       .getNodes()
       .some((n) => n.id !== exceptNodeId && getNodeGroup(n)?.name === name) ||
-    // A pending create for the group being renamed is not a collision with
-    // itself.
     d.changes.some(
       (c) =>
         c.type === "create-group" &&
@@ -1814,12 +1460,6 @@ function groupNameTaken(
     : null;
 }
 
-/**
- * Whether a policy's destination side is resources only — a resource, or groups
- * that hold resources and no peers. Those policies are locked one-way (see
- * `destinationOnlyResources` in useAccessControl); NetBird has no way to
- * initiate a connection FROM a subnet or a domain.
- */
 function destinationIsResourceOnly(
   rule: Policy["rules"][number],
   d: BridgeDeps,
@@ -1842,7 +1482,6 @@ function destinationIsResourceOnly(
 const policyOn = (nodeId: string, d: BridgeDeps): Policy | undefined =>
   (d.reactFlow.getNodes().find((n) => n.id === nodeId)?.data as { policy?: Policy })?.policy;
 
-/** Whether the policy holds what the edit asked for: the protocol, and the ports and direction it named. */
 function editLanded(edit: AgentPolicyEdit, policy: Policy | undefined): boolean {
   const rule = policy?.rules?.[0];
   if (!rule) return false;
@@ -1853,11 +1492,6 @@ function editLanded(edit: AgentPolicyEdit, policy: Policy | undefined): boolean 
   return true;
 }
 
-/**
- * Edits a draft policy — the fields its editor exposes. The changeset write goes
- * through `updateDraftPolicy`, which is also what the policy modal calls, so an
- * assistant edit and a hand edit produce the same change (and the same redraw).
- */
 function editPolicy(edit: AgentPolicyEdit, d: BridgeDeps): AgentStepResult {
   const node = d.reactFlow.getNodes().find((n) => n.id === edit.node);
   const current = (node?.data as { policy?: Policy })?.policy;
@@ -1875,8 +1509,7 @@ function editPolicy(edit: AgentPolicyEdit, d: BridgeDeps): AgentStepResult {
 
   const protocol = edit.protocol ?? rule.protocol;
   const portsGiven = edit.ports !== undefined;
-  // Ports only mean anything for TCP/UDP; the API rejects them otherwise, so a
-  // protocol switch away from them clears the list rather than shipping a 422.
+  // The API rejects ports on anything but TCP/UDP, so a switch away clears them.
   const portsAllowed = protocol === "tcp" || protocol === "udp";
   let ports: typeof rule.ports = [];
   if (portsAllowed) ports = portsGiven ? edit.ports! : rule.ports;
@@ -1908,12 +1541,6 @@ function editPolicy(edit: AgentPolicyEdit, d: BridgeDeps): AgentStepResult {
 
   d.updateDraftPolicy(next);
 
-  /*
-    Report the rule as it now stands, not the edit that was asked for. The
-    model describes the draft from these results, and a bare "Updated policy X"
-    lets it narrate its own intent. Echoing the landed values gives it
-    something that can contradict it.
-  */
   const landed = `${protocol}${
     ports.length > 0 ? ` on ${ports.join(", ")}` : ", all ports"
   }${next.rules?.[0]?.bidirectional ? ", both directions" : ""}`;
@@ -1954,7 +1581,6 @@ function labelOf(node: Node): string {
     network?: { name?: string };
     resource?: { name?: string };
     placeholderName?: string;
-    /** Provider and agent-policy cards carry their name flat. */
     name?: string;
   };
   return (
@@ -1969,11 +1595,8 @@ function labelOf(node: Node): string {
   );
 }
 
-/**
- * How a step's `detail` names a node. A peer's name is a person's machine, so
- * it goes out as the canvas id (the caller swaps in a token); everything else
- * is an admin-chosen label and reads better as itself.
- */
+// Peer names must not leave the browser, so a peer is named by its node id,
+// which the caller swaps for a token.
 function refOf(node: Node): string {
   const kind = KINDS[node.type ?? ""] ?? "other";
   const placeholder = (node.data as { placeholderKind?: string })
@@ -1982,18 +1605,12 @@ function refOf(node: Node): string {
   return `“${labelOf(node)}”`;
 }
 
-/** The account entity behind a node, if it has a real id. */
 function entityOf(node: Node): AgentNode["entity"] {
-  /*
-    Agent Network first, and by node type: both its cards hold their record id
-    flat in `data.id`, which every other card uses for something else. Told
-    apart here rather than in the pairs below so a provider is never read as a
-    policy.
-  */
+  // Checked by node type: provider and agent-policy cards keep their record id
+  // in `data.id`, which other cards use for something else.
   const type = KINDS[node.type ?? ""] ?? "other";
   if (type === "provider" || type === "agent-policy") {
     const recordId = (node.data as { id?: string })?.id;
-    // A draft record (`new-…`) has no account entity yet, same as elsewhere.
     if (!recordId || recordId.startsWith("new-")) return undefined;
     return {
       kind: type === "provider" ? "provider" : "agent_policy",
@@ -2015,7 +1632,6 @@ function entityOf(node: Node): AgentNode["entity"] {
     ["resource", data?.resource?.id],
   ] as const;
   for (const [kind, id] of pairs) {
-    // Client ids (`new-…`) are draft-local — there is no account entity yet.
     if (id && !id.startsWith("new-")) return { kind, id };
   }
   return undefined;
@@ -2055,19 +1671,8 @@ function describeNode(node: Node, d: BridgeDeps): AgentNode {
   };
 }
 
-/**
- * Some connects finish in a dialog the user has to fill in — the model needs to
- * know that, so it says so instead of assuming the policy is done.
- */
 function dialogNote(from: Node, to: Node): string {
   const kinds = new Set([from, to].map((n) => KINDS[n.type ?? ""] ?? "other"));
-  /*
-    Agent Network wires itself: a group either way round becomes the policy's
-    source and a provider its destination. The two cases worth reporting are a
-    group aimed straight at a provider, which opens the agent-policy wizard,
-    and an end the rules simply ignore — that one draws nothing at all, and
-    silence there reads as a connection that worked.
-  */
   if (kinds.has("agent-policy")) {
     return kinds.has("provider") || kinds.has("group")
       ? ""
@@ -2087,14 +1692,8 @@ function dialogNote(from: Node, to: Node): string {
   return "";
 }
 
-/**
- * Which handle a programmatic connect should look like it came from.
- *
- * `node → policy` means "this is a source", so it starts at the node's RIGHT
- * handle — except for resources and network frames, which only ever sit on the
- * destination side and only carry a LEFT handle. Getting this wrong isn't an
- * error, it's silence: the connect rules drop a resource aimed at a source side.
- */
+// The connect rules read the side off the start handle, and silently drop a
+// resource or network frame that claims the source (right) side.
 function startHandle(from: Node, to: Node): string {
   const kind = KINDS[from.type ?? ""] ?? "other";
   const destinationOnly = kind === "resource" || kind === "network";
@@ -2106,7 +1705,6 @@ function startHandle(from: Node, to: Node): string {
 const onCanvas = (nodeId: string, d: BridgeDeps): boolean =>
   d.reactFlow.getNodes().some((n) => n.id === nodeId);
 
-/** A frame's network ref — real id for an existing network, client id for a draft one. */
 const frameRef = (frame: Node) => {
   const network = (frame.data as { network?: { id?: string; name?: string } })
     ?.network;
@@ -2124,7 +1722,6 @@ const resolveNetwork = (
     ? d.data.networks?.find((n) => n.id === target || n.name === target)
     : undefined;
 
-/** Which entity a live view should be built around; `"self"` means the user's own. */
 function resolveSubject(
   view: string,
   target: string | undefined,

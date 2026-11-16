@@ -327,9 +327,6 @@ export const draftBoundGroupName = (
 export const kindHasBoundGroup = (kind?: string) =>
   kind === "server" || kind === "agent";
 
-// A pseudo-peer minted by getPlaceholderPeer: its id is a draft id and its `os`
-// carries the placeholder kind. Selectors and the changeset both need to tell
-// one from a real peer — a draft id must never reach the API.
 export const isPlaceholderPeer = (peer?: {
   id?: string;
   os?: string;
@@ -339,7 +336,6 @@ export const isPlaceholderPeer = (peer?: {
 
 export const PLACEHOLDER_OS_PREFIX = "draft-";
 
-/** True for a placeholder peer's canvas-side id ("draft-<uuid>"). */
 export const isDraftPeerId = (id?: string): boolean =>
   !!id && id.startsWith("draft-");
 

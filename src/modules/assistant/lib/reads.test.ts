@@ -19,7 +19,6 @@ const PEERS = [
   peer("p3", "web-server", { groups: [{ id: "g-srv", name: "Servers" }] }),
 ];
 
-// A real account's peers sit in many groups, which makes each row wide.
 const GROUPS = Array.from({ length: 30 }, (_, i) => ({ id: `g-${i}`, name: `Department group number ${i}` }));
 
 function fakeFetch(bodies: Record<string, unknown>): ManagementFetch & { calls: [string, Record<string, string>][] } {
@@ -54,7 +53,6 @@ describe("netbird_api", () => {
     const fetch = fakeFetch({ "/api/peers": PEERS });
     const rows = await data(readNetbirdApi({ operation: "get_api_peers", query: { search: "stagng db" } }, fetch));
     expect(rows.map((r: { id: string }) => r.id)).toEqual(["p2"]);
-    // `search` is the dashboard's, never sent to management.
     expect(fetch.calls[0]).toEqual(["/api/peers", {}]);
   });
 

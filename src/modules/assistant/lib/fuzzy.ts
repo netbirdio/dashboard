@@ -1,15 +1,9 @@
-/**
- * Loose matching for what a person types against names in the account:
- * "anna laptop" finds `laptop-anna`, "stagng-db" finds `staging-db`.
- * Scores are relative, only good for ranking one search's matches.
- */
-
 const SEPARATORS = /[\s._\-/:]+/g;
 
 const normalize = (s: string) => s.toLowerCase().replace(SEPARATORS, "");
 const words = (s: string) => s.toLowerCase().split(SEPARATORS).filter(Boolean);
 
-/** Edit distance with transpositions, giving up once it passes `max`. */
+// Returns `max + 1` as soon as the distance is known to exceed `max`.
 function editDistance(a: string, b: string, max: number): number {
   if (Math.abs(a.length - b.length) > max) return max + 1;
   let prevPrev: number[] = [];
@@ -36,7 +30,6 @@ function typoBudget(length: number): number {
   return length >= 4 ? 1 : 0;
 }
 
-/** How well `query` matches `text`: 0 for no match, up to 100 for an exact one. */
 export function fuzzyScore(query: string, text: string): number {
   const q = query.trim().toLowerCase();
   const t = text.toLowerCase();
@@ -50,10 +43,8 @@ export function fuzzyScore(query: string, text: string): number {
 
   const queryWords = words(q);
   const textWords = words(t);
-  // Every word typed appears, in any order: "anna laptop" against `laptop-anna`.
   if (queryWords.length > 1 && queryWords.every((w) => nt.includes(w))) return 70;
 
-  // A typo or two in one word, or in the whole name.
   const budget = typoBudget(nq.length);
   if (budget > 0) {
     if (editDistance(nq, nt, budget) <= budget) return 60;
@@ -66,7 +57,6 @@ export function fuzzyScore(query: string, text: string): number {
   return 0;
 }
 
-/** The strings a row is found by: its own and its direct children's, such as a peer's groups. */
 function searchableStrings(value: unknown, depth = 0, out: string[] = []): string[] {
   if (typeof value === "string") {
     if (value.length <= 256) out.push(value);
@@ -78,7 +68,6 @@ function searchableStrings(value: unknown, depth = 0, out: string[] = []): strin
   return out;
 }
 
-/** The rows matching `query`, best match first; rows that tie keep their order. */
 export function fuzzySearch<T>(rows: readonly T[], query: string): T[] {
   return rows
     .map((row, index) => ({ row, index, score: Math.max(0, ...searchableStrings(row).map((s) => fuzzyScore(query, s))) }))

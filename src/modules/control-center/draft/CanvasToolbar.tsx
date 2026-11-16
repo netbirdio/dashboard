@@ -85,8 +85,6 @@ export const CanvasToolbar = () => {
   const toolBeforeSpaceRef = React.useRef<CanvasTool | null>(null);
 
   useEffect(() => {
-    // Its own listener, so it needs its own guard while the assistant works —
-    // see useControlCenterShortcuts for the rest of them.
     if (!isDraft || agentBusy) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {

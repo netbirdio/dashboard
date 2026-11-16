@@ -2,11 +2,9 @@ import type { EveDynamicToolPart, EveMessage } from "eve/react";
 
 type QuestionReply = { question: string; answer: string };
 
-/** An answer sent but not yet echoed back by the session, keyed by request id. */
 export type SentAnswers = ReadonlyMap<string, { optionId?: string; text?: string }>;
 
-// Only the model's own questions are replies in the transcript. A browser tool
-// also parks on a question, which the dashboard answers with the call's result.
+// A browser tool also parks on a question, so only `ask_question` counts as a reply.
 const isAsk = (part: { toolName?: string }) => part.toolName === "ask_question";
 
 function answeredQuestion(part: EveDynamicToolPart, sent: SentAnswers): QuestionReply | undefined {
@@ -26,11 +24,6 @@ type Part = EveMessage["parts"][number];
 
 const normalize = (text: string) => text.replace(/\s+/g, " ").trim();
 
-/**
- * Drops the model's own restatement of a question from the text just before it:
- * the card shows the question while it is open, and the transcript shows it once
- * after it is answered, so a restatement would always be a duplicate.
- */
 function withoutRestatement(parts: Part[], prompt: string): Part[] {
   const last = parts.at(-1);
   const question = normalize(prompt);
@@ -46,12 +39,7 @@ const questionPrompt = (part: Part) =>
     ? part.toolMetadata.eve.inputRequest.prompt
     : undefined;
 
-/**
- * Projects answered questions, which eve stores as tool results, into the transcript as user messages.
- * The assistant message is split at the question so the reply precedes later assistant text,
- * and stable ids keep refreshes duplicate-free.
- * A sent answer shows at once; the session's own response replaces it under the same ids, so nothing reflows.
- */
+// The ids minted here must stay stable across refreshes, or replies duplicate.
 export function withQuestionReplies(messages: readonly EveMessage[], sent: SentAnswers = new Map()): EveMessage[] {
   return messages.flatMap((message) => {
     if (message.role !== "assistant") return [message];
@@ -68,7 +56,6 @@ export function withQuestionReplies(messages: readonly EveMessage[], sent: SentA
         continue;
       }
 
-      // The card disappears once answered, so its question is kept as text to give the answer context.
       parts.push({ type: "text", text: reply.question, state: "done" });
       projected.push(
         { ...message, id, parts, metadata: { ...message.metadata, status: "complete" } },

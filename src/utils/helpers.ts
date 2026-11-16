@@ -3,12 +3,8 @@ import { type ClassValue, clsx } from "clsx";
 import deepClone from "lodash/cloneDeep";
 import { extendTailwindMerge } from "tailwind-merge";
 
-/**
- * tailwind-merge only knows Tailwind's own scales, so a custom `text-*` size
- * from the `@theme` in `globals.css` is mistaken for a text *colour* and
- * dropped the moment a real colour joins it in the same `cn()`. Font sizes we
- * add have to be declared here too.
- */
+// Custom `text-*` sizes must be declared here,
+// or tailwind-merge takes them for colours and drops them.
 const twMerge = extendTailwindMerge({
   extend: { theme: { text: ["chat"] } },
 });
@@ -287,7 +283,6 @@ export const textOf = (value: unknown): string | undefined =>
 export const nonEmptyString = (value: unknown): string | undefined =>
   typeof value === "string" && value.trim() ? value : undefined;
 
-/** `new_empty` → `New Empty`: enum values are for the wire, not for reading. */
 export const humanize = (value: string): string =>
   value
     .split(/[_\s]+/)

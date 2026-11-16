@@ -96,9 +96,7 @@ export function useDraftNetworkActions() {
         (node.data as { resourceGroupIds?: string[] })?.resourceGroupIds ?? [];
 
       // Tracked as soon as it has an address; a missing network becomes a
-      // blocking issue rather than a withheld change. Only an address-less
-      // resource stays off the changeset: a resource IS its address, so there
-      // is nothing to deploy without one.
+      // blocking issue rather than a withheld change.
       if (!resource.address) {
         untrackResource(resource.id);
         return;

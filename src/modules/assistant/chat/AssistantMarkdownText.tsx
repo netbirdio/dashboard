@@ -24,8 +24,6 @@ import type { ReactNode } from "react";
 import remarkGfm from "remark-gfm";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 
-// Registered by hand rather than lowlight's `common` bundle, so only the
-// grammars a NetBird answer contains get bundled; anything else stays plain.
 const LANGUAGES = {
   bash,
   dockerfile,
@@ -39,7 +37,6 @@ const LANGUAGES = {
   yaml,
 };
 
-// The aliases a model actually writes on a fence, mapped to the above.
 const ALIASES: Record<string, (typeof LANGUAGES)[keyof typeof LANGUAGES]> = {
   sh: bash,
   shell: bash,
@@ -61,8 +58,7 @@ const headingClass =
 
 const lowlight = createLowlight({ ...LANGUAGES, ...ALIASES });
 
-// Block vs inline comes from the primitive, not the `language-*` class: a fence
-// without a language has no such class, and sniffing painted a chip inside the block.
+// Block vs inline comes from the primitive: a fence without a language has no `language-*` class.
 function Code({ className, ...props }: any) {
   const isBlock = useIsMarkdownCodeBlock();
 
@@ -79,8 +75,6 @@ function Code({ className, ...props }: any) {
   );
 }
 
-// lowlight hast → React: only nested spans with `hljs-*` classes (styled in
-// globals.css) and text.
 function renderHighlighted(node: any, key?: number): ReactNode {
   if (node.type === "text") return node.value;
   if (node.type !== "element") return null;
@@ -99,13 +93,12 @@ function renderHighlighted(node: any, key?: number): ReactNode {
 }
 
 // Not a rehype plugin: the primitive only renders `CodeHeader` for blocks whose
-// child is a plain string, so a plugin's span tree quietly lost every header.
+// child is a plain string, so a plugin's span tree loses every header.
 function SyntaxHighlighter({
   language,
   code,
   components: { Pre, Code },
 }: Readonly<SyntaxHighlighterProps>) {
-  // No auto-detect: guessing paints a short snippet as the wrong grammar.
   const tree = lowlight.registered(language)
     ? lowlight.highlight(language, code)
     : null;
@@ -122,14 +115,11 @@ function SyntaxHighlighter({
 }
 
 function CodeHeader({ language, code }: Readonly<CodeHeaderProps>) {
-  // Silent: a toast for every snippet in a long answer is a lot of toast.
   const [, copyToClipboard, copied] = useCopyToClipboard(code, {
     silent: true,
   });
 
   return (
-    /* `.assistant-code-header + pre` in globals.css strips the seam, so the
-       `pre` needs no knowledge of whether a header was rendered. */
     <div className="assistant-code-header mt-3 flex items-center justify-between gap-2 rounded-t-lg border border-b-0 border-nb-gray-850 bg-nb-gray-920 py-1 pl-3 pr-1.5">
       <span className="truncate font-mono text-[11px] text-nb-gray-400">
         {language && language !== "unknown" ? language : "code"}
@@ -151,12 +141,9 @@ function CodeHeader({ language, code }: Readonly<CodeHeaderProps>) {
   );
 }
 
-// A model can be steered by text it read into writing a link or image whose URL
-// carries chat content to another site, which a click or a mere render would
-// send. So images never load, and only the two sites the assistant cites and
-// in-dashboard paths are links; anything else shows as its text. The hosts are
-// named rather than matched as `*.netbird.io`, so an open redirect on any other
-// subdomain cannot become a way out.
+// A steered model can write a link or image whose URL carries chat content
+// to another site, so images never load and only these hosts and in-dashboard
+// paths become links. Exact hosts, not `*.netbird.io`: no open-redirect way out.
 const TRUSTED_HOSTS = new Set(["netbird.io", "docs.netbird.io"]);
 
 const isTrustedHref = (href: unknown): href is string => {
@@ -171,8 +158,6 @@ const isTrustedHref = (href: unknown): href is string => {
   }
 };
 
-// Block spacing is set element by element because Tailwind's preflight zeroes
-// the browser's default margins.
 const components = {
   p: ({ className, ...props }: any) => (
     <p {...props} className={cn("my-3 first:mt-0 last:mb-0", className)} />
@@ -202,7 +187,7 @@ const components = {
   li: ({ className, ...props }: any) => (
     <li {...props} className={cn("[&>p]:my-0", className)} />
   ),
-  // One heading scale: stepped sizes made deeper levels smaller than body text.
+  // One heading scale: an `h1` renders as an `h2`.
   h1: ({ className, children, ...props }: any) => (
     <h2 {...props} className={cn(headingClass, className)}>
       {children}
@@ -242,8 +227,6 @@ const components = {
     <hr {...props} className={cn("my-6 border-nb-gray-800", className)} />
   ),
   img: ({ alt }: any) => (alt ? <span>{alt}</span> : null),
-  // The external-link icon marks absolute http(s) targets only; relative links
-  // stay inside the dashboard.
   a: ({ className, children, href, ...props }: any) =>
     isTrustedHref(href) ? (
       <a
@@ -269,7 +252,6 @@ const components = {
       <span>{children}</span>
     ),
   code: Code,
-  // When a header is rendered above, the sibling rule in globals.css joins the two.
   pre: ({ className, ...props }: any) => (
     <pre
       {...props}
@@ -315,8 +297,6 @@ export function AssistantMarkdownText() {
     <div className="assistant-markdown text-sm leading-relaxed text-nb-gray-100">
       <MarkdownTextPrimitive
         remarkPlugins={[remarkGfm]}
-        // The server already streams tokens; the primitive's reveal animation
-        // on top reads as the text hesitating in bursts.
         smooth={false}
         components={{ ...components, CodeHeader, SyntaxHighlighter } as any}
       />

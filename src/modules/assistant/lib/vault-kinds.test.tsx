@@ -1,8 +1,3 @@
-/*
-  Every kind of value the vault tokenises, typed by the person and written
-  back by the model, must make the whole trip: out as a token and nothing
-  else, back as the value, in each place a value is restored to.
-*/
 import type { EveMessage } from "eve/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import Markdown from "react-markdown";
@@ -11,7 +6,6 @@ import { describe, expect, test } from "vitest";
 import { restoreEveMessage } from "./convert";
 import { TOKEN_PATTERN, Vault } from "./vault";
 
-// What a person might type, by the kind its token is minted under.
 const TYPED: [kind: string, value: string][] = [
   ["IP", "10.10.2.23"],
   ["IP", "fd00:4e42::1"],
@@ -27,8 +21,7 @@ const TYPED: [kind: string, value: string][] = [
 const message = (role: "user" | "assistant", text: string) =>
   ({ id: "m", role, parts: [{ type: "text", text }] }) as EveMessage;
 const textOf = (m: EveMessage) => (m.parts[0] as { text: string }).text;
-// Text only: GFM autolinks an email whatever its escapes, and the chat's own
-// renderer shows a link to anywhere but NetBird's sites as its text.
+// Tags are stripped because GFM autolinks an email whatever its escapes.
 const rendered = (markdown: string) =>
   renderToStaticMarkup(<Markdown remarkPlugins={[remarkGfm]}>{markdown}</Markdown>).replace(/<[^>]+>/g, "");
 

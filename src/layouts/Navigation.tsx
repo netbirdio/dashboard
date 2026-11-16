@@ -70,8 +70,6 @@ export default function Navigation({
   // custom delegated roles), so it is the one surface switch here.
   const { only: agentNetworkOnly, enabled: agentNetworkEnabled } =
     useAgentNetworkMode();
-  // Heights here derive from 100vh, so they must account for the dashboard being
-  // inset by the assistant panel or the nav overflows the card and is clipped.
   const { inset } = useAssistantSidebar();
   // Caller-scoped: true whenever the caller's own policies grant access to
   // at least one provider, independent of any agent_network permission —
@@ -109,16 +107,9 @@ export default function Navigation({
         hideOnMobile ? "hidden md:block" : "",
         fullWidth
           ? "w-auto max-w-[22rem]"
-          : // Not a scroll container: the `ScrollArea` inside owns scrolling. Left
-            // scrollable it would trip over its own child — a y-scrollbar narrows
-            // the content box, which makes the 15rem child overflow sideways.
-            "w-[15rem] max-w-[15rem] min-w-[15rem] overflow-hidden",
-        // Taken out of flow so hover-expanding the rail overlays the page
-        // instead of pushing it (`PageContainer` reserves the 64px). Absolute
-        // rather than fixed: a fixed rail escapes the dashboard card's
-        // `overflow-hidden`, so it paints over the card's rounded edge once the
-        // assistant panel insets it. The row it sits in is `relative`, and its
-        // static position is that row's top-left, so this is the same geometry.
+          : "w-[15rem] max-w-[15rem] min-w-[15rem] overflow-hidden",
+        // Absolute, not fixed: a fixed rail escapes the card's `overflow-hidden`
+        // and paints over its rounded edge.
         isNavigationCollapsed &&
           "md:w-[64px] md:min-w-[64px] md:absolute md:left-0 md:top-0 md:overflow-hidden md:hover:w-[15rem] md:hover:max-w-[15rem] md:hover:min-w-[15rem] md:z-50",
       )}
@@ -126,17 +117,8 @@ export default function Navigation({
         height: `calc(100vh - ${headerHeight + bannerHeight + inset * 2}px)`,
       }}
     >
-      {/*
-        In flow, not positioned out of it: the `ScrollArea` below is already
-        sized to the viewport, so taking this out of flow only makes the rail
-        escape the card's clipping (when fixed) or adds scrollable overflow to
-        the rail itself (when absolute). `relative` keeps it the containing
-        block for the submenu popovers.
-      */}
       <div className={cn(fullWidth ? "w-10/12" : "relative z-0")}>
         <ScrollArea
-          // Vertical only: the rail's width is fixed, so any horizontal
-          // overflow is something to clip, never something to scroll.
           scrollbars={"vertical"}
           style={{
             height: !fullWidth
@@ -146,12 +128,8 @@ export default function Navigation({
         >
           <div
             className={cn(
-              // Clipped in both states, not just while collapsed: this column's
-              // width is fixed, but an item's own min-content isn't — a long
-              // label with a badge ("Agent Network" + Beta) can exceed 15rem and
-              // `whitespace-nowrap` forbids wrapping it. Clipping here keeps
-              // that overflow from widening the `ScrollArea`'s content box,
-              // which Radix sizes with `display: table` around this column.
+              // Clipped even when expanded: a long nowrap label would otherwise
+              // widen the `ScrollArea`'s content box.
               "flex flex-col pt-3 w-[15rem] max-w-[15rem] min-w-[15rem] overflow-x-clip transition-all",
               isNavigationCollapsed &&
                 "md:w-[64px] md:min-w-[64px] md:group-hover/navigation:w-[15rem] md:group-hover/navigation:max-w-[15rem] md:group-hover/navigation:min-w-[15rem]",

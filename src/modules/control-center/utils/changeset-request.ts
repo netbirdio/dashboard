@@ -67,12 +67,6 @@ export interface RequestResolvers {
     networkName: string;
   }) => string;
   groupIdForRef: (ref: string) => string;
-  /**
-   * A router's peer ref → its wire value. A real id passes through; a draft
-   * placeholder's id ("draft-…") has no wire value yet, so the PREVIEW renders a
-   * `{office_router_peer_id}` token — a curl carrying a draft id can't be run,
-   * and printing one invites the reader to try.
-   */
   peerIdForRef: (ref: string, label?: string) => string;
   normalizeAddress: (address: string) => string;
   // The group POST/PUT rejects bare resource ids; it wants {id, type} objects.

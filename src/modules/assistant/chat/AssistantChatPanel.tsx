@@ -1,4 +1,3 @@
-// Always mounted so a conversation survives closing; inert + aria-hidden while hidden.
 "use client";
 
 import { AssistantRuntimeProvider, useAuiState } from "@assistant-ui/react";
@@ -29,15 +28,12 @@ import { useAssistantManagementFetch } from "@/modules/assistant/useAssistantMan
 
 const EXTRA_EXECUTORS = { dashboard_page_redirect: pageRedirect };
 
-// Above the header as well as the thread, so the header can read the thread.
 function ConversationRuntime({
   children,
   open,
 }: Readonly<{ children: React.ReactNode; open: boolean }>) {
   const { runtime, prewarm } = useAssistant();
 
-  // The session is created when the panel opens, so the first message starts
-  // its turn at once instead of waiting for the session to start.
   useEffect(() => {
     if (open) prewarm();
   }, [open, prewarm]);
@@ -49,7 +45,6 @@ function ConversationRuntime({
   );
 }
 
-// Inside the provider, like the header's New Chat button, so it can reset the SDK session too.
 function AssistantConversation({ onNewChat }: Readonly<{ onNewChat: () => void }>) {
   const { entry, dismiss } = useActivePageContext();
   const { newChat } = useAssistant();
@@ -66,8 +61,6 @@ function AssistantConversation({ onNewChat }: Readonly<{ onNewChat: () => void }
   );
 }
 
-// Renders nothing: the context's display name comes from a hook (the SWR
-// cache), but the page-context getter needs it as a plain value at send time.
 function ContextName({
   entry,
   onName,
@@ -85,8 +78,6 @@ function ContextName({
   return null;
 }
 
-// The icon buttons carry ~10px of empty space around the glyph, so matching
-// CHAT_PAD.x would make the header look more inset than the messages.
 const HEADER_PAD_X = CHAT_PAD.x - 10;
 
 function PanelButton({
@@ -111,10 +102,8 @@ function PanelButton({
   );
 }
 
-// Inside the provider so it can reset the SDK session alongside the remount.
 function NewChatButton({ onNewChat }: Readonly<{ onNewChat: () => void }>) {
   const { newChat } = useAssistant();
-  // An empty chat is already a new one.
   const empty = useAuiState((s) => s.thread.isEmpty);
   if (empty) return null;
 
@@ -149,21 +138,15 @@ export function AssistantChatPanel() {
   const [contextName, setContextName] = useState<string | undefined>();
   const pageContext = usePageContextString(contextName);
 
-  // Keys the SDK conversation; a fresh id starts a new one.
   const [chatId, setChatId] = useState(() => crypto.randomUUID());
   const startNewChat = useCallback(() => setChatId(crypto.randomUUID()), []);
-  /*
-    The MSP tenant the reads go to is part of the conversation's key: the
-    assistant service knows the user's own account only, so a chat that
-    outlived a tenant switch would carry one tenant's reads and names into
-    questions about another. A switch starts a separate conversation instead.
-  */
+  // The MSP tenant is part of the key: a chat that outlived a tenant switch
+  // would carry one tenant's reads and names into questions about another.
   const { globalApiParams } = useApplicationContext();
   const tenant = globalApiParams?.account;
   const conversationId = tenant ? `${tenant}:${chatId}` : chatId;
 
-  // autoFocus only fires on mount and the panel is always mounted, so opening
-  // moves focus itself — a frame later, since an inert subtree can't take focus.
+  // Focus moves a frame after opening: an inert subtree cannot take it.
   const panelRef = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -178,11 +161,11 @@ export function AssistantChatPanel() {
   return (
     <aside
       ref={panelRef}
-      // Read by the dashboard's modals, which stay out of the panel's way while it is open.
+      // Read by the dashboard's modals.
       data-assistant-panel={open ? "open" : "closed"}
       aria-label="NetBird Assistant"
       aria-hidden={!open}
-      // Without inert the hidden panel stays in the tab order behind the card.
+      // The panel stays mounted, so without inert it stays in the tab order while hidden.
       inert={open ? undefined : true}
       className={cn(
         "fixed inset-0 flex",
@@ -207,7 +190,6 @@ export function AssistantChatPanel() {
         {entry && <ContextName entry={entry} onName={setContextName} />}
 
         <ConversationRuntime open={open}>
-          {/* Rows pad themselves by CHAT_PAD so the scrollbar can sit on the panel's edge. */}
           <div
             className="flex min-h-0 flex-col"
             style={{ width: overlay ? "100%" : PANEL_WIDTH }}

@@ -11,12 +11,6 @@ import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNod
 import { getPoliciesTargetingResources } from "@/modules/control-center/utils/helpers";
 import { NodeType } from "@/modules/control-center/utils/nodes";
 
-/**
- * Placing an EXISTING peer / group / resource / network / policy on the draft
- * canvas — the components panel's drops and the assistant's `control_center_add` share this
- * so both produce the same nodes, the same network frames, and the same
- * automatically drawn policies.
- */
 export function useDraftEntityDrop() {
   const {
     placeNode,
@@ -30,11 +24,6 @@ export function useDraftEntityDrop() {
   );
   const { data: policies } = useFetchApi<Policy[]>("/policies");
 
-  /**
-   * A pending `update-policy` change wins over the API data, so a policy
-   * edited or disconnected in this draft comes back in its draft state, not
-   * its deployed one.
-   */
   const draftStateOf = useCallback(
     (policy: Policy): Policy => {
       const pending = changes.find(
@@ -45,7 +34,6 @@ export function useDraftEntityDrop() {
     [changes],
   );
 
-  /** Draws the policies granting access to the resources just dropped. */
   const drawResourcePolicies = useCallback(
     (droppedResources: NetworkResource[], position?: XYPosition) => {
       const related = getPoliciesTargetingResources(
@@ -53,8 +41,8 @@ export function useDraftEntityDrop() {
         (policies ?? []).map(draftStateOf),
       );
       if (related.length === 0) return;
-      // Next tick — the dropped nodes must be committed to the canvas before
-      // drawPolicyOnCanvas connects the policies' edges to them.
+      // Next tick: the dropped nodes must be on the canvas before their edges
+      // are drawn.
       setTimeout(() => {
         related.forEach((policy, i) => {
           const anchor = position
@@ -67,10 +55,6 @@ export function useDraftEntityDrop() {
     [policies, draftStateOf, drawPolicyOnCanvas],
   );
 
-  /**
-   * An existing policy draws with its sources/destinations: nodes already on
-   * the canvas are connected, missing ones created around the drop point.
-   */
   const dropExistingPolicy = useCallback(
     (policy: Policy, position?: XYPosition) =>
       drawPolicyOnCanvas(draftStateOf(policy), position),
@@ -113,8 +97,6 @@ export function useDraftEntityDrop() {
 
   const dropExistingResource = useCallback(
     (resource: NetworkResource, position?: XYPosition) => {
-      // Existing resources already live in a network — stamp its ref so the
-      // standalone card shows the network name (read-only in v1).
       const network = networks?.find((n) =>
         n.resources?.includes(resource.id),
       );
@@ -141,7 +123,6 @@ export function useDraftEntityDrop() {
     [placeNode, networks, drawResourcePolicies],
   );
 
-  /** An existing network drops as a full frame, with its resources' policies. */
   const dropExistingNetwork = useCallback(
     (network: Network, position?: XYPosition) => {
       const nodeId = dropExistingNetworkFrame(network, position);

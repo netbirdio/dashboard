@@ -30,13 +30,7 @@ interface MultiSelectProps {
   disabledPeers?: string[];
   disabledPeerReason?: string;
   disabled?: boolean;
-  /**
-   * Peers that don't exist in the API yet — the control center's draft
-   * placeholders. Listed above the real ones and exempt from the version gate:
-   * their version is unknown until they're installed, so gating on it would make
-   * every placeholder unselectable.
-   */
-  extraPeers?: Peer[];
+  additionalPeers?: Peer[];
 }
 
 const searchPredicate = (item: Peer, query: string) => {
@@ -47,20 +41,9 @@ const searchPredicate = (item: Peer, query: string) => {
   return !!item.ipv6?.toLowerCase().startsWith(lowerCaseQuery);
 };
 
-/**
- * What a peer shows in the IP column. A placeholder has no address until it
- * registers, so it shows the masked range its address will come from — the same
- * `100.x.x.x` its canvas card shows (see placeholderIp in ControlCenterContext),
- * which reads as "an address is coming" rather than as an error.
- */
 const addressOf = (peer: Peer) =>
   isPlaceholderPeer(peer) ? getIpPlaceholderFromRange() : peer.ip;
 
-/**
- * A placeholder has no version to compare — it isn't installed yet, which is the
- * whole point of picking one here. The install flow is where a too-old agent
- * shows up, not this list.
- */
 const supportsRouting = (peer: Peer) =>
   isPlaceholderPeer(peer) || isRoutingPeerSupported(peer.version, peer.os);
 
@@ -71,7 +54,7 @@ export function PeerSelector({
   disabledPeers,
   disabledPeerReason,
   disabled = false,
-  extraPeers,
+  additionalPeers,
 }: MultiSelectProps) {
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
@@ -83,11 +66,11 @@ export function PeerSelector({
     { filter: true, debounce: 150 },
   );
 
-  // Serialised so the effect below reacts to a placeholder being renamed or
-  // added, without depending on a fresh array identity each render.
-  const extraKey = (extraPeers ?? []).map((p) => `${p.id}:${p.name}`).join("|");
+  const additionalKey = (additionalPeers ?? [])
+    .map((p) => `${p.id}:${p.name}`)
+    .join("|");
   useEffect(() => {
-    if (!peers && !extraPeers?.length) return;
+    if (!peers && !additionalPeers?.length) return;
 
     let options = sortBy([...(peers ?? [])], "name") as Peer[];
 
@@ -98,13 +81,11 @@ export function PeerSelector({
       });
     }
 
-    // Draft placeholders first: they're what the user just drew, and the API
-    // list can be long.
     setUnfilteredItems(
-      unionBy([...(extraPeers ?? []), ...options], unfilteredItems, "id"),
+      unionBy([...(additionalPeers ?? []), ...options], unfilteredItems, "id"),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [peers, extraKey]);
+  }, [peers, additionalKey]);
 
   const togglePeer = (peer: Peer) => {
     const isSelected = value && value.id == peer.id;

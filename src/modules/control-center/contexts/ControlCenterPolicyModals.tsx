@@ -45,10 +45,6 @@ import {
   isTrackablePolicy,
 } from "@/modules/control-center/utils/helpers";
 
-/**
- * What the Connect Provider modal produces for a caller that waits on it.
- * `providerId` is the draft client id (`new-…`) until the changeset deploys.
- */
 export interface ProviderWizardOutcome {
   providerId: string;
   nodeId: string;
@@ -77,11 +73,6 @@ interface PolicyContextType {
     fallbackPosition?: XYPosition,
   ) => void;
   openProviderWizard: (position?: XYPosition) => void;
-  /**
-   * The same modal, for a caller that has to know how it ended — the assistant,
-   * which cannot type an operator's API key and so opens this and waits.
-   * Resolves with the provider on save and with null on a dismissal.
-   */
   requestProvider: (
     position?: XYPosition,
   ) => Promise<ProviderWizardOutcome | null>;
@@ -260,12 +251,8 @@ export function ControlCenterPolicyProvider({
   const [providerWizard, setProviderWizard] = useState<{
     position?: XYPosition;
   } | null>(null);
-  /*
-    A waiting caller's resolver, in a ref rather than in state because BOTH
-    exits run through it: a draft submit settles it with the provider, and the
-    close that AIProviderModal fires straight afterwards must not settle it a
-    second time as a cancellation. Read-and-clear makes the first exit win.
-  */
+  // Read-and-cleared so the first exit wins: AIProviderModal fires a close
+  // right after a draft submit, which must not settle it again as a cancel.
   const providerWizardResolve = useRef<
     ((outcome: ProviderWizardOutcome | null) => void) | null
   >(null);
@@ -275,8 +262,6 @@ export function ControlCenterPolicyProvider({
     resolve?.(outcome);
   };
 
-  // Opening the wizard from the UI while something waits on it abandons that
-  // wait rather than leaving a promise that can never settle.
   const openProviderWizard = (position?: XYPosition) => {
     settleProviderWizard(null);
     setProviderWizard({ position });
@@ -289,7 +274,6 @@ export function ControlCenterPolicyProvider({
       setProviderWizard({ position });
     });
 
-  // Leaving the page with the wizard open would strand whoever is awaiting it.
   useEffect(() => () => settleProviderWizard(null), []);
 
   const [createPolicyModal, setCreatePolicyModal] = useState(false);
@@ -726,18 +710,9 @@ export function ControlCenterPolicyProvider({
       pushEdge(`${policyNodeId}-${destId}`, policyNodeId, destId);
     }
 
-    /*
-      One writer, and idempotent.
-
-      This goes through `reactFlow.setNodes`/`setEdges` ONLY. React Flow batches
-      the resulting changes and replays them onto the controlled `useNodesState`
-      array through `onNodesChange` in a layout effect, so the array follows on
-      its own — and a second, direct write to that array races the replay rather
-      than reinforcing it.
-
-      The updaters stay idempotent because they can run against an array that
-      already holds part of the result.
-    */
+    // Write through `reactFlow.setNodes`/`setEdges` only: a direct write to the
+    // controlled array races React Flow's replay. The updaters must stay
+    // idempotent, since they can run against a partly updated array.
     const byId = <T extends { id: string }>(items: T[]) => {
       const seen = new Set<string>();
       return items.filter((i) => !seen.has(i.id) && seen.add(i.id));

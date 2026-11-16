@@ -1,24 +1,14 @@
-/**
- * The HTTP side of a chat: the assistant's own routes and headers, and
- * nothing of the agent framework behind them. A chat is a session the agent
- * addresses by id; messages and answers are POSTs, and what happens in the
- * session comes back as one NDJSON event stream.
- */
 import type { InputResponse, MessageStreamEvent } from "eve/client";
 import { PREWARM_PATH, SESSION_ID_HEADER, SESSION_PATH } from "./contract";
 import { AssistantHttpError, serverFailure } from "./session-client";
 
 export interface TransportOptions {
-  /** Origin of the assistant service. */
   host: string;
-  /** Resolved before every request: the user's bearer and the chat header. */
   headers: () => Promise<Record<string, string>>;
 }
 
-/** What the agent says when it takes a message or an answer. */
 export interface Accepted {
   sessionId: string;
-  /** Matches the message to the one the stream reports, so an optimistic copy can be replaced. */
   deliveryId?: string;
 }
 
@@ -33,7 +23,6 @@ const sessionPath = (sessionId?: string, action?: string) => {
   return parts.join("");
 };
 
-// The agent's own "not ready yet": a new chat's session is still being claimed.
 const NOT_READY_CODE = "session_not_ready";
 const NOT_READY_DELAYS_MS = [250, 500, 1_000, 2_000];
 
@@ -73,7 +62,6 @@ async function post(options: TransportOptions, path: string, body: unknown, head
   }
 }
 
-/** Sends a message or answers to a chat; without a session id, starts the chat with its first message. */
 export async function sendTurn(
   options: TransportOptions,
   sessionId: string | undefined,
@@ -86,11 +74,7 @@ export async function sendTurn(
   return { sessionId: id, ...(typeof reply.deliveryId === "string" ? { deliveryId: reply.deliveryId } : {}) };
 }
 
-/**
- * Creates the chat's session ahead of its first message, or finds the one the
- * chat already has. Null when the agent cannot prewarm, in which case the
- * first message creates the session; any other failure is thrown.
- */
+// Null when the agent cannot prewarm (501); any other failure is thrown.
 export async function prewarmChat(options: TransportOptions): Promise<string | null> {
   const res = await fetch(`${options.host}${PREWARM_PATH}`, {
     method: "POST",
@@ -104,16 +88,10 @@ export async function prewarmChat(options: TransportOptions): Promise<string | n
   return typeof reply.sessionId === "string" ? reply.sessionId : null;
 }
 
-/** Stops the turn the chat is running, if any. */
 export async function cancelTurn(options: TransportOptions, sessionId: string): Promise<void> {
   await post(options, sessionPath(sessionId, "cancel"), {});
 }
 
-/**
- * Ends a chat's run on the agent, so its stored transcript starts its
- * retention countdown now instead of at the session timeout.
- * Best effort: a failure leaves the chat to end at its timeout.
- */
 export async function endChat(options: TransportOptions, sessionId: string): Promise<void> {
   try {
     await fetch(`${options.host}${sessionPath(sessionId, "reset")}`, {
@@ -128,7 +106,7 @@ export async function endChat(options: TransportOptions, sessionId: string): Pro
   }
 }
 
-// The agent writes a blank line every 10 s on a quiet stream, so this long without a byte is a dead one.
+// Must exceed the agent's 10 s heartbeat on a quiet stream.
 const STREAM_IDLE_MS = 15_000;
 
 export class StreamIdleError extends Error {
@@ -139,14 +117,11 @@ export class StreamIdleError extends Error {
 }
 
 export interface StreamOptions {
-  /** The index of the first event to send. */
   startIndex: number;
-  /** Ends the stream at the session's current last event instead of following it; the agent closes it there. */
   toTail?: boolean;
   signal: AbortSignal;
 }
 
-/** The chat's events from `startIndex` on, as they happen. Ends when the agent ends the response. */
 export async function* streamEvents(
   options: TransportOptions,
   sessionId: string,
@@ -160,7 +135,6 @@ export async function* streamEvents(
   const res = await fetch(url, { headers: await options.headers(), cache: "no-store", redirect: "error", signal });
   if (!res.ok) throw await failure(res);
   if (!res.body) return;
-  // The agent names the session it streams; anything else is not this chat's stream.
   if (res.headers.get(SESSION_ID_HEADER) !== sessionId) throw new AssistantHttpError(502, "The stream answered for another chat.");
 
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();

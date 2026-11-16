@@ -2,7 +2,6 @@ import { MODEL_REFUSALS, SESSION_UNAVAILABLE_CODE } from "./contract";
 
 const REFUSAL_MESSAGES = new Set<string>(Object.values(MODEL_REFUSALS));
 
-/** Every failure the chat can hit, as one sentence the user can act on. */
 export const ERROR_MESSAGES = {
   sessionExpired: "Your session expired. Reload the page and sign in again.",
   wrongAddress:
@@ -31,7 +30,7 @@ export class AssistantHttpError extends Error {
   }
 }
 
-// For bodies the agent did not word itself, such as proxy error pages; never echoes the body.
+// Never echoes the body: it may be a proxy error page.
 function fallbackFailure(status: number): string {
   if (status === 401) return ERROR_MESSAGES.sessionExpired;
   if (status === 404) return ERROR_MESSAGES.wrongAddress;
@@ -40,7 +39,6 @@ function fallbackFailure(status: number): string {
   return ERROR_MESSAGES.requestFailed;
 }
 
-/** The agent's own `{ code, message }` wording when the body has it, else a fallback. */
 export const serverFailure = (
   status: number,
   body: string,
@@ -57,22 +55,15 @@ export const serverFailure = (
   return { message: fallbackFailure(status) };
 };
 
-/**
- * Whether the session id the browser holds can no longer be resumed.
- * The agent refuses an id it has no record of (after a restart, say) with the same code as a foreign one,
- * so it does not reveal which ids exist; either way the browser starts a new chat.
- */
 export function isUnresumableSession(err: unknown): boolean {
   return err instanceof AssistantHttpError && err.status === 403 && err.code === SESSION_UNAVAILABLE_CODE;
 }
 
 export function describeAssistantError(err: unknown): string {
-  // Worded by the agent, or by `serverFailure` when it was not.
   if (err instanceof AssistantHttpError) return err.message;
   if ((err as Error)?.name === "TimeoutError") return ERROR_MESSAGES.timeout;
   if (err instanceof TypeError) return ERROR_MESSAGES.unreachable;
   if ((err as Error)?.name === "SESSION_TOKEN_LIMIT_REACHED") return ERROR_MESSAGES.chatTooLong;
-  // The agent's own refusals are worded for the user; any other failure text is not.
   const message = (err as Error)?.message;
   if (typeof message === "string" && REFUSAL_MESSAGES.has(message)) return message;
   // Raw error text can name internal hosts, providers or billing state, so it is never shown.

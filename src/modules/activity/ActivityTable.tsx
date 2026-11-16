@@ -100,8 +100,6 @@ export default function ActivityTable({
   const router = useRouter();
   const params = useSearchParams();
 
-  // `?id=` opens the log on one event (the assistant links here), the way the
-  // network resources table takes `?resource=`.
   const eventId = params.get("id") ?? undefined;
   const removeEventParam = React.useCallback(() => {
     if (!eventId) return;

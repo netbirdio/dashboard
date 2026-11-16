@@ -218,10 +218,6 @@ export function useDeployChangeset() {
           `Group "${ref}" is missing. It may have been removed from the draft.`,
         );
       },
-      // install-peer blocks the deploy until the peer exists, and installing
-      // rewrites the router with the real id. Checked here as well, so a
-      // placeholder that gets past that gate stops the deploy instead of
-      // reaching the API.
       peerIdForRef: (ref) => {
         if (!isDraftPeerId(ref)) return ref;
         throw new Error(

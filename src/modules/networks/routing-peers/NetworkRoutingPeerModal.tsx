@@ -97,12 +97,7 @@ type ContentProps = {
   // false → no API calls; the data comes back via onSaved (draft mode).
   useSave?: boolean;
   onSaved?: (r: RoutingPeerModalResult) => void;
-  /**
-   * Peers to offer besides the account's own — the control center's draft
-   * placeholders, which have no API row yet. Draft mode only: a placeholder
-   * router is recorded in the changeset and deploys once the peer is installed.
-   */
-  extraPeers?: Peer[];
+  additionalPeers?: Peer[];
 };
 
 export function RoutingPeerModalContent({
@@ -112,7 +107,7 @@ export function RoutingPeerModalContent({
   onUpdated,
   useSave = true,
   onSaved,
-  extraPeers,
+  additionalPeers,
 }: ContentProps) {
   const isRoutingPeer = router ? router.peer != "" : true;
 
@@ -126,8 +121,6 @@ export function RoutingPeerModalContent({
     `/networks/${network.id}/routers/${router?.id}`,
   ).put;
 
-  // A placeholder's id has no API row — resolve the prefill from `extraPeers`
-  // instead of fetching a 404.
   const presetIsDraft = isDraftPeerId(router?.peer);
   const { data: peer, isLoading: peerLoading } = useFetchApi<Peer>(
     "/peers/" + router?.peer,
@@ -156,7 +149,7 @@ export function RoutingPeerModalContent({
     null,
   );
   const presetPeer = presetIsDraft
-    ? extraPeers?.find((p) => p.id === router?.peer)
+    ? additionalPeers?.find((p) => p.id === router?.peer)
     : peer;
   const routingPeer = selectedPeer === null ? presetPeer : selectedPeer;
 
@@ -181,8 +174,7 @@ export function RoutingPeerModalContent({
 
   const isNonLinuxRoutingPeer = useMemo(() => {
     if (!routingPeer) return false;
-    // A placeholder's OS is unknown until it's installed — assuming non-Linux
-    // would lock masquerade on for a router the user hasn't set up yet.
+    // A placeholder's OS is unknown; non-Linux would lock masquerade on.
     if (isPlaceholderPeer(routingPeer)) return false;
     return getOperatingSystem(routingPeer.os) != OperatingSystem.LINUX;
   }, [routingPeer]);
@@ -329,7 +321,7 @@ export function RoutingPeerModalContent({
                     <PeerSelector
                       onChange={setSelectedPeer}
                       value={routingPeer}
-                      extraPeers={extraPeers}
+                      additionalPeers={additionalPeers}
                       disabled={peerLoading}
                       disabledPeers={assignedPeerIds}
                       disabledPeerReason={

@@ -248,7 +248,6 @@ export const ReviewDeployModal = ({
                     onDiscard={() => removeWithCascade(change)}
                     previewRemove={previewRemove}
                     onResolveIssue={
-                      // An issue about a group deleted elsewhere has no fix on this row.
                       getChangeIssue(change, changes)?.resolvable
                         ? resolveIssue
                         : undefined

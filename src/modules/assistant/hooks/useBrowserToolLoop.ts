@@ -24,22 +24,14 @@ import { describeAssistantError, ERROR_MESSAGES } from "../lib/session-client";
 import type { BrowserToolContext } from "../lib/tools";
 import { redactResult, restoreToolInput, type Vault } from "../lib/vault";
 
-/*
-  A browser tool parks the turn on a question naming the call and its input.
-  The dashboard runs it, then answers every call of that pause at once:
-  a placeholder answer per call, with what each reported as a browser result
-  the agent screens and writes into the answer, which the call returns.
-  Calls run in the order the model made them,
-  since a control_center_add run concurrently with the draft before it would find nothing to add to.
-  Each call runs with the tokens in its input restored, and its result is tokenised before it is sent,
-  so the agent only ever handles tokens.
-*/
+// Browser calls run one at a time, in the order the model made them:
+// a control_center_add run concurrently with the draft before it would find nothing to add to.
+// Inputs have their tokens restored and results are tokenised before sending, so the agent only handles tokens.
 
 interface BrowserCall {
   requestId: string;
   toolName: string;
   input: unknown;
-  /** Where the call stood among the step's calls; unknown calls go last. */
   order: number;
 }
 
@@ -49,19 +41,14 @@ interface BrowserToolQueueDeps {
   execute: (call: BrowserCall) => Promise<ToolOutcome>;
   deliver: (responses: InputResponse[], results: BrowserResult[]) => Promise<void>;
   onBusyChange?: (busy: boolean) => void;
-  /** The answers could not be delivered, so the turn stays parked until the chat is reloaded. */
   onDeliveryFailed?: (err: unknown) => void;
 }
 
-// The results of one request, in UTF-8 bytes as sent; the rest of the cap is
-// the envelope and each answer's ids, generously.
 const RESULTS_BUDGET_BYTES = CHAT_REQUEST_MAX_BYTES - 16 * 1024;
-// Says what to do next, since a model told only that it failed repeats the same read.
 const TOO_LARGE = "[The result was too large to send. Narrow the read with a filter instead of repeating it.]";
 const DELIVERY_ATTEMPTS = 3;
 
 const utf8 = new TextEncoder();
-/** A result's size in the request body: escaped as a JSON string, then encoded. */
 const wireBytes = (content: string) => utf8.encode(JSON.stringify(content)).length;
 
 const statusOf = (err: unknown): number | undefined => {
@@ -71,11 +58,7 @@ const statusOf = (err: unknown): number | undefined => {
 
 type Ran = { call: BrowserCall; outcome: ToolOutcome };
 
-/**
- * The results split into requests the agent takes: each within the request cap and the count cap,
- * in order. A result too large for any request goes as a short note instead.
- * Never cut: a cut JSON result could not be re-profiled, and the agent would withhold it anyway.
- */
+// An oversized result is replaced by a note, never cut: the agent could not re-profile cut JSON.
 function requests(entries: Ran[]): Ran[][] {
   const out: Ran[][] = [];
   let current: Ran[] = [];
@@ -109,17 +92,15 @@ class BrowserToolQueue {
 
   constructor(private readonly deps: BrowserToolQueueDeps) {}
 
-  /** eve resolved this request (another tab answered it, or the turn ended), so it is not run or answered. */
   markSettled(requestId: string): void {
     this.settled.add(requestId);
     this.releases.get(requestId)?.();
   }
 
-  /** Abandons the queue: its work belongs to a conversation the user has left. */
   dispose(): void {
     if (this.disposed) return;
     for (const release of this.releases.values()) release();
-    // Settled here, not when the abandoned work resolves:
+    // Before `disposed` is set, and not when the abandoned work resolves:
     // every generation of the queue drives the same busy flag.
     this.setPending(0);
     this.disposed = true;
@@ -148,11 +129,8 @@ class BrowserToolQueue {
     for (const batch of requests(ran)) await this.send(batch);
   }
 
-  /**
-   * Answers the calls, retrying a failure that may pass. The answers are matched
-   * by request id, so a repeat is safe. A request too large for the agent goes
-   * once more with every result withheld, which still lets the turn move on.
-   */
+  // Answers are matched by request id, so a retry is safe.
+  // On a 413 the batch goes once more with every result withheld, so the turn can still move on.
   private async send(batch: Ran[]): Promise<void> {
     let entries = batch;
     for (let attempt = 1; ; attempt++) {
@@ -182,7 +160,6 @@ class BrowserToolQueue {
     }
   }
 
-  // A rejecting executor still owes the model an answer, so it becomes a failed outcome.
   private async executed(call: BrowserCall): Promise<ToolOutcome | typeof RELEASED> {
     const released = new Promise<typeof RELEASED>((resolve) => {
       this.releases.set(call.requestId, () => resolve(RELEASED));
@@ -205,39 +182,21 @@ class BrowserToolQueue {
   }
 }
 
-// How long a turn boundary has to stand before the canvas lock is released:
-// long enough to bridge a queued follow-up turn, short enough that the scrim does not linger.
 export const TURN_SETTLE_MS = 200;
 
-/*
-  How long calls are held before they run, so the step's calls can be put back
-  in the model's order. Each browser call is its own workflow, and the
-  workflows of one step start together and ask separately, so their questions
-  arrive moments apart and not always in the order the calls were made.
-*/
+// Calls are held this long so a step's calls can be put back in the model's order:
+// their questions arrive moments apart, and not always in the order the calls were made.
 const CALL_ORDER_WINDOW_MS = 40;
 
 const byOrder = (a: BrowserCall, b: BrowserCall) => a.order - b.order;
 
-/**
- * An input request eve paused the session on that the host renders:
- * an `ask_question`, a runtime-limit continuation or an approval for a non-browser tool.
- * Later messages queue behind it until it is resolved.
- */
 export interface PendingInputRequest {
-  /** Identifies the request, not a tool call. */
   requestId: string;
-  /** eve's discriminator: `session-limit`, `tool-approval` or `question`. */
   kind: string;
   prompt: string;
   toolName?: string;
-  /**
-   * The answer shape eve expects:
-   * `text` for a question without options, `select` with options, `confirmation` for an approval.
-   * Not inferable from `options`, since a malformed request also has none.
-   */
+  /** Not inferable from `options`, since a malformed request also has none. */
   display?: "confirmation" | "select" | "text";
-  /** The model offered options but will also accept typed text. */
   allowFreeform?: boolean;
   options: {
     id: string;
@@ -247,7 +206,6 @@ export interface PendingInputRequest {
   }[];
 }
 
-/** Whether the request can be answered by typing; only a `question` ever can. */
 export const acceptsFreeText = (request: PendingInputRequest): boolean =>
   request.kind === "question" &&
   (request.display === "text" || request.allowFreeform === true);
@@ -260,15 +218,12 @@ const asObject = (input: unknown): Record<string, unknown> =>
 
 interface BrowserToolLoopApi {
   handleEvent: (ev: MessageStreamEvent) => void;
-  /** Runs the browser calls a resumed session is still parked on, once its history has replayed. */
   flushReplayed: () => void;
   busy: boolean;
-  /** Why the browser's answers last failed to reach the agent; cleared when a turn starts. */
   deliveryError: unknown;
   pendingInput: PendingInputRequest | null;
   pendingInputs: PendingInputRequest[];
   clearPendingInput: (requestId: string) => void;
-  /** Puts back a request whose answer did not go through, at the head where it was. */
   restorePendingInput: (request: PendingInputRequest) => void;
   reset: () => void;
 }
@@ -276,10 +231,8 @@ interface BrowserToolLoopApi {
 interface UseBrowserToolLoopOptions {
   getSessionId: () => string | undefined;
   getStatus: () => ChatStatus;
-  /** The chat's vault, read per call since a new chat replaces it. */
   getVault: () => Vault;
   respond: (responses: InputResponse[], results: BrowserResults) => Promise<void>;
-  /** An account read, tokenised, for the engine to carry into the next message. */
   onRead?: (result: { toolName: string; ok: boolean; content: string }) => void;
 }
 
@@ -293,23 +246,17 @@ export function useBrowserToolLoop({
   const ctx = useAssistantContext();
   const [busy, setBusy] = useState(false);
   const [deliveryError, setDeliveryError] = useState<unknown>(null);
-  // eve can hold several outstanding requests at once,
-  // and keeping only the newest would leave the session parked forever.
+  // A list: eve can hold several requests at once, and keeping only the newest would leave the session parked.
   const [pendingInputs, setPendingInputs] = useState<PendingInputRequest[]>([]);
 
   const optsRef = useRef({ getSessionId, getStatus, getVault, respond, onRead });
   optsRef.current = { getSessionId, getStatus, getVault, respond, onRead };
 
-  // Browser calls seen while history replays, in order; resolved ones drop out.
   const replayedRef = useRef(new Map<string, BrowserCall>());
-  // Each call's place among the calls the model has made, from eve's own announcement of them.
   const callOrderRef = useRef(new Map<string, number>());
-  // Calls held for the order window, and the timer that releases them.
   const stagedRef = useRef<BrowserCall[]>([]);
   const stageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Holds the canvas still from the first cc_* tool of a turn until the turn
-  // settles, spanning the model round-trips between tool batches.
   const canvasReleaseRef = useRef<(() => void) | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -388,7 +335,6 @@ export function useBrowserToolLoop({
     [run],
   );
 
-  // The queue outlives renders, so it reaches the latest executor through a ref.
   const executeRef = useRef(execute);
   executeRef.current = execute;
 
@@ -462,7 +408,6 @@ export function useBrowserToolLoop({
                 options: (r.options ?? []).filter((o) => o.id === "stop"),
               });
             } else {
-              // The model asks in tokens; the person reads names.
               const { restoreText } = optsRef.current.getVault();
               shown.push({
                 requestId: r.requestId,
@@ -515,7 +460,6 @@ export function useBrowserToolLoop({
           setDeliveryError(null);
           return;
         case "turn.completed":
-        // A question parks the turn open; the canvas is the user's while they answer.
         case "turn.waiting":
         case "turn.cancelled":
         case "turn.failed":
@@ -560,7 +504,6 @@ export function useBrowserToolLoop({
     setPendingInputs([]);
   }, [releaseCanvas, clearStaged, makeQueue]);
 
-  // Unmounting must not leave the canvas scrim up, nor a held call run.
   useEffect(() => () => {
     releaseCanvas();
     clearStaged();

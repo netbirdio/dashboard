@@ -1268,12 +1268,9 @@ describe("getChangeIssue / hasBlockingIssues", () => {
   } as DraftChange;
 
   it("says nothing on a router whose peer already has an install step", () => {
-    // Review & Deploy lists that step first as a prerequisite; repeating it on the
-    // router hides the request the row exists to show.
     expect(
       getChangeIssue(placeholderRouter, [installStep, placeholderRouter]),
     ).toBeUndefined();
-    // Still blocked — by the install step itself.
     expect(hasBlockingIssues([installStep, placeholderRouter])).toBe(true);
   });
 

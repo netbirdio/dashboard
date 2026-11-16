@@ -1,15 +1,7 @@
 import type { DraftChange } from "@/modules/control-center/draft/DraftChangesetContext";
 
-/**
- * The ids of the changes the assistant made or touched, carried from one
- * changeset to the next. A change is the assistant's when it appeared or was
- * replaced while the assistant held the canvas. The mark stays when the user
- * edits the change afterwards, since what the assistant put in it still needs
- * checking, and goes when the change leaves the changeset.
- *
- * Text the assistant reads can carry instructions, so the review before deploy
- * has to show which changes came from it rather than from the user.
- */
+// Text the assistant reads can carry instructions, so the review must show
+// which changes it made. A mark survives the user editing the change afterwards.
 export function markAssistantChanges(
   prev: readonly DraftChange[],
   next: readonly DraftChange[],

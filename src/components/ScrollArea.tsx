@@ -4,13 +4,8 @@ import * as React from "react";
 
 type AdditionalScrollAreaProps = {
   withoutViewport?: boolean;
-  /**
-   * Which axes may scroll. Radix derives the viewport's `overflow-x` /
-   * `overflow-y` from the scrollbars that are mounted, so dropping an axis
-   * here also stops the viewport from scrolling on it — the content is
-   * clipped instead. Use "vertical" for fixed-width columns, where a stray
-   * sub-pixel of horizontal overflow would otherwise grow a scrollbar.
-   */
+  // Radix derives the viewport's overflow from the mounted scrollbars,
+  // so dropping an axis clips its content instead of scrolling it.
   scrollbars?: "both" | "vertical" | "horizontal";
 };
 

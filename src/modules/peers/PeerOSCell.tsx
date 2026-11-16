@@ -79,8 +79,6 @@ const ListItem = ({
   );
 };
 
-// `size` is the base measure; each logo scales from it with its own factor
-// because the marks aren't optically equal at the same pixel size.
 export function OSLogo({ os, size = 18 }: Readonly<{ os: string; size?: number }>) {
   const icon = useMemo(() => {
     return getOperatingSystem(os);

@@ -164,10 +164,6 @@ export function useDraftGroupActions() {
   } = useDraftChangeset();
 
   // The group panel opens on click, not on drop.
-  //
-  // `preferredName` names the group AT BIRTH. Creating it and renaming it after
-  // the fact is a different thing entirely: two changeset writes, the second one
-  // reading state the first hasn't committed yet.
   const addNewGroup = useCallback(
     (position: XYPosition, preferredName?: string) => {
       const taken = new Set<string>();
@@ -998,8 +994,6 @@ export function useDraftGroupActions() {
     removeGroupMember,
     removeGroup,
     removeGroups,
-    // Unconfirmed single-group delete — the assistant's control_center_node path; the menu
-    // goes through confirmAndDeleteGroups instead.
     deleteGroup,
     confirmAndDeleteGroups,
     removeNodeWithEdges,

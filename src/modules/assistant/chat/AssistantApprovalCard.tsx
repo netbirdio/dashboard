@@ -1,54 +1,21 @@
-// The gate for a framework pause: a tool waiting on approval, or a runtime
-// limit waiting on a decision. It takes the composer's place at the foot of
-// the panel rather than floating over the thread: the framework answers
-// nothing — not this prompt, not any message sent after it — until one of
-// these options comes back, so the box you would have typed into is exactly
-// the thing that should not be there. The conversation stays readable behind
-// it, which is usually what the decision is about.
 "use client";
 
 import Button from "@components/Button";
 import { cn } from "@utils/helpers";
 import { MessageCircleQuestion, ShieldQuestion } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { acceptsFreeText, type PendingInputRequest } from "@/modules/assistant/hooks/useBrowserToolLoop";
 import { toolLabel } from "@/modules/assistant/lib/tools";
 
-/**
- * What the card asks, in the words the rest of the thread uses.
- *
- * The framework's own prompt is written for a generic client — "Approve tool
- * call: peer_ssh_bash" — and the tool's wire name is not what this dashboard
- * calls it anywhere else. The manifest label is, so a tool approval gets that and
- * every other pause gets the framework's prompt, which is already prose.
- */
 function approvalTitle(request: PendingInputRequest): string {
   if (request.kind !== "tool-approval" || !request.toolName)
     return request.prompt;
   return `${toolLabel(request.toolName, false)}?`;
 }
 
-/**
- * Whether this pause is an open question — one asked with nothing to tap.
- *
- * It is the one pause that does NOT belong in the composer's place. An
- * approval replaces the composer because the box you would type into is
- * exactly the thing that should not be there; an open question is the
- * opposite, since typing is the only way to answer it. So it renders as a
- * card above the composer the way a question with options does, and the composer
- * the user already has is what sends the answer.
- */
 export const isOpenQuestion = (request: PendingInputRequest): boolean =>
   acceptsFreeText(request) && request.options.length === 0;
 
-/**
- * An open question, above the composer: the question and nothing else.
- *
- * No "waiting for you" line, because the focused composer directly beneath it
- * already says so and the sentence only reads as filler once there is nowhere
- * else for the turn to go. No text box and no send button either — both would
- * be a second copy of the composer sitting on top of the real one.
- */
 export function AssistantOpenQuestionCard({
   request,
 }: Readonly<{ request: PendingInputRequest }>) {
@@ -69,30 +36,16 @@ export function AssistantOpenQuestionCard({
 
 type Option = PendingInputRequest["options"][number];
 
-/**
- * Which option each key answers.
- *
- * Chosen from the framework's own `style` hint first, since that is the field
- * it sets deliberately, and from the option's position only as a fallback —
- * never from the label, which is copy and changes. A pause that offers
- * something other than a yes/no pair still renders every option as a button;
- * only the keyboard shortcuts need a pair to bind to.
- */
 function affirmativeOf(options: Option[]): Option | undefined {
   return options.find((o) => o.style === "primary") ?? options[0];
 }
 
-// Never the affirmative too: a lone option, such as the length limit's Stop, would render twice.
+// Never the affirmative too: a lone option would otherwise render twice.
 function negativeOf(options: Option[]): Option | undefined {
   const negative = options.find((o) => o.style === "danger") ?? options.at(-1);
   return negative === affirmativeOf(options) ? undefined : negative;
 }
 
-/**
- * The copy for a tool approval, which is a narrower question than the
- * framework's generic one: this grants a single call, not a standing
- * permission.
- */
 function labelFor(
   request: PendingInputRequest,
   option: Option,
@@ -104,36 +57,18 @@ function labelFor(
 
 export interface ApprovalCardProps {
   request: PendingInputRequest;
-  onRespond: (answer: string | { text: string }) => void;
-  /** Offered on the length limit, the way past it: Stop only ends the answer. */
+  onRespond: (answer: string) => void;
   onNewChat?: () => void;
 }
-
-/*
-  The latch below holds the option id that was clicked, so that a typed answer
-  — which has no id — still has something to latch on. Not a value any option
-  can collide with: eve mints option ids, and this is not one of them.
-*/
-const TYPED = "\u0000typed";
 
 export function AssistantApprovalCard({
   request,
   onRespond,
   onNewChat,
 }: Readonly<ApprovalCardProps>) {
-  // The answer is a round trip, and the session is parked until it lands. A
-  // second click would post a second response to a request the framework has
-  // already resolved, so the buttons latch on the first one.
+  // Latches on the first answer: a second one would post to a request
+  // the framework has already resolved.
   const [answering, setAnswering] = useState<string | null>(null);
-
-  /*
-    A question eve will accept typed text for. The other two pauses — an
-    approval, a runtime-limit continuation — are a choice between the options it
-    minted, so they never get a text box: there would be nothing to send it to.
-  */
-  const freeText = acceptsFreeText(request);
-  const [draft, setDraft] = useState("");
-  const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   const respond = useCallback(
     (optionId: string) => {
@@ -146,46 +81,18 @@ export function AssistantApprovalCard({
     [onRespond],
   );
 
-  const submitText = useCallback(() => {
-    const text = draft.trim();
-    if (text === "") return;
-    setAnswering((current) => {
-      if (current !== null) return current;
-      onRespond({ text });
-      return TYPED;
-    });
-  }, [draft, onRespond]);
-
-  // The box is the only thing on screen worth typing into, and the composer it
-  // replaces had focus a moment ago.
-  useEffect(() => {
-    if (freeText) inputRef.current?.focus();
-  }, [freeText]);
-
-  // New chat takes the affirmative's place, so Stop is the refusal: on the left, on Escape.
+  // On the length limit, New chat takes the affirmative's place and Stop is the refusal.
   const newChat = request.kind === "session-limit" ? onNewChat : undefined;
   const affirmative = newChat ? undefined : affirmativeOf(request.options);
   const negative = newChat ? request.options[0] : negativeOf(request.options);
 
-  /*
-    Deny first, allow last, whatever order the framework listed them in. The
-    rightmost button is the one a pointer travels to by default and the one
-    Enter is bound to, so it has to be the same choice either way — and the
-    destructive half of a yes/no pair should never be what a reflex lands on.
-  */
   const ordered = [
     ...(negative ? [negative] : []),
     ...request.options.filter((o) => o !== negative && o !== affirmative),
     ...(affirmative ? [affirmative] : []),
   ];
 
-  // Enter and Escape, bound while the gate is up. Captured on the window
-  // because the overlay covers the composer: there is nothing else on screen
-  // these keys could sensibly mean.
   useEffect(() => {
-    // Not while there is a text box: Enter belongs to the answer being typed,
-    // and Escape to whatever the browser does with a focused field.
-    if (freeText) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
       if (event.key !== "Enter" && event.key !== "Escape") return;
@@ -201,7 +108,7 @@ export function AssistantApprovalCard({
     };
     globalThis.addEventListener("keydown", onKey);
     return () => globalThis.removeEventListener("keydown", onKey);
-  }, [affirmative, negative, freeText, respond, newChat]);
+  }, [affirmative, negative, respond, newChat]);
 
   return (
     <div
@@ -211,7 +118,6 @@ export function AssistantApprovalCard({
       className="w-full rounded-2xl border border-nb-gray-700 bg-nb-gray-900 px-4 pb-3.5 pt-4"
     >
       <div className="flex items-start gap-2.5">
-        {/* A question is not a security decision, and the shield read as one. */}
         {request.kind === "question" ? (
           <MessageCircleQuestion
             size={16}
@@ -239,39 +145,10 @@ export function AssistantApprovalCard({
         </div>
       </div>
 
-      {freeText && (
-        <textarea
-          ref={inputRef}
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            // Enter sends, because this is one answer and not a document.
-            // Shift+Enter still breaks a line, for the occasional pasted list.
-            if (event.key !== "Enter" || event.shiftKey) return;
-            event.preventDefault();
-            submitText();
-          }}
-          disabled={answering !== null}
-          rows={2}
-          placeholder="Type your answer…"
-          aria-label={approvalTitle(request)}
-          className={cn(
-            "mt-3 w-full resize-none rounded-lg border border-nb-gray-700 bg-nb-gray-950",
-            "px-3 py-2 text-chat text-nb-gray-100 placeholder:text-nb-gray-500",
-            "focus:border-nb-gray-500 focus:outline-none disabled:opacity-50",
-          )}
-        />
-      )}
-
       <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
         {ordered.map((option) => {
-          // With a text box present the send button is the primary action, so
-          // an option alongside it is one way of answering rather than the way.
-          const isAffirmative = !freeText && option === affirmative;
+          const isAffirmative = option === affirmative;
           return (
-            /* The dashboard's own Button, so these two read as the same kind of
-               control as every other pair of actions in the product, and pick
-               up its focus ring and disabled treatment for free. */
             <Button
               key={option.id}
               size="xs"
@@ -298,43 +175,24 @@ export function AssistantApprovalCard({
             New chat
           </Button>
         )}
-        {freeText && (
-          <Button
-            size="xs"
-            variant="primary"
-            disabled={answering !== null || draft.trim() === ""}
-            onClick={submitText}
-            className="!py-1.5 gap-2"
-          >
-            Send
-          </Button>
-        )}
       </div>
     </div>
   );
 }
 
-/**
- * The pause in the composer's slot, or nothing.
- *
- * A thin wrapper so the thread does not have to know the card's null case or
- * its reset key, and so "what replaces the composer" stays one decision in one
- * place.
- */
 export function AssistantApprovalGate({
   request,
   onRespond,
   onNewChat,
 }: Readonly<{
   request: PendingInputRequest | null;
-  onRespond: (answer: string | { text: string }) => void;
+  onRespond: (answer: string) => void;
   onNewChat?: () => void;
 }>) {
   if (!request) return null;
   return (
     <AssistantApprovalCard
-      // A new pause is a new card, so a latched button does not carry over
-      // from the one before it.
+      // Resets the answer latch for each new pause.
       key={request.requestId}
       request={request}
       onRespond={onRespond}

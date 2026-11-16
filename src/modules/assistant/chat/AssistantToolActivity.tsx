@@ -1,4 +1,3 @@
-// One row of the activity trail, for both server-run and browser-run tools.
 "use client";
 
 import { cn } from "@utils/helpers";
@@ -10,8 +9,6 @@ import { describeToolCall } from "@/modules/assistant/lib/tools";
 import { useTurnActive } from "@/modules/assistant/chat/AssistantTurnContext";
 import { navigateToPage } from "@/modules/assistant/lib/page-redirect";
 
-// Narrower than `ToolCallMessagePartProps` on purpose: grouped parts hand over
-// a part state, not the full props object, and this is all both have to agree on.
 export interface ToolActivityProps {
   toolName: string;
   status?: { type: string };
@@ -20,8 +17,6 @@ export interface ToolActivityProps {
   result?: unknown;
 }
 
-// The first string in the input, since every tool takes exactly one that
-// matters; `dashboard_page_redirect` instead shows the pushed route.
 function subjectOf(toolName: string, args: unknown): string | null {
   if (!args || typeof args !== "object") return null;
 
@@ -30,11 +25,6 @@ function subjectOf(toolName: string, args: unknown): string | null {
     return "href" in target ? target.href : null;
   }
 
-  /*
-    Named, not found. Both tools lead with an enum — the API operation, the
-    site to list — which the label already spells out, so the first-string
-    rule would quote it back as the subject.
-  */
   if (toolName === "netbird_api" || toolName === "docs_search") {
     const key = toolName === "netbird_api" ? "id" : "url";
     const value = (args as Record<string, unknown>)[key];
@@ -53,10 +43,6 @@ const asJson = (value: unknown): string | null => {
   return JSON.stringify(value, null, 2);
 };
 
-// A server tool's result is `{ ok, content, summary, … }` — the content is the
-// readable part. A management call's result is the JSON payload as a string.
-// A guide or docs page the model read arrives as a stub, so the row shows
-// the request alone.
 function formatResult(result: unknown): string | null {
   if (result === undefined || result === null || isOmittedOutput(result)) return null;
   const content = (result as { content?: unknown })?.content;
@@ -82,19 +68,8 @@ export function AssistantToolActivity({
   const [open, setOpen] = useState(false);
 
   const failed = isError === true || status?.type === "incomplete";
-  /*
-    A result in hand outranks the status. The status is the host's word for
-    what the runtime last said, and a failed call must not keep the spinner
-    when the error is already here.
-  */
-  /*
-    A row cannot still be running once the turn that owns it is over.
-
-    eve resolves its own framework tools — `ask_question` among them — without
-    sending back the tool result a dispatched tool returns, so `result` never
-    arrives and the status stays "running" forever. The turn ending is the
-    honest end of anything it started.
-  */
+  // eve resolves its own framework tools without sending a result, so their
+  // status stays "running" forever: the turn ending settles the row too.
   const turnActive = useTurnActive();
   const settled = failed || result !== undefined || !turnActive;
   const running = !settled && status?.type === "running";
@@ -102,54 +77,20 @@ export function AssistantToolActivity({
   const request = asJson(args);
   const outcome = formatResult(result);
   const expandable = Boolean(request || outcome);
-  /*
-    How the row reads. The canvas tools name their own move, an API read names
-    its operation, and everything else takes the manifest's fixed label.
-  */
   const described = describeToolCall(toolName, args, running);
-  /*
-    The canvas tools also name their own SUBJECT, so the generic first-string
-    rule is skipped for them — it surfaced raw enums ('new_empty') and half a
-    connection. Every other tool still shows it.
-
-    `described.subject` is the third case: a tool the SDK names better than the
-    rule can. It distinguishes "no opinion" (undefined, rule applies) from "this
-    row has no subject" (null), which is what stops a label that already spells
-    out its skill from being followed by the slug it came from.
-  */
+  // `described.subject` is undefined for "no opinion" (the first-string rule
+  // applies) and null for "this row has no subject".
   let subject: string | null | undefined;
   if (CONTROL_CENTER_TOOLS[toolName]) subject = null;
   else if (described.subject === undefined) subject = subjectOf(toolName, args);
   else subject = described.subject;
-  /*
-    One string, not three spans.
-
-    The label, the preposition and the quoted subject are one sentence about
-    one call — "List user accounts on 'alice-laptop.local'" — and
-    splitting them across flex children put the row's `gap-2` inside it, so it
-    read as three separate labels with 8px gutters rather than as a phrase.
-    Joined here, the gap is left to do its real job of spacing the icons.
-  */
   const line = [described.label, described.detail, subject && `'${subject}'`]
     .filter(Boolean)
     .join(" ");
 
-
   const chevron = <ChevronRight size={13} className={cn("transition-transform", open && "rotate-90")} />;
-  /* 12, not the 13 its neighbours use, and `block`.
-
-     Lucide draws a 24-unit viewBox at the pixel size given, so 13
-     scales by 13/24 and puts the circle's centre on a half-pixel:
-     the stroke then rasterises slightly differently on each frame
-     and the spin visibly wobbles. 12 is an exact half, so the centre
-     and the stroke land on whole pixels and the rotation is steady.
-     The constraint only applies to the icon that MOVES — the chevron
-     and info marks beside it stay at 13, where a half-pixel is
-     static and invisible, and the 16px box keeps the column aligned
-     either way. `block` drops the inline baseline gap, which would
-     otherwise put the rotation origin below the glyph's centre. */
-  /* An expandable failed row still needs its chevron; one with
-     nothing to open says so with the icon instead. */
+  // The spinner is 12 and `block`, not 13 like its neighbours: an odd size
+  // or an inline baseline puts the rotation off-centre and the spin wobbles.
   let icon: ReactNode;
   if (running) icon = <Loader2 size={12} className="block animate-spin" />;
   else if (failed) icon = expandable ? chevron : <Info size={13} />;
@@ -163,31 +104,15 @@ export function AssistantToolActivity({
         aria-expanded={expandable ? open : undefined}
         className={cn(
           "flex w-full items-center gap-2 pb-1 text-left transition-colors",
-          // A failed row stays red on hover: sliding to the neutral colour
-          // read as the error resolving itself under the cursor.
           failed
             ? "text-red-400 hover:text-red-300"
             : "text-nb-gray-300 hover:text-nb-gray-100",
         )}
       >
-        {/* Same 16px box as the working indicator, so both lines start text on
-            one column — and while the call runs it carries the spinner, which
-            is what that column is for. Empty here and spinning on the far side
-            of the label left the row visibly headless against the working line
-            right below it, with the progress orphaned past the text it belongs
-            to. The chevron takes the box back once there is a result to open,
-            which is also the moment the spinner has nothing left to say.
-            A spinner rather than the working line's pulsing logo mark: a tool
-            row and that line are different claims — this call is running,
-            versus the assistant is thinking — and they stack, so giving both
-            the same mark would show the NetBird logo twice saying two things. */}
         <span className="flex h-4 w-4 shrink-0 items-center justify-center">
           {icon}
         </span>
 
-        {/* `min-w-0 truncate` rather than `shrink-0`: the line carries the
-            subject, so a long peer name has to ellipse at the end of the
-            phrase instead of pushing the outcome mark off the row. */}
         <span
           className={cn(
             "min-w-0 truncate",
@@ -196,17 +121,10 @@ export function AssistantToolActivity({
           )}
         >
           {line}
-          {/* At the end of the phrase, not after the label: "Reading the docs…
-              'dns'" put the trailing-off in the middle of the sentence. */}
           {running ? "…" : ""}
         </span>
 
-        {/* The outcome, once there is one. Kept at width while the call runs so
-            the label does not shift sideways when the tick arrives. */}
         <span className="flex h-4 w-4 shrink-0 items-center justify-center">
-          {/* A finished call always ends with a mark here: a tick when it
-              worked, an info circle when it did not. The row is a record of
-              what happened, and "nothing" is not one of the outcomes. */}
           {!running && failed && <Info size={13} />}
           {!running && !failed && (
             <Check size={13} className="text-green-500" />
@@ -221,8 +139,6 @@ export function AssistantToolActivity({
               <div className="mb-1 pr-3 text-[11px] uppercase tracking-wide text-nb-gray-400">
                 Request
               </div>
-              {/* The panel's padding sits inside the `pre`, so the scrollbar
-                  track lands on the panel's right edge. */}
               <pre className="nb-scrollbar max-h-64 overflow-auto whitespace-pre-wrap break-words pr-3 font-mono text-[12px] text-nb-gray-200">
                 {request}
               </pre>
@@ -234,7 +150,6 @@ export function AssistantToolActivity({
               <div className="mb-1 pr-3 text-[11px] uppercase tracking-wide text-nb-gray-400">
                 Result
               </div>
-              {/* Capped: a `list_peers` payload can be longer than the answer it supports. */}
               <pre className="nb-scrollbar max-h-64 overflow-auto whitespace-pre-wrap break-words pr-3 font-mono text-[12px] text-nb-gray-200">
                 {outcome}
               </pre>

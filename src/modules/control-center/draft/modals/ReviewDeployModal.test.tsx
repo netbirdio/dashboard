@@ -231,8 +231,6 @@ describe("the frozen live snapshot", () => {
   });
 });
 
-// Text the assistant reads can carry instructions, so the review has to say
-// which changes it made before the user approves them.
 describe("changes the assistant made in Review & Deploy", () => {
   it("are badged and announced", () => {
     assistantChangeIds = new Set([strippedDraftPolicy.id]);

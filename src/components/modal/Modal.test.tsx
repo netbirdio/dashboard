@@ -9,7 +9,6 @@ import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Modal, ModalContent } from "./Modal";
 
-/** The assistant panel as the chat renders it: marked, and holding a textarea. */
 function Panel({ open }: Readonly<{ open: boolean }>) {
   return (
     <aside data-assistant-panel={open ? "open" : "closed"}>

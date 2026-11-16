@@ -8,7 +8,6 @@ import type { PolicyRuleResource } from "@/interfaces/Policy";
 // A pick the connect guards cannot apply must not close the modal as if it had
 // succeeded: the incompatible pick disables Connect and says why.
 let nodes: unknown[] = [];
-// The React Flow store, which can be ahead of the nodes the picker rendered with.
 let storeNodes: unknown[] | undefined;
 let networkDestinationPicker: {
   networkNodeId: string;

@@ -211,10 +211,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     if (result) {
       // The caller's setNodes([selectNode]) may not be committed yet, so patch
       // the select node from the updater's `prev`, not reactFlow.getNodes().
-      // Compared against the node itself, not `shouldRecalculate`: a selection
-      // set from outside (the assistant's navigate) is already in state by the
-      // time the view-init effect rebuilds around it, so the state says
-      // "unchanged" while the selector still shows the view's default pick.
+      // Compared against the node, not `shouldRecalculate`: a selection set from
+      // outside is already in state while the selector shows the default pick.
       setNodes((prev) => {
         const source = prev.find((n) => n.id === selectNodeId);
         if (!source) return prev;
@@ -227,9 +225,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       setEdges(result.updatedEdges);
       setLayoutInitialized(true);
       // fitView reads geometry from the store at rAF time, so a stub id works.
-      // A rebuild from an invalidated layout fits too: that is how a selection
-      // set from outside (the assistant's navigate) lands, and there the
-      // selection itself reads as unchanged.
       if (shouldRecalculate || !layoutInitialized)
         fitView([...result.updatedNodes, { id: selectNodeId } as Node]);
       return;

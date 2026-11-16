@@ -5,8 +5,6 @@ import { CONTROL_CENTER_HREF } from "./control-center";
 
 export type NavigateToPage = { href: string } | { error: string };
 
-// `dashboard_page_redirect`: turns the tool input into the route to push. Unknown pages are
-// refused rather than guessed — a wrong push moves the user's screen for no reason.
 export function navigateToPage(input: Record<string, unknown>): NavigateToPage {
   const routes: Record<string, string> = {
     peers: "/peers",
@@ -19,12 +17,6 @@ export function navigateToPage(input: Record<string, unknown>): NavigateToPage {
     setup_keys: "/setup-keys",
     users: "/team/users",
     activity: "/events/audit",
-    /*
-      The three log surfaces a security question ends on. Audit answers "who
-      CHANGED this", traffic answers "who CONNECTED to this", and the proxy
-      logs answer "who reached this exposed service" — different records with
-      different readers, so they are separate pages rather than tabs of one.
-    */
     traffic_events: "/events/traffic",
     proxy_events: "/events/proxy",
     reverse_proxy_logs: "/reverse-proxy/logs",
@@ -43,22 +35,9 @@ export function navigateToPage(input: Record<string, unknown>): NavigateToPage {
   const tabRoutes: Record<string, string> = {
     settings: "/settings",
     integrations: "/integrations",
-    /*
-      Clusters is a tab here rather than a page of its own, and it is the one
-      the assistant sends people to most: a provider cannot be saved until a
-      cluster exists, so "where do I set that up" ends on this route. An
-      unrecognised tab is not worth refusing — the page falls back to its first
-      one, which is a better outcome than not moving at all.
-    */
     agent_network_configuration: "/agent-network/configuration",
   };
 
-  /*
-    Log pages open on one record or one search, the way detail pages take an
-    id. The audit log is loaded whole, so it can focus on an event id; the
-    traffic and proxy logs are paged on the server, so they take the search
-    their own search box would send.
-  */
   const logParams: Record<string, "id" | "search"> = {
     activity: "id",
     traffic_events: "search",
@@ -108,19 +87,13 @@ export function navigateToPage(input: Record<string, unknown>): NavigateToPage {
   };
 }
 
-// The route table stays app-side: the SDK dispatches `dashboard_page_redirect` here because
-// only the dashboard knows its own URLs.
 export const pageRedirect: BrowserToolExecutor = async (
   input,
   ctx,
 ): Promise<ToolOutcome> => {
   const target = navigateToPage((input ?? {}) as Record<string, unknown>);
   if ("error" in target) return { ok: false, content: target.error };
-  /*
-    Leaving the control center drops an open draft, so the user decides here,
-    in the canvas's own "Discard draft changes?" dialog, and the answer is this
-    call's result.
-  */
+  // Leaving the control center drops an open draft, so the user confirms in the canvas's discard dialog first.
   const pending = ctx.onControlCenterPage() && !target.href.startsWith(CONTROL_CENTER_HREF) ? unsavedDraftChanges() : 0;
   if (pending > 0) {
     const left = await getCanvasAgent()?.draftAction("exit");

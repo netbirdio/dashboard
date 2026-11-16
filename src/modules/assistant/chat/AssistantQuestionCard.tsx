@@ -1,12 +1,10 @@
-// The card for a pending ask_question with options: answer, dismiss, or just type.
 "use client";
 
 import { cn } from "@utils/helpers";
 import { ArrowUp, Check, X } from "lucide-react";
 import { useState } from "react";
 
-// "2", "1,3", "1 3" → option indices, or null when the text isn't a pick.
-// Deliberately strict: anything with a word in it must be sent as written.
+// Strict: anything with a word in it returns null, so it is sent as written.
 export function parseOptionNumbers(
   text: string,
   count: number,
@@ -84,15 +82,12 @@ export function AssistantQuestionCard({
                 role={multi ? "checkbox" : undefined}
                 aria-checked={multi ? selected : undefined}
                 className={cn(
-                  // Negative margin lets the hover fill reach past the text
-                  // while the content stays aligned with the question above.
                   "group -mx-1.5 flex w-[calc(100%+0.75rem)] items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-left",
                   "hover:bg-nb-gray-800",
                 )}
               >
                 {multi ? (
-                  /* Drawn, not a real checkbox: a focusable control inside a
-                     button is invalid, so the button carries role and state. */
+                  /* Drawn, not a real checkbox: a focusable control inside a button is invalid. */
                   <span
                     className={cn(
                       "flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border",
@@ -104,7 +99,6 @@ export function AssistantQuestionCard({
                     {selected && <Check size={14} />}
                   </span>
                 ) : (
-                  /* The number is the keyboard shortcut: typing "1" sends this option. */
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-nb-gray-800 text-xs tabular-nums text-nb-gray-200 group-hover:bg-nb-gray-700 group-hover:text-white">
                     {index + 1}
                   </span>
@@ -132,8 +126,6 @@ export function AssistantQuestionCard({
             {picked.length} selected
           </span>
 
-          {/* `-mr-2` bridges the card/composer padding difference so this
-              lines up with the composer's send button. */}
           <button
             type="button"
             aria-label="Send"

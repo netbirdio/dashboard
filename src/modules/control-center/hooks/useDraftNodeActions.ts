@@ -12,13 +12,6 @@ import {
   getResourceNodeEnabled,
 } from "@/modules/control-center/utils/helpers";
 
-/**
- * Per-node draft edits that aren't group or network specific: renaming a
- * placeholder peer or a draft resource, enabling/disabling a resource, and
- * deleting an existing one. Shared by the node context menu and the
- * assistant's `control_center_node`, so both write the same canvas state and the same
- * changeset entries.
- */
 export function useDraftNodeActions() {
   const reactFlow = useReactFlow();
   const { nodes, setNodes } = useCanvasState();
@@ -27,8 +20,6 @@ export function useDraftNodeActions() {
   const { syncDraftResource } = useDraftNetworkActions();
   const { removeNodeWithEdges } = useDraftGroupActions();
 
-  // Placeholder names live only on the canvas node — the real name comes from
-  // the machine once the peer is installed.
   const renamePlaceholder = useCallback(
     (id: string, name: string) => {
       setNodes((prev) =>
@@ -38,7 +29,6 @@ export function useDraftNodeActions() {
             : n,
         ),
       );
-      // The pending install-peer entry follows the rename.
       const kind = reactFlow
         .getNodes()
         .find((n) => n.id === id)?.data?.placeholderKind as
@@ -76,9 +66,6 @@ export function useDraftNodeActions() {
     [setNodes, syncDraftResource],
   );
 
-  // Enable/disable a resource on the canvas (dims the node), mirroring the
-  // policy Enable/Disable toggle. For an EXISTING resource it also records an
-  // update-resource change so the enabled state deploys.
   const setResourceEnabled = useCallback(
     (id: string, enabled: boolean) => {
       const target = reactFlow.getNodes().find((n) => n.id === id);
@@ -88,8 +75,6 @@ export function useDraftNodeActions() {
           n.id === id
             ? {
                 ...n,
-                // A draft resource has no live twin, so there the flag IS the
-                // state; an existing one needs its own key to stay separable.
                 data: isDraftResource
                   ? { ...n.data, enabled }
                   : { ...n.data, resourceEnabled: enabled },
@@ -97,8 +82,6 @@ export function useDraftNodeActions() {
             : n,
         ),
       );
-      // Draft resources carry their enabled state via their create-resource
-      // change, so they only need a re-sync after the canvas update.
       if (isDraftResource) {
         setTimeout(() => syncDraftResource(id), 0);
         return;
@@ -146,12 +129,6 @@ export function useDraftNodeActions() {
     [nodes],
   );
 
-  /**
-   * Marks an EXISTING resource for deletion: records the delete-resource
-   * change, then takes it off the canvas. The caller owns the confirmation —
-   * the menu asks first, the assistant doesn't (nothing is deleted until the
-   * draft deploys).
-   */
   const deleteResource = useCallback(
     (id: string) => {
       const target = reactFlow.getNodes().find((n) => n.id === id);

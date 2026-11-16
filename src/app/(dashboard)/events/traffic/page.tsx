@@ -22,8 +22,6 @@ import { LockedFeatureOverlay } from "@/modules/billing/locked-feature/LockedFea
 import { EventStreamingCard } from "@/modules/integrations/event-streaming/EventStreamingCard";
 
 export default function NetworkTrafficPage() {
-  // `?search=` links straight into a filtered log (the assistant sends people
-  // here); the same search box a person types into.
   const linkedSearch = useSearchParams().get("search") ?? "";
   const account = useAccount();
   const { permission } = usePermissions();

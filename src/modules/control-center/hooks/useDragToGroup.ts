@@ -118,14 +118,8 @@ export function useDragToGroup() {
       // "All" is system-managed: every peer is in it implicitly.
       if (groupData.name === "All") return;
 
-      /*
-        Absorbing the card is right for a standalone one — the group now stands
-        for it. It is WRONG for a resource that lives inside a network frame: that
-        card is the network's row, its home, and removing it left the frame looking
-        empty while the changeset still deployed the resource into that network.
-        Group membership is an attribute of a framed resource, not a new address
-        for it, so the row stays and only the group's counts change.
-      */
+      // A resource inside a network frame keeps its card: that row is the
+      // network's own, and absorbing it leaves the frame looking empty.
       const framedChild = draggedNodeId
         ? !!reactFlow.getNodes().find((n) => n.id === draggedNodeId)?.parentId
         : false;

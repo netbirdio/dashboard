@@ -4,18 +4,14 @@ import { sleep } from "@utils/helpers";
 import { useCallback, useRef } from "react";
 import { isExpired } from "react-jwt";
 
-// The same token selection and expiry wait as useNetBirdFetch (src/utils/api),
-// shaped as the headers resolver the assistant calls before every request.
-// Undefined until the user has a token: nothing is asked of the assistant
-// on their behalf before then.
 export function useAssistantHeaders(): (() => Promise<Record<string, string>>) | undefined {
   const { idToken } = useOidcIdToken();
   const { accessToken } = useOidcAccessToken();
   const tokenSource = loadConfig().tokenSource || "accessToken";
   const token = tokenSource.toLowerCase() === "idtoken" ? idToken : accessToken;
 
-  // Read at request time through a ref: the resolver is captured once per
-  // conversation, and the OIDC client refreshes tokens behind it.
+  // The resolver is captured once per conversation,
+  // while the OIDC client refreshes tokens behind it.
   const tokenRef = useRef(token);
   // eslint-disable-next-line react-hooks/refs -- deliberate: see above
   tokenRef.current = token;

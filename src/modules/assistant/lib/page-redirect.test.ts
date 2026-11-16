@@ -1,9 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { navigateToPage, pageRedirect } from "@/modules/assistant/lib/page-redirect";
 
-// What the canvas reports while a test runs; null when the control center is not mounted.
 let canvas: { mode: "live" | "draft"; changes: { type: string; name: string }[] } | null = null;
-// What the user picks in the canvas's "Discard draft changes?" dialog.
 let discards = false;
 const draftAction = vi.fn(async () => {
   if (discards && canvas) canvas = { mode: "live", changes: [] };
@@ -35,9 +33,6 @@ describe("navigateToPage", () => {
   });
 
   it("opens the clusters tab, which is where a provider actually starts", () => {
-    // A provider cannot be saved until a cluster exists, so this is the route
-    // the assistant sends people to when it refuses to open the provider
-    // dialog.
     expect(
       navigateToPage({ page: "agent_network_configuration", tab: "clusters" }),
     ).toEqual({ href: "/agent-network/configuration?tab=clusters" });
@@ -56,8 +51,6 @@ describe("navigateToPage", () => {
   });
 
   it("lands on the configuration page even with no tab", () => {
-    // The page picks its own first tab, so a bare navigation still arrives
-    // somewhere useful rather than being refused.
     expect(navigateToPage({ page: "agent_network_configuration" })).toEqual({
       href: "/agent-network/configuration",
     });
@@ -75,11 +68,6 @@ describe("navigateToPage", () => {
     });
   });
 
-  /*
-    A security question ends on one of these, and the wrong one answers a
-    different question convincingly: audit says who CHANGED a thing, traffic
-    says who CONNECTED to it, the proxy log says who reached it from outside.
-  */
   it("reaches each record page a security question ends on", () => {
     expect(navigateToPage({ page: "traffic_events" })).toEqual({
       href: "/events/traffic",
@@ -149,13 +137,11 @@ describe("pageRedirect", () => {
     pushed.length = 0;
     draftAction.mockClear();
     canvas = { mode: "draft", changes: [{ type: "create_group", name: "Build Servers" }] };
-    // Staying on the control center is fine, as is a draft with nothing in it, as is the live view.
     expect((await pageRedirect({ page: "control_center" }, ctx(pushed, true))).ok).toBe(true);
     canvas = { mode: "draft", changes: [] };
     expect((await pageRedirect({ page: "peers" }, ctx(pushed, true))).ok).toBe(true);
     canvas = { mode: "live", changes: [] };
     expect((await pageRedirect({ page: "peers" }, ctx(pushed, true))).ok).toBe(true);
-    // None of those needed asking.
     expect(draftAction).not.toHaveBeenCalled();
     canvas = null;
   });

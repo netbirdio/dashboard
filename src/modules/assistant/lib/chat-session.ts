@@ -1,13 +1,3 @@
-/**
- * One chat's state in the browser: its session, the events its stream has
- * brought, and the transcript they project to.
- *
- * The transcript is projected by the agent framework's own message reducer,
- * the same one its client uses, so tool parts, approvals and answers read
- * exactly as they always did; only the transport is the assistant's. While a
- * session exists its stream is followed, reconnecting where it left off, so
- * every event reaches the transcript once and in order.
- */
 import {
   defaultMessageReducer,
   type EveAgentReducerEvent,
@@ -22,10 +12,8 @@ import { cancelTurn, prewarmChat, sendTurn, streamEvents, StreamIdleError, type 
 
 export type ChatStatus = "ready" | "submitted" | "streaming" | "resuming" | "error";
 
-/** What the browser keeps to resume a chat after a reload. */
 export interface StoredSession {
   sessionId: string;
-  /** How many of the session's events the transcript already holds. */
   streamIndex: number;
 }
 
@@ -46,9 +34,8 @@ export interface SendOptions {
   headers?: Record<string, string>;
 }
 
-// A stream that drops is reopened after these delays, longest last and then repeated.
 const RECONNECT_DELAYS_MS = [250, 500, 1_000, 2_000, 4_000];
-// Statuses worth reopening on: the agent restarting, or a new chat's session still being claimed.
+// 404/409/425 are retried too: a new chat's session may still be being claimed.
 const RETRYABLE = new Set([404, 409, 425, 429, 500, 502, 503, 504]);
 
 const sleep = (ms: number, signal: AbortSignal) =>
@@ -79,7 +66,6 @@ interface Pending {
 
 export class ChatSession {
   private readonly reducer = defaultMessageReducer();
-  // Server events and the browser's own projection events, in order; the transcript is their fold.
   private projection: EveAgentReducerEvent[] = [];
   private data: EveMessageData = this.reducer.initial();
   private serverEvents = 0;
@@ -87,7 +73,6 @@ export class ChatSession {
   private session: StoredSession | undefined;
   private status: ChatStatus = "ready";
   private error: Error | undefined;
-  // Calls the agent has accepted whose turn has not yet started streaming.
   private awaitingTurn = 0;
   private follower: AbortController | null = null;
   private readonly listeners = new Set<() => void>();
@@ -115,20 +100,18 @@ export class ChatSession {
 
   getSnapshot = (): ChatSnapshot => this.snapshot;
 
-  /** Follows the chat's stream, after replaying a stored chat into the transcript once. */
   start(): void {
     if (!this.session || this.follower) return;
     if (this.replayed) this.ensureFollowing();
     else void this.resume();
   }
 
-  // False until a stored chat's history has replayed in full; a fresh chat has none to replay.
   private replayed: boolean;
 
   private async resume(): Promise<void> {
     const session = this.session;
     if (!session) return;
-    // A replay cut short (the view remounting) starts over, so no event is counted twice.
+    // A replay cut short by a remount starts over, so no event is counted twice.
     this.projection = [];
     this.data = this.reducer.initial();
     this.serverEvents = 0;
@@ -160,12 +143,6 @@ export class ChatSession {
     void this.follow(controller);
   }
 
-  /**
-   * Creates the session before the first message, so that message starts its
-   * turn at once. Nothing to do for a chat that has a session; a chat whose
-   * first message is already on its way keeps that message's session. Best
-   * effort: a failure leaves the first message to create the session.
-   */
   async prewarm(): Promise<void> {
     if (this.session || this.prewarming) return;
     this.prewarming = true;
@@ -185,7 +162,6 @@ export class ChatSession {
 
   private prewarming = false;
 
-  /** Sends a message; the first one starts the chat. Failures are shown, not thrown. */
   async send(text: string, options: SendOptions = {}): Promise<void> {
     const submissionId = newSubmissionId();
     this.pending.push({ submissionId });
@@ -223,7 +199,7 @@ export class ChatSession {
     }
   }
 
-  /** Answers the requests the chat is parked on. Throws when the agent refuses, so the caller can retry. */
+  // Unlike `send`, this throws when the agent refuses, so the caller can retry.
   async respond(responses: InputResponse[], options: SendOptions = {}): Promise<void> {
     const session = this.session;
     if (!session) throw new AssistantHttpError(409, "There is no chat to answer.");
@@ -253,7 +229,6 @@ export class ChatSession {
     if (this.session) await cancelTurn(this.transport, this.session.sessionId);
   }
 
-  /** Forgets the chat: a new message starts a new one. */
   reset(): void {
     this.stop();
     this.projection = [];
@@ -271,7 +246,6 @@ export class ChatSession {
     this.notify();
   }
 
-  /** Stops following the stream; the chat itself stays as it is. */
   stop(): void {
     this.follower?.abort();
     this.follower = null;
@@ -349,7 +323,6 @@ export class ChatSession {
     if (!resuming) this.notify();
   }
 
-  /** The optimistic copy of a message the agent just reported, dropped in favour of its own. */
   private settleEcho(event: Extract<MessageStreamEvent, { type: "message.received" }>) {
     const ids = (event as { meta?: { deliveryIds?: readonly string[] } }).meta?.deliveryIds ?? [];
     const match =

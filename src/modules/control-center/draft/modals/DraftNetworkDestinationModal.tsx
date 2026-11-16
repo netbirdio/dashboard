@@ -122,11 +122,8 @@ const PickerContent = ({
 
   const onConnect = () => {
     if (!policy || !rule || blockedReason) return;
-    /*
-      The policy as it stands now, not as it was when the picker rendered: the
-      assistant narrows the protocol and ports while the picker is open, and
-      writing back the copy from then put them back at "all".
-    */
+    // Re-read from the store: the policy can change while the picker is open,
+    // and writing back the rendered copy would revert that.
     const latest =
       (reactFlow.getNode(policyNodeId)?.data as { policy?: Policy })?.policy ?? policy;
     const latestRule = latest.rules?.[0] ?? rule;

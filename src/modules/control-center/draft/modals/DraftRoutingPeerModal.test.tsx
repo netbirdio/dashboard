@@ -1,10 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// A create-router bound to a draft placeholder round-trips the modal: the
-// placeholder is offered through `extraPeers`, so the edit opens with the
-// draft id preserved instead of silently dropping the binding.
-
 let routingPeerModal: Record<string, unknown> | null = null;
 let changes: Record<string, unknown>[] = [];
 const contentProps: Record<string, unknown>[] = [];

@@ -23,9 +23,7 @@ import { useAssistantAvailable } from "@/modules/assistant/hooks/useAssistantAva
 import { useAssistantHeaders } from "@/modules/assistant/useAssistantHeaders";
 
 interface AssistantSidebarState {
-  // Configured *and* the server answered; false leaves no trace in the UI.
   available: boolean;
-  // Empty when none is configured.
   origin: string;
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -46,9 +44,6 @@ export function AssistantSidebarProvider({
 }>) {
   const [open, setOpen] = useState(false);
   const origin = useMemo(() => loadConfig().assistantApiOrigin, []);
-  // No origin, no assistant. With one, the agent is asked once per page load
-  // whether the user's account is enabled; a "no" or a silent failure simply
-  // leaves the assistant hidden.
   const headers = useAssistantHeaders();
   const reachable = useAssistantAvailable(origin, headers);
   const hasRoomToReveal = useIsMd();
@@ -56,16 +51,14 @@ export function AssistantSidebarProvider({
 
   const { isNavigationCollapsed, toggleNavigation } = useApplicationContext();
 
-  // Whether *we* collapsed the sidebar. The collapse state is persisted, so
-  // restoring it unconditionally on close would overwrite the user's preference.
+  // The collapse state is persisted, so only a collapse the panel made is
+  // restored on close.
   const collapsedByPanel = useRef(false);
 
   const changeOpen = useCallback(
     (next: boolean) => {
       setOpen(next);
 
-      // In overlay mode the dashboard is covered anyway, so there's no space
-      // to reclaim by collapsing the sidebar.
       if (overlay) return;
 
       if (next && !isNavigationCollapsed) {
@@ -84,8 +77,7 @@ export function AssistantSidebarProvider({
   const value = useMemo(() => {
     const reveal = open && !overlay;
     return {
-      // A server that dies mid-conversation shouldn't make an open panel
-      // vanish along with the transcript.
+      // An open panel must not vanish when the server stops answering.
       available: reachable || open,
       origin,
       open,
@@ -126,8 +118,6 @@ export function AssistantSidebarProvider({
   );
 }
 
-// Returns an unavailable, closed, inert state outside the provider so the
-// header can render on surfaces (login, setup) that don't mount the assistant.
 export function useAssistantSidebar(): AssistantSidebarState {
   return (
     useContext(AssistantSidebarContext) ?? {

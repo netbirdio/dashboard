@@ -1,22 +1,5 @@
-/**
- * The PII boundary, kept in the browser.
- *
- * Everything the dashboard sends the agent passes through the chat's vault
- * first: account reads, canvas results, the page marker and what the user
- * types. What identifies a person or their machine (peer and user names,
- * hostnames, emails, addresses, serials, keys) becomes a token like
- * `[PEER_k3f9a2]`, and only the browser can turn a token back into the value
- * it stands for. Ids pass as they are, and so do labels an admin chose.
- *
- * Going the other way, the vault restores the tokens the model writes: to the
- * display name in what a person reads, and to the real id in what a browser
- * tool runs with.
- *
- * Tokens are random and live for one chat, in memory only: a chat resumed
- * after a reload shows the tokens of its earlier answers as they are.
- *
- * React-free: the agent imports the patterns from here for its own backstop.
- */
+// The PII boundary: everything the dashboard sends the agent passes through the chat's vault first,
+// and only the browser can turn a token back into its value. Tokens live in memory, for one chat.
 import { buildPageContextMarker, parsePageContextMarker, SECRET_PATTERNS } from "./contract";
 import { AUDIT_RESULT, type FieldRule, type Profile, PROFILES } from "./profiles";
 
@@ -46,9 +29,7 @@ export const PII_PATTERNS: readonly [kind: string, re: RegExp, valid?: (m: strin
   ["card", /\b(?:\d[ -]?){12,18}\d\b/g, luhn],
 ];
 
-/** A redaction token as the model reads and writes it. */
 export const TOKEN_PATTERN = /\[[A-Z][A-Z_]*_[a-z2-7]{6,}\]/g;
-// The start of a token a stream has not finished writing yet.
 const PARTIAL_TOKEN = /\[(?:[A-Z][A-Z_]*(?:_[a-z2-7]*)?)?$/;
 
 // Credentials are never restored: a pasted key must not round-trip into tools.
@@ -72,8 +53,8 @@ export function mapStrings(value: unknown, fn: (s: string) => string): unknown {
   return value;
 }
 
-// Not a cryptographic hash, and not meant to be one: it only lets a repeated
-// credential find its token without the vault keeping the credential.
+// Not cryptographic: it only lets a repeated credential find its token
+// without the vault keeping the credential.
 function fnv1a(text: string): string {
   let h1 = 0x811c9dc5;
   let h2 = 0x01000193;
@@ -90,43 +71,30 @@ function randomSuffix(length: number): string {
   return Array.from(bytes, (b) => BASE32[b % 32]).join("");
 }
 
-/** Which key carries a canvas node's or subject's readable label. */
 const labelKeyOf = (n: Record<string, unknown>): "label" | "name" | undefined => {
   if (typeof n.label === "string") return "label";
   return typeof n.name === "string" ? "name" : undefined;
 };
 
-/*
-  The run of characters ending at `end` that markdown would read as one
-  destination. Only ASCII whitespace ends a destination; `\s` would also stop
-  at a no-break space or a line separator, which a URL may carry, and the
-  `://` before it would go unseen.
-*/
+// Only ASCII whitespace ends a destination: `\s` would also stop at a no-break space,
+// which a URL may carry, and the `://` before it would go unseen.
 function wordBefore(text: string, end: number): string {
   let start = end;
   while (start > 0 && !/[ \t\n\v\f\r]/.test(text[start - 1])) start--;
   return text.slice(start, end);
 }
 
-// A reference-style link definition: `[label]: destination`, where the destination may hold spaces.
 const REFERENCE_DEFINITION = /^\s{0,3}\[[^\]]+\]:\s/;
-// The same with nothing after the colon: markdown then reads the destination from the next line.
+// With nothing after the colon, markdown reads the destination from the next line.
 const REFERENCE_DEFINITION_OPEN = /^\s{0,3}\[[^\]]+\]:[ \t]*$/;
 
-/** Whether the line above `lineStart` ends in `](` or `[label]:`, so this line opens with its destination. */
 function destinationOpenedAbove(text: string, lineStart: number): boolean {
   if (lineStart === 0) return false;
   const previous = text.slice(text.lastIndexOf("\n", lineStart - 2) + 1, lineStart - 1).trimEnd();
   return previous.endsWith("](") || REFERENCE_DEFINITION_OPEN.test(previous);
 }
 
-/**
- * Whether the text at `offset` sits where markdown would read a URL: a bare
- * URL, an inline destination `](…)`, a `<…>` destination or autolink, or a
- * reference definition's line, including a destination markdown lets start
- * on the line after `](` or `[label]:`. A value restored there would travel
- * in an href, so it stays a token.
- */
+// Anywhere markdown would read a URL: a value restored there would travel in an href, so it stays a token.
 function inLinkDestination(text: string, offset: number): boolean {
   const word = wordBefore(text, offset);
   if (/:\/\/|\]\(|^www\./i.test(word)) return true;
@@ -138,15 +106,8 @@ function inLinkDestination(text: string, offset: number): boolean {
   return open !== -1 && !line.includes(">", open);
 }
 
-// A fence line opens or closes a fenced code block.
 const FENCE = /^ {0,3}(?:`{3,}|~{3,})/;
 
-/**
- * Whether the text at `offset` sits in code, where markdown is not parsed:
- * inside a fenced block, or inside a code span on its line. A code span
- * may in fact run over lines, but the model writes a name in one on a
- * single line, and a span read wrongly only costs a stray backslash.
- */
 function codeContextAt(text: string, offset: number): "fence" | "span" | null {
   const before = text.slice(0, offset);
   const lines = before.split("\n");
@@ -157,17 +118,10 @@ function codeContextAt(text: string, offset: number): "fence" | "span" | null {
 }
 
 const LINE_BREAKS = /[\r\n\u2028\u2029]+/g;
-// ASCII punctuation, every character of which markdown reads literally after a backslash.
 const MARKDOWN_PUNCTUATION = /[!-/:-@[-`{-~]/g;
 
-/**
- * A restored value as literal text at `offset`. Names and hostnames are
- * written by whoever controls a device or account, so one could otherwise
- * carry headings, emphasis, tables or links into the assistant's answer.
- * Outside code every punctuation mark is escaped; inside code nothing is
- * parsed, so only a backtick (which would close the span) and a line
- * break (which could close the fence) are taken out.
- */
+// Names are written by whoever controls a device or account, so a restored value must never act as markup.
+// Inside code only a backtick or a line break could break out.
 function asMarkdownLiteral(value: string, text: string, offset: number): string {
   const flat = value.replace(LINE_BREAKS, " ");
   switch (codeContextAt(text, offset)) {
@@ -194,14 +148,12 @@ export class Vault {
   private readonly known = new Map<string, string>();
   private knownRe: RegExp | null = null;
   private readonly listeners = new Set<() => void>();
-  /** Bumped on every new token, so a view of restored text knows to redraw. */
   revision = 0;
 
   get size(): number {
     return this.entries.size;
   }
 
-  /** Called after the vault learns a new value. */
   subscribe(listener: () => void): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
@@ -220,7 +172,6 @@ export class Vault {
     }
   }
 
-  /** The token for a value, minting one the first time it is seen. */
   mint(kind: string, real: string, display = real, aliases: string[] = []): string {
     const oneWay = ONE_WAY.has(kind);
     const key = `${kind}\0${oneWay ? fnv1a(real) : real}`;
@@ -247,7 +198,6 @@ export class Vault {
     return token;
   }
 
-  /** Free text: values the vault knows first, then PII patterns. Tokens pass through. */
   scrub = (text: string): string => {
     if (this.known.size > 0) {
       this.knownRe ??= new RegExp(
@@ -266,7 +216,6 @@ export class Vault {
     return text;
   };
 
-  /** A record walked through a profile: unlisted fields are dropped. */
   redact(value: unknown, profile: Profile): unknown {
     if (Array.isArray(value)) return value.map((v) => this.redact(v, profile));
     // A record given by its id alone.
@@ -283,7 +232,6 @@ export class Vault {
     return out;
   }
 
-  /** A record's id and name: the id as is, the name a token when the record is a person's or a machine's. */
   private handleOf(src: Record<string, unknown>, handle: string, personal: boolean | undefined): Record<string, unknown> {
     const out: Record<string, unknown> = {};
     if (typeof src.id === "string") out.id = src.id;
@@ -298,19 +246,13 @@ export class Vault {
     return this.redact(raw, rule);
   }
 
-  /**
-   * A canvas result. A peer's or person's label becomes a token, and the rest
-   * of the payload is scrubbed as text. A node carries its label as `name`, a
-   * canvas subject as `label`.
-   */
   redactCanvas(value: unknown): unknown {
-    // First pass mints, so the second can scrub every string against all of it.
+    // The first pass mints, so the second can scrub every string against all of it.
     const tokenise = (node: unknown): unknown => {
       if (Array.isArray(node)) return node.map(tokenise);
       if (!node || typeof node !== "object") return node;
       const n = node as Record<string, unknown>;
       const labelKey = labelKeyOf(n);
-      // A node points at its entity; a canvas subject is the entity itself.
       const entity = n.entity ?? (typeof n.id === "string" ? n : undefined);
       const entityKind = entity && typeof entity === "object" ? (entity as { kind?: unknown }).kind : undefined;
       const kind = [n.kind, entityKind].find((k): k is "peer" | "user" => k === "peer" || k === "user");
@@ -322,10 +264,8 @@ export class Vault {
     return mapStrings(tokenise(value), this.scrub);
   }
 
-  /**
-   * Tokens back to what a person reads, except inside a URL: a link or image
-   * the model was steered into writing must not carry real values off-site.
-   */
+  // Never restores inside a URL: a link or image the model was steered into writing
+  // must not carry real values off-site.
   restoreText = (text: string): string =>
     text.replace(TOKEN_PATTERN, (m, offset: number) => {
       const entry = this.entries.get(m);
@@ -334,10 +274,8 @@ export class Vault {
       return ONE_WAY.has(entry.kind) ? "[redacted credential]" : entry.display;
     });
 
-  /** The same for text still streaming in: a token cut off at the end is held back. */
   restoreStreamingText = (text: string): string => this.restoreText(text.replace(PARTIAL_TOKEN, ""));
 
-  /** Tokens back in markdown a person reads, each value restored as literal text rather than markup. */
   restoreMarkdown = (text: string): string =>
     text.replace(TOKEN_PATTERN, (m, offset: number) => {
       const entry = this.entries.get(m);
@@ -347,10 +285,8 @@ export class Vault {
       return asMarkdownLiteral(entry.display, text, offset);
     });
 
-  /** The same for markdown still streaming in. */
   restoreStreamingMarkdown = (text: string): string => this.restoreMarkdown(text.replace(PARTIAL_TOKEN, ""));
 
-  /** Tokens back inside a string a system reads: an id, a filter value. */
   restoreString = (text: string, as: RestoreAs): string =>
     text.replace(TOKEN_PATTERN, (m) => {
       const entry = this.entries.get(m);
@@ -368,7 +304,6 @@ const RESULT_ENVELOPE = new Set([
   "operation", "total", "shown", "status", "statusText", "error", "note", "withheld", "count_by", "distinct", "missing", "other",
 ]);
 
-/** A read's or a tool's result as the model may see it. Account data is profiled, the rest scrubbed. */
 function redactValue(vault: Vault, toolName: string, value: unknown): unknown {
   if (typeof value === "string") {
     try {
@@ -386,14 +321,12 @@ function redactValue(vault: Vault, toolName: string, value: unknown): unknown {
   return mapStrings(v, vault.scrub);
 }
 
-/** One management read: its envelope scrubbed, its data cut to the operation's profile. */
 function redactApiRead(vault: Vault, v: Record<string, unknown>): unknown {
   const op = own(PROFILES, String(v.operation));
   if (!op) return WITHHELD;
   return {
     ...(mapStrings(Object.fromEntries(Object.entries(v).filter(([k]) => RESULT_ENVELOPE.has(k))), vault.scrub) as object),
     ...(v.data === undefined ? {} : { data: vault.redact(v.data, op.profile) }),
-    // A count is shaped like a row with its `count`: the row part goes through the profile like any row.
     ...(Array.isArray(v.counts)
       ? {
           counts: v.counts.flatMap((c) => {
@@ -412,7 +345,7 @@ function redactSearch(vault: Vault, v: Record<string, unknown>): unknown {
   return { term: vault.scrub(term), ...(typeof v.note === "string" ? { note: v.note } : {}), results };
 }
 
-/** A browser tool's result body, tokenised for the agent. Never throws. */
+// Never throws: a result that cannot be redacted is withheld.
 export function redactResult(vault: Vault, toolName: string, content: string): string {
   try {
     const redacted = redactValue(vault, toolName, content);
@@ -422,8 +355,7 @@ export function redactResult(vault: Vault, toolName: string, content: string): s
   }
 }
 
-// Arguments that name a thing the way a person wrote it, restored to display
-// names rather than ids: a log search box, an audit filter, a read's query.
+// Arguments restored to display names; every other argument restores to the real id.
 const DISPLAY_ARGS: Record<string, "*" | string[]> = {
   ask_question: "*",
   render_component: ["title", "data", "rows"],
@@ -433,7 +365,6 @@ const DISPLAY_ARGS: Record<string, "*" | string[]> = {
   netbird_api: ["query"],
 };
 
-/** A browser tool call's input with its tokens restored, for the executor to run. */
 export function restoreToolInput(vault: Vault, toolName: string, input: unknown): unknown {
   const display = own(DISPLAY_ARGS, toolName);
   if (display === "*") return vault.restoreValue(input, "display");
@@ -443,14 +374,9 @@ export function restoreToolInput(vault: Vault, toolName: string, input: unknown)
   );
 }
 
-/**
- * The page-context marker, with the entity it names as the token its reads
- * give it; null when the value is not a marker.
- */
 export function redactPageContext(vault: Vault, marker: string): string | null {
   const context = parsePageContextMarker(marker);
   if (!context) return null;
-  // The ref is an id; a peer's or person's label is their name, and a token like their reads give.
   const personal = context.kind === "peer" || context.kind === "user";
   const label = context.label
     ? { label: personal ? vault.mint(context.kind, context.label) : vault.scrub(context.label) }

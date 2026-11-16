@@ -1,4 +1,3 @@
-// "You're looking at this" chip above the composer, sent with the next message.
 "use client";
 
 import { IconSettings2 } from "@tabler/icons-react";
@@ -41,7 +40,6 @@ function ChipIcon({
     );
   }
 
-  // The users table shows service users as a cog instead of an avatar; match it.
   if (user?.isServiceUser) {
     return (
       <span className="flex h-4 w-4 items-center justify-center rounded-full bg-nb-gray-850 text-nb-gray-200">
@@ -62,7 +60,6 @@ function ChipIcon({
     );
   }
 
-  // The nav's marks, not the tab icons: switching tabs shouldn't change the chip's icon.
   if (entry.type === "integration" || entry.type === "settings") {
     return (
       <span className="flex h-4 w-4 items-center justify-center text-nb-gray-300 [&_svg]:h-3.5 [&_svg]:w-3.5">
@@ -114,18 +111,15 @@ export function AssistantContextChip({
   onDismiss: () => void;
 }>) {
   return (
-    /* Out of the flow so nothing moves when a context arrives or leaves.
-       The 20px in `bottom` tucks the slab's lower edge under the composer. */
     <AnimatePresence initial={false}>
       {entry && (
         <motion.div
-          // Keying on entry.key animated the slab out and back in on small context changes.
+          // A constant key: keying on entry.key would animate the slab out and back in on every context change.
           key="context"
           initial={{ y: "100%", opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: "100%", opacity: 0 }}
           transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
-          // z-10 keeps the empty state from swallowing the ✕; the composer still paints on top.
           className="absolute inset-x-0 z-10"
           style={{ bottom: "calc(100% - 20px)" }}
         >
@@ -136,24 +130,20 @@ export function AssistantContextChip({
   );
 }
 
-// Where each kind's rows live, keyed the way `useFetchApi` keys them.
+// These must match the SWR keys `useFetchApi` writes.
 const SOURCES: Partial<Record<PageContextType, string[]>> = {
   peer: ["/peers"],
   group: ["/groups"],
   network: ["/networks"],
-  // Users are only ever fetched split by kind, so both lists have to be searched.
   user: ["/users?service_user=false", "/users?service_user=true"],
 };
 
-// `settings` and `integration` are absent: the chip draws those itself.
 const ICONS: Partial<Record<PageContextType, typeof NetworkIcon>> = {
-  // Fallback when the peer's OS is unknown; a known OS shows its own logo.
   peer: MonitorSmartphone,
   group: FolderGit2Icon,
   network: NetworkIcon,
 };
 
-// Label fallback when the row can't be found.
 const KINDS: Record<PageContextType, string> = {
   peer: "Peer",
   group: "Group",
@@ -173,7 +163,7 @@ interface CachedRow {
 
 export interface ContextChipData {
   label: string;
-  // The resource's real name only, unlike `label` — sent to the model as page context.
+  // The resource's real name only, unlike `label`: it is sent to the model.
   name?: string;
   kind: string;
   Icon?: typeof NetworkIcon;

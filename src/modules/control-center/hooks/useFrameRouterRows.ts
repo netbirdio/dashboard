@@ -104,8 +104,6 @@ export function useFrameRouterRows(
         isGroup: !c.peerId,
         peersCount: !c.peerId ? group?.peers_count ?? 0 : undefined,
         enabled: c.enabled ?? true,
-        // The peer is a draft placeholder — the row says so, and the change
-        // carries the blocking issue (getChangeIssue).
         pendingInstall: isDraftPeerId(c.peerId),
         onEdit: () =>
           setRoutingPeerModal({ networkNodeId, editChangeId: c.id }),

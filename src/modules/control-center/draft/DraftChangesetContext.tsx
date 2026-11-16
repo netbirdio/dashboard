@@ -150,10 +150,6 @@ export interface CreateResourceChange {
   enabled?: boolean;
 }
 
-// A router may reference a placeholder peer (picked in the routing-peer modal):
-// the change is recorded against the draft id and carries a blocking "Install"
-// issue until the peer exists, at which point the upgrade sweep rewrites it with
-// the real id (replacePeerIdInGroups).
 export interface CreateRouterChange {
   id: string;
   type: "create-router";
@@ -673,15 +669,8 @@ export const getChangeIssue = (
       } — take the group off this change, or discard the deletion.`,
     };
   }
-  /*
-    A router pointing at a placeholder peer.
-
-    Normally the peer's own install-peer change is what blocks the deploy, and it
-    is listed FIRST as a prerequisite — so the router row says nothing and shows
-    its request like any other change. This is only the orphan guard: the
-    placeholder can be removed from the canvas, which drops that install step
-    while the router it routes for stays, and a "draft-…" id must never be POSTed.
-  */
+  // Orphan guard: removing the placeholder drops its install-peer step while
+  // the router stays, and a draft id must never be POSTed.
   if (
     (change.type === "create-router" || change.type === "update-router") &&
     isDraftPeerId(change.peerId) &&
@@ -913,7 +902,6 @@ type GroupRef = {
 interface DraftChangesetContextType {
   changes: DraftChange[];
   changeCount: number;
-  /** Ids of the changes the assistant made or touched; see `markAssistantChanges`. */
   assistantChangeIds: ReadonlySet<string>;
   trackCreateGroup: (params: {
     clientId: string;
@@ -1172,8 +1160,7 @@ export function DraftChangesetProvider({
   // Changes live only in React state: a reload loses the draft.
   const [changes, setChanges] = useState<DraftChange[]>([]);
 
-  // Updated during render rather than in an effect, so the marks never lag a
-  // render behind the changes and the review modal can't show one unmarked.
+  // Updated during render, not in an effect, so the marks never lag the changes.
   const assistantActing = useAgentBusy();
   const [assistantChangeIds, setAssistantChangeIds] = useState<
     ReadonlySet<string>
@@ -1448,8 +1435,6 @@ export function DraftChangesetProvider({
     (oldId: string, newId: string, newName?: string) => {
       setChanges((prev) => {
         const mapped = prev.map((c) => {
-          // Routers too: a placeholder can BE the routing peer (picked in the
-          // routing-peer modal), on a draft network or an existing one.
           if (
             (c.type === "create-router" || c.type === "update-router") &&
             c.peerId === oldId

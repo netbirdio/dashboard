@@ -12,7 +12,6 @@ const textOf = (value: unknown): string | undefined =>
 const nonEmptyString = (value: unknown): string | undefined =>
   typeof value === "string" && value.trim() ? value : undefined;
 
-/** `new_empty` becomes `New Empty`. */
 const humanize = (value: string): string =>
   value
     .split(/[_\s]+/)
@@ -25,12 +24,6 @@ const quoted = (value?: string): string | undefined =>
 
 const labelFor = (table: Record<string, string>, key: string | undefined): string | undefined =>
   key === undefined ? undefined : ownEntry(table, key);
-
-/*
-  The shared frame every `control_center_*` tool runs in: acquire the canvas, run the action, report the steps.
-  These tools never deploy; that click stays the user's.
-  Inputs and reports carry real ids and labels; the agent tokenises them for the model.
-*/
 
 export const CONTROL_CENTER_HREF = "/control-center";
 
@@ -71,18 +64,11 @@ function describeNode(node: AgentNode): Record<string, unknown> {
   };
 }
 
-/*
-  A report travels inside one chat request with whatever else its batch sends,
-  so the canvas in it is projected to a fixed size rather than whole:
-  a large account would otherwise make every canvas call too large to send.
-  Each collection gets its own share, so a long change list cannot crowd out the nodes.
-*/
 const CANVAS_SHARES_BYTES = { nodes: 20_000, edges: 8_000, pending_changes: 4_000 };
 const REPORT_MAX_STEPS = 40;
 
 const utf8 = new TextEncoder();
 
-/** The leading items that fit in `budget` UTF-8 bytes of JSON. */
 function fitting<T>(items: readonly T[], budget: number): T[] {
   let used = 0;
   let count = 0;
@@ -96,7 +82,6 @@ function fitting<T>(items: readonly T[], budget: number): T[] {
 
 type Truncated = Record<string, { shown: number; total: number }>;
 
-/** `truncated` naming only the collections that were cut, or nothing. */
 function truncation(counts: Record<string, [shown: number, total: number]>): { truncated?: Truncated } {
   const cut = Object.entries(counts).filter(([, [shown, total]]) => shown < total);
   if (cut.length === 0) return {};
@@ -132,7 +117,6 @@ export function snapshotReport(
   };
 }
 
-/** Step lines, the latest kept when there are too many; the latest name the nodes just made. */
 function stepLines(lines: string[]): { steps: string[]; truncated?: Truncated } {
   const steps = lines.slice(-REPORT_MAX_STEPS);
   return { steps, ...truncation({ steps: [steps.length, lines.length] }) };
@@ -142,7 +126,6 @@ export function reportSteps(
   steps: AgentStepResult[],
   api: CanvasAgentApi,
 ): ToolOutcome {
-  // What the canvas did on its own since the last report, listed first because it happened first.
   const before = api.drainNotices().map((notice) => `· ${notice}`);
   const lines = steps.map((s, i) => {
     // A step that created a node is the only way the model learns its id.
@@ -154,13 +137,11 @@ export function reportSteps(
     ok: !(steps.length > 0 && steps.every((s) => !s.ok)),
     content: JSON.stringify({
       ...reported,
-      // The canvas after the call, so a follow-up call doesn't need control_center_state.
       canvas: snapshotReport(api.getSnapshot()),
     }),
   };
 }
 
-// `control_center_state`
 export const getCanvasSnapshot: ControlCenterToolAction = async (
   _input,
   api,
@@ -169,7 +150,6 @@ export const getCanvasSnapshot: ControlCenterToolAction = async (
   const notices = api.drainNotices().map((notice) => `· ${notice}`);
   const { truncated: stepsTruncated, ...steps } = stepLines(notices);
   const snapshot = snapshotReport(api.getSnapshot());
-  // One `truncated` here, since the steps and the snapshot share the top level.
   const truncated = { ...stepsTruncated, ...(snapshot.truncated as Truncated | undefined) };
   return {
     ok: true,
@@ -181,7 +161,6 @@ export const getCanvasSnapshot: ControlCenterToolAction = async (
   };
 };
 
-// `control_center_navigate`
 const str = (value: unknown): string => (typeof value === "string" ? value : "");
 
 export const gotoView: ControlCenterToolAction = async (input, api) => {
@@ -198,7 +177,6 @@ export const describeGotoView: ControlCenterDescribeTrail = (input) => {
   return { detail: quoted(target ?? (view ? humanize(view) : undefined)) };
 };
 
-// `control_center_draft`. Each action owns its whole phrase, since "Set up a draft 'Exit'" would mislead.
 const DRAFT_ACTION_LABELS: Record<string, string> = {
   new_empty: "Start an empty draft",
   from_current_view: "Start a draft from this view",
@@ -217,7 +195,6 @@ export const describeCreateDraft: ControlCenterDescribeTrail = (input) => {
   return { detail: quoted(action ? humanize(action) : undefined) };
 };
 
-// `control_center_add`
 const ADD_NEEDS_KIND = "control_center_add needs a `kind`.";
 
 const toAddItem = (input: Record<string, unknown>): AgentAddItem | null =>
@@ -240,7 +217,6 @@ const toAddItem = (input: Record<string, unknown>): AgentAddItem | null =>
       }
     : null;
 
-/** The objects of a call's `items` or `links`, or of the flat input when there is no list. */
 const listOf = (input: Record<string, unknown>, key: string): Record<string, unknown>[] => {
   const list = input[key];
   if (Array.isArray(list)) {
@@ -249,8 +225,7 @@ const listOf = (input: Record<string, unknown>, key: string): Record<string, unk
   return [input];
 };
 
-// Refused before anything is drawn: a policy born without a protocol allows everything,
-// and the follow-up edit meant to narrow it can be lost to a later write of the same policy.
+// A policy born without a protocol allows everything, and a follow-up edit to narrow it can be lost.
 const POLICY_NEEDS_PROTOCOL =
   "A new_policy needs its `protocol`, and `ports` for tcp/udp, set on this call; pass \"all\" only when every protocol is meant. Nothing was added.";
 
@@ -276,7 +251,6 @@ export const describeAddNode: ControlCenterDescribeTrail = (input) => {
   return { detail: quoted(describeOne(items[0] ?? input)) };
 };
 
-// `control_center_connect`
 const CONNECT_NEEDS_ENDS = "control_center_connect needs `from` and `to`.";
 
 export const connectNodes: ControlCenterToolAction = async (input, api) => {
@@ -302,7 +276,6 @@ export const describeConnectNodes: ControlCenterDescribeTrail = (input) => {
   return { detail: one(links[0] ?? input) };
 };
 
-// `control_center_node`
 const NODE_ACTION_LABELS: Record<string, string> = {
   rename: "Rename",
   remove: "Remove",
@@ -319,7 +292,7 @@ const NODE_ACTION_LABELS: Record<string, string> = {
 
 const NODE_NEEDS_ACTION = "control_center_node needs `node` and `action`.";
 
-/** NaN coordinates make a node vanish from the layout engine, so such a position is dropped. */
+// NaN coordinates make a node vanish from the layout engine.
 function finitePosition(value: unknown): { x: number; y: number } | undefined {
   if (!value || typeof value !== "object") return undefined;
   const x = Number((value as { x?: unknown }).x ?? 0);
@@ -353,7 +326,6 @@ export const editNode: ControlCenterToolAction = async (input, api) => {
 export const describeEditNode: ControlCenterDescribeTrail = (input) => {
   const verb = nonEmptyString(input.action);
   const subject = quoted(textOf(input.node));
-  // e.g. "Set routing peer 'Office Router' to 'Office'"
   const target = quoted(
     textOf(input.name) ?? textOf(input.group) ?? textOf(input.network),
   );
@@ -367,7 +339,6 @@ export const describeEditNode: ControlCenterDescribeTrail = (input) => {
   };
 };
 
-// `control_center_policy`
 export const editPolicy: ControlCenterToolAction = async (input, api) => {
   if (typeof input.node !== "string")
     return { ok: false, content: "control_center_policy needs the policy's `node`." };
@@ -393,7 +364,6 @@ export const describeEditPolicy: ControlCenterDescribeTrail = (input) => ({
   detail: quoted(textOf(input.node)),
 });
 
-// `control_center_canvas`
 const CANVAS_ACTION_LABELS: Record<string, string> = {
   auto_arrange: "Arrange the canvas",
   fit_view: "Fit the view",
@@ -418,7 +388,6 @@ export interface ControlCenterToolEntry {
   describe?: ControlCenterDescribeTrail;
 }
 
-/** Wire name to executor and trail formatter. */
 export const CONTROL_CENTER_TOOLS: Record<string, ControlCenterToolEntry> = {
   control_center_state: { action: getCanvasSnapshot },
   control_center_navigate: { action: gotoView, describe: describeGotoView },

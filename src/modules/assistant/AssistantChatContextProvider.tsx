@@ -1,5 +1,3 @@
-// What the user is looking at, made available to the assistant. Detail pages
-// register via the URL (the route watcher below).
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
@@ -29,8 +27,6 @@ export function AssistantChatContextProvider({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // A stack, not a single value: a modal opened over a peer page can register
-  // on top and the peer comes back when it closes.
   const [stack, setStack] = useState<PageContextEntry[]>([]);
   const [dismissed, setDismissed] = useState<string | null>(null);
 
@@ -43,8 +39,7 @@ export function AssistantChatContextProvider({
 
   const top = stack.at(-1) ?? null;
 
-  // Reset during render, not in an effect, so the chip never flashes back for
-  // a frame. Keyed on "the top changed": returning to a page is a new visit.
+  // Reset during render: an effect would flash the dismissed chip for a frame.
   const [lastKey, setLastKey] = useState<string | null>(top?.key ?? null);
   if (lastKey !== (top?.key ?? null)) {
     setLastKey(top?.key ?? null);
@@ -64,8 +59,7 @@ export function AssistantChatContextProvider({
 
   return (
     <ChatContext.Provider value={value}>
-      {/* Inside Suspense because `useSearchParams` opts the tree out of
-        static rendering otherwise. */}
+      {/* `useSearchParams` opts the tree out of static rendering without Suspense. */}
       <Suspense fallback={null}>
         <AssistantRouteWatcher />
       </Suspense>
@@ -74,13 +68,11 @@ export function AssistantChatContextProvider({
   );
 }
 
-// No-op outside the provider, so a page rendered in isolation doesn't need it.
 function useRegisterPageContext(entry: PageContextEntry | null): void {
   const state = useContext(ChatContext);
   const register = state?.register;
 
-  // Depend on the fields, not the object: callers build the entry inline, and
-  // a fresh object every render would re-register on every render.
+  // Depend on the fields: callers build the entry inline on every render.
   const { key, type, id, label } = entry ?? {};
 
   useEffect(() => {
@@ -100,7 +92,6 @@ export function useActivePageContext(): {
   };
 }
 
-// The string the assistant reads. Real values: the assistant SDK tokenises them before they leave the browser.
 function describePageContext(
   entry: PageContextEntry | null,
   name?: string,
@@ -118,12 +109,8 @@ function describePageContext(
     : null;
 }
 
-/**
- * Send-time getter for the page-context string; the chat panel hands it to the
- * assistant provider. `name` is the entry's display name when the caller has
- * one (the SWR row). Read through a ref because the getter is captured once
- * per conversation and the user can navigate between two messages.
- */
+// Read through a ref: the getter is captured once per conversation,
+// and the user can navigate between two messages.
 export function usePageContextString(name?: string): () => string | null {
   const { entry } = useActivePageContext();
   const current = useRef({ entry, name });
@@ -143,8 +130,6 @@ interface RouteRule {
   label?: string;
 }
 
-// Overview pages are deliberately absent: "on the peers list" says nothing a
-// question wouldn't. Modal-edited resources have no URL and register themselves.
 const ROUTES: RouteRule[] = [
   { path: "/peer", type: "peer", idParam: "id" },
   { path: "/group", type: "group", idParam: "id" },
@@ -159,7 +144,6 @@ const ROUTES: RouteRule[] = [
   },
 ];
 
-// Title-casing a slug would otherwise produce "Edr" and "Sso".
 const ACRONYMS = new Set(["edr", "idp", "sso", "dns", "api", "msp", "ssh"]);
 
 const prettyTab = (tab: string) =>
@@ -173,11 +157,8 @@ const prettyTab = (tab: string) =>
     )
     .join(" ");
 
-/*
-  The shapes a NetBird id and a tab slug take. The marker tells the assistant
-  what the user has open, so a query parameter that is neither names no page:
-  a crafted link could otherwise put its own words into the marker.
-*/
+// Query parameters reach the assistant's page marker, so anything outside
+// these shapes is dropped: a crafted link could otherwise inject its own words.
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
 const TAB = /^[a-z0-9][a-z0-9-]{0,31}$/;
 
@@ -200,7 +181,6 @@ function routeEntry(
     };
   }
 
-  // A detail page without its id isn't showing anything yet.
   if (rule.idParam) return null;
 
   return rule.label

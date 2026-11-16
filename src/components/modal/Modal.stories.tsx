@@ -122,19 +122,12 @@ export const Default: StoryObj = {
   ),
 };
 
-/*
-  A modal opened while the assistant panel is open: the overlay covers the
-  dashboard only, the chat beside it stays usable (click, type, scroll), and a
-  click on the dimmed dashboard still closes the modal.
-*/
 export const BesideAssistantPanel: StoryObj = {
   render: () => <BesideAssistant />,
 };
 
 function BesideAssistant() {
-  // Opened by the button, as in the dashboard, where the panel is there before any modal.
   const [open, setOpen] = React.useState(false);
-  // What AssistantSidebarProvider sets while its panel is open on the right.
   React.useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty("--nb-overlay-right", "360px");

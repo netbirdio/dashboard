@@ -35,8 +35,6 @@ export const DraftRoutingPeerModal = () => {
           c.id === routingPeerModal.editChangeId && c.type === "create-router",
       )
     : undefined;
-  // Prefill for edit mode — a NetworkRouter shaped from the draft change. An API
-  // router preset (read-only view) is passed through as-is.
   const routerPreset: NetworkRouter | undefined =
     editChange?.type === "create-router"
       ? {
@@ -49,13 +47,6 @@ export const DraftRoutingPeerModal = () => {
         }
       : routingPeerModal?.router;
 
-  /**
-   * The draft's placeholder peers, offered alongside the account's own.
-   *
-   * The router is recorded against the placeholder's draft id;
-   * its own install-peer step blocks the deploy until the peer exists,
-   * and installing it rewrites the router with the real id (useDraftPeerUpgrade).
-   */
   const placeholderPeers = React.useMemo(
     () =>
       isDraft
@@ -105,7 +96,7 @@ export const DraftRoutingPeerModal = () => {
             network={network as Network}
             router={routingPeerModal.router}
             useSave={false}
-            extraPeers={placeholderPeers}
+            additionalPeers={placeholderPeers}
             onSaved={(result) => {
               if (network?.id && routingPeerModal.router) {
                 updateRouterFromSelection({
@@ -131,7 +122,7 @@ export const DraftRoutingPeerModal = () => {
             network={{ id: "", name: network?.name ?? "" } as Network}
             router={routerPreset}
             useSave={false}
-            extraPeers={placeholderPeers}
+            additionalPeers={placeholderPeers}
             onSaved={(result) => {
               if (networkNodeId) {
                 // Editing replaces the change so the dedup rules re-apply.

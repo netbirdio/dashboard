@@ -5,15 +5,7 @@ import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import type { ManagementFetch } from "@/modules/assistant/lib/reads";
 import { mergeUrlParams, useNetBirdFetch } from "@/utils/api";
 
-/**
- * The assistant's account reads, made here with the user's own session, so the
- * assistant service never reads the account itself. It still receives the
- * user's token, which authenticates every chat request to it. The SDK cuts
- * each result to its field allowlist and tokenises it before anything leaves
- * the browser.
- */
 export function useAssistantManagementFetch(): ManagementFetch {
-  // Errors go back to the assistant as a status, not as a toast or a login redirect.
   const { fetch } = useNetBirdFetch(true);
   const { globalApiParams } = useApplicationContext();
   const { cache } = useSWRConfig();
@@ -26,7 +18,6 @@ export function useAssistantManagementFetch(): ManagementFetch {
 
   return useCallback(async (path, query, options) => {
     const { fetch, globalApiParams, cache } = latest.current;
-    // The SDK names API paths from `/api`; the dashboard's keys start below it.
     const url = path.replace(/^\/api(?=\/)/, "");
     const withQuery = mergeUrlParams(url, query);
 

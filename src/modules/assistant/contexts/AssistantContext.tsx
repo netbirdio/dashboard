@@ -7,25 +7,19 @@ import type { ManagementFetch } from "../lib/reads";
 import type { BrowserToolExecutor } from "../lib/tools";
 
 export interface AssistantProviderProps {
-  /** Origin of the assistant service, e.g. "https://assistant.example.com". */
   host: string;
-  /** Resolved before every request; must include the NetBird OIDC bearer. */
+  /** Must include the NetBird OIDC bearer. */
   headers: () => Promise<Record<string, string>>;
   navigate: (href: string) => void;
   currentPath: () => string;
   /**
-   * The signed-in NetBird user. It scopes the persisted and the live session,
-   * so the next user on the same tab cannot resume or continue the previous one's conversation.
-   * Changing it starts a new session;
-   * a host that resolves the user asynchronously should mount the provider once the id is known.
+   * Scopes the session, so the next user on the same tab cannot resume the previous one's conversation.
+   * Mount the provider only once the id is known: changing it starts a new session.
    */
   currentUserId?: string;
-  /** Read at send time; rides the page-context header. */
   pageContext?: () => string | null;
-  /** Executors for browser tools the SDK has no built-in for, such as dashboard_page_redirect. */
   extraExecutors?: Record<string, BrowserToolExecutor>;
   fetchManagement?: ManagementFetch;
-  /** Keys the session persisted in sessionStorage; defaults to one conversation per app. */
   conversationId?: string;
   children: ReactNode;
 }
@@ -56,8 +50,6 @@ function AssistantConfigProvider({
   conversationId = "default",
   children,
 }: Readonly<AssistantProviderProps>) {
-  // Callback props are read through a ref,
-  // so the context value does not churn when the host re-creates them on every render.
   const propsRef = useRef({
     headers,
     navigate,
@@ -111,13 +103,8 @@ export function useAssistantContext(): AssistantContextValue {
   return ctx;
 }
 
-/**
- * Mounts the assistant: the config context, the eve session, the client-tool loop and the assistant-ui runtime.
- *
- * The engine is keyed on host and conversation id because eve reads its session config once per mount,
- * and on the user because a session id resumes one user's transcript,
- * so a sign-in that swaps the user must not inherit the previous one's session.
- */
+// The engine key includes the user: eve reads its session config once per mount,
+// and a sign-in that swaps the user must not inherit the previous session.
 export function AssistantProvider(props: Readonly<AssistantProviderProps>) {
   const { children, ...config } = props;
   return (

@@ -67,13 +67,6 @@ export default function DashboardLayout({
   );
 }
 
-/**
- * True while the window is being resized, and for a moment after.
- *
- * Used to suppress the card's geometry transition: it exists to animate the
- * panel opening, and a resize is not that — it's the user dragging an edge and
- * expecting the layout to keep up.
- */
 function useIsResizing(): boolean {
   const [resizing, setResizing] = React.useState(false);
 
@@ -115,37 +108,26 @@ function DashboardPageContent({
       {!isRestricted && <AssistantChatPanel />}
 
       {/*
-        The dashboard card. Sits above the panel and shrinks to reveal it —
-        the panel itself never moves. Rendered as a sibling of the panel (not a
-        parent) because the animated subtree below applies transforms, which
-        would capture the panel's `position: fixed`.
+        A sibling of the panel, not a parent: the animated subtree below applies
+        transforms, which would capture the panel's `position: fixed`.
       */}
       <div
         className={cn(
-          // z-10 keeps the card above the panel for the whole transition, not
-          // just at rest.
           "relative z-10",
-          // Transition the geometry only. `transition-all` also animates
-          // border-color and border-width from their initial values, which reads
-          // as the border flashing/changing colour as the panel opens.
+          // Not `transition-all`: that also animates the border, which flashes
+          // as the panel opens.
           "transition-[margin,height] duration-300 ease-out",
-          // ...except while the window is being resized. The height is derived
-          // from `100vh`, so every resize tick would otherwise animate for
-          // 300ms and the card would lag behind the window edge.
+          // The height derives from `100vh`, so a resize would otherwise lag
+          // behind the window edge.
           resizing && "transition-none",
-          // Applied only while revealed, so the closed state is exactly the
-          // layout that existed before the panel: no clipping that could cut off
-          // a non-portaled dropdown, no background change.
-          //
-          // This single border/rounding is the whole outline — the header is
-          // an in-flow child, so `overflow-hidden` clips its top corners.
+          // Only while revealed, so the closed layout has no clipping that
+          // could cut off a non-portaled dropdown.
           reveal &&
             "overflow-hidden rounded-2xl border border-nb-gray-900 bg-nb-gray-950 shadow-2xl",
         )}
         style={{
           marginTop: inset,
           marginBottom: inset,
-          // The panel's edge takes the panel's width; the other keeps the inset.
           marginLeft: PANEL_ON_LEFT && reveal ? PANEL_WIDTH : inset,
           marginRight: !PANEL_ON_LEFT && reveal ? PANEL_WIDTH : inset,
           height: `calc(100vh - ${inset * 2}px)`,
@@ -254,8 +236,6 @@ function DashboardPageContent({
                 <div
                   className={"relative flex flex-row flex-grow"}
                   style={{
-                    // The card's vertical margins come out of the viewport too, or
-                    // the content would overflow by that much once the panel opens.
                     height: `calc(100vh - ${
                       headerHeight + bannerHeight + inset * 2
                     }px)`,

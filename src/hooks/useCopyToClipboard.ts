@@ -1,11 +1,6 @@
 import { notify } from "@components/Notification";
 import { useRef, useState } from "react";
 
-/**
- * `silent` suppresses the toast for copies whose confirmation is already on
- * screen — a button that swaps to a ✓ next to the thing it copied doesn't need
- * the corner of the app to say so as well.
- */
 export default function useCopyToClipboard(
   textToCopy?: string,
   options?: { silent?: boolean },
