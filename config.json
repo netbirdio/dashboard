@@ -24,6 +24,8 @@
   "hubspotSignupFormId": "$NETBIRD_HUBSPOT_SIGNUP_FORM_ID",
   "hubspotOnboardingFormId": "$NETBIRD_HUBSPOT_ONBOARDING_FORM_ID",
   "hubspotSurveyFormId": "$NETBIRD_HUBSPOT_SURVEY_FORM_ID",
+  "matomoUrl": "$NETBIRD_MATOMO_URL",
+  "matomoSiteId": "$NETBIRD_MATOMO_SITE_ID",
   "analyticsExcludedEmails": "$NETBIRD_ANALYTICS_EXCLUDED_EMAILS",
   "announcement": "$NETBIRD_ANNOUNCEMENT"
 }

@@ -1,7 +1,6 @@
 import SidebarItem from "@components/SidebarItem";
 import * as React from "react";
 import { useEffect, useMemo } from "react";
-import ActivityIcon from "@/assets/icons/ActivityIcon";
 import MSPIcon from "@/assets/icons/MSPIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { useDistributor } from "@/cloud/distributor/contexts/DistributorProvider";
@@ -10,6 +9,7 @@ import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { isNetBirdCloud } from "@utils/netbird";
 import { Role } from "@/interfaces/User";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import { USERS_ACTIVE_ROUTES } from "@/modules/navigation/sections";
 
 export const DistributorNavigation = () => {
   const { isActive } = useDistributor();
@@ -60,32 +60,14 @@ export const DistributorNavigation = () => {
         labelClassName={"-left-[1.5px] relative"}
       />
 
+      {/* Users with its Service Users tab, as in the regular sidebar. The
+          account area (Settings, Integrations, Audit Events) follows below. */}
       <SidebarItem
         icon={<TeamIcon />}
         visible={permission.users.read}
-        label={"Team"}
-        href={"/team"}
-        collapsible
-      >
-        <SidebarItem
-          label={"Users"}
-          isChild
-          href={"/team/users"}
-          visible={permission.users.read}
-        />
-        <SidebarItem
-          label={"Service Users"}
-          isChild
-          href={"/team/service-users"}
-          visible={permission.users.read}
-        />
-      </SidebarItem>
-      <SidebarItem
-        icon={<ActivityIcon />}
-        visible={permission.events.read}
-        label={"Audit Events"}
-        href={"/events/audit"}
-        exactPathMatch={true}
+        label={"Users"}
+        href={"/team/users"}
+        activeRoutes={USERS_ACTIVE_ROUTES}
       />
     </div>
   );

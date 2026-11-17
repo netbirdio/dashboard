@@ -249,6 +249,7 @@ export function ResourceModalContent({
 
   return (
     <ModalContent
+      flow={useSave ? "network_resource" : undefined}
       maxWidthClass={
         tab === "access-control" ? "max-w-[790px]" : "max-w-[680px]"
       }

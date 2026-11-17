@@ -14,6 +14,7 @@ import {
   UserCircleIcon,
 } from "lucide-react";
 import * as React from "react";
+import { useMatomoVirtualPage } from "@/cloud/analytics/MatomoProvider";
 
 const parseApproverEmail = (message?: string): string =>
   message?.match(/[^\s@]+@[a-z0-9.-]+\.[a-z]{2,}/i)?.[0] ?? "";
@@ -45,6 +46,7 @@ type Props = {
 
 export const PendingApproval = ({ error, onRefresh, onLogout }: Props) => {
   const owner = parseApproverEmail(error?.message);
+  useMatomoVirtualPage("pending_approval");
 
   return (
     <div

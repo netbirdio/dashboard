@@ -576,6 +576,7 @@ export default function ReverseProxyModal({
   return (
     <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
       <ModalContent
+        flow="reverse_proxy"
         maxWidthClass={tab === "service" ? "max-w-xl" : "max-w-2xl"}
       >
         <ModalHeader

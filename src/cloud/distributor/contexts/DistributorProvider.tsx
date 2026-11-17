@@ -16,10 +16,17 @@ const DISTRIBUTOR_HIDDEN_NAV_ITEMS = [
   "/reverse-proxy",
   "/dns",
   "/team",
-  "/events",
+  "/team/users",
+  "/team/service-users",
+  "/groups",
+  "/events/traffic",
   "/tenants",
   "/peers",
 ];
+
+// Distributors manage customers, not networks or agents: both product
+// sections go, headings included. The account area stays, Audit Events in it.
+const DISTRIBUTOR_HIDDEN_NAV_SECTIONS = ["networking", "agent-network"];
 
 const DISTRIBUTOR_HIDDEN_SETTINGS_TABS = [
   "networks",
@@ -76,6 +83,9 @@ export default function DistributorProvider({ children }: Readonly<Props>) {
         (href) =>
           `body[data-distributor] [data-nav-item="${href}"]:not([data-distributor-nav] *)`,
       );
+      const sectionRules = DISTRIBUTOR_HIDDEN_NAV_SECTIONS.map(
+        (id) => `body[data-distributor] [data-nav-section="${id}"]`,
+      );
       const settingsRules = DISTRIBUTOR_HIDDEN_SETTINGS_TABS.map(
         (tab) => `body[data-distributor] [data-settings-tab="${tab}"]`,
       );
@@ -83,8 +93,9 @@ export default function DistributorProvider({ children }: Readonly<Props>) {
         (setting) => `body[data-distributor] [data-auth-setting="${setting}"]`,
       );
       const hideRules =
-        [...navRules, ...settingsRules, ...authRules].join(",\n") +
-        " { display: none; }";
+        [...navRules, ...sectionRules, ...settingsRules, ...authRules].join(
+          ",\n",
+        ) + " { display: none; }";
       const overrideRules = `body[data-distributor] [data-auth-setting="toggles"] { margin-top: 1rem; }`;
       style.textContent = hideRules + "\n" + overrideRules;
       document.head.appendChild(style);

@@ -80,7 +80,7 @@ const ResourceGroupModalContent = ({
   };
 
   return (
-    <ModalContent maxWidthClass={"max-w-2xl"}>
+    <ModalContent flow="resource_group" maxWidthClass={"max-w-2xl"}>
       <ModalHeader
         title={"Resource Groups"}
         description={

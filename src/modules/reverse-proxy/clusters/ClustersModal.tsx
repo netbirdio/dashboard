@@ -328,7 +328,11 @@ spec:
 
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
-      <ModalContent maxWidthClass={"relative max-w-[600px]"} showClose={true}>
+      <ModalContent
+        flow="reverse_proxy_cluster"
+        maxWidthClass={"relative max-w-[600px]"}
+        showClose={true}
+      >
         <ModalHeader
           icon={<ServerIcon size={16} />}
           title={"Setup Cluster"}
