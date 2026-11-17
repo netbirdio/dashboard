@@ -32,6 +32,16 @@ describe("a question the assistant restated before asking it", () => {
     expect(textOf(message)).toEqual([]);
   });
 
+  it("keeps the indentation of the text before it", () => {
+    const [message] = withQuestionReplies([asking("    allow tcp 443\n\nContinue?", "Continue?")]);
+    expect(textOf(message)).toEqual(["    allow tcp 443"]);
+  });
+
+  it("does not match the question inside a longer word", () => {
+    const [message] = withQuestionReplies([asking("Which subnet?", "net?")]);
+    expect(textOf(message)).toEqual(["Which subnet?"]);
+  });
+
   it("leaves text that does not end in the question alone", () => {
     const [message] = withQuestionReplies([asking("Continue? Maybe.", "Continue?")]);
     expect(textOf(message)).toEqual(["Continue? Maybe."]);

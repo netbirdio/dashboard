@@ -28,9 +28,9 @@ function withoutRestatement(parts: Part[], prompt: string): Part[] {
   const words = prompt.split(/\s+/).filter(Boolean);
   if (last?.type !== "text" || words.length === 0) return parts;
   // Whitespace is matched loosely, and the text before the question keeps its own formatting.
-  const restated = new RegExp(`${words.map(escapeRegExp).join("\\s+")}\\s*$`);
+  const restated = new RegExp(`(?:^|\\s)${words.map(escapeRegExp).join("\\s+")}\\s*$`);
   if (!restated.test(last.text)) return parts;
-  const rest = last.text.replace(restated, "").trim();
+  const rest = last.text.replace(restated, "").trimEnd();
   return rest ? [...parts.slice(0, -1), { ...last, text: rest }] : parts.slice(0, -1);
 }
 
