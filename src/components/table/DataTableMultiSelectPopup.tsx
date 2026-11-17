@@ -60,7 +60,7 @@ export function DataTableMultiSelectPopup<T>({
                         <MonitorSmartphoneIcon size={16} className={""} />
                       )}
                       <span>
-                        <span className={"font-medium text-nb-gray-100"}>
+                        <span className={"font-medium text-nb-gray-100 dark:text-white"}>
                           {count}
                         </span>{" "}
                         {label}

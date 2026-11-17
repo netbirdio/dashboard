@@ -63,7 +63,7 @@ export default function PeerVersionCell({
         <TooltipProvider>
           <Tooltip delayDuration={10}>
             <TooltipTrigger className={"flex max-w-full min-w-0"}>
-              <div className="flex gap-2 text-nb-gray-300 hover:text-nb-gray-100 transition-all rounded-md items-center min-w-0">
+              <div className="flex gap-2 text-nb-gray-300 dark:text-neutral-300 hover:text-nb-gray-100 dark:hover:text-neutral-100 transition-all rounded-md items-center min-w-0">
                 <MemoizedNetBirdIcon />
                 {/* The update tooltip shows the full version. */}
                 <span className={"truncate"}>{displayVersion}</span>
@@ -89,7 +89,7 @@ export default function PeerVersionCell({
 
               <div
                 className={
-                  "text-nb-gray-300 flex flex-col gap-1 max-w-[300px] text-xs mt-1"
+                  "text-nb-gray-300 dark:text-neutral-300 flex flex-col gap-1 max-w-[300px] text-xs mt-1"
                 }
               >
                 A new version of Netbird is available. Please update your client
@@ -107,7 +107,7 @@ export default function PeerVersionCell({
           </Tooltip>
         </TooltipProvider>
       ) : (
-        <div className="flex gap-2 text-nb-gray-300 items-center min-w-0">
+        <div className="flex gap-2 text-nb-gray-300 dark:text-neutral-300 items-center min-w-0">
           <MemoizedNetBirdIcon />
           <TextWithTooltip text={displayVersion} fluid={true} />
         </div>
@@ -135,7 +135,7 @@ export default function PeerVersionCell({
         >
           <div
             className={
-              "flex items-center gap-2 text-nb-gray-300 whitespace-nowrap min-w-0"
+              "flex items-center gap-2 text-nb-gray-300 dark:text-neutral-300 whitespace-nowrap min-w-0"
             }
           >
             <span className={"shrink-0"}>

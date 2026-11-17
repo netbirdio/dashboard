@@ -199,7 +199,7 @@ export default function Notification<T>({
             className={classNames(
               "h-8 w-8  shadow-sm flex items-center justify-center rounded-md shrink-0",
               loading
-                ? "bg-nb-gray-900 text-nb-gray-100"
+                ? "bg-nb-gray-900 text-nb-gray-100 dark:text-white"
                 : error
                 ? "bg-red-500 text-white"
                 : backgroundColor

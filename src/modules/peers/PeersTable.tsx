@@ -561,7 +561,9 @@ export default function PeersTable({
                 User Devices
               </ButtonGroup.Button>
               <ButtonGroup.Button
-                className={"h-[42px]"}
+                // Drop the left border so it doesn't stack with the first
+                // button's right border into a doubled divider.
+                className={"h-[42px] !border-l-0"}
                 variant={kind === "servers" ? "tertiary" : "secondary"}
                 onClick={() => {
                   table.setPageIndex(0);

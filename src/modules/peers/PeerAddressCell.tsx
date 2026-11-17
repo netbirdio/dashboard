@@ -57,7 +57,7 @@ export default function PeerAddressCell({ peer, fluid = false }: Props) {
             <RoundedFlag country={peer.country_code} size={12} />
           )}
         </div>
-        <div className="flex flex-col gap-0 text-nb-gray-300 font-light truncate">
+        <div className="flex flex-col gap-0 text-nb-gray-300 dark:text-neutral-300 font-light truncate">
           <CopyToClipboardText
             message={"DNS label has been copied to your clipboard"}
             textToCopy={peer.dns_label}

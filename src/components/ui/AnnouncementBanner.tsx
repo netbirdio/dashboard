@@ -19,16 +19,16 @@ const variants = cva(
         default:
           "bg-neutral-200 text-neutral-700 dark:bg-nb-gray-200/10 dark:text-nb-gray-100 font-medium",
         important:
-          "bg-zinc-800 text-gray-200 font-medium",
+          "bg-zinc-800 text-gray-200 dark:bg-nb-gray-900 dark:text-nb-gray-200 font-medium",
       },
       closeButton: {
         default:
           "bg-neutral-200 text-neutral-600 hover:bg-neutral-300 dark:bg-nb-gray-900 dark:text-nb-gray-300 dark:hover:bg-nb-gray-800 rounded-md p-1",
         important:
-          "rounded-md p-1 bg-netbird text-black hover:bg-zinc-800 hover:text-gray-200",
+          "rounded-md p-1 bg-netbird text-black hover:bg-zinc-800 hover:text-gray-200 dark:text-nb-gray-900 dark:hover:bg-nb-gray-900 dark:hover:text-nb-gray-200",
       },
       inlineLink: {
-        default: "text-nb-blue-500 dark:text-nb-blue-400 hover:underline",
+        default: "text-nb-blue-400 hover:underline",
         important:
           "!text-black underline hover:opacity-80",
       },

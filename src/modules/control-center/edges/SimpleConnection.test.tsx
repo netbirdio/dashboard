@@ -68,11 +68,11 @@ describe("SimpleConnection", () => {
     expect(path?.style.opacity).toBe("0.6");
   });
 
-  // The stroke must stay on the theme-flipping ramp tokens (and inline —
-  // xyflow's .react-flow__edge-path would override a stroke-* utility).
-  it("strokes with the dark ramp token in dark mode", () => {
+  // The stroke must stay inline — xyflow's .react-flow__edge-path would
+  // override a stroke-* utility.
+  it("keeps its neutral grey stroke in dark mode", () => {
     const path = renderEdge({ enabled: true });
-    expect(path?.style.stroke).toBe("rgb(var(--nb-gray-400))");
+    expect(path?.style.stroke).toBe("rgb(125, 125, 125)");
   });
 
   it("strokes with the light ramp token in light mode", () => {

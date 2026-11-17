@@ -36,10 +36,10 @@ export default function PeerNameCell({
     <div>
       <div
         className={cn(
-          "flex items-center gap-2 text-nb-gray-300 transition-all py-2 px-3 rounded-md ",
+          "flex items-center gap-2 text-nb-gray-300 dark:text-neutral-300 transition-all py-2 px-3 rounded-md ",
           fluid ? "w-fit max-w-full min-w-0" : "max-w-[280px]",
           linkToPeer &&
-            "hover:text-nb-gray-100 hover:bg-nb-gray-900/60 cursor-pointer",
+            "hover:text-nb-gray-100 dark:hover:text-neutral-100 hover:bg-nb-gray-900/60 cursor-pointer",
         )}
         data-testid="peer-name-cell"
         aria-label={`View details of peer ${peer.name}`}

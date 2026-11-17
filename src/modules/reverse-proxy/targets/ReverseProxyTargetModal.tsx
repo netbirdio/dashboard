@@ -366,22 +366,22 @@ export default function ReverseProxyTargetModal({
                             <div className="text-xs max-w-xs flex flex-col gap-2">
                               <div>
                                 When disabled, a request to e.g.,{" "}
-                                <span className="font-mono text-nb-gray-100">
+                                <span className="font-mono text-nb-gray-100 dark:text-white">
                                   {targetPath}/users
                                 </span>{" "}
                                 is forwarded as{" "}
-                                <span className="font-mono text-nb-gray-100">
+                                <span className="font-mono text-nb-gray-100 dark:text-white">
                                   /users
                                 </span>
                                 .
                               </div>
                               <div>
                                 When enabled, a request to e.g.,{" "}
-                                <span className="font-mono text-nb-gray-100">
+                                <span className="font-mono text-nb-gray-100 dark:text-white">
                                   {targetPath}/users
                                 </span>{" "}
                                 is forwarded as{" "}
-                                <span className="font-mono text-nb-gray-100">
+                                <span className="font-mono text-nb-gray-100 dark:text-white">
                                   {targetPath}/users
                                 </span>
                                 .

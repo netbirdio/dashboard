@@ -41,9 +41,9 @@ const renderLine = () => {
 describe("ConnectionLine", () => {
   it("uses the theme-flipping ramp token and the shared dash animation", () => {
     const path = renderLine();
-    // nb-gray-50 is near-white in dark and near-black in light, so one token
-    // keeps the drag preview visible on both canvases.
+    // nb-gray-50 is near-black in light mode; dark keeps the white preview.
     expect(path?.classList.contains("stroke-nb-gray-50")).toBe(true);
+    expect(path?.classList.contains("dark:stroke-white")).toBe(true);
     expect(path?.classList.contains("cc-animated-edge")).toBe(true);
     expect(path?.getAttribute("stroke")).toBeNull();
   });

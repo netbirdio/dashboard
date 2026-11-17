@@ -1,6 +1,7 @@
 import { BaseEdge, type EdgeProps, getSimpleBezierPath } from "@xyflow/react";
-import { useTheme } from "@/contexts/ThemeProvider";
 import React from "react";
+import { useTheme } from "@/contexts/ThemeProvider";
+import { canvasConnectionStroke } from "@/modules/control-center/utils/canvas-theme";
 import { useSourceGroupEnabled } from "@/modules/control-center/utils/helpers";
 
 type Props = {
@@ -41,12 +42,7 @@ export function SimpleConnection({
       path={edgePath}
       style={{
         strokeWidth: 1.5,
-        /* Inline (not a stroke-* utility): xyflow's .react-flow__edge-path
-           sets stroke and loads after the Tailwind utilities. */
-        stroke:
-          resolvedTheme === "light"
-            ? "rgb(var(--nb-gray-700))"
-            : "rgb(var(--nb-gray-400))",
+        stroke: canvasConnectionStroke(resolvedTheme),
         strokeDasharray: "0, 0",
         opacity: enabled ? 1 : 0.6,
       }}

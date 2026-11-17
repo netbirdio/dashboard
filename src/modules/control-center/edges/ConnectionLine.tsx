@@ -30,7 +30,7 @@ export const ConnectionLine = ({
           strokeWidth={2}
           strokeDasharray="5, 5"
           style={{ opacity: 0.6 }}
-          className="cc-animated-edge stroke-nb-gray-50"
+          className="cc-animated-edge stroke-nb-gray-50 dark:stroke-white"
           d={edgePath}
         />
       </g>

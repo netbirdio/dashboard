@@ -111,7 +111,7 @@ function InviteAcceptContent() {
                 <Clock className="w-8 h-8 text-yellow-500" />
               </div>
             </div>
-            <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white mb-2">
+            <h1 className="text-2xl font-semibold text-neutral-900 mb-2">
               Too Many Requests
             </h1>
             <Paragraph className="text-nb-gray-400 text-base">
@@ -138,7 +138,7 @@ function InviteAcceptContent() {
               <AlertCircle className="w-8 h-8 text-red-700 dark:text-red-500" />
             </div>
           </div>
-          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white mb-2">
+          <h1 className="text-2xl font-semibold text-neutral-900 mb-2">
             Invalid Invite
           </h1>
           <Paragraph className="text-nb-gray-400 text-base">
@@ -166,7 +166,7 @@ function InviteAcceptContent() {
               <CheckCircle2 className="w-8 h-8 text-green-700 dark:text-green-500" />
             </div>
           </div>
-          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white mb-2">
+          <h1 className="text-2xl font-semibold text-neutral-900 mb-2">
             Account Created!
           </h1>
           <Paragraph className="text-nb-gray-400">
@@ -194,7 +194,7 @@ function InviteAcceptContent() {
               <AlertCircle className="w-8 h-8 text-yellow-500" />
             </div>
           </div>
-          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white mb-2">
+          <h1 className="text-2xl font-semibold text-neutral-900 mb-2">
             Invite Expired
           </h1>
           <Paragraph className="text-nb-gray-400">
@@ -221,7 +221,7 @@ function InviteAcceptContent() {
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white mb-2">
+          <h1 className="text-2xl font-semibold text-neutral-900 mb-2">
             Welcome to NetBird
           </h1>
           <p className="text-neutral-600 dark:text-nb-gray-400 text-base">
@@ -299,7 +299,7 @@ function InviteAcceptContent() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-neutral-600 dark:text-nb-gray-500">
+        <p className="text-center text-xs text-neutral-600">
           Invite expires on {dayjs(inviteInfo.expires_at).format("D MMMM, YYYY [at] h:mm A")}
         </p>
       </div>

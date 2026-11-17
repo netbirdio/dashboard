@@ -183,7 +183,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
             <div className={"flex items-center gap-3"}>
               <div
                 className={cn(
-                  "w-10 h-10 rounded-full relative flex items-center justify-center text-nb-gray-100 uppercase text-md font-medium bg-nb-gray-900",
+                  "w-10 h-10 rounded-full relative flex items-center justify-center text-nb-gray-100 dark:text-white uppercase text-md font-medium bg-nb-gray-900",
                   !isServiceUser && "initials-avatar",
                 )}
                 style={

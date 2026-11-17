@@ -62,11 +62,11 @@ describe("DirectionIn", () => {
     expect(lightPath?.style.stroke).toBe("rgb(14, 159, 110)");
   });
 
-  // Disabled edges must stay on the theme-flipping ramp tokens (and inline —
-  // xyflow's .react-flow__edge-path would override a stroke-* utility).
-  it("strokes disabled edges with the dark ramp token in dark mode", () => {
+  // Disabled strokes must stay inline — xyflow's .react-flow__edge-path
+  // would override a stroke-* utility.
+  it("strokes disabled edges neutral grey in dark mode", () => {
     const path = renderEdge({ enabled: false });
-    expect(path?.style.stroke).toBe("rgb(var(--nb-gray-400))");
+    expect(path?.style.stroke).toBe("rgb(120, 120, 120)");
     expect(path?.style.opacity).toBe("0.6");
     expect(path?.classList.contains("cc-animated-edge")).toBe(false);
   });

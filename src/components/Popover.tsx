@@ -16,7 +16,7 @@ export const popoverVariants = cva([], {
       ],
       dark: [
         "rounded-md border border-nb-gray-700 bg-white px-5 py-3 text-sm text-neutral-950 shadow-md",
-        "dark:border-nb-gray-800 dark:bg-nb-gray-940 dark:text-gray-50",
+        "dark:border-nb-gray-900 dark:bg-nb-gray-940 dark:text-gray-50",
       ],
     },
   },

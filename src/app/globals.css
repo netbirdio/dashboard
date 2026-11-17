@@ -362,9 +362,9 @@
     --nb-gray-950: 24 26 29;
     --nb-gray-960: 22 24 27;
 
-    /* Dark skeletons keep their existing nb-gray-920 / nb-gray-850 values. */
+    /* Dark skeletons keep the colours they had before light mode. */
     --skeleton-base: 37 40 45;
-    --skeleton-highlight: 54 59 64;
+    --skeleton-highlight: 51 55 62;
 }
 
 .initials-avatar,
@@ -395,7 +395,18 @@
     }
 }
 
+/* Dark mode keeps v3's compiled element colours (`p:is(.dark *)`), which beat
+   plain text colour classes but lose to `dark:text-*` ones. Light mode uses
+   the overridable base-layer defaults above. */
 @layer utilities {
+    h1:is(.dark *),
+    h2:is(.dark *) {
+        color: rgb(var(--nb-gray-100));
+    }
+    p:is(.dark *) {
+        color: var(--color-zinc-50);
+    }
+
     /* v4's outline-none removes the outline, which also hides it in forced
        colors mode; v3 made it transparent instead (v4's outline-hidden).
        Same selectors as the generated utilities, later in the layer. */

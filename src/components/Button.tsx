@@ -18,7 +18,7 @@ export const buttonVariants = cva(
     "relative",
     "text-sm focus:z-10 focus:ring-2 font-medium  focus:outline-none whitespace-nowrap shadow-sm",
     "inline-flex gap-2 items-center justify-center transition-colors focus:ring-offset-1",
-    "disabled:opacity-60 disabled:dark:opacity-40 disabled:cursor-not-allowed disabled:dark:text-nb-gray-300 dark:ring-offset-neutral-950/50",
+    "disabled:opacity-40 not-dark:disabled:opacity-60 disabled:cursor-not-allowed disabled:dark:text-nb-gray-300 dark:ring-offset-neutral-950/50",
   ],
   {
     variants: {
@@ -31,7 +31,7 @@ export const buttonVariants = cva(
           "border-transparent",
           "dark:focus:ring-netbird-600/50 dark:ring-offset-neutral-950/50 enabled:dark:bg-netbird disabled:dark:bg-nb-gray-910 dark:text-gray-100 enabled:dark:hover:text-white enabled:dark:hover:bg-netbird-500/80",
           "enabled:bg-netbird enabled:text-white enabled:focus:ring-netbird-400/50 enabled:hover:bg-netbird-500",
-          "disabled:bg-neutral-200 disabled:text-neutral-600 disabled:border-neutral-300 disabled:!opacity-100 dark:disabled:!opacity-40 dark:disabled:border-transparent",
+          "disabled:bg-neutral-200 disabled:text-neutral-600 disabled:border-neutral-300 not-dark:disabled:!opacity-100 dark:disabled:border-transparent",
         ],
         secondary: [
           "bg-white hover:text-black focus:ring-neutral-200/50 enabled:hover:bg-neutral-50 border-nb-gray-700 text-neutral-900",
@@ -63,7 +63,7 @@ export const buttonVariants = cva(
           "dark:focus:ring-zinc-800/50 dark:bg-white dark:text-gray-800 dark:border-gray-700/40 dark:hover:bg-neutral-200 disabled:dark:bg-nb-gray-920 disabled:dark:text-nb-gray-300",
         ],
         white: [
-          "focus:ring-white/50 bg-white text-neutral-800 border-white outline-none hover:bg-neutral-50 dark:hover:bg-neutral-200 disabled:dark:bg-nb-gray-920 disabled:dark:text-nb-gray-300",
+          "focus:ring-white/50 bg-white text-neutral-800 dark:text-gray-800 border-white outline-none hover:bg-neutral-50 dark:hover:bg-neutral-200 disabled:dark:bg-nb-gray-920 disabled:dark:text-nb-gray-300",
           "disabled:dark:bg-nb-gray-900 disabled:dark:text-nb-gray-300 disabled:dark:border-nb-gray-900",
         ],
         outline: [
@@ -79,11 +79,11 @@ export const buttonVariants = cva(
         ],
         "default-outline": [
           "ring-offset-nb-gray-950/50 focus:ring-nb-gray-500/20 !shadow-none dark:!shadow-sm",
-          "bg-transparent text-nb-gray-400 border-transparent hover:text-nb-gray-50 hover:bg-nb-gray-900/30 hover:border-nb-gray-800/50",
-          "data-[state=open]:text-nb-gray-50 data-[state=open]:bg-nb-gray-900/30 data-[state=open]:border-nb-gray-800/50",
+          "bg-transparent text-nb-gray-400 border-transparent hover:text-nb-gray-50 dark:hover:text-white hover:bg-nb-gray-900/30 hover:border-nb-gray-800/50",
+          "data-[state=open]:text-nb-gray-50 data-[state=open]:dark:text-white data-[state=open]:bg-nb-gray-900/30 data-[state=open]:border-nb-gray-800/50",
         ],
         danger: [
-          "enabled:bg-red-600 enabled:text-white enabled:hover:bg-red-700 enabled:focus:bg-red-700 enabled:focus:ring-red-400/50 border-red-600 disabled:bg-red-300 disabled:text-white",
+          "enabled:bg-red-600 enabled:text-white enabled:hover:bg-red-700 enabled:focus:bg-red-700 enabled:focus:ring-red-400/50 border-red-600 dark:border-transparent disabled:bg-red-300 disabled:text-white",
           "dark:focus:ring-red-700/20 dark:focus:bg-red-700 hover:dark:bg-red-700 dark:hover:border-red-800/50 dark:bg-red-600 dark:text-red-100",
         ],
       },

@@ -239,7 +239,7 @@ export const AssignGroupToPeerModalContent = ({
                   {groupName !== "All" && (
                     <button
                       className={
-                        "flex items-center gap-2 text-nb-gray-300 hover:text-nb-gray-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
+                        "flex items-center gap-2 text-nb-gray-300 dark:text-neutral-300 hover:text-nb-gray-100 dark:hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
                       }
                       onClick={() => setGroupNameModal(true)}
                     >
