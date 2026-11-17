@@ -554,10 +554,10 @@ export function useDraftGroupActions() {
 
       // "Add Resource Group" tracked its create-group under this node id, and no
       // other remover reaches the row.
-      if (nodeId.startsWith("resourcegroup-new-")) {
-        const rowGroupName = getNodeGroup(node)?.name;
-        if (rowGroupName) untrackNewGroup(rowGroupName);
-      }
+      const rowGroupName = nodeId.startsWith("resourcegroup-new-")
+        ? getNodeGroup(node)?.name
+        : undefined;
+      if (rowGroupName) untrackNewGroup(rowGroupName);
 
       const removedGroup = isGroupNode(node) ? getNodeGroup(node) : undefined;
       const stripsById = new Map<string, Policy>();
@@ -571,7 +571,22 @@ export function useDraftGroupActions() {
       }
       const groupPolicyUpdates = [...stripsById.values()];
 
-      setNodes((prev) => prev.filter((n) => n.id !== nodeId));
+      setNodes((prev) =>
+        prev
+          .filter((n) => n.id !== nodeId)
+          .map((n) => {
+            const refs = (n.data as { resourceGroupIds?: string[] })
+              ?.resourceGroupIds;
+            if (!rowGroupName || !refs?.includes(rowGroupName)) return n;
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                resourceGroupIds: refs.filter((r) => r !== rowGroupName),
+              },
+            };
+          }),
+      );
       setEdges((prev) =>
         prev.filter((e) => e.source !== nodeId && e.target !== nodeId),
       );
@@ -645,19 +660,12 @@ export function useDraftGroupActions() {
         }
       });
 
-      setNodes((prev) => prev.filter((n) => !removedIds.has(n.id)));
-      setEdges((prev) =>
-        prev.filter(
-          (e) => !removedIds.has(e.source) && !removedIds.has(e.target),
-        ),
-      );
-      setSelectedDestinationGroup("");
-
       const removedDraftNames = new Set<string>();
       nodesToRemove.forEach((n) => {
         const g = getNodeGroup(n);
         if (isGroupNode(n) && g && isNewGroup(g)) removedDraftNames.add(g.name);
       });
+      const untrackedNames = new Set<string>();
       removedDraftNames.forEach((name) => {
         const survivor = allNodes.some(
           (n) =>
@@ -666,8 +674,33 @@ export function useDraftGroupActions() {
             isNewGroup(getNodeGroup(n)) &&
             getNodeGroup(n)?.name === name,
         );
-        if (!survivor) untrackNewGroup(name);
+        if (!survivor) untrackedNames.add(name);
       });
+
+      setNodes((prev) =>
+        prev
+          .filter((n) => !removedIds.has(n.id))
+          .map((n) => {
+            const refs = (n.data as { resourceGroupIds?: string[] })
+              ?.resourceGroupIds;
+            if (!refs?.some((r) => untrackedNames.has(r))) return n;
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                resourceGroupIds: refs.filter((r) => !untrackedNames.has(r)),
+              },
+            };
+          }),
+      );
+      setEdges((prev) =>
+        prev.filter(
+          (e) => !removedIds.has(e.source) && !removedIds.has(e.target),
+        ),
+      );
+      setSelectedDestinationGroup("");
+
+      untrackedNames.forEach((name) => untrackNewGroup(name));
 
       deferPolicyStrips([...updatesById.values()]);
       deferAgentPolicyStrips([...agentUpdatesById.values()]);

@@ -1,7 +1,12 @@
 // Field allowlists for what the model may read; an operation without a profile cannot be called.
 // `true` passes a field through, a string tokenises it under that kind, a function keeps what it returns,
-// and any unlisted field is dropped. A `personal` handle's name becomes a token too.
+// `ID` and `FIXED` pass a field through with less rewriting, and any unlisted field is dropped.
+// A `personal` handle's name becomes a token too.
 export type FieldRule = true | string | Profile | ((value: unknown) => unknown);
+
+export const ID: FieldRule = (value) => value;
+
+export const FIXED: FieldRule = (value) => value;
 
 export interface Profile {
   handle?: string;
@@ -49,7 +54,7 @@ const PEER: Profile = {
     // Usually the peer's name, so the same kind gives it the same token.
     hostname: "peer",
     extra_dns_labels: "dns",
-    user_id: true,
+    user_id: ID,
     serial_number: "serial",
     city_name: "city",
     groups: GROUP_MINIMUM,
@@ -90,7 +95,7 @@ const POLICY: Profile = {
     enabled: true,
     description: true,
     rules: POLICY_RULE,
-    source_posture_checks: true,
+    source_posture_checks: ID,
   },
 };
 
@@ -107,10 +112,10 @@ const ROUTE: Profile = {
     network_id: true,
     network: "cidr",
     domains: "domain",
-    peer: true,
-    peer_groups: true,
-    groups: true,
-    access_control_groups: true,
+    peer: ID,
+    peer_groups: ID,
+    groups: ID,
+    access_control_groups: ID,
   },
 };
 
@@ -127,7 +132,7 @@ const NAMESERVER_GROUP: Profile = {
     search_domains_enabled: true,
     nameservers: NAMESERVER,
     domains: "domain",
-    groups: true,
+    groups: ID,
   },
 };
 
@@ -146,7 +151,7 @@ const SETUP_KEY: Profile = {
     usage_limit: true,
     ephemeral: true,
     allow_extra_dns_labels: true,
-    auto_groups: true,
+    auto_groups: ID,
   },
 };
 
@@ -164,7 +169,7 @@ const USER: Profile = {
     pending_approval: true,
     issued: true,
     email: "email",
-    auto_groups: true,
+    auto_groups: ID,
   },
 };
 
@@ -210,8 +215,8 @@ const ACCOUNT_SETTINGS: Profile = {
     dns_domain: "domain",
     network_range: "cidr",
     network_range_v6: "cidr",
-    peer_expose_groups: true,
-    ipv6_enabled_groups: true,
+    peer_expose_groups: ID,
+    ipv6_enabled_groups: ID,
     jwt_allow_groups: true,
   },
 };
@@ -258,9 +263,9 @@ const NETWORK: Profile = {
   fields: {
     description: true,
     routing_peers_count: true,
-    routers: true,
-    resources: true,
-    policies: true,
+    routers: ID,
+    resources: ID,
+    policies: ID,
   },
 };
 
@@ -272,7 +277,7 @@ const FLOW_ENDPOINT: Profile = {
   fields: {
     type: true,
     os: true,
-    id: true,
+    id: ID,
     // Most endpoints are peers, whose names are personal.
     name: "peer",
     address: "ip",
@@ -297,8 +302,8 @@ const FLOW_EVENT: Profile = {
     window_end: true,
     icmp: { fields: { type: true, code: true } },
     events: { fields: { type: true, timestamp: true } },
-    flow_id: true,
-    reporter_id: true,
+    flow_id: ID,
+    reporter_id: ID,
     source: FLOW_ENDPOINT,
     destination: FLOW_ENDPOINT,
     policy: { handle: "policy", fields: {} },
@@ -322,8 +327,8 @@ const pathname = (value: unknown) => (typeof value === "string" ? value.split(/[
 
 const PROXY_ACCESS_LOG: Profile = {
   fields: {
-    id: true,
-    service_id: true,
+    id: ID,
+    service_id: ID,
     timestamp: true,
     method: true,
     host: "domain",
@@ -338,7 +343,7 @@ const PROXY_ACCESS_LOG: Profile = {
     country_code: true,
     subdivision_code: true,
     city_name: "city",
-    user_id: true,
+    user_id: ID,
     auth_method_used: true,
     metadata: { fields: { crowdsec_verdict: true } },
   },
@@ -357,9 +362,9 @@ const PROXY_ACCESS_LOGS_PAGE: Profile = {
 const NETWORK_ROUTER: Profile = {
   handle: "router",
   fields: {
-    network_id: true,
-    peer: true,
-    peer_groups: true,
+    network_id: ID,
+    peer: ID,
+    peer_groups: ID,
     metric: true,
     masquerade: true,
     enabled: true,
@@ -373,7 +378,7 @@ const NETWORK_RESOURCE: Profile = {
 
 const DNS_RECORD: Profile = {
   fields: {
-    id: true,
+    id: ID,
     name: "domain",
     content: "domain",
     type: true,
@@ -387,7 +392,7 @@ const DNS_ZONE: Profile = {
     domain: "domain",
     enabled: true,
     enable_search_domain: true,
-    distribution_groups: true,
+    distribution_groups: ID,
     records: DNS_RECORD,
   },
 };
@@ -397,7 +402,7 @@ const SERVICE_AUTH: Profile = {
   fields: {
     password_auth: { fields: { enabled: true } },
     pin_auth: { fields: { enabled: true } },
-    bearer_auth: { fields: { enabled: true, distribution_groups: true } },
+    bearer_auth: { fields: { enabled: true, distribution_groups: ID } },
     link_auth: { fields: { enabled: true } },
     header_auths: { fields: { enabled: true, header: true } },
   },
@@ -405,7 +410,7 @@ const SERVICE_AUTH: Profile = {
 
 const SERVICE_TARGET: Profile = {
   fields: {
-    target_id: true,
+    target_id: ID,
     target_type: true,
     path: true,
     access_action: true,
@@ -440,7 +445,7 @@ const PROXY_SERVICE: Profile = {
     pass_host_header: true,
     rewrite_redirects: true,
     private: true,
-    access_groups: true,
+    access_groups: ID,
     targets: SERVICE_TARGET,
     auth: SERVICE_AUTH,
     access_restrictions: {
@@ -562,9 +567,9 @@ const AGENT_POLICY: Profile = {
   fields: {
     description: true,
     enabled: true,
-    source_groups: true,
-    destination_provider_ids: true,
-    guardrail_ids: true,
+    source_groups: ID,
+    destination_provider_ids: ID,
+    guardrail_ids: ID,
     limits: AGENT_POLICY_LIMITS,
   },
 };
@@ -586,8 +591,8 @@ const AGENT_BUDGET_RULE: Profile = {
   handle: "budget_rule",
   fields: {
     enabled: true,
-    target_groups: true,
-    target_users: true,
+    target_groups: ID,
+    target_users: ID,
     limits: AGENT_POLICY_LIMITS,
   },
 };
@@ -621,22 +626,22 @@ const AGENT_USAGE_FIELDS: Record<string, FieldRule> = {
 // Never `request_prompt` or `response_completion`: what a person asked a model, and what it answered.
 const AGENT_ACCESS_LOG: Profile = {
   fields: {
-    id: true,
-    service_id: true,
-    session_id: true,
+    id: ID,
+    service_id: ID,
+    session_id: "session",
     timestamp: true,
     status_code: true,
     duration_ms: true,
-    user_id: true,
-    group_ids: true,
+    user_id: ID,
+    group_ids: ID,
     source_ip: "ip",
     method: true,
     host: "domain",
     path: pathname,
     provider: true,
     model: true,
-    resolved_provider_id: true,
-    selected_policy_id: true,
+    resolved_provider_id: ID,
+    selected_policy_id: ID,
     decision: true,
     deny_reason: true,
     stream: true,
@@ -646,9 +651,9 @@ const AGENT_ACCESS_LOG: Profile = {
 
 const AGENT_ACCESS_LOG_SESSION: Profile = {
   fields: {
-    session_id: true,
-    user_id: true,
-    group_ids: true,
+    session_id: "session",
+    user_id: ID,
+    group_ids: ID,
     started_at: true,
     ended_at: true,
     request_count: true,
@@ -667,7 +672,7 @@ const pageOf = (row: Profile): Profile => ({
 const AGENT_CONSUMPTION: Profile = {
   fields: {
     dimension_kind: true,
-    dimension_id: true,
+    dimension_id: ID,
     window_seconds: true,
     window_start_utc: true,
     tokens_input: true,
@@ -688,7 +693,7 @@ const AGENT_CATALOG_PROVIDER: Profile = {
     pricing_surfaces: true,
     models: {
       fields: {
-        id: true,
+        id: FIXED,
         label: true,
         input_per_1k: true,
         output_per_1k: true,
@@ -710,7 +715,7 @@ const IDENTITY_PROVIDER: Profile = {
 // Never `auth_token`, nor the tenant, customer or client ids the sync signs in with.
 const IDP_INTEGRATION: Profile = {
   fields: {
-    id: true,
+    id: ID,
     enabled: true,
     provider: true,
     prefix: true,
@@ -723,13 +728,13 @@ const IDP_INTEGRATION: Profile = {
 
 // Not `config`, which holds the destination's API keys and credentials.
 const EVENT_STREAM: Profile = {
-  fields: { id: true, enabled: true, platform: true, created_at: true, updated_at: true },
+  fields: { id: ID, enabled: true, platform: true, created_at: true, updated_at: true },
 };
 
 // Not a webhook's URL or headers: either can carry a secret.
 const NOTIFICATION_CHANNEL: Profile = {
   fields: {
-    id: true,
+    id: ID,
     type: true,
     enabled: true,
     event_types: true,
@@ -742,7 +747,7 @@ const EDR_INTEGRATION: Profile = {
   fields: {
     id: true,
     enabled: true,
-    created_by: true,
+    created_by: ID,
     created_at: true,
     updated_at: true,
     last_synced_at: true,
@@ -774,7 +779,7 @@ const EDR_INTEGRATION: Profile = {
   },
 };
 
-const EDR_BYPASS: Profile = { fields: { peer_id: true } };
+const EDR_BYPASS: Profile = { fields: { peer_id: ID } };
 
 const SUBSCRIPTION: Profile = {
   fields: {
@@ -804,7 +809,7 @@ const BILLING_USAGE: Profile = {
 };
 
 const INVOICE: Profile = {
-  fields: { id: true, type: true, period_start: true, period_end: true },
+  fields: { id: ID, type: true, period_start: true, period_end: true },
 };
 
 // Not `dns_challenge`, the value that proves a tenant's domain.
@@ -813,7 +818,7 @@ const MSP_TENANT: Profile = {
   fields: {
     domain: "domain",
     status: true,
-    groups: { fields: { id: true, role: true } },
+    groups: { fields: { id: ID, role: true } },
     activated_at: true,
     invited_at: true,
     created_at: true,
@@ -828,7 +833,7 @@ const USER_INVITE: Profile = {
   fields: {
     email: "email",
     role: true,
-    auto_groups: true,
+    auto_groups: ID,
     expires_at: true,
     created_at: true,
     expired: true,
@@ -840,7 +845,7 @@ const ACCESS_TOKEN: Profile = {
   fields: {
     expiration_date: true,
     expires_at: true,
-    created_by: true,
+    created_by: ID,
     created_at: true,
     last_used: true,
     revoked: true,
@@ -940,7 +945,7 @@ export const PROFILES: Record<string, OperationProfile> = {
 };
 
 export const AUDIT_RESULT: Profile = {
-  fields: { window_days: true, matched: true, shown: true, note: true, rows: AUDIT_EVENT_ROW },
+  fields: { window_days: true, matched: true, shown: true, note: FIXED, rows: AUDIT_EVENT_ROW },
 };
 
 export function allowlist(value: unknown, profile: Profile): unknown {

@@ -1,11 +1,13 @@
 "use client";
 
+import { e2eHooksEnabled } from "@utils/netbird";
 import { Connection, Node, useReactFlow } from "@xyflow/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useDialog } from "@/contexts/DialogProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
-import { Policy } from "@/interfaces/Policy";
+import { Policy, PortRange } from "@/interfaces/Policy";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import type {
   AgentPolicy,
@@ -13,7 +15,26 @@ import type {
 } from "@/modules/agent-network/data/mockData";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { useBootstrapCluster } from "@/modules/agent-network/useBootstrapCluster";
-import { AgentAddItem, AgentCanvasAction, AgentCanvasSnapshot, AgentDraftAction, AgentLink, AgentNavigateInput, AgentNode, AgentNodeAction, AgentNodeKind, AgentPolicyEdit, AgentStepResult, beginAgentActivity, beginAgentTurn, CanvasAgentApi, registerCanvasAgent } from "@/modules/assistant/lib/canvas";
+import { AgentAddItem, AgentCanvasAction, AgentCanvasSnapshot, AgentDraftAction, AgentLink, AgentNavigateInput, AgentNode, AgentNodeAction, AgentNodeKind, AgentPolicyEdit, AgentStepResult, agentTurnGeneration, beginAgentActivity, beginAgentTurn, CanvasAgentApi, registerCanvasAgent } from "@/modules/assistant/lib/canvas";
+import {
+  CanvasPolicy,
+  connectBlockedByDialog,
+  ConnectEvidence,
+  ConnectOutcome,
+  connectOutcome,
+  connectSide,
+  consequencesText,
+  describePolicySide,
+  holdsLiveSetupKey,
+  holdsSessionArtifacts,
+  liveSetupKeyGuards,
+  policyConsequences,
+  policyEntityKey,
+  policySidesKey,
+  portsLabel,
+  samePortRanges,
+  strippedCanvasPolicies,
+} from "@/modules/control-center/agent/bridge-logic";
 import {
   useCanvasState,
   useControlCenterUI,
@@ -25,11 +46,16 @@ import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDiscardDraft } from "@/modules/control-center/draft/useDiscardDraft";
 import { FlowView } from "@/modules/control-center/header/FlowSelector";
 import { useAutoArrange } from "@/modules/control-center/hooks/useAutoArrange";
+import { useCanDeleteGroup } from "@/modules/control-center/hooks/useCanDeleteGroup";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { deployInFlight } from "@/modules/control-center/hooks/useDeployChangeset";
 import { useDraftEntityDrop } from "@/modules/control-center/hooks/useDraftEntityDrop";
 import {
+  canRenameGroup,
   getNodeGroup,
+  isAllGroup,
   isGroupNode,
+  isNewGroup,
   useDraftGroupActions,
 } from "@/modules/control-center/hooks/useDraftGroupActions";
 import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
@@ -40,6 +66,7 @@ import {
   useDragToGroup,
 } from "@/modules/control-center/hooks/useDragToGroup";
 import { useNodeRemoval } from "@/modules/control-center/hooks/useNodeRemoval";
+import { usePendingArtifacts } from "@/modules/control-center/hooks/usePlaceholderArtifacts";
 import { getNodeRect } from "@/modules/control-center/utils/canvas-transition";
 import {
   getDraftResource,
@@ -71,15 +98,25 @@ export const CanvasAgentBridge = ({
 
   useEffect(() => {
     const api = buildApi(() => latest.current);
-    if (process.env.APP_ENV === "test") {
-      (
-        globalThis as unknown as {
-          __controlCenterAgent?: CanvasAgentApi & { beginTurn: () => () => void };
-        }
-      ).__controlCenterAgent = { ...api, beginTurn: beginAgentTurn };
-    }
-    return registerCanvasAgent(api);
+    const host = globalThis as unknown as {
+      __controlCenterAgent?: CanvasAgentApi & { beginTurn: () => () => void };
+    };
+    const exposed = e2eHooksEnabled()
+      ? { ...api, beginTurn: beginAgentTurn }
+      : undefined;
+    if (exposed) host.__controlCenterAgent = exposed;
+    const unregister = registerCanvasAgent(api);
+    return () => {
+      unregister();
+      cancelArrange();
+      if (exposed && host.__controlCenterAgent === exposed) {
+        delete host.__controlCenterAgent;
+      }
+    };
   }, []);
+
+  const isDraft = deps.draft.isDraft;
+  useEffect(() => resetPlacement, [isDraft]);
 
   return null;
 };
@@ -97,6 +134,9 @@ function useBridgeDeps(onConnect: (connection: Connection) => void) {
     setSelectedPeerPanel,
   } = useDestinationGroup();
   const { discardAndExit } = useDiscardDraft();
+  const { confirm } = useDialog();
+  const { canDeleteGroup } = useCanDeleteGroup();
+  const hasPendingArtifacts = usePendingArtifacts();
   const camera = useAutoArrange();
   const creation = useDraftNodeCreation();
   const drop = useDraftEntityDrop();
@@ -110,7 +150,13 @@ function useBridgeDeps(onConnect: (connection: Connection) => void) {
   const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
   const { providers: agentProviders, policies: agentPolicies } =
     useAIProviders();
-  const bootstrapCluster = useBootstrapCluster();
+  const [clusterWanted, setClusterWanted] = useState(false);
+  const cluster = useBootstrapCluster(clusterWanted);
+  const bootstrapCluster = {
+    ...cluster,
+    ready: cluster.bootstrapped || (clusterWanted && !cluster.loading),
+    request: () => setClusterWanted(true),
+  };
 
   return {
     reactFlow,
@@ -124,6 +170,9 @@ function useBridgeDeps(onConnect: (connection: Connection) => void) {
     setSelectedDestinationGroup,
     setSelectedPeerPanel,
     discardAndExit,
+    confirm,
+    canDeleteGroup,
+    hasPendingArtifacts,
     ...camera,
     ...creation,
     ...drop,
@@ -160,13 +209,18 @@ const BUILD_AREA_HEIGHT = 620;
 
 type Lane = keyof typeof LANE_X;
 
-let placement = {
-  key: "",
+const emptyPlacement = () => ({
   anchor: null as { x: number; y: number } | null,
   framed: null as { min: number; max: number } | null,
   left: 0,
   center: 0,
   right: 0,
+});
+
+let placement = emptyPlacement();
+
+const resetPlacement = () => {
+  placement = emptyPlacement();
 };
 
 const quoted = (name?: string) => (name ? ` “${name}”` : "");
@@ -180,8 +234,17 @@ function withSelectorSubject(prev: Node[], selectorId: string | undefined, key: 
 }
 
 const wait = (ms: number) => new Promise((r) => globalThis.setTimeout(r, ms));
+const FRAME_TIMEOUT_MS = 100;
 const nextFrame = () =>
-  new Promise((r) => globalThis.requestAnimationFrame(() => r(undefined)));
+  new Promise<void>((resolve) => {
+    const done = () => {
+      globalThis.clearTimeout(timer);
+      globalThis.cancelAnimationFrame(frame);
+      resolve();
+    };
+    const timer = globalThis.setTimeout(done, FRAME_TIMEOUT_MS);
+    const frame = globalThis.requestAnimationFrame(done);
+  });
 // Two frames straddle a React commit; a bare zero-timeout can fire before it
 // under concurrent rendering.
 const settle = async () => {
@@ -199,19 +262,66 @@ const fail = (detail: string): AgentStepResult => ({ ok: false, detail });
 
 // ── the API ──────────────────────────────────────────────────────────────────
 
-async function acting<T>(run: () => Promise<T>): Promise<T> {
+const TURN_ENDED =
+  "Not run: the assistant's turn was stopped or reset before this step. If the turn is in fact still going, send the remaining steps again.";
+const DEPLOYING =
+  "Not run: the draft is being deployed right now, and changing it mid-deploy would desync what lands. Wait for the deploy to finish.";
+const DIALOG_WAITING =
+  "Not connected: a dialog is already open and waiting for the user, and connecting now would overwrite what it was opened with. Nothing changed. Ask the user to finish or close that dialog, then send the remaining connects again.";
+const STILL_BUSY =
+  "Not run: the canvas is still busy with an earlier step — a dialog may be waiting for the user. Try again once it has finished.";
+const BUSY_WAIT_MS = 15_000;
+
+type Halted = () => string | null;
+
+let running = false;
+const waiting: symbol[] = [];
+
+async function acting<T>(
+  run: (halted: Halted) => Promise<T>,
+  refuse: (step: AgentStepResult) => T,
+  { writes = true } = {},
+): Promise<T> {
+  const generation = agentTurnGeneration();
+  const halted: Halted = () => {
+    if (generation !== agentTurnGeneration()) return TURN_ENDED;
+    if (writes && deployInFlight.current) return DEPLOYING;
+    return null;
+  };
+
+  const ticket = Symbol("canvas-call");
+  waiting.push(ticket);
+  const queuedAt = Date.now();
+  while (running || waiting[0] !== ticket) {
+    if (Date.now() - queuedAt > BUSY_WAIT_MS) {
+      waiting.splice(waiting.indexOf(ticket), 1);
+      return refuse(fail(STILL_BUSY));
+    }
+    await wait(50);
+  }
+  waiting.shift();
+
+  const stopped = halted();
+  if (stopped) return refuse(fail(stopped));
+
+  running = true;
   const done = beginAgentActivity();
   try {
-    return await run();
+    return await run(halted);
   } finally {
+    running = false;
     done();
   }
 }
+
+const single = (step: AgentStepResult) => step;
+const listed = (step: AgentStepResult) => [step];
 
 function buildApi(deps: Deps): CanvasAgentApi {
   const snapshot = (): AgentCanvasSnapshot => {
     const d = deps();
     const nodes = d.reactFlow.getNodes();
+    const keyed = liveSetupKeyGuards(nodes);
 
     const subject = (): AgentCanvasSnapshot["subject"] => {
       const named = (
@@ -251,7 +361,7 @@ function buildApi(deps: Deps): CanvasAgentApi {
       drilledNetwork: d.draft.drillDownNetworkNodeId ?? undefined,
       subject: subject(),
       startedBlank: d.draft.startedBlank,
-      nodes: nodes.filter((n) => !n.hidden).map((n) => describeNode(n, d)),
+      nodes: nodes.filter((n) => !n.hidden).map((n) => describeNode(n, d, keyed)),
       edges: d.reactFlow.getEdges().map((e) => ({ from: e.source, to: e.target })),
       changes: d.changes.map((c) => ({
         type: c.type,
@@ -265,6 +375,11 @@ function buildApi(deps: Deps): CanvasAgentApi {
   ): Promise<AgentStepResult> => {
     let d = deps();
     const { view, target } = input;
+    if (view !== "network" && !Object.hasOwn(VIEWS, view)) {
+      return fail(
+        `There is no “${view}” view — use peers, users, groups, networks or network.`,
+      );
+    }
 
     if (d.draft.isDraft) {
       if (d.draft.drillDownNetworkNodeId && view === "networks") {
@@ -307,7 +422,8 @@ function buildApi(deps: Deps): CanvasAgentApi {
         );
       }
 
-      await d.discardAndExit();
+      const left = await leaveDraft(d);
+      if (!left.ok) return left;
       await wait(STEP_MS);
       d = deps();
       const landed = await navigateLive(view, target, d);
@@ -376,10 +492,12 @@ function buildApi(deps: Deps): CanvasAgentApi {
     const d = deps();
     if (action === "exit") {
       if (!d.draft.isDraft) return ok("Already in live mode.");
-      const left = await d.discardAndExit();
-      return left
-        ? ok("Left draft mode; the draft was discarded.")
-        : fail("The user chose to keep the draft — still in draft mode.");
+      return leaveDraft(d);
+    }
+    if (action !== "new_empty" && action !== "from_current_view") {
+      return fail(
+        `Unknown draft action “${action}” — use new_empty, from_current_view or exit.`,
+      );
     }
     if (d.draft.isDraft) {
       return ok("Already in a draft — kept it and its changes.");
@@ -401,16 +519,22 @@ function buildApi(deps: Deps): CanvasAgentApi {
 
   const add = async (
     items: AgentAddItem[],
-    final = false,
+    final: boolean,
+    halted: Halted,
   ): Promise<AgentStepResult[]> => {
     const results: AgentStepResult[] = [];
     for (const item of items) {
+      const stopped = halted();
+      if (stopped) {
+        results.push(fail(stopped));
+        break;
+      }
       const blocked = requireDraft(deps());
       if (blocked) {
         results.push(blocked);
         break;
       }
-      const step = await addOne(item, deps());
+      const step = await addOne(item, deps(), deps);
       results.push(step);
       if (step.ok && step.nodeId) {
         const d = deps();
@@ -426,11 +550,17 @@ function buildApi(deps: Deps): CanvasAgentApi {
 
   const connect = async (
     links: AgentLink[],
-    final = false,
+    final: boolean,
+    halted: Halted,
   ): Promise<AgentStepResult[]> => {
     const results: AgentStepResult[] = [];
     for (const link of links) {
-      const d = deps();
+      const stopped = halted();
+      if (stopped) {
+        results.push(fail(stopped));
+        break;
+      }
+      let d = deps();
       const blocked = requireDraft(d);
       if (blocked) {
         results.push(blocked);
@@ -449,21 +579,48 @@ function buildApi(deps: Deps): CanvasAgentApi {
         );
         continue;
       }
-      const edgesBefore = new Set(d.reactFlow.getEdges().map((e) => e.id));
+      if (connectBlockedByDialog(connectEvidence(d))) {
+        results.push(fail(DIALOG_WAITING));
+        break;
+      }
+      const marked = markByAssistant(d, [from.id, to.id]);
+      if (marked.length > 0) {
+        await settle();
+        d = deps();
+      }
+      const before = connectEvidence(d);
+      const sourceHandle = startHandle(from, to);
       d.onConnect({
         source: from.id,
         target: to.id,
-        sourceHandle: startHandle(from, to),
+        sourceHandle,
         targetHandle: null,
       });
+
+      let outcome: ConnectOutcome = "nothing";
+      let fresh: string[] = [];
+      for (let i = 0; i < 4 && outcome === "nothing"; i++) {
+        await settle();
+        const after = connectEvidence(deps());
+        fresh = [...after.edges].filter((id) => !before.edges.has(id));
+        outcome = connectOutcome(before, after);
+        if (outcome === "nothing") await wait(25);
+      }
+
+      if (outcome === "nothing") {
+        unmarkByAssistant(d, marked);
+        results.push(fail(nothingConnected(from, to, sourceHandle)));
+        continue;
+      }
       results.push(
-        ok(`Connected ${refOf(from)} → ${refOf(to)}.${dialogNote(from, to)}`),
+        outcome === "connected"
+          ? ok(`Connected ${refOf(from)} → ${refOf(to)}.`)
+          : ok(
+              `Nothing is connected yet between ${refOf(from)} and ${refOf(
+                to,
+              )}.${dialogNote(from, to)}`,
+            ),
       );
-      await settle();
-      const fresh = d.reactFlow
-        .getEdges()
-        .filter((e) => !edgesBefore.has(e.id))
-        .map((e) => e.id);
       flashEdges(d.reactFlow, fresh);
       pulseNodes(d.reactFlow, [from.id, to.id]);
       await wait(STEP_MS);
@@ -477,12 +634,18 @@ function buildApi(deps: Deps): CanvasAgentApi {
 
   const node = async (
     actions: AgentNodeAction[],
-    final = false,
+    final: boolean,
+    halted: Halted,
   ): Promise<AgentStepResult[]> => {
     const results: AgentStepResult[] = [];
     let movedThings = false;
     for (const action of actions) {
-      const result = await nodeOne(action, deps());
+      const stopped = halted();
+      if (stopped) {
+        results.push(fail(stopped));
+        break;
+      }
+      const result = await nodeOne(action, deps);
       results.push(result);
       if (result.ok) {
         const d = deps();
@@ -503,8 +666,12 @@ function buildApi(deps: Deps): CanvasAgentApi {
 
   const policy = async (
     edit: AgentPolicyEdit,
-    final = false,
+    final: boolean,
+    halted: Halted,
   ): Promise<AgentStepResult> => {
+    const marked = deps().draft.isDraft
+      ? markByAssistant(deps(), [edit.node])
+      : [];
     // Settle before reading: `editPolicy` and every connect read-modify-write
     // the whole policy, so an unflushed connect and this edit overwrite each other.
     await settle();
@@ -512,17 +679,25 @@ function buildApi(deps: Deps): CanvasAgentApi {
     const blocked = requireDraft(d);
     if (blocked) return blocked;
     let result = editPolicy(edit, d);
+    if (!result.ok) unmarkByAssistant(d, marked);
     // A write still in flight can land after this one and revert it, so it is
     // re-applied until it sticks.
+    let stopped: string | null = null;
     for (let attempt = 0; result.ok && attempt < 3; attempt++) {
       await settle();
       await wait(STEP_MS);
       d = deps();
       if (editLanded(edit, policyOn(edit.node, d))) break;
+      stopped = halted();
+      if (stopped) break;
       result = editPolicy(edit, d);
     }
     if (result.ok && !editLanded(edit, policyOn(edit.node, d))) {
-      return fail("The policy edit did not stick on the canvas. Call control_center_policy again.");
+      return fail(
+        stopped
+          ? `The edit to ${edit.node} was written, but the canvas did not show it yet when the turn was stopped or the draft began deploying, so it may or may not have landed. Read control_center_state before assuming either.`
+          : "The policy edit did not stick on the canvas. Call control_center_policy again.",
+      );
     }
     if (result.ok && result.nodeId) {
       pulseNodes(d.reactFlow, [result.nodeId]);
@@ -557,13 +732,18 @@ function buildApi(deps: Deps): CanvasAgentApi {
   return {
     getSnapshot: snapshot,
     drainNotices: () => notices.splice(0, notices.length),
-    goToView: (input) => acting(() => navigate(input)),
-    draftAction: (action) => acting(() => draftAction(action)),
-    addNodes: (items, final) => acting(() => add(items, final)),
-    connectNodes: (links, final) => acting(() => connect(links, final)),
-    editNodes: (actions, final) => acting(() => node(actions, final)),
-    editPolicy: (edit, final) => acting(() => policy(edit, final)),
-    canvasAction: (action) => acting(() => canvasAction(action)),
+    goToView: (input) => acting(() => navigate(input), single),
+    draftAction: (action) => acting(() => draftAction(action), single),
+    addNodes: (items, final = false) =>
+      acting((halted) => add(items, final, halted), listed),
+    connectNodes: (links, final = false) =>
+      acting((halted) => connect(links, final, halted), listed),
+    editNodes: (actions, final = false) =>
+      acting((halted) => node(actions, final, halted), listed),
+    editPolicy: (edit, final = false) =>
+      acting((halted) => policy(edit, final, halted), single),
+    canvasAction: (action) =>
+      acting(() => canvasAction(action), single, { writes: false }),
   };
 }
 const VIEWS: Record<string, FlowView> = {
@@ -599,15 +779,19 @@ const requireDraft = (d: BridgeDeps): AgentStepResult | null =>
 let arrangeTimer: ReturnType<typeof setTimeout> | undefined;
 const notices: string[] = [];
 
-function arrangeNow(deps: Deps): AgentStepResult {
+function cancelArrange() {
   globalThis.clearTimeout(arrangeTimer);
   arrangeTimer = undefined;
+}
+
+function arrangeNow(deps: Deps): AgentStepResult {
+  cancelArrange();
   deps().arrange();
   return ok("Arranged the canvas and fitted the view.");
 }
 
 function scheduleArrange(deps: Deps) {
-  globalThis.clearTimeout(arrangeTimer);
+  cancelArrange();
   arrangeTimer = globalThis.setTimeout(() => {
     arrangeTimer = undefined;
     const done = beginAgentActivity();
@@ -625,6 +809,7 @@ function scheduleArrange(deps: Deps) {
 async function addOne(
   item: AgentAddItem,
   d: BridgeDeps,
+  deps: Deps,
 ): Promise<AgentStepResult> {
   const { kind, ref, name } = item;
   const { lane, ...at } = nextPlacement(kind, item.role, d);
@@ -639,10 +824,21 @@ async function addOne(
         at,
         name,
       );
+      await settle();
+      const landed = (
+        d.reactFlow.getNodes().find((n) => n.id === nodeId)?.data as
+          | { placeholderName?: string }
+          | undefined
+      )?.placeholderName;
+      const named = landed ?? name;
+      const renamed =
+        name && landed && landed !== name.trim()
+          ? ` (“${name}” is already taken on this canvas)`
+          : "";
       return ok(
         `Added a ${kind.replace("_", " ")} placeholder${
-          name ? ` named “${name}”` : ""
-        } — it has to be installed before the draft can deploy.`,
+          named ? ` named “${named}”` : ""
+        }${renamed} — it has to be installed before the draft can deploy.`,
         nodeId,
       );
     }
@@ -683,14 +879,26 @@ async function addOne(
         return fail(
           `${item.network ?? "(no network)"} isn't a network frame — a resource group needs the network it belongs to.`,
         );
+      const taken = name ? groupNameTaken(name, d) : null;
+      if (taken) return fail(taken);
+      const peers = (item.members ?? []).filter(
+        (member) => !!resolveMember(member, d).peer,
+      );
+      if (peers.length > 0) {
+        return fail(
+          `A resource group inside a network holds that network's resources only, and ${peers.join(
+            ", ",
+          )} ${
+            peers.length === 1 ? "is a peer" : "are peers"
+          }. Nothing was added — put peers in an ordinary group (new_group).`,
+        );
+      }
       const before = new Set(d.reactFlow.getNodes().map((n) => n.id));
       d.addResourceGroupToFrame(frame.id);
       await settle();
       const created = d.reactFlow.getNodes().find((n) => !before.has(n.id));
       if (!created) return fail("Could not add the resource group.");
       if (name) {
-        const taken = groupNameTaken(name, d, created.id);
-        if (taken) return fail(taken);
         d.renameGroup(created, name);
         await settle();
       }
@@ -732,18 +940,60 @@ async function addOne(
         created = d.reactFlow.getNodes().find((n) => !before.has(n.id));
         if (!created) await wait(25);
       }
-      const narrowed = item.protocol && item.protocol !== "all";
-      const ports = item.ports?.length ? ` on ${item.ports.join(", ")}` : ", all ports";
-      const holds = narrowed ? `${item.protocol}${ports}` : "ALL protocols on ALL ports";
+      if (!created) {
+        return fail(
+          `The policy${quoted(
+            name,
+          )} did not appear on the canvas, so nothing about it is confirmed. Read control_center_state before adding it again — it may still land, and then it has to be checked, not duplicated.`,
+        );
+      }
+      const nodeId = created.id;
+      markByAssistant(d, [nodeId]);
+
+      const ranges = takesPorts(item.protocol) ? item.portRanges ?? [] : [];
+      if (ranges.length > 0) {
+        const narrowing = { node: nodeId, ports: item.ports ?? [], portRanges: ranges };
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const applied = editPolicy(narrowing, d);
+          if (!applied.ok) break;
+          await settle();
+          if (samePortRanges(policyOn(nodeId, d)?.rules?.[0]?.port_ranges, ranges)) break;
+          await wait(25);
+        }
+      }
+
+      const rule = policyOn(nodeId, d)?.rules?.[0];
+      if (!rule) {
+        return {
+          ...fail(`The policy${quoted(name)} was added but can't be read back. Read control_center_state before describing it.`),
+          nodeId,
+        };
+      }
+      const narrowed = rule.protocol !== "all";
+      const holds = narrowed
+        ? `${rule.protocol}${
+            takesPorts(rule.protocol)
+              ? portsLabel(rule.ports ?? [], rule.port_ranges)
+              : ", all ports"
+          }`
+        : "ALL protocols on ALL ports";
+      if (!samePortRanges(rule.port_ranges, ranges)) {
+        return {
+          ...fail(
+            `The policy${quoted(name)} was added, but its port ranges did NOT land: it currently allows ${holds}, which is wider than asked. Set the ports on it with control_center_policy, or remove it — and don't describe it as restricted until that step succeeds.`,
+          ),
+          nodeId,
+        };
+      }
       return ok(
         `Added a${narrowed ? "" : "n empty"} ${
-          item.bidirectional === false ? "one-way " : ""
-        }policy${name ? ` “${name}”` : ""}. It allows ${holds}${
+          rule.bidirectional === false ? "one-way " : ""
+        }policy${quoted(name)}. It allows ${holds}${
           narrowed
             ? ""
             : " — call control_center_policy to narrow it before you describe it to the user"
         }. Connect a source and a destination to it: a policy with only one side never deploys.`,
-        created?.id,
+        nodeId,
       );
     }
 
@@ -819,7 +1069,7 @@ async function addOne(
     case "new_provider": {
       const off = agentNetworkOff(d);
       if (off) return off;
-      const unbootstrappable = noClusterToBootstrap(d);
+      const unbootstrappable = noClusterToBootstrap(await bootstrapCluster(deps));
       if (unbootstrappable) return unbootstrappable;
       const outcome = await d.requestProvider(at);
       if (!outcome) {
@@ -863,6 +1113,7 @@ async function addOne(
         description: item.description,
       });
       await settle();
+      markByAssistant(d, [nodeId]);
       return ok(
         `Added an agent policy${
           name ? ` “${name}”` : ""
@@ -899,10 +1150,21 @@ const agentNetworkOff = (d: BridgeDeps): AgentStepResult | null =>
         "Agent Network isn't enabled on this account, so there are no AI providers or agent policies to work with.",
       );
 
-const noClusterToBootstrap = (d: BridgeDeps): AgentStepResult | null => {
-  const { bootstrapped, canReadDomains, noClustersAvailable, clustersLackPrivateCapability } =
-    d.bootstrapCluster;
-  if (bootstrapped || !noClustersAvailable) return null;
+const CLUSTER_WAIT_MS = 8000;
+
+async function bootstrapCluster(deps: Deps): Promise<BridgeDeps["bootstrapCluster"]> {
+  deps().bootstrapCluster.request();
+  const deadline = Date.now() + CLUSTER_WAIT_MS;
+  while (!deps().bootstrapCluster.ready && Date.now() < deadline) await wait(50);
+  return deps().bootstrapCluster;
+}
+
+const noClusterToBootstrap = (
+  cluster: BridgeDeps["bootstrapCluster"],
+): AgentStepResult | null => {
+  const { ready, bootstrapped, canReadDomains, noClustersAvailable, clustersLackPrivateCapability } =
+    cluster;
+  if (!ready || bootstrapped || !noClustersAvailable) return null;
   if (!canReadDomains) {
     return fail(
       "This account has no Agent Network endpoint yet, and the first provider has to create one on a proxy cluster — which this role can't read. Tell the user an account admin has to connect the first provider, and stop.",
@@ -969,8 +1231,15 @@ async function fillGroup(
   for (const member of members) {
     const { peer, resource, itemId, nodeId } = resolveMember(member, d);
     if (!itemId) continue;
+    if (peer && group.type === NodeType.ResourceGroupNode) continue;
 
-    d.addMemberToGroup(group, { peer, resource, itemId, draggedNodeId: nodeId });
+    d.addMemberToGroup(group, {
+      peer,
+      resource,
+      itemId,
+      draggedNodeId: nodeId,
+      keepFramedCard: true,
+    });
     // Counted from the canvas: `addMemberToGroup`'s early returns are silent.
     for (let i = 0; i < 20; i++) {
       await settle();
@@ -989,8 +1258,9 @@ async function fillGroup(
 
 async function nodeOne(
   action: AgentNodeAction,
-  d: BridgeDeps,
+  deps: Deps,
 ): Promise<AgentStepResult> {
+  const d = deps();
   const target = d.reactFlow.getNodes().find((n) => n.id === action.node);
 
   if (!target && action.action === "add_to_group") {
@@ -1080,16 +1350,34 @@ async function nodeOne(
           )} can't be taken off the canvas — an existing resource inside a network can only be deleted.`,
         );
       }
+      const keyed = liveSetupKeyRefusal(target, d);
+      if (keyed) return fail(keyed);
+      const before = policyState(d);
       d.removeNode(target);
+      if (isPolicyCard(target)) {
+        return ok(`Removed ${refOf(target)} from the draft.`);
+      }
+      const caused = await policyFallout(before, deps);
       return ok(
-        `Removed ${refOf(target)} from the canvas — nothing was deleted.`,
+        `Removed ${refOf(target)} from the canvas. ${
+          caused ||
+          "No policy changed as a result, and nothing in the account will be deleted."
+        }`,
       );
     }
 
     case "delete": {
       const blocked = draftOnly();
       if (blocked) return blocked;
-      return deleteInDraft(target, d);
+      const refused = deleteRefusal(target, d);
+      if (refused) return fail(refused);
+      const before = policyState(d);
+      const result = deleteInDraft(target, d);
+      if (isPolicyCard(target)) return result;
+      const caused = await policyFallout(before, deps);
+      return ok(
+        `${result.detail} ${caused || "No policy changed as a result."}`,
+      );
     }
 
     case "add_to_group": {
@@ -1106,6 +1394,7 @@ async function nodeOne(
         resource,
         itemId,
         draggedNodeId: target.id,
+        keepFramedCard: true,
       });
       let filled: Node | undefined;
       for (let i = 0; i < 20; i++) {
@@ -1118,10 +1407,13 @@ async function nodeOne(
         return fail(
           `${refOf(target)} did not join “${getNodeGroup(group)?.name}” — it may already be in it.`,
         );
+      const kept = onCanvas(target.id, d);
       return ok(
-        `Added ${refOf(target)} to “${
-          getNodeGroup(group)?.name
-        }” — its own card is now part of the group.`,
+        `Added ${refOf(target)} to “${getNodeGroup(group)?.name}” — ${
+          kept
+            ? "its row stays in its network frame"
+            : "its own card is now part of the group"
+        }.`,
       );
     }
 
@@ -1166,6 +1458,14 @@ async function nodeOne(
 function rename(target: Node, name: string, d: BridgeDeps): AgentStepResult {
   if (isGroupNode(target)) {
     const group = getNodeGroup(target);
+    if (isSystemAllGroup(group, d)) {
+      return fail("The “All” group is system-managed and can't be renamed.");
+    }
+    if (!canRenameGroup(group)) {
+      return fail(
+        `Group “${group?.name}” is synced from the identity provider, so its name can't be changed here — the API refuses the rename.`,
+      );
+    }
     const taken = groupNameTaken(name, d, target.id);
     if (taken) return fail(taken);
     d.renameGroup(target, name);
@@ -1195,25 +1495,162 @@ function rename(target: Node, name: string, d: BridgeDeps): AgentStepResult {
   );
 }
 
+function isSystemAllGroup(group: Group | undefined, d: BridgeDeps): boolean {
+  if (!group) return false;
+  if (isAllGroup(group)) return true;
+  return (
+    !!group.id &&
+    isAllGroup(d.data.groups?.find((g: Group) => g.id === group.id))
+  );
+}
+
+function liveSetupKeyRefusal(
+  target: Node,
+  d: BridgeDeps,
+  guarded = liveSetupKeyGuards(d.reactFlow.getNodes()),
+): string | null {
+  if (!guarded.has(target.id)) return null;
+  const where = holdsLiveSetupKey(target.data)
+    ? "carries a generated setup key"
+    : "contains a row that carries a generated setup key";
+  return `${refOf(
+    target,
+  )} ${where} (an install command may already be in use), and taking it off the canvas revokes that live key immediately — not on deploy. The user has to remove it themselves from the node's menu; tell them so and leave it.`;
+}
+
+function deleteRefusal(
+  target: Node,
+  d: BridgeDeps,
+  guarded?: Set<string>,
+): string | null {
+  if (isGroupNode(target)) {
+    const group = getNodeGroup(target);
+    if (isSystemAllGroup(group, d)) {
+      return "The “All” group is system-managed and can't be deleted.";
+    }
+    if (group && !isNewGroup(group) && !d.canDeleteGroup(group)) {
+      return `Group “${group.name}” can't be deleted: it is synced from the identity provider, still in use in the account (peers, users, resources, policies, routes, DNS or setup keys), or this role may not delete groups. Nothing was changed — a group DELETE the API would refuse must not strip policies first. To retire it, take it out of the policies and other objects that use it, then delete it.`;
+    }
+  }
+  const keyed = liveSetupKeyRefusal(target, d, guarded);
+  if (keyed) return keyed;
+  if (isGroupNode(target)) return null;
+  if (isExistingResource(target)) return null;
+  return d.canRemoveNode(target) ? null : `${refOf(target)} can't be removed.`;
+}
+
+const isExistingResource = (target: Node) =>
+  target.type === NodeType.ResourceNode &&
+  !target.id.startsWith("resource-new-");
+
 function deleteInDraft(target: Node, d: BridgeDeps): AgentStepResult {
   if (isGroupNode(target)) {
     const group = getNodeGroup(target);
-    if (group?.name === "All")
-      return fail("The “All” group is system-managed and can't be deleted.");
     d.deleteGroup(target);
-    return ok(`Marked group “${group?.name}” for deletion.`);
+    return ok(
+      isNewGroup(group)
+        ? `Removed the draft group “${group?.name}”.`
+        : `Marked group “${group?.name}” for deletion.`,
+    );
   }
-  if (
-    target.type === NodeType.ResourceNode &&
-    !target.id.startsWith("resource-new-")
-  ) {
+  if (isExistingResource(target)) {
     d.deleteResource(target.id);
     return ok(`Marked ${refOf(target)} for deletion.`);
   }
-  if (!d.canRemoveNode(target))
-    return fail(`${refOf(target)} can't be removed.`);
   d.removeNode(target);
   return ok(`Removed ${refOf(target)} from the draft.`);
+}
+
+const isPolicyCard = (node: Node) =>
+  node.type === NodeType.PolicyNode || node.type === NodeType.AgentPolicyNode;
+
+type PolicyState = {
+  changes: BridgeDeps["changes"];
+  canvas: Map<string, CanvasPolicy>;
+};
+
+function canvasPolicies(d: BridgeDeps): PolicyState["canvas"] {
+  const edges = d.reactFlow.getEdges();
+  const found = new Map<string, CanvasPolicy>();
+  d.reactFlow.getNodes().forEach((n) => {
+    if (n.type === NodeType.PolicyNode) {
+      const policy = (n.data as { policy?: Policy })?.policy;
+      if (!policy) return;
+      found.set(n.id, {
+        name: policy.name,
+        key: policySidesKey(policy),
+        existing: !n.id.startsWith("policy-new-"),
+        entity: policyEntityKey("policy", policy.id ?? n.id),
+      });
+    }
+    if (n.type === NodeType.AgentPolicyNode) {
+      const data = n.data as { id?: string; name?: string };
+      const ends = edges
+        .filter((e) => e.source === n.id || e.target === n.id)
+        .map((e) => (e.source === n.id ? `>${e.target}` : `<${e.source}`))
+        .sort();
+      found.set(n.id, {
+        name: data?.name ?? "Agent policy",
+        key: JSON.stringify(ends),
+        existing: !data?.id?.startsWith("new-"),
+        entity: policyEntityKey("agent", data?.id ?? n.id),
+      });
+    }
+  });
+  return found;
+}
+
+const policyState = (d: BridgeDeps): PolicyState => ({
+  changes: d.changes,
+  canvas: canvasPolicies(d),
+});
+
+async function policyFallout(
+  before: PolicyState,
+  deps: Deps,
+): Promise<string> {
+  await settle();
+  await settle();
+  const d = deps();
+  const stripped = strippedCanvasPolicies(before.canvas, canvasPolicies(d));
+  markByAssistant(
+    d,
+    stripped.map((p) => p.id),
+  );
+  return consequencesText(
+    policyConsequences(before.changes, d.changes),
+    stripped,
+  );
+}
+
+function markByAssistant(d: BridgeDeps, nodeIds: string[]): string[] {
+  const fresh = d.reactFlow
+    .getNodes()
+    .filter(
+      (n) =>
+        nodeIds.includes(n.id) &&
+        isPolicyCard(n) &&
+        !(n.data as { byAssistant?: boolean })?.byAssistant,
+    )
+    .map((n) => n.id);
+  setByAssistant(d, fresh, true);
+  return fresh;
+}
+
+const unmarkByAssistant = (d: BridgeDeps, nodeIds: string[]) =>
+  setByAssistant(d, nodeIds, false);
+
+function setByAssistant(d: BridgeDeps, nodeIds: string[], value: boolean) {
+  if (nodeIds.length === 0) return;
+  d.reactFlow.setNodes((prev) => {
+    const stale = (n: Node) =>
+      nodeIds.includes(n.id) &&
+      !!(n.data as { byAssistant?: boolean })?.byAssistant !== value;
+    if (!prev.some(stale)) return prev;
+    return prev.map((n) =>
+      stale(n) ? { ...n, data: { ...n.data, byAssistant: value || undefined } } : n,
+    );
+  });
 }
 
 function laneFor(kind: AgentAddItem["kind"], role?: AgentAddItem["role"]): Lane {
@@ -1241,17 +1678,6 @@ function nextPlacement(
   role: AgentAddItem["role"],
   d: BridgeDeps,
 ): { x: number; y: number; lane: Lane } {
-  const key = `${d.draft.isDraft}:${d.draft.draftSession}`;
-  if (placement.key !== key) {
-    placement = {
-      key,
-      anchor: null,
-      framed: null,
-      left: 0,
-      center: 0,
-      right: 0,
-    };
-  }
   if (!placement.anchor) {
     const top = d.reactFlow.getNodes().filter((n) => !n.parentId);
     if (top.length === 0) {
@@ -1379,10 +1805,10 @@ function assignUserToGroup(
   return ok(`Added the user ${label} to “${groupData?.name}”.`);
 }
 
-function assignEntityToGroup(
+async function assignEntityToGroup(
   action: AgentNodeAction,
   d: BridgeDeps,
-): AgentStepResult {
+): Promise<AgentStepResult> {
   const group = d.reactFlow.getNodes().find((n) => n.id === action.group);
   if (!group || !isGroupNode(group))
     return fail(`${action.group ?? "(no group)"} isn't a group node.`);
@@ -1426,8 +1852,23 @@ function assignEntityToGroup(
     resource,
     itemId: action.node,
     draggedNodeId: card?.id,
+    keepFramedCard: true,
   });
   const what = peer ? card?.id ?? action.node : `“${resource?.name}”`;
+  let filled: Node | undefined;
+  for (let i = 0; i < 20; i++) {
+    await settle();
+    filled = d.reactFlow.getNodes().find((n) => n.id === group.id);
+    if (filled && groupContainsItem(filled, itemId)) break;
+    await wait(25);
+  }
+  if (!filled || !groupContainsItem(filled, itemId)) {
+    return fail(
+      `${what} did not join “${
+        getNodeGroup(group)?.name
+      }” — that group doesn't take members this way. Nothing changed.`,
+    );
+  }
   const note = card ? " — its card is now part of the group" : "";
   return ok(`Added ${what} to “${getNodeGroup(group)?.name}”${note}.`);
 }
@@ -1439,12 +1880,14 @@ function groupNameTaken(
 ): string | null {
   if (name.trim().toLowerCase() === "all")
     return "“All” is the system group's name and can't be reused.";
-  const ownName = exceptNodeId
+  const own = exceptNodeId
     ? getNodeGroup(d.reactFlow.getNodes().find((n) => n.id === exceptNodeId))
-        ?.name
     : undefined;
+  const ownName = own?.name;
   const clash =
-    d.data.groups?.some((g: Group) => g.name === name) ||
+    d.data.groups?.some(
+      (g: Group) => g.name === name && !(own?.id && g.id === own.id),
+    ) ||
     d.reactFlow
       .getNodes()
       .some((n) => n.id !== exceptNodeId && getNodeGroup(n)?.name === name) ||
@@ -1482,12 +1925,20 @@ function destinationIsResourceOnly(
 const policyOn = (nodeId: string, d: BridgeDeps): Policy | undefined =>
   (d.reactFlow.getNodes().find((n) => n.id === nodeId)?.data as { policy?: Policy })?.policy;
 
+const takesPorts = (protocol: string | undefined) =>
+  protocol === "tcp" || protocol === "udp";
+
+const portsGiven = (edit: AgentPolicyEdit) =>
+  edit.ports !== undefined || edit.portRanges !== undefined;
+
 function editLanded(edit: AgentPolicyEdit, policy: Policy | undefined): boolean {
   const rule = policy?.rules?.[0];
   if (!rule) return false;
   if (edit.protocol !== undefined && rule.protocol !== edit.protocol) return false;
-  const portsAllowed = rule.protocol === "tcp" || rule.protocol === "udp";
-  if (edit.ports !== undefined && portsAllowed && (rule.ports ?? []).join(",") !== edit.ports.join(",")) return false;
+  if (portsGiven(edit) && takesPorts(rule.protocol)) {
+    if ((rule.ports ?? []).join(",") !== (edit.ports ?? []).join(",")) return false;
+    if (!samePortRanges(rule.port_ranges, edit.portRanges)) return false;
+  }
   if (edit.bidirectional !== undefined && rule.bidirectional !== edit.bidirectional) return false;
   return true;
 }
@@ -1508,11 +1959,21 @@ function editPolicy(edit: AgentPolicyEdit, d: BridgeDeps): AgentStepResult {
   }
 
   const protocol = edit.protocol ?? rule.protocol;
-  const portsGiven = edit.ports !== undefined;
+  const given = portsGiven(edit);
   // The API rejects ports on anything but TCP/UDP, so a switch away clears them.
-  const portsAllowed = protocol === "tcp" || protocol === "udp";
-  let ports: typeof rule.ports = [];
-  if (portsAllowed) ports = portsGiven ? edit.ports! : rule.ports;
+  const portsAllowed = takesPorts(protocol);
+  if (given && !portsAllowed) {
+    return fail(
+      `Ports need protocol tcp or udp — “${protocol}” takes none. Nothing changed.`,
+    );
+  }
+
+  let ports: string[] = [];
+  let ranges: PortRange[] = [];
+  if (portsAllowed) {
+    ports = given ? edit.ports ?? [] : rule.ports ?? [];
+    ranges = given ? edit.portRanges ?? [] : rule.port_ranges ?? [];
+  }
 
   const next: Policy = {
     ...current,
@@ -1527,23 +1988,18 @@ function editPolicy(edit: AgentPolicyEdit, d: BridgeDeps): AgentStepResult {
         enabled: edit.enabled ?? rule.enabled,
         protocol,
         ports,
+        port_ranges: ranges.length > 0 ? ranges : undefined,
         bidirectional: edit.bidirectional ?? rule.bidirectional,
       },
       ...(current.rules?.slice(1) ?? []),
     ],
   };
 
-  if (portsGiven && !portsAllowed) {
-    return fail(
-      `Ports need protocol tcp or udp — “${protocol}” takes none. Nothing changed.`,
-    );
-  }
-
   d.updateDraftPolicy(next);
 
-  const landed = `${protocol}${
-    ports.length > 0 ? ` on ${ports.join(", ")}` : ", all ports"
-  }${next.rules?.[0]?.bidirectional ? ", both directions" : ""}`;
+  const landed = `${protocol}${portsLabel(ports, ranges)}${
+    next.rules?.[0]?.bidirectional ? ", both directions" : ""
+  }`;
   return ok(
     `Updated policy “${next.name}”${
       edit.enabled === false ? " (disabled)" : ""
@@ -1637,7 +2093,11 @@ function entityOf(node: Node): AgentNode["entity"] {
   return undefined;
 }
 
-function describeNode(node: Node, d: BridgeDeps): AgentNode {
+function describeNode(
+  node: Node,
+  d: BridgeDeps,
+  guarded: Set<string>,
+): AgentNode {
   const kind = KINDS[node.type ?? ""] ?? "other";
   const placeholder = (
     node.data as { placeholderKind?: AgentNode["placeholder"] }
@@ -1656,32 +2116,28 @@ function describeNode(node: Node, d: BridgeDeps): AgentNode {
     can: {
       rename:
         isDraft &&
-        (isGroupNode(node) ||
-          !!placeholder ||
-          node.id.startsWith("resource-new-") ||
-          isDraftNetworkNode(node)),
-      remove: isDraft && d.canRemoveNode(node),
-      delete:
-        isDraft &&
-        (isGroupNode(node) ||
-          kind === "resource" ||
-          kind === "network" ||
-          kind === "policy"),
+        (isGroupNode(node)
+          ? !isSystemAllGroup(getNodeGroup(node), d) &&
+            canRenameGroup(getNodeGroup(node))
+          : !!placeholder ||
+            node.id.startsWith("resource-new-") ||
+            isDraftNetworkNode(node)),
+      remove: isDraft && d.canRemoveNode(node) && !guarded.has(node.id),
+      delete: isDraft && deleteRefusal(node, d, guarded) === null,
     },
   };
 }
 
+const kindsOf = (from: Node, to: Node) =>
+  new Set([from, to].map((n) => KINDS[n.type ?? ""] ?? "other"));
+
 function dialogNote(from: Node, to: Node): string {
-  const kinds = new Set([from, to].map((n) => KINDS[n.type ?? ""] ?? "other"));
+  const kinds = kindsOf(from, to);
   if (kinds.has("agent-policy")) {
-    return kinds.has("provider") || kinds.has("group")
-      ? ""
-      : " An agent policy only takes a group (source) or a provider (destination), so nothing was drawn.";
+    return " That agent policy already has a source group and holds exactly one, so a replace confirmation opened for the user to answer.";
   }
   if (kinds.has("provider")) {
-    return kinds.has("group")
-      ? " There was no agent policy between them, so the agent-policy wizard opened for the user to finish."
-      : " Only a group or an agent policy can reach a provider, so nothing was drawn.";
+    return " There was no agent policy between them, so the agent-policy wizard opened for the user to finish.";
   }
   if (!kinds.has("policy")) {
     return " Neither side is a policy, so the create-policy dialog opened for the user to finish.";
@@ -1689,7 +2145,89 @@ function dialogNote(from: Node, to: Node): string {
   if (kinds.has("network")) {
     return " A network has several possible destinations, so the picker opened for the user to choose one.";
   }
-  return "";
+  return " A dialog opened for the user to finish.";
+}
+
+function nothingConnected(from: Node, to: Node, sourceHandle: string): string {
+  const policyNode = [to, from].find((n) => n.type === NodeType.PolicyNode);
+  if (policyNode) {
+    const other = policyNode.id === from.id ? to : from;
+    const side = connectSide(policyNode.id === from.id, sourceHandle);
+    const policy = (policyNode.data as { policy?: Policy })?.policy;
+    return `Nothing was connected: ${refOf(other)} was NOT added to policy ${refOf(
+      policyNode,
+    )} — ${describePolicySide(policy, side)}. The policy is unchanged.`;
+  }
+  const kinds = kindsOf(from, to);
+  let why = "that pair can't be linked, or it already is";
+  if (kinds.has("agent-policy")) {
+    why =
+      kinds.has("provider") || kinds.has("group")
+        ? "the agent policy already has it"
+        : "an agent policy only takes a group (source) or a provider (destination)";
+  } else if (kinds.has("provider") && !kinds.has("group")) {
+    why = "only a group or an agent policy can reach a provider";
+  }
+  return `Nothing was connected between ${refOf(from)} and ${refOf(
+    to,
+  )}: ${why}. No dialog opened and nothing changed.`;
+}
+
+function connectEvidence(d: BridgeDeps): ConnectEvidence {
+  const nodes = d.reactFlow.getNodes().map((n) => {
+    const data = n.data as {
+      policy?: Policy | AgentPolicy;
+      draftNetwork?: unknown;
+    };
+    const policy = data?.policy;
+    let sides: string | null = null;
+    if (policy && "rules" in policy) sides = policySidesKey(policy);
+    else if (policy) {
+      sides = JSON.stringify([
+        policy.sourceGroups,
+        policy.destinationProviderIds,
+      ]);
+    }
+    return [n.id, n.parentId ?? null, sides, data?.draftNetwork ?? null];
+  });
+  return {
+    edges: new Set(d.reactFlow.getEdges().map((e) => e.id)),
+    state: JSON.stringify([nodes, d.changes]),
+    dialogs: openDialogCount(),
+    picker: !!d.draft.networkDestinationPicker,
+  };
+}
+
+const openDialogCount = (): number =>
+  [
+    ...document.querySelectorAll('[role="dialog"], [role="alertdialog"]'),
+  ].filter(
+    (el) =>
+      el.getAttribute("data-state") !== "closed" &&
+      !el.closest("[data-assistant-panel], [data-radix-popper-content-wrapper]"),
+  ).length;
+
+async function leaveDraft(d: BridgeDeps): Promise<AgentStepResult> {
+  const artifacts =
+    d.hasPendingArtifacts ||
+    d.reactFlow.getNodes().some((n) => holdsSessionArtifacts(n.data));
+  if (artifacts && d.changes.length === 0) {
+    const agreed = await d.confirm({
+      title: "Leave the draft?",
+      description:
+        "This draft generated setup keys for devices that were not installed yet. Leaving deletes those keys and their temporary groups, so an install command you already copied stops working.",
+      confirmText: "Leave draft",
+      cancelText: "Stay",
+      type: "warning",
+    });
+    if (!agreed) {
+      return fail("The user chose to keep the draft — still in draft mode.");
+    }
+  }
+  const left = await d.discardAndExit();
+  return left
+    ? ok("Left draft mode; the draft was discarded.")
+    : fail("The user chose to keep the draft — still in draft mode.");
 }
 
 // The connect rules read the side off the start handle, and silently drop a

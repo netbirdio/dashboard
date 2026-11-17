@@ -169,13 +169,17 @@ const usePeerSettings = () => {
   return context;
 };
 
-const PEER_TABS = new Set<string>([
-  "overview",
-  "network-routes",
-  "accessible-peers",
-  "reverse-proxies",
-  "peer-job",
-  "traffic-events",
+type PeerTabGate = (
+  permission: ReturnType<typeof usePermissions>["permission"],
+) => boolean;
+
+const PEER_TAB_GATES = new Map<string, PeerTabGate>([
+  ["overview", () => true],
+  ["network-routes", (permission) => !!permission.routes.read],
+  ["accessible-peers", () => true],
+  ["reverse-proxies", (permission) => !!permission.services?.read],
+  ["peer-job", (permission) => !!permission.peers.delete],
+  ["traffic-events", (permission) => !!permission.events.read],
 ]);
 
 const PeerSettingsProvider = ({ children }: { children: React.ReactNode }) => {
@@ -184,9 +188,15 @@ const PeerSettingsProvider = ({ children }: { children: React.ReactNode }) => {
   const { permission } = usePermissions();
   const [name, setName] = useState(peer.name);
   const requestedTab = useSearchParams().get("tab") ?? "";
-  const [tab, setTab] = useState(
-    PEER_TABS.has(requestedTab) ? requestedTab : "overview",
-  );
+  const linkedTab = PEER_TAB_GATES.get(requestedTab)?.(permission)
+    ? requestedTab
+    : "";
+  const [tab, setTab] = useState(linkedTab || "overview");
+  const [appliedLinkedTab, setAppliedLinkedTab] = useState(linkedTab);
+  if (linkedTab !== appliedLinkedTab) {
+    setAppliedLinkedTab(linkedTab);
+    if (linkedTab) setTab(linkedTab);
+  }
   const [selectedGroups, setSelectedGroups, { getAllGroupCalls }] =
     useGroupHelper({
       initial: peerGroups?.filter((g) => g?.name !== "All"),

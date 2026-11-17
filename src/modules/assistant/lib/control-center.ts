@@ -1,4 +1,4 @@
-import type { AgentAddItem, AgentCanvasAction, AgentCanvasSnapshot, AgentDraftAction, AgentNavigateInput, AgentNode, AgentNodeAction, AgentPolicyEdit, AgentStepResult, CanvasAgentApi } from "./canvas";
+import type { AgentAddItem, AgentCanvasAction, AgentCanvasSnapshot, AgentDraftAction, AgentNavigateInput, AgentNode, AgentNodeAction, AgentPolicyEdit, AgentPortRange, AgentStepResult, CanvasAgentApi } from "./canvas";
 import { getCanvasAgent, waitForCanvasAgent } from "./canvas";
 import type { ToolOutcome } from "./contract";
 import { ownEntry } from "./own";
@@ -163,9 +163,26 @@ export const getCanvasSnapshot: ControlCenterToolAction = async (
 
 const str = (value: unknown): string => (typeof value === "string" ? value : "");
 
+const refusal = (content: string): ToolOutcome => ({ ok: false, content });
+
+const optionsOf = (table: Record<string, unknown>): string =>
+  Object.keys(table).map((key) => `\`${key}\``).join(", ");
+
+const VIEW_LABELS: Record<AgentNavigateInput["view"], string> = {
+  peers: "Peers",
+  users: "Users",
+  groups: "Groups",
+  networks: "Networks",
+  network: "Network",
+};
+
 export const gotoView: ControlCenterToolAction = async (input, api) => {
+  const view = str(input.view);
+  if (!ownEntry(VIEW_LABELS, view)) {
+    return refusal(`control_center_navigate has no view \`${view}\`; use one of ${optionsOf(VIEW_LABELS)}.`);
+  }
   const step = await api.goToView({
-    view: str(input.view) as AgentNavigateInput["view"],
+    view: view as AgentNavigateInput["view"],
     target: typeof input.target === "string" ? input.target : undefined,
   });
   return reportSteps([step], api);
@@ -177,14 +194,18 @@ export const describeGotoView: ControlCenterDescribeTrail = (input) => {
   return { detail: quoted(target ?? (view ? humanize(view) : undefined)) };
 };
 
-const DRAFT_ACTION_LABELS: Record<string, string> = {
+const DRAFT_ACTION_LABELS: Record<AgentDraftAction, string> = {
   new_empty: "Start an empty draft",
   from_current_view: "Start a draft from this view",
   exit: "Leave the draft",
 };
 
 export const createDraft: ControlCenterToolAction = async (input, api) => {
-  const step = await api.draftAction(str(input.action) as AgentDraftAction);
+  const action = str(input.action);
+  if (!ownEntry(DRAFT_ACTION_LABELS, action)) {
+    return refusal(`control_center_draft has no action \`${action}\`; use one of ${optionsOf(DRAFT_ACTION_LABELS)}.`);
+  }
+  const step = await api.draftAction(action as AgentDraftAction);
   return reportSteps([step], api);
 };
 
@@ -197,25 +218,74 @@ export const describeCreateDraft: ControlCenterDescribeTrail = (input) => {
 
 const ADD_NEEDS_KIND = "control_center_add needs a `kind`.";
 
-const toAddItem = (input: Record<string, unknown>): AgentAddItem | null =>
-  nonEmptyString(input.kind)
-    ? {
-        kind: String(input.kind) as AgentAddItem["kind"],
-        ref: nonEmptyString(input.ref),
-        role: nonEmptyString(input.role) as AgentAddItem["role"],
-        bidirectional:
-          typeof input.bidirectional === "boolean" ? input.bidirectional : undefined,
-        protocol: nonEmptyString(input.protocol) as AgentAddItem["protocol"],
-        ports: Array.isArray(input.ports) ? input.ports.map(String) : undefined,
-        name: nonEmptyString(input.name),
-        description: nonEmptyString(input.description),
-        address: nonEmptyString(input.address),
-        network: nonEmptyString(input.network),
-        members: Array.isArray(input.members)
-          ? input.members.filter((m): m is string => typeof m === "string" && !!m)
-          : undefined,
-      }
-    : null;
+const MAX_PORT = 65535;
+
+const isPort = (value: number) => Number.isInteger(value) && value >= 1 && value <= MAX_PORT;
+
+export type ParsedPorts =
+  | { ok: true; ports?: string[]; portRanges?: AgentPortRange[] }
+  | { ok: false; error: string };
+
+export function parsePorts(value: unknown): ParsedPorts {
+  if (value === undefined || value === null) return { ok: true };
+  if (typeof value === "string" && !value.trim()) return { ok: true };
+  let entries: unknown[];
+  if (Array.isArray(value)) entries = value;
+  else if (typeof value === "string") entries = value.split(",");
+  else entries = [value];
+
+  const bad = (entry: unknown): ParsedPorts => ({
+    ok: false,
+    error: `\`ports\` has an invalid value ${JSON.stringify(entry)}: use a port number from 1 to ${MAX_PORT} or a range like "8000-8100". Nothing changed.`,
+  });
+
+  const singles: number[] = [];
+  const ranges: AgentPortRange[] = [];
+  for (const entry of entries) {
+    if (typeof entry !== "string" && typeof entry !== "number") return bad(entry);
+    const text = String(entry).trim();
+    const range = /^(\d+)\s*-\s*(\d+)$/.exec(text);
+    if (range) {
+      const start = Number(range[1]);
+      const end = Number(range[2]);
+      if (!isPort(start) || !isPort(end) || start > end) return bad(entry);
+      if (start === end) singles.push(start);
+      else ranges.push({ start, end });
+      continue;
+    }
+    if (!/^\d+$/.test(text) || !isPort(Number(text))) return bad(entry);
+    singles.push(Number(text));
+  }
+
+  if (ranges.length === 0) return { ok: true, ports: singles.map(String) };
+  return {
+    ok: true,
+    ports: [],
+    portRanges: [...ranges, ...singles.map((port) => ({ start: port, end: port }))],
+  };
+}
+
+const toAddItem = (input: Record<string, unknown>, ports: ParsedPorts & { ok: true }): AgentAddItem => ({
+  kind: String(input.kind) as AgentAddItem["kind"],
+  ref: nonEmptyString(input.ref),
+  role: nonEmptyString(input.role) as AgentAddItem["role"],
+  bidirectional: typeof input.bidirectional === "boolean" ? input.bidirectional : undefined,
+  protocol: nonEmptyString(input.protocol) as AgentAddItem["protocol"],
+  ports: ports.ports,
+  portRanges: ports.portRanges,
+  name: nonEmptyString(input.name),
+  description: nonEmptyString(input.description),
+  address: nonEmptyString(input.address),
+  network: nonEmptyString(input.network),
+  members: Array.isArray(input.members)
+    ? input.members.filter((m): m is string => typeof m === "string" && !!m)
+    : undefined,
+});
+
+export const MAX_BATCH = 25;
+
+const tooMany = (tool: string, key: string, count: number): string =>
+  `${tool} takes at most ${MAX_BATCH} ${key} per call and got ${count}. Nothing was run; split them over several calls.`;
 
 const listOf = (input: Record<string, unknown>, key: string): Record<string, unknown>[] => {
   const list = input[key];
@@ -229,11 +299,33 @@ const listOf = (input: Record<string, unknown>, key: string): Record<string, unk
 const POLICY_NEEDS_PROTOCOL =
   "A new_policy needs its `protocol`, and `ports` for tcp/udp, set on this call; pass \"all\" only when every protocol is meant. Nothing was added.";
 
+const PROTOCOLS = ["all", "tcp", "udp", "icmp"];
+
+const badProtocol = (protocol: string): string =>
+  `\`protocol\` is one of all, tcp, udp, icmp, not \`${protocol}\`. Nothing changed.`;
+
 export const addNode: ControlCenterToolAction = async (input, api) => {
-  const items = listOf(input, "items").map(toAddItem);
-  if (items.length === 0 || items.includes(null)) return { ok: false, content: ADD_NEEDS_KIND };
-  if (items.some((item) => item!.kind === "new_policy" && !item!.protocol)) return { ok: false, content: POLICY_NEEDS_PROTOCOL };
-  const steps = await api.addNodes(items as AgentAddItem[], input.final === true);
+  const raw = listOf(input, "items");
+  if (raw.length === 0 || raw.some((item) => !nonEmptyString(item.kind))) return refusal(ADD_NEEDS_KIND);
+  if (raw.length > MAX_BATCH) return refusal(tooMany("control_center_add", "items", raw.length));
+  const items: AgentAddItem[] = [];
+  for (const entry of raw) {
+    const ports = parsePorts(entry.ports);
+    if (!ports.ok) return refusal(ports.error);
+    const item = toAddItem(entry, ports);
+    if (item.kind === "new_policy") {
+      if (!item.protocol) return refusal(POLICY_NEEDS_PROTOCOL);
+      if (!PROTOCOLS.includes(item.protocol)) {
+        return refusal(badProtocol(item.protocol));
+      }
+      const hasPorts = !!item.ports?.length || !!item.portRanges?.length;
+      if (hasPorts && item.protocol !== "tcp" && item.protocol !== "udp") {
+        return refusal(`Ports need protocol tcp or udp; \`${item.protocol}\` takes none. Nothing was added.`);
+      }
+    }
+    items.push(item);
+  }
+  const steps = await api.addNodes(items, input.final === true);
   return reportSteps(steps, api);
 };
 
@@ -258,6 +350,7 @@ export const connectNodes: ControlCenterToolAction = async (input, api) => {
   if (links.length === 0 || links.some((l) => !nonEmptyString(l.from) || !nonEmptyString(l.to))) {
     return { ok: false, content: CONNECT_NEEDS_ENDS };
   }
+  if (links.length > MAX_BATCH) return refusal(tooMany("control_center_connect", "links", links.length));
   const steps = await api.connectNodes(
     links.map((l) => ({ from: String(l.from), to: String(l.to) })),
     input.final === true,
@@ -342,14 +435,19 @@ export const describeEditNode: ControlCenterDescribeTrail = (input) => {
 export const editPolicy: ControlCenterToolAction = async (input, api) => {
   if (typeof input.node !== "string")
     return { ok: false, content: "control_center_policy needs the policy's `node`." };
+  const ports = parsePorts(input.ports);
+  if (!ports.ok) return refusal(ports.error);
+  const protocol = nonEmptyString(input.protocol);
+  if (protocol && !PROTOCOLS.includes(protocol)) return refusal(badProtocol(protocol));
   const step = await api.editPolicy(
     {
       node: input.node,
       name: nonEmptyString(input.name),
       description: nonEmptyString(input.description),
       enabled: typeof input.enabled === "boolean" ? input.enabled : undefined,
-      protocol: nonEmptyString(input.protocol) as AgentPolicyEdit["protocol"],
-      ports: Array.isArray(input.ports) ? input.ports.map(String) : undefined,
+      protocol: protocol as AgentPolicyEdit["protocol"],
+      ports: ports.ports,
+      portRanges: ports.portRanges,
       bidirectional:
         typeof input.bidirectional === "boolean"
           ? input.bidirectional

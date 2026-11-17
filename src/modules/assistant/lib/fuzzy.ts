@@ -68,10 +68,26 @@ function searchableStrings(value: unknown, depth = 0, out: string[] = []): strin
   return out;
 }
 
+const NAMING_FIELDS = ["name", "hostname", "email"];
+
+function namingScore(row: unknown, query: string): number {
+  if (!row || typeof row !== "object") return 0;
+  const fields = row as Record<string, unknown>;
+  return Math.max(0, ...NAMING_FIELDS.map((key) => (typeof fields[key] === "string" ? fuzzyScore(query, fields[key]) : 0)));
+}
+
+const NAMED = 70;
+
 export function fuzzySearch<T>(rows: readonly T[], query: string): T[] {
   return rows
-    .map((row, index) => ({ row, index, score: Math.max(0, ...searchableStrings(row).map((s) => fuzzyScore(query, s))) }))
+    .map((row, index) => ({
+      row,
+      index,
+      named: namingScore(row, query),
+      score: Math.max(0, ...searchableStrings(row).map((s) => fuzzyScore(query, s))),
+    }))
     .filter((r) => r.score > 0)
-    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((r) => ({ ...r, named: r.named >= NAMED ? r.named : 0 }))
+    .sort((a, b) => b.named - a.named || b.score - a.score || a.index - b.index)
     .map((r) => r.row);
 }

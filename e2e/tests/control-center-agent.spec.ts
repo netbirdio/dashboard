@@ -1,6 +1,6 @@
 import { Page, expect } from "@playwright/test";
 import { test } from "../helpers/fixtures";
-import { listPeers } from "../helpers/api";
+import { listGroups, listPeers } from "../helpers/api";
 import {
   canvasNode,
   enterDraft,
@@ -13,15 +13,45 @@ import {
 type Step = { ok: boolean; detail: string; nodeId?: string };
 
 async function agent<T>(page: Page, method: string, arg?: unknown): Promise<T> {
+  const hooksOn = await page.evaluate(
+    () =>
+      (window as unknown as { __ccDraftChanges?: unknown })
+        .__ccDraftChanges !== undefined,
+  );
+  test.skip(!hooksOn, "this dashboard build exposes no e2e hooks");
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            !!(window as unknown as { __controlCenterAgent?: unknown })
+              .__controlCenterAgent,
+        ),
+      {
+        message:
+          "e2e hooks are on but window.__controlCenterAgent is missing: CanvasAgentBridge did not publish its API",
+      },
+    )
+    .toBe(true);
   return (await page.evaluate(
     async ([m, a]) => {
-      const api = (window as unknown as { __controlCenterAgent?: Record<string, any> })
+      const api = (window as unknown as { __controlCenterAgent: Record<string, any> })
         .__controlCenterAgent;
-      if (!api) throw new Error("__controlCenterAgent is not exposed — test build only");
       return await api[m as string](a);
     },
     [method, arg ?? undefined] as [string, unknown],
   )) as T;
+}
+
+type CanvasNode = {
+  id: string;
+  data?: { policy?: { rules?: any[] }; group?: { name?: string } };
+};
+
+async function ruleOf(page: Page, policyNodeId?: string) {
+  const canvas = await readDraftCanvas(page);
+  return (canvas?.nodes ?? []).find((n: CanvasNode) => n.id === policyNodeId)
+    ?.data?.policy?.rules?.[0];
 }
 
 const add = (page: Page, items: unknown[]) =>
@@ -97,9 +127,163 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     ]);
 
     expect(links[0].ok).toBe(true);
+    expect(links[0].detail).toContain("Connected");
     await expect(page.getByTestId("policy-continue")).not.toBeVisible();
+    const rule = await ruleOf(page, policy.nodeId);
+    expect(rule?.sourceResource).toEqual({
+      id: server.nodeId!.replace("peer-", ""),
+      type: "peer",
+    });
+  });
+
+  test("Should fail a connect onto a side that is already taken", async ({
+    dashboardAsOwner: page,
+  }) => {
+    await enterDraft(page);
+    const [group, server, policy] = await add(page, [
+      { kind: "new_group", name: "Agent Occupying Group" },
+      { kind: "server", name: "agent-late-01" },
+      { kind: "new_policy", name: "Agent Occupied Policy" },
+    ]);
+    const first = await agent<Step[]>(page, "connectNodes", [
+      { from: group.nodeId, to: policy.nodeId },
+    ]);
+    expect(first[0].ok).toBe(true);
+
+    const second = await agent<Step[]>(page, "connectNodes", [
+      { from: server.nodeId, to: policy.nodeId },
+    ]);
+
+    expect(second[0].ok).toBe(false);
+    expect(second[0].detail).toContain("Nothing was connected");
+    expect(second[0].detail).toContain("Agent Occupying Group");
+    const rule = await ruleOf(page, policy.nodeId);
+    expect(rule?.sourceResource).toBeUndefined();
+    expect(rule?.sources).toHaveLength(1);
+  });
+
+  test("Should refuse a connect while a dialog is still waiting for the user", async ({
+    dashboardAsOwner: page,
+  }) => {
+    await enterDraft(page);
+    const [first, second, third] = await add(page, [
+      { kind: "new_group", name: "Agent Dialog First" },
+      { kind: "new_group", name: "Agent Dialog Second" },
+      { kind: "new_group", name: "Agent Dialog Third" },
+    ]);
+
+    const opened = await agent<Step[]>(page, "connectNodes", [
+      { from: first.nodeId, to: second.nodeId },
+    ]);
+    expect(opened[0].ok).toBe(true);
+    expect(opened[0].detail).toContain("Nothing is connected yet");
+    await expect(page.getByTestId("policy-continue")).toBeVisible();
+
+    const blocked = await agent<Step[]>(page, "connectNodes", [
+      { from: first.nodeId, to: third.nodeId },
+      { from: second.nodeId, to: third.nodeId },
+    ]);
+
+    expect(blocked).toHaveLength(1);
+    expect(blocked[0].ok).toBe(false);
+    expect(blocked[0].detail).toContain("dialog is already open");
+    await expect(page.getByTestId("policy-continue")).toBeVisible();
+    const changes = await readDraftChanges(page);
+    expect(changes.filter((c) => c.type.includes("policy"))).toHaveLength(0);
+
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("policy-continue")).not.toBeVisible();
+  });
+
+  test("Should refuse a peer as a member of a network's resource group", async ({
+    dashboardAsOwner: page,
+  }) => {
+    await enterDraft(page);
+    const [network, server] = await add(page, [
+      { kind: "new_network", name: "Agent Row Guard Network" },
+      { kind: "server", name: "agent-row-guard-01" },
+    ]);
+
+    const [group] = await add(page, [
+      {
+        kind: "new_resource_group",
+        name: "Agent Row Guard Group",
+        network: network.nodeId,
+        members: [server.nodeId],
+      },
+    ]);
+
+    expect(group.ok).toBe(false);
+    expect(group.detail).toContain("is a peer");
+    await expect(canvasNode(page, "resourcegroup-new-")).toHaveCount(0);
+    await expect(canvasNode(page, server.nodeId!)).toHaveCount(1);
+  });
+
+  test("Should name the policy a removal strips", async ({
+    dashboardAsOwner: page,
+  }) => {
+    await enterDraft(page);
+    const [source, policy, destination] = await add(page, [
+      { kind: "new_group", name: "Agent Strip Sources", role: "source" },
+      { kind: "new_policy", name: "Agent Stripped Policy" },
+      { kind: "new_group", name: "Agent Strip Destinations", role: "destination" },
+    ]);
+    const links = await agent<Step[]>(page, "connectNodes", [
+      { from: source.nodeId, to: policy.nodeId },
+      { from: policy.nodeId, to: destination.nodeId },
+    ]);
+    expect(links.every((l) => l.ok)).toBe(true);
+
+    const removed = await agent<Step[]>(page, "editNodes", [
+      { node: source.nodeId, action: "remove" },
+    ]);
+
+    expect(removed[0].ok).toBe(true);
+    expect(removed[0].detail).toContain("Agent Stripped Policy");
+    expect(removed[0].detail).not.toContain("No policy changed");
+    expect((await ruleOf(page, policy.nodeId))?.sources).toHaveLength(0);
+  });
+
+  test("Should refuse to rename or delete the All group", async ({
+    dashboardAsOwner: page,
+  }) => {
+    const all = (await listGroups(page)).find((g) => g.name === "All");
+    test.skip(!all, "needs the account's All group");
+
+    await enterDraft(page, { blank: true });
+    const [group] = await add(page, [{ kind: "existing_group", ref: all!.id }]);
+    expect(group.nodeId).toBeTruthy();
+
+    const snapshot = await agent<{
+      nodes: { nodeId: string; can: { rename: boolean; delete: boolean } }[];
+    }>(page, "getSnapshot");
+    const described = snapshot.nodes.find((n) => n.nodeId === group.nodeId);
+    expect(described?.can).toMatchObject({ rename: false, delete: false });
+
+    const [renamed, deleted] = await agent<Step[]>(page, "editNodes", [
+      { node: group.nodeId, action: "rename", name: "Agent Not All" },
+      { node: group.nodeId, action: "delete" },
+    ]);
+
+    expect(renamed.ok).toBe(false);
+    expect(renamed.detail).toContain("system-managed");
+    expect(deleted.ok).toBe(false);
     const canvas = await readDraftCanvas(page);
-    expect(canvas?.nodes?.length).toBeGreaterThanOrEqual(2);
+    const node = (canvas?.nodes ?? []).find(
+      (n: CanvasNode) => n.id === group.nodeId,
+    );
+    expect(node?.data?.group?.name).toBe("All");
+    await expectChangeCount(page, 0);
+  });
+
+  test("Should refuse an unknown draft action instead of starting a draft", async ({
+    dashboardAsOwner: page,
+  }) => {
+    const step = await agent<Step>(page, "draftAction", "deploy");
+
+    expect(step.ok).toBe(false);
+    expect(step.detail).toContain("Unknown draft action");
+    await expect(page.getByTestId("cc-draft-cancel")).not.toBeVisible();
   });
 
   test("Should rename and then remove a node it added", async ({
@@ -548,6 +732,30 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     );
     expect(node?.parentId).toBe(network.nodeId);
     expect(group.detail).toContain("1 of 1");
+  });
+
+  test("Should leave no stray group when a resource group's name is taken", async ({
+    dashboardAsOwner: page,
+  }) => {
+    await enterDraft(page);
+    const [network] = await add(page, [
+      { kind: "new_network", name: "Agent Taken Name Network" },
+      { kind: "new_group", name: "Agent Taken Name" },
+    ]);
+
+    const [group] = await add(page, [
+      {
+        kind: "new_resource_group",
+        name: "Agent Taken Name",
+        network: network.nodeId,
+      },
+    ]);
+
+    expect(group.ok).toBe(false);
+    expect(group.detail).toContain("already exists");
+    await expect(canvasNode(page, "resourcegroup-new-")).toHaveCount(0);
+    const changes = await readDraftChanges(page);
+    expect(changes.filter((c) => c.type === "create-group")).toHaveLength(1);
   });
 
   test("Should stay locked between steps for the whole turn", async ({

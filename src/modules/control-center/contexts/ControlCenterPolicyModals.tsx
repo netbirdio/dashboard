@@ -936,6 +936,10 @@ export function ControlCenterPolicyProvider({
     );
   };
 
+  const drawnByAssistant = (policyNodeId: string): true | undefined =>
+    reactFlow.getNodes().find((n) => n.id === policyNodeId)?.data
+      ?.byAssistant === true || undefined;
+
   const ensureAgentDraftGroupChanges = (policy: AgentPolicy) => {
     policy.sourceGroups.forEach((ref) => {
       if (!isDraftGroupRef(ref)) return;
@@ -958,13 +962,15 @@ export function ControlCenterPolicyProvider({
       const hasCreateChange = changes.some(
         (c) => c.type === "create-agent-policy" && c.clientId === policy.id,
       );
+      const byAssistant = drawnByAssistant(`agent-policy-${policy.id}`);
       if (isDraftPolicy && !hasCreateChange) {
-        trackCreateAgentPolicy({ clientId: policy.id, policy });
+        trackCreateAgentPolicy({ clientId: policy.id, policy, byAssistant });
       } else {
         trackUpdateAgentPolicy({
           agentPolicyId: policy.id,
           name: policy.name,
           policy,
+          byAssistant,
         });
       }
     } else if (isDraftPolicy) {
@@ -1070,13 +1076,14 @@ export function ControlCenterPolicyProvider({
   const updateDraftPolicy = (policy: Policy) => {
     if (!policy.id) return;
     ensureDraftGroupChanges(policy);
+    const byAssistant = drawnByAssistant(`policy-${policy.id}`);
     if (policy.id.startsWith("new-")) {
       const hasCreateChange = changes.some(
         (c) => c.type === "create-policy" && c.clientId === policy.id,
       );
       if (!hasCreateChange) {
         if (isCompletePolicy(policy)) {
-          trackCreatePolicy({ clientId: policy.id, policy });
+          trackCreatePolicy({ clientId: policy.id, policy, byAssistant });
         }
         drawPolicyOnCanvas(policy);
         return;
@@ -1100,7 +1107,7 @@ export function ControlCenterPolicyProvider({
       drawPolicyOnCanvas(policy);
       return;
     }
-    trackUpdatePolicy({ policyId: policy.id, policy });
+    trackUpdatePolicy({ policyId: policy.id, policy, byAssistant });
     drawPolicyOnCanvas(policy);
   };
 

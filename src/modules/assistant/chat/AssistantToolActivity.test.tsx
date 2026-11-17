@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { AssistantToolActivity } from "./AssistantToolActivity";
+import { TurnActiveContext } from "./AssistantTurnContext";
 
 const rowText = (toolName: string, args: unknown): string => {
   const { container } = render(
@@ -62,6 +63,34 @@ describe("AssistantToolActivity", () => {
 
     expect(text).toContain("Read peer details 'd1ppv2rl0ubs73c9ruhg'");
     expect(text).not.toContain("get_api_peers_peerId");
+  });
+
+  it("shows the green check only for a call that returned", () => {
+    const { container } = render(
+      <AssistantToolActivity
+        toolName="docs_search"
+        args={{ query: "posture checks" }}
+        result="found"
+        status={{ type: "complete" }}
+      />,
+    );
+
+    expect(container.querySelector(".text-green-500")).not.toBeNull();
+  });
+
+  it("settles a call the turn ended without a result as neither running nor done", () => {
+    const { container } = render(
+      <TurnActiveContext.Provider value={false}>
+        <AssistantToolActivity
+          toolName="control_center_add"
+          args={{ items: [] }}
+          status={{ type: "running" }}
+        />
+      </TurnActiveContext.Provider>,
+    );
+
+    expect(container.querySelector(".animate-spin")).toBeNull();
+    expect(container.querySelector(".text-green-500")).toBeNull();
   });
 
   it("still lets the host name the subject for every other tool", () => {

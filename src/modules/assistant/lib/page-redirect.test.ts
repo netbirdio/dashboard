@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { navigateToPage, pageRedirect } from "@/modules/assistant/lib/page-redirect";
+import { redactResult, restoreToolInput, Vault } from "@/modules/assistant/lib/vault";
 
 let canvas: { mode: "live" | "draft"; changes: { type: string; name: string }[] } | null = null;
 let discards = false;
@@ -104,6 +105,10 @@ describe("navigateToPage", () => {
     ).toEqual({ href: "/reverse-proxy/logs?search=app.test.com" });
   });
 
+  it.each(["constructor", "__proto__", "toString", "hasOwnProperty"])("refuses %s, which only Object.prototype has", (page) => {
+    expect(navigateToPage({ page, id: "p1", search: "x", tab: "y" })).toHaveProperty("error");
+  });
+
   it("ignores a log param the page does not take", () => {
     expect(navigateToPage({ page: "activity", search: "policy" })).toEqual({
       href: "/events/audit",
@@ -156,6 +161,28 @@ describe("pageRedirect", () => {
   it("fails without navigating on an unknown page", async () => {
     const pushed: string[] = [];
     const outcome = await pageRedirect({ page: "billing" }, ctx(pushed));
+    expect(outcome.ok).toBe(false);
+    expect(pushed).toEqual([]);
+  });
+
+  it("reports the path only, so a restored search value does not reach the model", async () => {
+    const vault = new Vault();
+    const email = vault.scrub("jane.doe@corp.example");
+    const name = vault.mint("user", "Jane Doe");
+    for (const [token, query] of [[name, "Jane%20Doe"], [email, "jane.doe%40corp.example"]]) {
+      const pushed: string[] = [];
+      const input = restoreToolInput(vault, "dashboard_page_redirect", { page: "traffic_events", search: token });
+      const outcome = await pageRedirect(input, ctx(pushed));
+      expect(pushed).toEqual([`/events/traffic?search=${query}`]);
+      expect(outcome).toEqual({ ok: true, content: "Navigated to /events/traffic." });
+      const sent = redactResult(vault, "dashboard_page_redirect", outcome.content);
+      expect(sent).not.toMatch(/jane/i);
+    }
+  });
+
+  it("does not navigate to a page name inherited from Object.prototype", async () => {
+    const pushed: string[] = [];
+    const outcome = await pageRedirect({ page: "constructor" }, ctx(pushed));
     expect(outcome.ok).toBe(false);
     expect(pushed).toEqual([]);
   });

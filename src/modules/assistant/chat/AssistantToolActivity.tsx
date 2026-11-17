@@ -2,7 +2,7 @@
 
 import { cn } from "@utils/helpers";
 import { Check, ChevronRight, Info, Loader2 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { isOmittedOutput } from "@/modules/assistant/lib/contract";
 import { CONTROL_CENTER_TOOLS } from "@/modules/assistant/lib/control-center";
 import { describeToolCall } from "@/modules/assistant/lib/tools";
@@ -37,7 +37,7 @@ function subjectOf(toolName: string, args: unknown): string | null {
   return null;
 }
 
-const asJson = (value: unknown): string | null => {
+export const asJson = (value: unknown): string | null => {
   if (value === undefined || value === null) return null;
   if (typeof value === "object" && Object.keys(value).length === 0) return null;
   return JSON.stringify(value, null, 2);
@@ -58,6 +58,73 @@ function formatResult(result: unknown): string | null {
   }
 }
 
+const INVISIBLE_CONTROLS = /[\u061C\u200B-\u200F\u202A-\u202E\u2060\u2066-\u2069\uFEFF]/g;
+
+const escapeInvisibleControls = (text: string): string =>
+  text.replace(
+    INVISIBLE_CONTROLS,
+    (char) => `\\u${char.charCodeAt(0).toString(16).toUpperCase().padStart(4, "0")}`,
+  );
+
+const FALLBACK_LINE_HEIGHT = 18;
+
+export function ToolPayload({
+  title,
+  children,
+  showHidden = false,
+}: Readonly<{
+  title: string;
+  children: string;
+  showHidden?: boolean;
+}>) {
+  const boxRef = useRef<HTMLPreElement>(null);
+  const [scrollable, setScrollable] = useState(false);
+  const [hiddenLines, setHiddenLines] = useState(0);
+
+  const measure = useCallback(() => {
+    const box = boxRef.current;
+    if (!box) return;
+    const lineHeight =
+      Number.parseFloat(getComputedStyle(box).lineHeight) || FALLBACK_LINE_HEIGHT;
+    const below = box.scrollHeight - box.clientHeight - box.scrollTop;
+    setScrollable(box.scrollHeight > box.clientHeight);
+    setHiddenLines(Math.max(0, Math.round(below / lineHeight)));
+  }, []);
+
+  useLayoutEffect(() => {
+    if (showHidden) measure();
+  }, [showHidden, measure, children]);
+
+  useEffect(() => {
+    const box = boxRef.current;
+    if (!showHidden || !box) return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [showHidden, measure]);
+
+  return (
+    <div className="py-2 pl-3">
+      <div className="mb-1 pr-3 text-[11px] uppercase tracking-wide text-nb-gray-400">
+        {title}
+      </div>
+      <pre
+        ref={boxRef}
+        onScroll={showHidden ? measure : undefined}
+        tabIndex={scrollable ? 0 : undefined}
+        className="nb-scrollbar max-h-64 overflow-auto whitespace-pre-wrap break-words pr-3 font-mono text-[12px] text-nb-gray-200"
+      >
+        {escapeInvisibleControls(children)}
+      </pre>
+      {hiddenLines > 0 && (
+        <div className="mt-1.5 pr-3 text-[11px] text-nb-gray-300">
+          Scroll to see {hiddenLines} more {hiddenLines === 1 ? "line" : "lines"}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AssistantToolActivity({
   toolName,
   status,
@@ -73,6 +140,7 @@ export function AssistantToolActivity({
   const turnActive = useTurnActive();
   const settled = failed || result !== undefined || !turnActive;
   const running = !settled && status?.type === "running";
+  const done = !failed && result !== undefined;
 
   const request = asJson(args);
   const outcome = formatResult(result);
@@ -126,35 +194,15 @@ export function AssistantToolActivity({
 
         <span className="flex h-4 w-4 shrink-0 items-center justify-center">
           {!running && failed && <Info size={13} />}
-          {!running && !failed && (
-            <Check size={13} className="text-green-500" />
-          )}
+          {done && <Check size={13} className="text-green-500" />}
         </span>
       </button>
 
       {open && (
         <div className="mb-5 ml-6 mt-0.5 overflow-hidden rounded-lg border border-nb-gray-900 bg-nb-gray-940">
-          {request && (
-            <div className="py-2 pl-3">
-              <div className="mb-1 pr-3 text-[11px] uppercase tracking-wide text-nb-gray-400">
-                Request
-              </div>
-              <pre className="nb-scrollbar max-h-64 overflow-auto whitespace-pre-wrap break-words pr-3 font-mono text-[12px] text-nb-gray-200">
-                {request}
-              </pre>
-            </div>
-          )}
+          {request && <ToolPayload title="Request">{request}</ToolPayload>}
           {request && outcome && <div className="h-px bg-nb-gray-900" />}
-          {outcome && (
-            <div className="py-2 pl-3">
-              <div className="mb-1 pr-3 text-[11px] uppercase tracking-wide text-nb-gray-400">
-                Result
-              </div>
-              <pre className="nb-scrollbar max-h-64 overflow-auto whitespace-pre-wrap break-words pr-3 font-mono text-[12px] text-nb-gray-200">
-                {outcome}
-              </pre>
-            </div>
-          )}
+          {outcome && <ToolPayload title="Result">{outcome}</ToolPayload>}
         </div>
       )}
     </div>

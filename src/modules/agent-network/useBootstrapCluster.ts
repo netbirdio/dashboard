@@ -9,7 +9,7 @@ import {
 } from "@/interfaces/ReverseProxy";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 
-export function useBootstrapCluster() {
+export function useBootstrapCluster(enabled = true) {
   const { settings, settingsLoading } = useAIProviders();
   const { permission } = usePermissions();
 
@@ -24,7 +24,7 @@ export function useBootstrapCluster() {
     "/reverse-proxies/domains",
     true,
     true,
-    canReadDomains && !bootstrapped && !settingsLoading,
+    enabled && canReadDomains && !bootstrapped && !settingsLoading,
   );
 
   const validatedClusters = useMemo(

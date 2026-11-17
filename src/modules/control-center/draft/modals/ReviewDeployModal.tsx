@@ -22,6 +22,7 @@ import {
 import React, { useCallback, useMemo, useRef } from "react";
 import { AssistantIcon } from "@/assets/icons/AssistantIcon";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
+import { useAgentBusy } from "@/modules/assistant/hooks/useAgentBusy";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { ChangeAccordionItem } from "@/modules/control-center/draft/changeset/ChangeAccordionItem";
 import {
@@ -33,7 +34,10 @@ import {
 } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useDeployChangeset } from "@/modules/control-center/hooks/useDeployChangeset";
+import {
+  deployInFlight,
+  useDeployChangeset,
+} from "@/modules/control-center/hooks/useDeployChangeset";
 import { useRemoveChange } from "@/modules/control-center/hooks/useRemoveChange";
 import { LiveData } from "@/modules/control-center/utils/changeset-request";
 import { getPlaceholderSetupKey } from "@/modules/control-center/utils/helpers";
@@ -52,6 +56,7 @@ export const ReviewDeployModal = ({
   const { changes, clearChanges, assistantChangeIds } = useDraftChangeset();
   const { removeWithCascade, previewRemove } = useRemoveChange();
   const { deploy, isDeploying, deployStatus } = useDeployChangeset();
+  const assistantBusy = useAgentBusy();
   const { policies, groups, networks, networkResources, users } =
     useControlCenterData();
   const { providers: agentProviders, policies: agentPolicies } =
@@ -171,6 +176,7 @@ export const ReviewDeployModal = ({
   } before deploying to your network.`;
 
   const handleDeploy = async () => {
+    if (assistantBusy) return;
     const ok = await deploy();
     // A partial failure keeps the modal open; deployed items are skipped on
     // retry.
@@ -188,7 +194,11 @@ export const ReviewDeployModal = ({
     // "no changes" state on the way out.
     onDeployed();
     onOpenChange(false);
-    window.setTimeout(() => clearChanges(), 400);
+    deployInFlight.current = true;
+    window.setTimeout(() => {
+      clearChanges();
+      deployInFlight.current = false;
+    }, 400);
   };
 
   return (
@@ -286,8 +296,12 @@ export const ReviewDeployModal = ({
             {/* A disabled button emits no hover, so the wrapper div FullTooltip
                 adds carries the tooltip. */}
             <FullTooltip
-              content={"Resolve issues before deploying"}
-              disabled={!hasIssues}
+              content={
+                assistantBusy
+                  ? "Wait for the assistant to finish before deploying"
+                  : "Resolve issues before deploying"
+              }
+              disabled={!hasIssues && !assistantBusy}
               side={"top"}
             >
               <Button
@@ -295,7 +309,8 @@ export const ReviewDeployModal = ({
                 disabled={
                   (deployableCount === 0 && installedCount === 0) ||
                   isDeploying ||
-                  hasIssues
+                  hasIssues ||
+                  assistantBusy
                 }
                 onClick={handleDeploy}
                 data-testid={"cc-deploy"}

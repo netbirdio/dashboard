@@ -84,6 +84,33 @@ export function groupContainsItem(groupNode: Node, itemId: string): boolean {
   return addedMembers.has(itemId);
 }
 
+export function setDraftResourceCardGroup(
+  nodes: Node[],
+  resourceId: string,
+  groupRef: string,
+  member: boolean,
+): Node[] {
+  const cardId = `resource-${resourceId}`;
+  let changed = false;
+  const next = nodes.map((n) => {
+    if (n.id !== cardId) return n;
+    const refs =
+      (n.data as { resourceGroupIds?: string[] }).resourceGroupIds ?? [];
+    if (refs.includes(groupRef) === member) return n;
+    changed = true;
+    return {
+      ...n,
+      data: {
+        ...n.data,
+        resourceGroupIds: member
+          ? [...refs, groupRef]
+          : refs.filter((r) => r !== groupRef),
+      },
+    };
+  });
+  return changed ? next : nodes;
+}
+
 export function useDragToGroup() {
   const { isDraft, drillDownNetworkNodeId } = useDraftMode();
   const { setNodes, setEdges } = useCanvasState();
@@ -102,11 +129,13 @@ export function useDragToGroup() {
         resource,
         itemId: itemIdOverride,
         draggedNodeId,
+        keepFramedCard = false,
       }: {
         peer?: Peer;
         resource?: NetworkResource;
         itemId?: string;
         draggedNodeId?: string;
+        keepFramedCard?: boolean;
       },
     ) => {
       const itemId = itemIdOverride ?? peer?.id ?? resource?.id;
@@ -118,12 +147,16 @@ export function useDragToGroup() {
       // "All" is system-managed: every peer is in it implicitly.
       if (groupData.name === "All") return;
 
-      // A resource inside a network frame keeps its card: that row is the
-      // network's own, and absorbing it leaves the frame looking empty.
-      const framedChild = draggedNodeId
-        ? !!reactFlow.getNodes().find((n) => n.id === draggedNodeId)?.parentId
-        : false;
-      if (draggedNodeId && !framedChild) {
+      const framed = () => {
+        const all = reactFlow.getNodes();
+        const card = all.find((n) => n.id === draggedNodeId);
+        return (
+          !!card?.parentId &&
+          isFrameNode(all.find((n) => n.id === card.parentId))
+        );
+      };
+      const absorbsCard = !!draggedNodeId && !(keepFramedCard && framed());
+      if (absorbsCard) {
         setNodes((prev) => prev.filter((n) => n.id !== draggedNodeId));
         setEdges((prev) =>
           prev.filter(
@@ -206,6 +239,14 @@ export function useDragToGroup() {
         if (bumpsAll) {
           next = patchGroupInPolicies(next, isAllMatcher, bumpCounts);
         }
+        if (draftResourceMember && !absorbsCard) {
+          next = setDraftResourceCardGroup(
+            next,
+            itemId,
+            groupData.id ?? groupData.name,
+            true,
+          );
+        }
         return next;
       });
       setEdges((prev) => {
@@ -232,7 +273,7 @@ export function useDragToGroup() {
         addGroupToDraftResource(itemId, groupData.id ?? groupData.name);
       }
 
-      if (draggedNodeId) {
+      if (absorbsCard) {
         const policyUpdates = getPolicyRegroupUpdates(
           reactFlow.getNodes(),
           new Set([itemId]),

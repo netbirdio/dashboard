@@ -57,6 +57,8 @@ export type AgentNavigateInput = {
 
 export type AgentDraftAction = "new_empty" | "from_current_view" | "exit";
 
+export type AgentPortRange = { start: number; end: number };
+
 export type AgentAddItem = {
   kind:
     | "server"
@@ -82,6 +84,7 @@ export type AgentAddItem = {
   bidirectional?: boolean;
   protocol?: "all" | "tcp" | "udp" | "icmp";
   ports?: string[];
+  portRanges?: AgentPortRange[];
   address?: string;
   network?: string;
   members?: string[];
@@ -116,6 +119,7 @@ export type AgentPolicyEdit = {
   enabled?: boolean;
   protocol?: "all" | "tcp" | "udp" | "icmp";
   ports?: string[];
+  portRanges?: AgentPortRange[];
   bidirectional?: boolean;
 };
 
@@ -168,6 +172,10 @@ let turnEngaged = false;
 const TURN_MAX_MS = 3 * 60 * 1000;
 let turnWatchdog: ReturnType<typeof setTimeout> | undefined;
 
+let turnGeneration = 0;
+export const agentTurnGeneration = (): number => turnGeneration;
+let turnSequence = 0;
+
 const emitActivity = () => activityListeners.forEach((l) => l());
 
 const setLocked = (next: boolean) => {
@@ -185,18 +193,28 @@ export function beginAgentTurn(): () => void {
   clearTimeout(turnWatchdog);
   turnActive = true;
   turnEngaged = false;
+  turnSequence += 1;
+  const turn = turnSequence;
 
-  let released = false;
-  const release = () => {
-    if (released) return;
-    released = true;
+  let held = true;
+  const unlock = () => {
+    if (!held) return;
+    held = false;
+    if (turn !== turnSequence) return;
     clearTimeout(turnWatchdog);
     turnActive = false;
     turnEngaged = false;
     if (depth === 0) scheduleClear();
   };
 
-  turnWatchdog = setTimeout(release, TURN_MAX_MS);
+  let halted = false;
+  const release = () => {
+    if (!halted && turn === turnSequence) turnGeneration += 1;
+    halted = true;
+    unlock();
+  };
+
+  turnWatchdog = setTimeout(unlock, TURN_MAX_MS);
   return release;
 }
 

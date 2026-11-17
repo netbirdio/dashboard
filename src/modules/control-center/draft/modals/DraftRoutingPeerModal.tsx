@@ -50,10 +50,11 @@ export const DraftRoutingPeerModal = () => {
   const placeholderPeers = React.useMemo(
     () =>
       isDraft
-        ? reactFlow
-            .getNodes()
-            .map((n) => getPlaceholderPeer(n))
-            .filter((p): p is Peer => !!p)
+        ? reactFlow.getNodes().flatMap((n) => {
+            const absorbed = (n.data?.draftPeers as Peer[] | undefined) ?? [];
+            const standalone = getPlaceholderPeer(n);
+            return standalone ? [standalone, ...absorbed] : absorbed;
+          })
         : [],
     // Read once per modal open: the canvas can't change while it's up.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,7 +127,9 @@ export const DraftRoutingPeerModal = () => {
             onSaved={(result) => {
               if (networkNodeId) {
                 // Editing replaces the change so the dedup rules re-apply.
-                if (editChange) removeChange(editChange.id);
+                if (editChange) {
+                  removeChange(editChange.id, { replaced: true });
+                }
                 addRouterFromSelection({ networkNodeId, ...result });
               }
               setRoutingPeerModal(null);

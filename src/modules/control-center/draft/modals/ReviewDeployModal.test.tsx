@@ -11,6 +11,10 @@ const setPolicyModalOpen = vi.fn();
 let changes: unknown[] = [];
 let assistantChangeIds: Set<string> = new Set();
 let isDeploying = false;
+let assistantBusy = false;
+const deploy = vi.fn();
+const clearChanges = vi.fn();
+const deployInFlight = { current: false };
 let liveGroups: unknown[] = [];
 
 vi.mock("@utils/config", () => ({
@@ -20,11 +24,15 @@ vi.mock("@xyflow/react", () => ({
   useReactFlow: () => ({ getNodes: () => [] }),
 }));
 vi.mock("@/modules/control-center/hooks/useDeployChangeset", () => ({
+  deployInFlight,
   useDeployChangeset: () => ({
-    deploy: vi.fn(),
+    deploy,
     isDeploying,
     deployStatus: {},
   }),
+}));
+vi.mock("@/modules/assistant/hooks/useAgentBusy", () => ({
+  useAgentBusy: () => assistantBusy,
 }));
 vi.mock("@/modules/control-center/hooks/useRemoveChange", () => ({
   useRemoveChange: () => ({
@@ -61,7 +69,7 @@ vi.mock("@/modules/control-center/draft/DraftChangesetContext", async () => {
     ...actual,
     useDraftChangeset: () => ({
       changes,
-      clearChanges: vi.fn(),
+      clearChanges,
       assistantChangeIds,
     }),
   };
@@ -94,6 +102,10 @@ beforeEach(() => {
   changes = [strippedDraftPolicy];
   assistantChangeIds = new Set();
   isDeploying = false;
+  assistantBusy = false;
+  deploy.mockReset();
+  clearChanges.mockClear();
+  deployInFlight.current = false;
   liveGroups = [];
 });
 
@@ -259,5 +271,52 @@ describe("changes the assistant made in Review & Deploy", () => {
 
     expect(screen.queryByText("Assistant")).toBeNull();
     expect(screen.queryByTestId("cc-assistant-changes-notice")).toBeNull();
+  });
+});
+
+describe("deploying while the assistant is still working", () => {
+  const renderModal = () =>
+    render(
+      <ReviewDeployModal
+        open={true}
+        onOpenChange={vi.fn()}
+        onDeployed={vi.fn()}
+      />,
+    );
+  const deployButton = () =>
+    screen.getByTestId("cc-deploy") as HTMLButtonElement;
+
+  beforeEach(() => {
+    changes = [{ id: "c9", type: "delete-group", groupId: "g9", name: "Old" }];
+  });
+
+  it("deploys as before when the assistant is idle", async () => {
+    renderModal();
+
+    expect(deployButton().disabled).toBe(false);
+    await act(async () => deployButton().click());
+    expect(deploy).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the deploy flag up until the changeset has been cleared", async () => {
+    deploy.mockResolvedValue(true);
+    renderModal();
+
+    await act(async () => deployButton().click());
+    expect(clearChanges).not.toHaveBeenCalled();
+    expect(deployInFlight.current).toBe(true);
+
+    await act(() => new Promise((r) => setTimeout(r, 450)));
+    expect(clearChanges).toHaveBeenCalledTimes(1);
+    expect(deployInFlight.current).toBe(false);
+  });
+
+  it("locks Approve & Deploy until the assistant has finished", async () => {
+    assistantBusy = true;
+    renderModal();
+
+    expect(deployButton().disabled).toBe(true);
+    await act(async () => deployButton().click());
+    expect(deploy).not.toHaveBeenCalled();
   });
 });

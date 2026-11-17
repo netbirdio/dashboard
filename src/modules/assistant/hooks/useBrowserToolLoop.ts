@@ -89,12 +89,31 @@ class BrowserToolQueue {
   private readonly releases = new Map<string, () => void>();
   private pending = 0;
   private disposed = false;
+  private paused: Promise<void> | null = null;
+  private unpause: (() => void) | null = null;
 
   constructor(private readonly deps: BrowserToolQueueDeps) {}
+
+  get busy(): boolean {
+    return this.pending > 0;
+  }
 
   markSettled(requestId: string): void {
     this.settled.add(requestId);
     this.releases.get(requestId)?.();
+  }
+
+  pause(): void {
+    if (this.paused || this.disposed) return;
+    this.paused = new Promise((resolve) => {
+      this.unpause = resolve;
+    });
+  }
+
+  resume(): void {
+    this.unpause?.();
+    this.paused = null;
+    this.unpause = null;
   }
 
   dispose(): void {
@@ -104,6 +123,7 @@ class BrowserToolQueue {
     // every generation of the queue drives the same busy flag.
     this.setPending(0);
     this.disposed = true;
+    this.resume();
   }
 
   enqueue(calls: BrowserCall[]): void {
@@ -121,11 +141,13 @@ class BrowserToolQueue {
   private async run(calls: BrowserCall[]): Promise<void> {
     const ran: Ran[] = [];
     for (const call of calls) {
+      if (this.paused) await this.paused;
       if (this.disposed) return;
       if (this.settled.has(call.requestId)) continue;
       const outcome = await this.executed(call);
       if (outcome !== RELEASED) ran.push({ call, outcome });
     }
+    if (this.paused) await this.paused;
     for (const batch of requests(ran)) await this.send(batch);
   }
 
@@ -195,6 +217,7 @@ export interface PendingInputRequest {
   kind: string;
   prompt: string;
   toolName?: string;
+  input?: unknown;
   /** Not inferable from `options`, since a malformed request also has none. */
   display?: "confirmation" | "select" | "text";
   allowFreeform?: boolean;
@@ -226,6 +249,10 @@ interface BrowserToolLoopApi {
   clearPendingInput: (requestId: string) => void;
   restorePendingInput: (request: PendingInputRequest) => void;
   reset: () => void;
+  beginStop: () => number;
+  finishStop: (stop?: number) => void;
+  abortStop: (stop?: number) => void;
+  messageSent: () => void;
 }
 
 interface UseBrowserToolLoopOptions {
@@ -259,8 +286,17 @@ export function useBrowserToolLoop({
 
   const canvasReleaseRef = useRef<(() => void) | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const releaseDueRef = useRef(false);
+
+  const stopRef = useRef<"idle" | "stopping" | "stopped">("idle");
+  const stopTokenRef = useRef(0);
+  const boundaryWhileStoppingRef = useRef(false);
+  const sentSinceStopRef = useRef(false);
+
+  const queueRef = useRef<BrowserToolQueue | null>(null);
 
   const cancelScheduledRelease = useCallback(() => {
+    releaseDueRef.current = false;
     if (settleTimerRef.current !== null) {
       clearTimeout(settleTimerRef.current);
       settleTimerRef.current = null;
@@ -274,12 +310,33 @@ export function useBrowserToolLoop({
   }, [cancelScheduledRelease]);
 
   const scheduleCanvasRelease = useCallback(() => {
-    if (!canvasReleaseRef.current || settleTimerRef.current !== null) return;
+    if (settleTimerRef.current !== null) return;
+    if (stagedRef.current.length > 0 || queueRef.current?.busy) {
+      releaseDueRef.current = true;
+      return;
+    }
+    if (!canvasReleaseRef.current) return;
     settleTimerRef.current = setTimeout(() => {
       settleTimerRef.current = null;
-      releaseCanvas();
+      if (stagedRef.current.length > 0 || queueRef.current?.busy) {
+        releaseDueRef.current = true;
+        return;
+      }
+      const status = optsRef.current.getStatus();
+      if (status !== "submitted" && status !== "streaming") releaseCanvas();
     }, TURN_SETTLE_MS);
   }, [releaseCanvas]);
+
+  const onBusyChange = useCallback(
+    (next: boolean) => {
+      setBusy(next);
+      if (!next && releaseDueRef.current) {
+        releaseDueRef.current = false;
+        scheduleCanvasRelease();
+      }
+    },
+    [scheduleCanvasRelease],
+  );
 
   const isBrowserTool = useCallback(
     (name: string | undefined) => !!name && (BROWSER_TOOLS.includes(name) || Object.hasOwn(ctx.extraExecutors, name)),
@@ -298,7 +355,6 @@ export function useBrowserToolLoop({
       try {
         const cc = ownEntry(CONTROL_CENTER_TOOLS, toolName);
         if (cc) {
-          cancelScheduledRelease();
           canvasReleaseRef.current ??= beginAgentTurn();
           return await runControlCenterTool(cc.action, input, toolCtx);
         }
@@ -316,7 +372,7 @@ export function useBrowserToolLoop({
         return { ok: false, content: describeAssistantError(err) };
       }
     },
-    [ctx, cancelScheduledRelease],
+    [ctx],
   );
 
   const execute = useCallback(
@@ -338,16 +394,15 @@ export function useBrowserToolLoop({
   const executeRef = useRef(execute);
   executeRef.current = execute;
 
-  const queueRef = useRef<BrowserToolQueue | null>(null);
   const makeQueue = useCallback(
     () =>
       new BrowserToolQueue({
         execute: (call) => executeRef.current(call),
         deliver: (responses, browserResults) => optsRef.current.respond(responses, { browserResults }),
-        onBusyChange: setBusy,
+        onBusyChange,
         onDeliveryFailed: (err) => setDeliveryError(err ?? new Error("delivery failed")),
       }),
-    [],
+    [onBusyChange],
   );
   queueRef.current ??= makeQueue();
 
@@ -356,7 +411,11 @@ export function useBrowserToolLoop({
     const calls = [...stagedRef.current].sort(byOrder);
     stagedRef.current = [];
     queueRef.current?.enqueue(calls);
-  }, []);
+    if (releaseDueRef.current && !queueRef.current?.busy) {
+      releaseDueRef.current = false;
+      scheduleCanvasRelease();
+    }
+  }, [scheduleCanvasRelease]);
 
   const stage = useCallback(
     (calls: BrowserCall[]) => {
@@ -371,6 +430,20 @@ export function useBrowserToolLoop({
     stageTimerRef.current = null;
     stagedRef.current = [];
   }, []);
+
+  const reset = useCallback(() => {
+    releaseCanvas();
+    clearStaged();
+    replayedRef.current.clear();
+    callOrderRef.current.clear();
+    queueRef.current?.dispose();
+    queueRef.current = makeQueue();
+    stopRef.current = "idle";
+    boundaryWhileStoppingRef.current = false;
+    setBusy(false);
+    setDeliveryError(null);
+    setPendingInputs([]);
+  }, [releaseCanvas, clearStaged, makeQueue]);
 
   const handleEvent = useCallback(
     (ev: MessageStreamEvent) => {
@@ -408,12 +481,14 @@ export function useBrowserToolLoop({
                 options: (r.options ?? []).filter((o) => o.id === "stop"),
               });
             } else {
-              const { restoreText } = optsRef.current.getVault();
+              const vault = optsRef.current.getVault();
+              const { restoreText } = vault;
               shown.push({
                 requestId: r.requestId,
                 kind: r.kind,
                 prompt: restoreText(r.prompt),
                 toolName: r.action?.toolName,
+                ...(r.action ? { input: restoreToolInput(vault, r.action.toolName, r.action.input) } : {}),
                 display: r.display,
                 allowFreeform: r.allowFreeform,
                 options: (r.options ?? []).map((o) => ({
@@ -423,6 +498,9 @@ export function useBrowserToolLoop({
                 })),
               });
             }
+          }
+          if (stopRef.current === "stopped") {
+            calls.length = 0;
           }
           // Replayed history: wait until it has all arrived, since a later event may show the call resolved.
           if (optsRef.current.getStatus() === "resuming") {
@@ -456,23 +534,34 @@ export function useBrowserToolLoop({
           return;
         }
         case "turn.started":
+          if (stopRef.current !== "idle" && (boundaryWhileStoppingRef.current || sentSinceStopRef.current)) {
+            if (stopRef.current === "stopping") reset();
+            stopRef.current = "idle";
+          }
           cancelScheduledRelease();
           setDeliveryError(null);
           return;
-        case "turn.completed":
+        case "step.started":
+          cancelScheduledRelease();
+          return;
         case "turn.waiting":
+          scheduleCanvasRelease();
+          return;
+        case "turn.completed":
         case "turn.cancelled":
         case "turn.failed":
         case "session.waiting":
         case "session.failed":
         case "session.completed":
+          if (stopRef.current === "stopping") boundaryWhileStoppingRef.current = true;
+          else stopRef.current = "idle";
           scheduleCanvasRelease();
           return;
         default:
           return;
       }
     },
-    [cancelScheduledRelease, scheduleCanvasRelease, isBrowserTool, stage],
+    [cancelScheduledRelease, scheduleCanvasRelease, isBrowserTool, stage, reset],
   );
 
   const flushReplayed = useCallback(() => {
@@ -492,22 +581,56 @@ export function useBrowserToolLoop({
     [],
   );
 
-  const reset = useCallback(() => {
-    releaseCanvas();
-    clearStaged();
-    replayedRef.current.clear();
-    callOrderRef.current.clear();
-    queueRef.current?.dispose();
-    queueRef.current = makeQueue();
-    setBusy(false);
-    setDeliveryError(null);
-    setPendingInputs([]);
-  }, [releaseCanvas, clearStaged, makeQueue]);
+  const beginStop = useCallback(() => {
+    stopRef.current = "stopping";
+    boundaryWhileStoppingRef.current = false;
+    sentSinceStopRef.current = false;
+    queueRef.current?.pause();
+    return ++stopTokenRef.current;
+  }, []);
 
-  useEffect(() => () => {
-    releaseCanvas();
-    clearStaged();
-  }, [releaseCanvas, clearStaged]);
+  const settlesStop = useCallback(
+    (stop: number | undefined) =>
+      stopRef.current === "stopping" && (stop ?? stopTokenRef.current) === stopTokenRef.current && !!queueRef.current,
+    [],
+  );
+
+  const finishStop = useCallback(
+    (stop?: number) => {
+      if (!settlesStop(stop)) return;
+      const ended = boundaryWhileStoppingRef.current;
+      reset();
+      stopRef.current = ended ? "idle" : "stopped";
+    },
+    [reset, settlesStop],
+  );
+
+  const abortStop = useCallback(
+    (stop?: number) => {
+      if (!settlesStop(stop)) return;
+      if (boundaryWhileStoppingRef.current) {
+        reset();
+        return;
+      }
+      stopRef.current = "idle";
+      queueRef.current?.resume();
+    },
+    [reset, settlesStop],
+  );
+
+  const messageSent = useCallback(() => {
+    sentSinceStopRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    queueRef.current ??= makeQueue();
+    return () => {
+      releaseCanvas();
+      clearStaged();
+      queueRef.current?.dispose();
+      queueRef.current = null;
+    };
+  }, [releaseCanvas, clearStaged, makeQueue]);
 
   return {
     handleEvent,
@@ -519,5 +642,9 @@ export function useBrowserToolLoop({
     clearPendingInput,
     restorePendingInput,
     reset,
+    beginStop,
+    finishStop,
+    abortStop,
+    messageSent,
   };
 }

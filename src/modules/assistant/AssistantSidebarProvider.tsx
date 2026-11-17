@@ -12,6 +12,7 @@ import {
   useState,
 } from "react";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import {
   CARD_BORDER,
   CARD_INSET,
@@ -45,7 +46,11 @@ export function AssistantSidebarProvider({
   const [open, setOpen] = useState(false);
   const origin = useMemo(() => loadConfig().assistantApiOrigin, []);
   const headers = useAssistantHeaders();
-  const reachable = useAssistantAvailable(origin, headers);
+  const { isRestricted } = usePermissions();
+  const reachable = useAssistantAvailable(
+    origin,
+    isRestricted ? undefined : headers,
+  );
   const hasRoomToReveal = useIsMd();
   const overlay = !hasRoomToReveal;
 
@@ -55,13 +60,16 @@ export function AssistantSidebarProvider({
   // restored on close.
   const collapsedByPanel = useRef(false);
 
+  useEffect(() => {
+    if (!isNavigationCollapsed) collapsedByPanel.current = false;
+  }, [isNavigationCollapsed]);
+
   const changeOpen = useCallback(
     (next: boolean) => {
       setOpen(next);
 
-      if (overlay) return;
-
       if (next && !isNavigationCollapsed) {
+        if (overlay) return;
         toggleNavigation();
         collapsedByPanel.current = true;
       } else if (!next && collapsedByPanel.current) {
@@ -71,6 +79,25 @@ export function AssistantSidebarProvider({
     },
     [overlay, isNavigationCollapsed, toggleNavigation],
   );
+
+  const navigationRef = useRef({ isNavigationCollapsed, toggleNavigation });
+  useEffect(() => {
+    navigationRef.current = { isNavigationCollapsed, toggleNavigation };
+  }, [isNavigationCollapsed, toggleNavigation]);
+
+  useEffect(() => {
+    const restore = () => {
+      if (!collapsedByPanel.current) return;
+      collapsedByPanel.current = false;
+      const navigation = navigationRef.current;
+      if (navigation.isNavigationCollapsed) navigation.toggleNavigation();
+    };
+    globalThis.addEventListener("pagehide", restore);
+    return () => {
+      globalThis.removeEventListener("pagehide", restore);
+      restore();
+    };
+  }, []);
 
   const toggle = useCallback(() => changeOpen(!open), [open, changeOpen]);
 
@@ -109,6 +136,10 @@ export function AssistantSidebarProvider({
         };
     for (const [side, px] of Object.entries(box))
       root.style.setProperty(`--nb-overlay-${side}`, px);
+    return () => {
+      for (const side of Object.keys(box))
+        root.style.removeProperty(`--nb-overlay-${side}`);
+    };
   }, [value.reveal]);
 
   return (

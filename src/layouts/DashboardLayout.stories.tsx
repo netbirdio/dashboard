@@ -29,7 +29,9 @@ const helpButton = () =>
     ...document.querySelectorAll<HTMLButtonElement>(
       "button[aria-haspopup=menu]",
     ),
-  ].find((b) => b.closest(".fixed") && b.dataset.testid !== "user-dropdown")!;
+  ].find(
+    (b) => b.closest("[data-header]") && b.dataset.testid !== "user-dropdown",
+  )!;
 
 export const UserDropdown: Story = {
   play: async () => {

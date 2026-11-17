@@ -28,6 +28,7 @@ export default function NavbarWithDropdown() {
 
   return (
     <div
+      data-header
       className={"relative z-50 shrink-0"}
       style={{ height: headerHeight + bannerHeight }}
     >

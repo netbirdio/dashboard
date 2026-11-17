@@ -11,15 +11,15 @@ import { headerHeight } from "@/layouts/Header";
 
 // A modal opened while the assistant panel is open is non-modal to Radix,
 // so the chat beside it stays usable.
-const ASSISTANT_PANEL = "[data-assistant-panel]";
+const ASSISTANT_PANEL = '[data-assistant-panel="open"]';
 const assistantPanelOpen = () =>
   typeof document !== "undefined" &&
-  document.querySelector(`${ASSISTANT_PANEL}[data-assistant-panel="open"]`) !==
-    null;
+  document.querySelector(ASSISTANT_PANEL) !== null;
 const inAssistantPanel = (target: EventTarget | null) =>
   target instanceof Element && target.closest(ASSISTANT_PANEL) !== null;
 
 const ModalModeContext = React.createContext(true);
+const BesideAssistantContext = React.createContext(false);
 
 function Modal({
   modal,
@@ -45,28 +45,150 @@ function Modal({
   const isModal = modal ?? blocking;
   return (
     <ModalModeContext.Provider value={isModal}>
-      <DialogPrimitive.Root
-        {...props}
-        modal={isModal}
-        open={open}
-        onOpenChange={(next) => {
-          if (openProp === undefined) setUncontrolledOpen(next);
-          onOpenChange?.(next);
-        }}
-      />
+      <BesideAssistantContext.Provider value={modal === undefined && !blocking}>
+        <DialogPrimitive.Root
+          {...props}
+          modal={isModal}
+          open={open}
+          onOpenChange={(next) => {
+            if (openProp === undefined) setUncontrolledOpen(next);
+            onOpenChange?.(next);
+          }}
+        />
+      </BesideAssistantContext.Provider>
     </ModalModeContext.Provider>
   );
 }
 
-function keepOpenForAssistant<
-  E extends { target: EventTarget | null; preventDefault: () => void },
->(handler?: (event: E) => void) {
+const OTHER_LAYER =
+  '[role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [data-radix-popper-content-wrapper], [data-toast-notification]';
+const MODAL_OVERLAY = "[data-modal-overlay]";
+
+function inOtherLayer(target: EventTarget | null, content: Element | null) {
+  if (!(target instanceof Element)) return false;
+  if (target.closest(OTHER_LAYER) !== null) return true;
+  const overlay = target.closest(MODAL_OVERLAY);
+  return overlay !== null && !overlay.contains(content);
+}
+
+type TitleRef = React.RefObject<HTMLHeadingElement | null>;
+const contentOf = (titleRef: TitleRef) =>
+  titleRef.current?.parentElement ?? null;
+
+const TABBABLE =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]';
+
+function focusLastTabbable(content: HTMLElement) {
+  const candidates = Array.from(
+    content.querySelectorAll<HTMLElement>(TABBABLE),
+  ).filter((el) => el.tabIndex >= 0 && !el.closest("[hidden], [inert]"));
+  for (let i = candidates.length - 1; i >= 0; i--) {
+    candidates[i].focus({ preventScroll: true });
+    if (document.activeElement === candidates[i]) return;
+  }
+  content.focus({ preventScroll: true });
+}
+
+function useFocusReturn(titleRef: TitleRef) {
+  React.useEffect(() => {
+    let lastInPanel = false;
+    let shiftTabbed = false;
+    const topmostContent = () => {
+      const content = contentOf(titleRef);
+      if (!content?.isConnected || content.dataset.state !== "open") {
+        return null;
+      }
+      const overlays = document.querySelectorAll(MODAL_OVERLAY);
+      const topmost = overlays[overlays.length - 1];
+      return topmost?.contains(content) ? content : null;
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      lastInPanel = inAssistantPanel(event.target);
+      shiftTabbed = false;
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      shiftTabbed = event.key === "Tab" && event.shiftKey;
+    };
+    const onFocusIn = (event: FocusEvent) => {
+      const byShiftTab = shiftTabbed;
+      shiftTabbed = false;
+      lastInPanel = inAssistantPanel(event.target);
+      if (lastInPanel) return;
+      const content = topmostContent();
+      if (
+        !content ||
+        !(event.target instanceof Node) ||
+        content.contains(event.target) ||
+        inOtherLayer(event.target, content)
+      ) {
+        return;
+      }
+      const leftBackward =
+        byShiftTab &&
+        event.relatedTarget instanceof Node &&
+        content.contains(event.relatedTarget) &&
+        (content.compareDocumentPosition(event.target) &
+          Node.DOCUMENT_POSITION_PRECEDING) !==
+          0;
+      if (leftBackward) focusLastTabbable(content);
+      else content.focus({ preventScroll: true });
+    };
+    const observer = new MutationObserver(() => {
+      if (document.activeElement !== document.body || lastInPanel) return;
+      topmostContent()?.focus({ preventScroll: true });
+    });
+    document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("keydown", onKeyDown, true);
+    document.addEventListener("focusin", onFocusIn);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("keydown", onKeyDown, true);
+      document.removeEventListener("focusin", onFocusIn);
+      observer.disconnect();
+    };
+  }, [titleRef]);
+}
+
+function FocusReturn({ titleRef }: Readonly<{ titleRef: TitleRef }>) {
+  useFocusReturn(titleRef);
+  return null;
+}
+
+function useBesideAssistant() {
+  const besideAssistant = React.useContext(BesideAssistantContext);
+  const titleRef = React.useRef<HTMLHeadingElement>(null);
+  const isOtherLayer = React.useCallback(
+    (target: EventTarget | null) =>
+      besideAssistant && inOtherLayer(target, contentOf(titleRef)),
+    [besideAssistant],
+  );
+  return { besideAssistant, titleRef, isOtherLayer };
+}
+
+type OutsideEvent = { target: EventTarget | null; preventDefault: () => void };
+
+function keepOpenForAssistant<E extends OutsideEvent>(
+  handler?: (event: E) => void,
+  isOtherLayer?: (target: EventTarget | null) => boolean,
+) {
   return (event: E) => {
-    if (inAssistantPanel(event.target)) {
+    if (inAssistantPanel(event.target) || isOtherLayer?.(event.target)) {
       event.preventDefault();
       return;
     }
     handler?.(event);
+  };
+}
+
+function keepOpenOnFocusOutside<E extends OutsideEvent>(
+  handler: ((event: E) => void) | undefined,
+  besideAssistant: boolean,
+) {
+  if (!besideAssistant) return handler;
+  return (event: E) => {
+    handler?.(event);
+    event.preventDefault();
   };
 }
 
@@ -96,6 +218,7 @@ const ModalOverlay = React.forwardRef<
   return (
     <Overlay
       ref={ref}
+      data-modal-overlay=""
       {...(isModal ? {} : { "data-state": "open" })}
       className={cn(
         // Not `fixed inset-0`: modals must stay out of the assistant panel's strip.
@@ -130,57 +253,71 @@ const ModalContent = React.forwardRef<
       maxWidthClass = "max-w-3xl",
       onPointerDownOutside,
       onInteractOutside,
+      onFocusOutside,
       onEscapeKeyDown,
       flow,
       ...props
     },
     ref,
-  ) => (
-    <ModalPortal>
-      <ModalOverlay>
-        <DialogPrimitive.Content
-          ref={ref}
-          className={cn(
-            "mx-auto relative top-0 z-[52] grid w-full focus:outline-none border border-neutral-200 bg-white py-6 dark:shadow-lg shadow-sm duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1  data-[state=open]:slide-in-from-left-1 sm:rounded-lg md:w-full dark:border-nb-gray-900 dark:bg-nb-gray",
-            className,
-            maxWidthClass,
-          )}
-          onPointerDownOutside={(e) => {
-            // Prevent closing modal when clicking on toast notifications
-            try {
-              const target = e.target as HTMLElement;
-              if (target?.closest("[data-toast-notification]")) {
-                e.preventDefault();
-                return;
+  ) => {
+    const { besideAssistant, titleRef, isOtherLayer } = useBesideAssistant();
+    return (
+      <ModalPortal>
+        <ModalOverlay>
+          <DialogPrimitive.Content
+            ref={ref}
+            className={cn(
+              "mx-auto relative top-0 z-[52] grid w-full focus:outline-none border border-neutral-200 bg-white py-6 dark:shadow-lg shadow-sm duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1  data-[state=open]:slide-in-from-left-1 sm:rounded-lg md:w-full dark:border-nb-gray-900 dark:bg-nb-gray",
+              className,
+              maxWidthClass,
+            )}
+            onPointerDownOutside={(e) => {
+              // Prevent closing modal when clicking on toast notifications
+              try {
+                const target = e.target as HTMLElement;
+                if (target?.closest("[data-toast-notification]")) {
+                  e.preventDefault();
+                  return;
+                }
+              } catch {
+                // Ignore errors
               }
-            } catch {
-              // Ignore errors
-            }
-            onPointerDownOutside?.(e);
-          }}
-          onInteractOutside={keepOpenForAssistant(onInteractOutside)}
-          onEscapeKeyDown={keepOpenForAssistant(onEscapeKeyDown)}
-          {...props}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <VisuallyHidden asChild>
-            <DialogPrimitive.Title>Dialog</DialogPrimitive.Title>
-          </VisuallyHidden>
-          {flow && <ModalInsights flow={flow} />}
-          {children}
-          {showClose && (
-            <DialogPrimitive.Close
-              data-testid={"modal-close"}
-              className="absolute right-4 z-10 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-neutral-100 data-[state=open]:text-neutral-500 dark:ring-offset-neutral-950 dark:focus:ring-neutral-300 dark:data-[state=open]:bg-neutral-800 dark:data-[state=open]:text-neutral-400"
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </DialogPrimitive.Close>
-          )}
-        </DialogPrimitive.Content>
-      </ModalOverlay>
-    </ModalPortal>
-  ),
+              onPointerDownOutside?.(e);
+            }}
+            onInteractOutside={keepOpenForAssistant(
+              onInteractOutside,
+              isOtherLayer,
+            )}
+            onFocusOutside={keepOpenOnFocusOutside(
+              onFocusOutside,
+              besideAssistant,
+            )}
+            onEscapeKeyDown={keepOpenForAssistant(onEscapeKeyDown)}
+            {...props}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <VisuallyHidden asChild>
+              <DialogPrimitive.Title ref={titleRef}>
+                Dialog
+              </DialogPrimitive.Title>
+            </VisuallyHidden>
+            {besideAssistant && <FocusReturn titleRef={titleRef} />}
+            {flow && <ModalInsights flow={flow} />}
+            {children}
+            {showClose && (
+              <DialogPrimitive.Close
+                data-testid={"modal-close"}
+                className="absolute right-4 z-10 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-neutral-100 data-[state=open]:text-neutral-500 dark:ring-offset-neutral-950 dark:focus:ring-neutral-300 dark:data-[state=open]:bg-neutral-800 dark:data-[state=open]:text-neutral-400"
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </DialogPrimitive.Close>
+            )}
+          </DialogPrimitive.Content>
+        </ModalOverlay>
+      </ModalPortal>
+    );
+  },
 );
 ModalContent.displayName = DialogPrimitive.Content.displayName;
 
@@ -196,14 +333,17 @@ const SidebarModalContent = React.forwardRef<
       showClose = true,
       maxWidthClass = "max-w-3xl",
       onInteractOutside,
+      onFocusOutside,
       onEscapeKeyDown,
       ...props
     },
     ref,
   ) => {
+    const { besideAssistant, titleRef, isOtherLayer } = useBesideAssistant();
     return (
       <ModalPortal>
         <div
+          data-modal-overlay=""
           className={cn(
             "nb-overlay-inset grid z-50 overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           )}
@@ -216,7 +356,14 @@ const SidebarModalContent = React.forwardRef<
               className,
               maxWidthClass,
             )}
-            onInteractOutside={keepOpenForAssistant(onInteractOutside)}
+            onInteractOutside={keepOpenForAssistant(
+              onInteractOutside,
+              isOtherLayer,
+            )}
+            onFocusOutside={keepOpenOnFocusOutside(
+              onFocusOutside,
+              besideAssistant,
+            )}
             onEscapeKeyDown={keepOpenForAssistant(onEscapeKeyDown)}
             {...props}
             style={{
@@ -227,8 +374,11 @@ const SidebarModalContent = React.forwardRef<
             onClick={(e) => e.stopPropagation()}
           >
             <VisuallyHidden asChild>
-              <DialogPrimitive.Title>Dialog</DialogPrimitive.Title>
+              <DialogPrimitive.Title ref={titleRef}>
+                Dialog
+              </DialogPrimitive.Title>
             </VisuallyHidden>
+            {besideAssistant && <FocusReturn titleRef={titleRef} />}
             {children}
             {showClose && (
               <DialogPrimitive.Close

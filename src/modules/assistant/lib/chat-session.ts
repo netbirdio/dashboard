@@ -8,7 +8,15 @@ import {
   type MessageStreamEvent,
 } from "eve/client";
 import { AssistantHttpError } from "./session-client";
-import { cancelTurn, prewarmChat, sendTurn, streamEvents, StreamIdleError, type TransportOptions } from "./transport";
+import {
+  cancelTurn,
+  prewarmChat,
+  sendTurn,
+  STREAM_IDLE_MS,
+  streamEvents,
+  StreamIdleError,
+  type TransportOptions,
+} from "./transport";
 
 export type ChatStatus = "ready" | "submitted" | "streaming" | "resuming" | "error";
 
@@ -37,6 +45,10 @@ export interface SendOptions {
 const RECONNECT_DELAYS_MS = [250, 500, 1_000, 2_000, 4_000];
 // 404/409/425 are retried too: a new chat's session may still be being claimed.
 const RETRYABLE = new Set([404, 409, 425, 429, 500, 502, 503, 504]);
+const MAX_FOLLOW_FAILURES = 10;
+const HEALTHY_CONNECTION_MS = 2 * STREAM_IDLE_MS;
+const CANCEL_TIMEOUT_MS = 15_000;
+const PREWARM_WAIT_MS = 5_000;
 
 const sleep = (ms: number, signal: AbortSignal) =>
   new Promise<void>((resolve) => {
@@ -75,6 +87,8 @@ export class ChatSession {
   private error: Error | undefined;
   private awaitingTurn = 0;
   private follower: AbortController | null = null;
+  private generation = 0;
+  private stopped = false;
   private readonly listeners = new Set<() => void>();
   private snapshot: ChatSnapshot;
   private callbacks: ChatSessionCallbacks = {};
@@ -101,6 +115,7 @@ export class ChatSession {
   getSnapshot = (): ChatSnapshot => this.snapshot;
 
   start(): void {
+    this.stopped = false;
     if (!this.session || this.follower) return;
     if (this.replayed) this.ensureFollowing();
     else void this.resume();
@@ -145,24 +160,56 @@ export class ChatSession {
 
   async prewarm(): Promise<void> {
     if (this.session || this.prewarming) return;
-    this.prewarming = true;
+    const prewarming = this.adoptPrewarmed();
+    this.prewarming = prewarming;
+    try {
+      await prewarming;
+    } finally {
+      if (this.prewarming === prewarming) this.prewarming = null;
+    }
+  }
+
+  private async adoptPrewarmed(): Promise<void> {
+    const generation = this.generation;
+    const epoch = this.prewarmEpoch;
     try {
       const sessionId = await prewarmChat(this.transport);
-      // The first message may have created the session meanwhile; its id wins.
-      if (!sessionId || this.session) return;
+      if (!sessionId || this.session || generation !== this.generation || epoch !== this.prewarmEpoch) return;
       this.session = { sessionId, streamIndex: 0 };
       this.callbacks.onSessionChange?.(this.session);
       this.notify();
     } catch {
       // Offline or refused; the first message creates the session instead.
-    } finally {
-      this.prewarming = false;
     }
   }
 
-  private prewarming = false;
+  private prewarming: Promise<void> | null = null;
+  private prewarmEpoch = 0;
+
+  private async prewarmSettled(prewarming: Promise<void>): Promise<void> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const gaveUp = new Promise<boolean>((resolve) => {
+      timer = setTimeout(() => resolve(true), PREWARM_WAIT_MS);
+    });
+    const late = await Promise.race([prewarming.then(() => false), gaveUp]);
+    clearTimeout(timer);
+    if (!late || this.prewarming !== prewarming) return;
+    this.prewarming = null;
+    this.prewarmEpoch++;
+  }
+  private readonly sends = new Set<Promise<void>>();
 
   async send(text: string, options: SendOptions = {}): Promise<void> {
+    const sending = this.submit(text, options);
+    this.sends.add(sending);
+    try {
+      await sending;
+    } finally {
+      this.sends.delete(sending);
+    }
+  }
+
+  private async submit(text: string, options: SendOptions): Promise<void> {
     const submissionId = newSubmissionId();
     this.pending.push({ submissionId });
     this.project({
@@ -173,9 +220,13 @@ export class ChatSession {
     this.status = "submitted";
     this.awaitingTurn++;
     this.notify();
+    const generation = this.generation;
     try {
+      if (this.prewarming) await this.prewarmSettled(this.prewarming);
+      if (generation !== this.generation) return;
       const body = { message: text, ...(options.clientContext === undefined ? {} : { clientContext: options.clientContext }) };
       const accepted = await sendTurn(this.transport, this.session?.sessionId, body, options.headers);
+      if (generation !== this.generation) return;
       if (!this.session) {
         this.session = { sessionId: accepted.sessionId, streamIndex: 0 };
         this.callbacks.onSessionChange?.(this.session);
@@ -186,6 +237,7 @@ export class ChatSession {
       // The stream may have reported the message before the POST returned.
       this.settleEchoes();
     } catch (err) {
+      if (generation !== this.generation) return;
       this.awaitingTurn = Math.max(0, this.awaitingTurn - 1);
       this.pending = this.pending.filter((p) => p.submissionId !== submissionId);
       this.replaceProjection(
@@ -209,14 +261,17 @@ export class ChatSession {
     this.status = "submitted";
     this.awaitingTurn++;
     this.notify();
+    const generation = this.generation;
     try {
       const body = {
         inputResponses: responses,
         ...(options.clientContext === undefined ? {} : { clientContext: options.clientContext }),
       };
       await sendTurn(this.transport, session.sessionId, body, options.headers);
+      if (generation !== this.generation) return;
       this.ensureFollowing();
     } catch (err) {
+      if (generation !== this.generation) throw err;
       this.awaitingTurn = Math.max(0, this.awaitingTurn - 1);
       this.removeProjection((e) => e === event);
       this.status = this.turnActive ? "streaming" : "ready";
@@ -226,11 +281,35 @@ export class ChatSession {
   }
 
   async cancel(): Promise<void> {
-    if (this.session) await cancelTurn(this.transport, this.session.sessionId);
+    const controller = new AbortController();
+    const timer = setTimeout(
+      () => controller.abort(new DOMException("The cancel request timed out.", "TimeoutError")),
+      CANCEL_TIMEOUT_MS,
+    );
+    const timedOut = new Promise<never>((_, reject) => {
+      controller.signal.addEventListener("abort", () => reject(controller.signal.reason), { once: true });
+    });
+    const cancelling = this.cancelOnceAccepted(controller.signal);
+    cancelling.catch(() => {});
+    try {
+      await Promise.race([cancelling, timedOut]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  private async cancelOnceAccepted(signal: AbortSignal): Promise<void> {
+    const generation = this.generation;
+    await Promise.all(this.sends);
+    if (signal.aborted || generation !== this.generation || !this.session) return;
+    await cancelTurn(this.transport, this.session.sessionId, signal);
   }
 
   reset(): void {
-    this.stop();
+    this.follower?.abort();
+    this.follower = null;
+    this.generation++;
+    this.prewarming = null;
     this.projection = [];
     this.data = this.reducer.initial();
     this.serverEvents = 0;
@@ -247,6 +326,7 @@ export class ChatSession {
   }
 
   stop(): void {
+    this.stopped = true;
     this.follower?.abort();
     this.follower = null;
   }
@@ -254,7 +334,7 @@ export class ChatSession {
   private turnActive = false;
 
   private ensureFollowing() {
-    if (this.follower || !this.session) return;
+    if (this.follower || !this.session || this.stopped) return;
     const controller = new AbortController();
     this.follower = controller;
     void this.follow(controller);
@@ -262,30 +342,54 @@ export class ChatSession {
 
   private async follow(controller: AbortController): Promise<void> {
     let attempt = 0;
+    let failures = 0;
+    let reauthorised = false;
     while (!controller.signal.aborted && this.session) {
       const sessionId = this.session.sessionId;
       let received = false;
+      let openedAt: number | undefined;
       try {
         for await (const event of streamEvents(this.transport, sessionId, {
           startIndex: this.serverEvents,
           signal: controller.signal,
+          onOpen: () => {
+            openedAt = Date.now();
+          },
         })) {
           if (controller.signal.aborted) return;
           received = true;
           attempt = 0;
-          this.accept(event);
+          failures = 0;
+          reauthorised = false;
+          try {
+            this.accept(event);
+          } catch (err) {
+            if (this.follower === controller) this.follower = null;
+            this.fail(new Error("The assistant sent an event the dashboard could not handle.", { cause: err }));
+            return;
+          }
           if (event.type === "session.completed" || event.type === "session.failed") {
             if (this.follower === controller) this.follower = null;
             return;
           }
         }
+        const lived = openedAt === undefined ? 0 : Date.now() - openedAt;
+        if (!received && !controller.signal.aborted && lived < HEALTHY_CONNECTION_MS) throw new StreamIdleError();
       } catch (err) {
         if (controller.signal.aborted) return;
+        if (openedAt !== undefined && Date.now() - openedAt >= HEALTHY_CONNECTION_MS) {
+          attempt = 0;
+          failures = 0;
+          reauthorised = false;
+        }
+        const expired = err instanceof AssistantHttpError && err.status === 401 && !reauthorised;
+        if (expired) reauthorised = true;
         const retryable =
+          expired ||
           err instanceof StreamIdleError ||
           err instanceof TypeError ||
           (err instanceof AssistantHttpError && RETRYABLE.has(err.status));
-        if (!retryable) {
+        if (!retryable || ++failures >= MAX_FOLLOW_FAILURES) {
           if (this.follower === controller) this.follower = null;
           this.fail(err);
           return;

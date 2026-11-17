@@ -449,3 +449,38 @@ describe("discarding a draft network detaches children in place", () => {
     expect(detached?.position).toEqual({ x: 1224, y: 460 });
   });
 });
+
+describe("discarding a draft group a resource card still lists", () => {
+  it("takes the group off the card and leaves an unrelated card untouched", () => {
+    const createGroup: DraftChange = {
+      id: "cg",
+      type: "create-group",
+      clientId: "group-new-1",
+      name: "Databases",
+      peerIds: [],
+      resourceIds: [],
+    };
+    changes = [createGroup];
+    const unrelated = {
+      id: "resource-new-2",
+      data: { resourceGroupIds: ["g0"] },
+    };
+    nodes = [
+      { id: "group-new-1", data: { group: { name: "Databases" } } },
+      { id: "resource-new-1", data: { resourceGroupIds: ["g0", "Databases"] } },
+      unrelated,
+    ];
+    remove(createGroup);
+
+    const after = setNodes.mock.calls.reduce(
+      (prev, [updater]) => (updater as (n: CanvasNode[]) => CanvasNode[])(prev),
+      nodes,
+    );
+    expect(after.map((n) => n.id)).toEqual([
+      "resource-new-1",
+      "resource-new-2",
+    ]);
+    expect(after[0].data?.resourceGroupIds).toEqual(["g0"]);
+    expect(after[1]).toBe(unrelated);
+  });
+});

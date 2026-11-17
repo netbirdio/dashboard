@@ -197,10 +197,16 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     window.requestAnimationFrame(() => attempt(30));
   };
 
+  const knownSelectionRef = React.useRef("");
+
   const handleEntityChange = (id: string, config: EntityChangeConfig) => {
     const { selectNodeId, dataKey, selectedValue, setSelected, applyView } =
       config;
     const shouldRecalculate = selectedValue !== id;
+    const selectionKey = `${selectNodeId}:${id}`;
+    const setFromOutside =
+      !shouldRecalculate && knownSelectionRef.current !== selectionKey;
+    if (shouldRecalculate) knownSelectionRef.current = selectionKey;
 
     // Compute the layout ONCE, outside the setNodes updater: it's a synchronous
     // d3 simulation and React double-invokes updaters under StrictMode.
@@ -224,8 +230,9 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       });
       setEdges(result.updatedEdges);
       setLayoutInitialized(true);
+      knownSelectionRef.current = selectionKey;
       // fitView reads geometry from the store at rAF time, so a stub id works.
-      if (shouldRecalculate || !layoutInitialized)
+      if (shouldRecalculate || setFromOutside)
         fitView([...result.updatedNodes, { id: selectNodeId } as Node]);
       return;
     }
@@ -316,6 +323,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     const { flowView, resetState, selectNode, applyView } = config;
 
     resetState();
+    knownSelectionRef.current = `${selectNode.id}:${entityId}`;
     setCurrentView(flowView);
     setNodes([selectNode]);
 

@@ -2,6 +2,7 @@ import type { ToolOutcome } from "@/modules/assistant/lib/contract";
 import type { BrowserToolExecutor } from "@/modules/assistant/lib/tools";
 import { getCanvasAgent } from "./canvas";
 import { CONTROL_CENTER_HREF } from "./control-center";
+import { ownEntry } from "./own";
 
 export type NavigateToPage = { href: string } | { error: string };
 
@@ -46,35 +47,38 @@ export function navigateToPage(input: Record<string, unknown>): NavigateToPage {
 
   const page = typeof input.page === "string" ? input.page : "";
 
-  if (routes[page]) {
-    const param = logParams[page];
+  const route = ownEntry(routes, page);
+  if (route) {
+    const param = ownEntry(logParams, page);
     const value =
       param && typeof input[param] === "string"
         ? input[param].trim()
         : "";
     return {
       href: value
-        ? `${routes[page]}?${param}=${encodeURIComponent(value)}`
-        : routes[page],
+        ? `${route}?${param}=${encodeURIComponent(value)}`
+        : route,
     };
   }
 
-  if (tabRoutes[page]) {
+  const tabRoute = ownEntry(tabRoutes, page);
+  if (tabRoute) {
     const tab = typeof input.tab === "string" ? input.tab.trim() : "";
     return {
       href: tab
-        ? `${tabRoutes[page]}?tab=${encodeURIComponent(tab)}`
-        : tabRoutes[page],
+        ? `${tabRoute}?tab=${encodeURIComponent(tab)}`
+        : tabRoute,
     };
   }
 
-  if (detailRoutes[page]) {
+  const detailRoute = ownEntry(detailRoutes, page);
+  if (detailRoute) {
     const id = typeof input.id === "string" ? input.id.trim() : "";
     const tab = typeof input.tab === "string" ? input.tab.trim() : "";
     if (id) {
       const query = `id=${encodeURIComponent(id)}`;
       return {
-        href: `${detailRoutes[page]}?${query}${
+        href: `${detailRoute}?${query}${
           tab ? `&tab=${encodeURIComponent(tab)}` : ""
         }`,
       };
@@ -106,7 +110,7 @@ export const pageRedirect: BrowserToolExecutor = async (
     }
   }
   ctx.navigate(target.href);
-  return { ok: true, content: `Navigated to ${target.href}.` };
+  return { ok: true, content: `Navigated to ${target.href.split("?")[0]}.` };
 };
 
 function unsavedDraftChanges(): number {

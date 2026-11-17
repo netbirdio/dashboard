@@ -45,6 +45,7 @@ const ActivityFeedColumnsTable: ColumnDef<ActivityEvent>[] = [
     id: "id",
     accessorKey: "id",
     filterFn: "exactMatch",
+    enableGlobalFilter: false,
   },
   {
     accessorKey: "activity_code",
@@ -175,6 +176,7 @@ export default function ActivityTable({
 
   return (
     <DataTable
+      key={eventId ?? ""}
       headingTarget={headingTarget}
       paginationClassName={"max-w-[800px]"}
       as={"div"}
@@ -184,7 +186,6 @@ export default function ActivityTable({
       initialPageSize={25}
       keepStateInLocalStorage={!eventId}
       initialFilters={eventId ? [{ id: "id", value: eventId }] : undefined}
-      initialSearch={eventId}
       showResetFilterButton={false}
       wrapperClassName={"gap-0 flex flex-col"}
       tableClassName={"px-8 pt-4"}

@@ -84,16 +84,12 @@ function loadChat(key: string): StoredChat {
   return { chatId: newChatId() };
 }
 
-function persistChat(key: string, chat: StoredChat | undefined): void {
+function forgetChat(key: string): void {
   if (globalThis.window === undefined) return;
   try {
-    if (chat?.session) {
-      globalThis.sessionStorage.setItem(key, JSON.stringify(chat));
-    } else {
-      globalThis.sessionStorage.removeItem(key);
-    }
+    globalThis.sessionStorage.removeItem(key);
   } catch {
-    // Storage is full or blocked, so resume just won't survive a reload.
+    // Storage is blocked, so there is nothing stored to remove.
   }
 }
 
@@ -178,10 +174,21 @@ function useAssistantEngine(): UseAssistantResult {
   // The chat turns only `session.failed` into `agent.error`,
   // so `step.failed` and `turn.failed` would otherwise end the turn with no text and no error.
   const [turnFailure, setTurnFailure] = useState<Error | null>(null);
+  const [stopFailure, setStopFailure] = useState<unknown>(null);
   const noteTurnFailure = useCallback((ev: MessageStreamEvent) => {
     if (ev.type === "turn.started") {
       setTurnFailure(null);
+      setStopFailure(null);
       return;
+    }
+    if (
+      ev.type === "turn.completed" ||
+      ev.type === "turn.cancelled" ||
+      ev.type === "turn.failed" ||
+      ev.type === "session.completed" ||
+      ev.type === "session.failed"
+    ) {
+      setStopFailure(null);
     }
     if (!isTurnFailureEvent(ev) || ev.type === "session.failed") return;
     const failure = new Error(ev.data.message);
@@ -204,7 +211,6 @@ function useAssistantEngine(): UseAssistantResult {
     },
     onSessionChange: (session) => {
       sessionIdRef.current = session?.sessionId;
-      persistChat(sessionKeyRef.current, session && { chatId: chatIdRef.current, session });
     },
   });
 
@@ -239,6 +245,7 @@ function useAssistantEngine(): UseAssistantResult {
     setVault(vaultRef.current);
     carriedRef.current = [];
     setTurnFailure(null);
+    setStopFailure(null);
     setSentAnswers(new Map());
     setStoppedAt(null);
     loopRef.current.reset();
@@ -334,19 +341,24 @@ function useAssistantEngine(): UseAssistantResult {
     const clientContext = await messageContext(vault);
     const scrubbed = vault.scrub(text);
     setStoppedAt(null);
+    setStopFailure(null);
+    loopRef.current.messageSent();
     await agentRef.current.send(scrubbed, { clientContext, headers: pageHeaders() });
   }, [messageContext, pageHeaders]);
 
   const onCancel = useCallback(async () => {
     setStoppedAt(agentRef.current.messages);
-    // A browser tool still executing would keep `loop.busy` set after Stop.
-    loopRef.current.reset();
+    setStopFailure(null);
+    const stop = loopRef.current.beginStop();
     try {
       await agentRef.current.cancel();
     } catch (err) {
+      loopRef.current.abortStop(stop);
       setStoppedAt(null);
-      throw err;
+      setStopFailure(err ?? new Error("cancel failed"));
+      return;
     }
+    loopRef.current.finishStop(stop);
   }, []);
 
   const [sentAnswers, setSentAnswers] = useState<SentAnswers>(() => new Map());
@@ -371,7 +383,7 @@ function useAssistantEngine(): UseAssistantResult {
       const chatId = chatIdRef.current;
       void endChat({ host: ctx.host, headers: async () => ({ ...(await ctx.headers()), [CHAT_HEADER]: chatId }) }, ending);
     }
-    persistChat(sessionKeyRef.current, undefined);
+    forgetChat(sessionKeyRef.current);
     sessionIdRef.current = undefined;
     chatIdRef.current = newChatId();
     resumingStoredRef.current = false;
@@ -379,6 +391,7 @@ function useAssistantEngine(): UseAssistantResult {
     setVault(vaultRef.current);
     carriedRef.current = [];
     setTurnFailure(null);
+    setStopFailure(null);
     setSentAnswers(new Map());
     setStoppedAt(null);
     loopRef.current.reset();
@@ -403,7 +416,7 @@ function useAssistantEngine(): UseAssistantResult {
     startChat(false);
   }, [unresumable, agentError, startChat]);
 
-  const failure = agentError ?? (loop.deliveryError || undefined) ?? turnFailure;
+  const failure = agentError ?? (loop.deliveryError || undefined) ?? turnFailure ?? (stopFailure || undefined);
   const error = !failure || (failure === agentError && unresumable) ? null : describeAssistantError(failure);
 
   const pendingInput = loop.pendingInput;
@@ -420,6 +433,7 @@ function useAssistantEngine(): UseAssistantResult {
         ? { optionId: answer }
         : { text: vaultRef.current.scrub(answer.text) };
       setSentAnswers((sent) => new Map(sent).set(requestId, response));
+      loopRef.current.messageSent();
       try {
         await agentRef.current.respond([{ requestId, ...response }]);
       } catch (err) {

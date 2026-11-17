@@ -3,6 +3,7 @@
 import { cn } from "@utils/helpers";
 import { ArrowUp, Check, X } from "lucide-react";
 import { useState } from "react";
+import { useArmingDelay } from "@/modules/assistant/chat/useArmingDelay";
 
 // Strict: anything with a word in it returns null, so it is sent as written.
 export function parseOptionNumbers(
@@ -18,6 +19,13 @@ export function parseOptionNumbers(
   if (indices.some((i) => i < 0 || i >= count)) return null;
 
   return [...new Set(indices)];
+}
+
+export function numbersPickOptions(
+  options: readonly { label: string }[],
+  freeText: boolean,
+): boolean {
+  return !freeText || !options.some((o) => /^\d/.test(o.label.trim()));
 }
 
 export interface AssistantQuestion {
@@ -40,11 +48,13 @@ export function AssistantQuestionCard({
 }: Readonly<QuestionCardProps>) {
   const [picked, setPicked] = useState<number[]>([]);
 
+  const isArmed = useArmingDelay();
+
   const { multi, options } = question;
 
   const toggle = (index: number) => {
     if (!multi) {
-      onAnswer([index]);
+      if (isArmed()) onAnswer([index]);
       return;
     }
     setPicked((prev) =>
@@ -62,7 +72,7 @@ export function AssistantQuestionCard({
         </p>
         <button
           type="button"
-          onClick={onDismiss}
+          onClick={() => isArmed() && onDismiss()}
           aria-label="Dismiss"
           title="Dismiss"
           className="-mr-1.5 -mt-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-nb-gray-300 transition-colors hover:bg-nb-gray-800 hover:text-nb-gray-100"
@@ -130,7 +140,7 @@ export function AssistantQuestionCard({
             type="button"
             aria-label="Send"
             disabled={picked.length === 0}
-            onClick={() => onAnswer(picked)}
+            onClick={() => isArmed() && onAnswer(picked)}
             className={cn(
               "-mr-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
               "bg-netbird-500 text-white hover:bg-netbird-500/90",

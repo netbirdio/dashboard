@@ -45,7 +45,13 @@ async function failure(res: Response): Promise<AssistantHttpError> {
   return new AssistantHttpError(res.status, message, code);
 }
 
-async function post(options: TransportOptions, path: string, body: unknown, headers: Record<string, string> = {}) {
+async function post(
+  options: TransportOptions,
+  path: string,
+  body: unknown,
+  headers: Record<string, string> = {},
+  signal?: AbortSignal,
+) {
   for (let attempt = 0; ; attempt++) {
     const res = await fetch(`${options.host}${path}`, {
       method: "POST",
@@ -53,12 +59,13 @@ async function post(options: TransportOptions, path: string, body: unknown, head
       body: JSON.stringify(body),
       // A redirect would carry the bearer to wherever it points.
       redirect: "error",
+      signal,
     });
     if (res.ok) return (await res.json()) as Record<string, unknown>;
     const error = await failure(res);
     const delay = NOT_READY_DELAYS_MS[attempt];
     if (error.status !== 409 || error.code !== NOT_READY_CODE || delay === undefined) throw error;
-    await sleep(delay);
+    await sleep(delay, signal);
   }
 }
 
@@ -88,8 +95,8 @@ export async function prewarmChat(options: TransportOptions): Promise<string | n
   return typeof reply.sessionId === "string" ? reply.sessionId : null;
 }
 
-export async function cancelTurn(options: TransportOptions, sessionId: string): Promise<void> {
-  await post(options, sessionPath(sessionId, "cancel"), {});
+export async function cancelTurn(options: TransportOptions, sessionId: string, signal?: AbortSignal): Promise<void> {
+  await post(options, sessionPath(sessionId, "cancel"), {}, {}, signal);
 }
 
 export async function endChat(options: TransportOptions, sessionId: string): Promise<void> {
@@ -107,7 +114,7 @@ export async function endChat(options: TransportOptions, sessionId: string): Pro
 }
 
 // Must exceed the agent's 10 s heartbeat on a quiet stream.
-const STREAM_IDLE_MS = 15_000;
+export const STREAM_IDLE_MS = 15_000;
 
 export class StreamIdleError extends Error {
   constructor() {
@@ -120,12 +127,13 @@ export interface StreamOptions {
   startIndex: number;
   toTail?: boolean;
   signal: AbortSignal;
+  onOpen?: () => void;
 }
 
 export async function* streamEvents(
   options: TransportOptions,
   sessionId: string,
-  { startIndex, toTail, signal }: StreamOptions,
+  { startIndex, toTail, signal, onOpen }: StreamOptions,
 ): AsyncGenerator<MessageStreamEvent> {
   const query = new URLSearchParams();
   if (startIndex !== 0) query.set("startIndex", String(startIndex));
@@ -135,7 +143,11 @@ export async function* streamEvents(
   const res = await fetch(url, { headers: await options.headers(), cache: "no-store", redirect: "error", signal });
   if (!res.ok) throw await failure(res);
   if (!res.body) return;
-  if (res.headers.get(SESSION_ID_HEADER) !== sessionId) throw new AssistantHttpError(502, "The stream answered for another chat.");
+  if (res.headers.get(SESSION_ID_HEADER) !== sessionId) {
+    await res.body.cancel().catch(() => {});
+    throw new AssistantHttpError(502, "The stream answered for another chat.");
+  }
+  onOpen?.();
 
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
   let buffered = "";
@@ -157,7 +169,14 @@ export async function* streamEvents(
       }
     }
     const rest = buffered.trim();
-    if (rest) yield JSON.parse(rest) as MessageStreamEvent;
+    if (rest) {
+      let last: MessageStreamEvent | undefined;
+      try {
+        last = JSON.parse(rest) as MessageStreamEvent;
+      } catch {
+      }
+      if (last) yield last;
+    }
   } finally {
     reader.cancel().catch(() => {});
   }

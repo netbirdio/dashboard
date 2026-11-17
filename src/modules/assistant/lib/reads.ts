@@ -18,8 +18,10 @@ const MAX_ROWS = 1_000;
 // Leaves room for tokenising, which can lengthen a row.
 const LIST_CHARS = Math.floor(BROWSER_RESULT_MAX_CHARS * 0.75);
 const MAX_COUNTS = 100;
-// `|` for a user id from an identity provider (`google-oauth2|1133…`).
-const ID = /^[A-Za-z0-9_|-]{1,128}$/;
+const MAX_TERM_CHARS = 200;
+const DEFAULT_PAGE_SIZE = 100;
+// `|` for a user id from an identity provider (`google-oauth2|1133…`), `@`, `.` and `+` for one that is a login.
+const ID = /^(?!\.+$)[A-Za-z0-9_|@.+-]{1,128}$/;
 
 type Value = string | number | boolean;
 type Query = Record<string, Value>;
@@ -61,6 +63,8 @@ const LOCAL_FILTERS: Record<string, Record<string, (row: Row, value: Value) => b
 // The only query keys forwarded to the management API. A key such as `account`
 // would otherwise, for an MSP parent, read another tenant.
 const PAGED = ["page", "page_size"];
+const MAX_NAMED_KEYS = 10;
+const MAX_KEY_CHARS = 64;
 const REMOTE_QUERY: Record<string, readonly string[]> = {
   get_api_peers: [...PAGED, "ip"],
   get_api_users: [...PAGED, "service_user"],
@@ -76,18 +80,31 @@ function splitQuery(operation: string, query: Query = {}) {
   let search: string | undefined;
   let fields: string[] | undefined;
   let countBy: string | undefined;
+  const listOnly: string[] = [];
+  const unknown: string[] = [];
   for (const [key, value] of Object.entries(query)) {
-    if (key === "search") search = String(value);
+    if (key === "search") search = String(value).slice(0, MAX_TERM_CHARS);
     else if (key === "count_by") countBy = String(value).trim();
     else if (key === "fields") fields = String(value).split(",").map((f) => f.trim()).filter(Boolean);
     else if (Object.hasOwn(local, key)) filters.push([local[key], value]);
     else if (allowed.includes(key)) remote[key] = String(value);
+    else unknown.push(key);
+    if (key === "search" || key === "count_by" || key === "fields" || Object.hasOwn(local, key)) listOnly.push(key);
   }
-  return { remote, filters, search, fields, countBy };
+  return { remote, filters, search, fields, countBy, listOnly, unknown };
 }
 
+function ignoredNote(keys: string[]): string | undefined {
+  if (keys.length === 0) return undefined;
+  const named = keys.slice(0, MAX_NAMED_KEYS).map((key) => `\`${key.slice(0, MAX_KEY_CHARS)}\``);
+  const more = keys.length > named.length ? ` and ${keys.length - named.length} more` : "";
+  return `Ignored query keys this read cannot use: ${named.join(", ")}${more}. The result is not narrowed by them.`;
+}
+
+const joined = (...notes: (string | undefined)[]) => notes.filter(Boolean).join(" ") || undefined;
+
 // Each count is shaped like a row, `{os: "macOS", count: 12}`, so the field is tokenised as it would be in the row.
-function countedBy(operation: string, rows: Row[], field: string): string {
+function countedBy(operation: string, rows: Row[], field: string, ignored?: string): string {
   const buckets = new Map<string, { value: unknown; count: number }>();
   let missing = 0;
   for (const row of rows) {
@@ -105,13 +122,18 @@ function countedBy(operation: string, rows: Row[], field: string): string {
   }
   const sorted = [...buckets.values()].sort((a, b) => b.count - a.count);
   const other = sorted.slice(MAX_COUNTS).reduce((sum, b) => sum + b.count, 0);
+  const note = joined(
+    ignored,
+    other > 0 ? `Only the ${MAX_COUNTS} most common values are listed; \`other\` sums the rest.` : undefined,
+  );
   return JSON.stringify({
     operation,
     total: rows.length,
     count_by: field,
     distinct: sorted.length,
     ...(missing > 0 ? { missing } : {}),
-    ...(other > 0 ? { other, note: `Only the ${MAX_COUNTS} most common values are listed; \`other\` sums the rest.` } : {}),
+    ...(other > 0 ? { other } : {}),
+    ...(note ? { note } : {}),
     counts: sorted.slice(0, MAX_COUNTS).map(({ value, count }) => ({ [field]: value, count })),
   });
 }
@@ -138,8 +160,9 @@ const listResult = (operation: string, rows: unknown[], total: number, cap: numb
 
 const CUT_NOTE = "Cut to fit. To see the rest, read again with a filter or `fields`; the user cannot narrow it.";
 
-function fittedList(operation: string, rows: Row[], note?: string): string {
-  const at = (cap: number) => listResult(operation, rows, rows.length, cap, cap < rows.length ? CUT_NOTE : note);
+function fittedList(operation: string, rows: Row[], note?: string, ignored?: string): string {
+  const at = (cap: number) =>
+    listResult(operation, rows, rows.length, cap, joined(ignored, cap < rows.length ? CUT_NOTE : note));
   let low = 0;
   let high = Math.min(rows.length, MAX_ROWS);
   if (at(high).length <= LIST_CHARS) return at(high);
@@ -164,14 +187,16 @@ export async function readNetbirdApi(
 ): Promise<ToolOutcome> {
   const operation = typeof input.operation === "string" ? input.operation : "";
   const op = Object.hasOwn(PROFILES, operation) ? PROFILES[operation] : undefined;
-  if (!op) return failed(operation, { error: "Unknown operation." });
+  if (!op) return { ok: false, content: JSON.stringify({ error: "Unknown operation." }) };
   const id = typeof input.id === "string" ? input.id : undefined;
   if (op.path.includes("{id}") && (!id || !ID.test(id))) {
     return failed(operation, { error: "This operation needs the resource's `id`, as a result gave it." });
   }
   const path = op.path.replace("{id}", encodeURIComponent(id ?? ""));
   const query = input.query && typeof input.query === "object" && !Array.isArray(input.query) ? (input.query as Query) : {};
-  const { remote, filters, search, fields, countBy } = splitQuery(operation, query);
+  const { remote, filters, search, fields, countBy, listOnly, unknown } = splitQuery(operation, query);
+  const defaultPage = Object.hasOwn(op.profile.fields, "page_size") && remote.page_size === undefined;
+  if (defaultPage) remote.page_size = String(DEFAULT_PAGE_SIZE);
 
   let res: ManagementResponse;
   try {
@@ -182,19 +207,27 @@ export async function readNetbirdApi(
   if (!res.ok) return failed(operation, { status: res.status, statusText: res.statusText });
 
   const data = allowlist(op.select ? op.select(res.body) : res.body, op.profile);
-  if (!Array.isArray(data)) return { ok: true, content: JSON.stringify({ operation, data }) };
+  if (!Array.isArray(data)) {
+    const note = joined(
+      ignoredNote([...listOnly, ...unknown]),
+      defaultPage ? `No \`page_size\` was passed, so a page holds up to ${DEFAULT_PAGE_SIZE} rows; pass \`page\` for the next.` : undefined,
+    );
+    return { ok: true, content: JSON.stringify({ operation, ...(note ? { note } : {}), data }) };
+  }
+  const ignored = ignoredNote(unknown);
 
   let rows = (data as Row[]).filter((row) => filters.every(([matches, value]) => matches(row, value)));
   if (search) rows = fuzzySearch(rows, search);
   if (countBy !== undefined) {
     if (countBy === "id" || countBy === "name" || !Object.hasOwn(op.profile.fields, countBy)) {
-      return failed(operation, { error: `Cannot count by \`${countBy}\`: name one of this list's fields.` });
+      const fields = Object.keys(op.profile.fields).join(", ");
+      return failed(operation, { error: `Cannot count by the \`count_by\` passed. Use one of this list's fields: ${fields}.` });
     }
-    return { ok: true, content: countedBy(operation, rows, countBy) };
+    return { ok: true, content: countedBy(operation, rows, countBy, ignored) };
   }
   rows = picked(rows, fields);
   const note = search && rows.length === 0 ? "Nothing matched the search; try fewer or different words." : undefined;
-  return { ok: true, content: fittedList(operation, rows, note) };
+  return { ok: true, content: fittedList(operation, rows, note, ignored) };
 }
 
 const DEFAULT_DAYS = 7;
@@ -360,24 +393,41 @@ export interface AccountSearchInput {
 }
 
 const MAX_SEARCH_TERMS = 5;
+const LIST_SHAPING = ["search", "count_by", "fields"];
+
+interface SearchRead {
+  term: string;
+  operation: string;
+  matched?: number;
+  data?: unknown[];
+  [detail: string]: unknown;
+}
 
 export async function searchAccount(input: AccountSearchInput, fetch: ManagementFetch): Promise<ToolOutcome> {
   const terms = [
     ...new Set(
       [input.term, ...(Array.isArray(input.terms) ? input.terms : [])].flatMap((t) => {
-        const name = text(t, 200);
+        const name = text(t, MAX_TERM_CHARS);
         return name ? [name] : [];
       }),
     ),
   ].slice(0, MAX_SEARCH_TERMS);
   if (terms.length === 0) return { ok: false, content: JSON.stringify({ error: "Pass the name to look for as `term`, or several as `terms`." }) };
-  const kinds = (Array.isArray(input.kinds) ? input.kinds : DEFAULT_SEARCH_KINDS).filter(
-    (k): k is string => typeof k === "string" && Object.hasOwn(SEARCH_KINDS, k),
-  );
-  const filters =
+  const asked = Array.isArray(input.kinds) ? input.kinds : DEFAULT_SEARCH_KINDS;
+  const kinds = asked.filter((k): k is string => typeof k === "string" && Object.hasOwn(SEARCH_KINDS, k));
+  if (kinds.length === 0) {
+    return {
+      ok: false,
+      content: JSON.stringify({ error: `None of \`kinds\` is a list this search covers. Use: ${Object.keys(SEARCH_KINDS).join(", ")}.` }),
+    };
+  }
+  const passed =
     input.filters && typeof input.filters === "object" && !Array.isArray(input.filters) ? (input.filters as Query) : {};
+  const shaping = Object.keys(passed).filter((key) => LIST_SHAPING.includes(key));
+  const filters: Query = Object.fromEntries(Object.entries(passed).filter(([key]) => !LIST_SHAPING.includes(key)));
+  const filtersPeers = kinds.includes("peer") && Object.keys(filters).length > 0;
 
-  // With several terms the same list would be fetched once per term, all in flight before the cache has it.
+  // With several terms the same list would be fetched once per term.
   const inFlight = new Map<string, ReturnType<ManagementFetch>>();
   const fetchOnce: ManagementFetch = (path, query, options) => {
     const key = `${path}?${JSON.stringify(query)}`;
@@ -388,27 +438,44 @@ export async function searchAccount(input: AccountSearchInput, fetch: Management
     }
     return pending;
   };
-  const results = await Promise.all(
+  const results: SearchRead[] = await Promise.all(
     terms.flatMap((term) =>
       kinds.map(async (kind) => {
         const operation = SEARCH_KINDS[kind];
         const query = { ...(kind === "peer" ? filters : {}), search: term };
-        const outcome = await readNetbirdApi({ operation, query }, fetchOnce, { preferCache: true });
-        if (!outcome.ok) return { term, operation, ...JSON.parse(outcome.content) };
+        const outcome = await readNetbirdApi({ operation, query }, fetchOnce);
+        if (!outcome.ok) return { ...JSON.parse(outcome.content), term, operation, matched: undefined };
         const read = JSON.parse(outcome.content) as { data?: unknown[]; total?: number };
         const rows = Array.isArray(read.data) ? read.data : [];
         return { term, operation, matched: read.total ?? rows.length, data: rows.slice(0, MATCHES_PER_KIND) };
       }),
     ),
   );
-  const found = results.filter((r) => r.matched > 0 || r.status !== undefined);
-  const unmatched = terms.filter((term) => !found.some((r) => r.term === term));
+  const shown = results.filter((r) => r.matched !== 0);
+  if (results.every((r) => r.matched === undefined)) {
+    return {
+      ok: false,
+      content: JSON.stringify({ term: terms.join(", "), terms, error: "None of the lists could be read; `results` has why.", results: shown }),
+    };
+  }
+  const unmatched = terms.filter((term) => results.every((r) => r.term !== term || r.matched === 0));
+  const absent = filtersPeers
+    ? "A term with no entry in `results` matched nothing, but peers were searched only among those passing `filters`: a peer by that name may exist outside them."
+    : "Nothing in the searched lists matches a term that has no entry in `results`.";
+  const note = joined(
+    unmatched.length > 0 ? absent : undefined,
+    kinds.length < asked.length ? `Some \`kinds\` are not lists this search covers and were skipped; it covers: ${Object.keys(SEARCH_KINDS).join(", ")}.` : undefined,
+    kinds.includes("peer") ? ignoredNote([...shaping, ...splitQuery(SEARCH_KINDS.peer, filters).unknown]) : undefined,
+    Object.keys(passed).length > 0 && !kinds.includes("peer") ? "`filters` narrow peers only and were not used." : undefined,
+  );
   return {
     ok: true,
     content: JSON.stringify({
       term: terms.join(", "),
-      ...(unmatched.length > 0 ? { note: `Nothing in the account matches: ${unmatched.join(", ")}.` } : {}),
-      results: found,
+      terms,
+      ...(unmatched.length > 0 ? { unmatched } : {}),
+      ...(note ? { note } : {}),
+      results: shown,
     }),
   };
 }

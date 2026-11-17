@@ -27,7 +27,8 @@ import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import type { PageContextEntry } from "@/interfaces/Assistant";
 import { CHAT_PAD } from "@/interfaces/Assistant";
 import { useAssistant } from "@/modules/assistant/hooks/useAssistant";
-import { acceptsFreeText } from "@/modules/assistant/hooks/useBrowserToolLoop";
+import { acceptsFreeText, type PendingInputRequest } from "@/modules/assistant/hooks/useBrowserToolLoop";
+import { describeAssistantError } from "@/modules/assistant/lib/session-client";
 import {
   AssistantApprovalGate,
   AssistantOpenQuestionCard,
@@ -40,10 +41,12 @@ import { AssistantMarkdownText } from "@/modules/assistant/chat/AssistantMarkdow
 import {
   type AssistantQuestion,
   AssistantQuestionCard,
+  numbersPickOptions,
   parseOptionNumbers,
 } from "@/modules/assistant/chat/AssistantQuestionCard";
 import { AssistantToolActivity } from "@/modules/assistant/chat/AssistantToolActivity";
 import { TurnActiveContext } from "@/modules/assistant/chat/AssistantTurnContext";
+import { useArmingDelay } from "@/modules/assistant/chat/useArmingDelay";
 
 const SCROLLBAR_WIDTH = 10;
 
@@ -393,31 +396,64 @@ function ThreadQuestion({
   );
 }
 
-function composerPlaceholder(
+export function composerPlaceholder(
   question: AssistantQuestion | null,
   openQuestion: boolean,
+  freeText: boolean,
 ): string {
   if (openQuestion) return "Type your answer";
   if (!question) return "How can I help you today?";
-  return question.multi
-    ? "Tick what applies, or type your answer"
+  if (!freeText) return "Pick an option, or type its number or name";
+  if (question.multi) return "Tick what applies, or type your answer";
+  return numbersPickOptions(question.options, freeText)
+    ? "Pick an option, type its number, or type your answer"
     : "Pick an option, or type your answer";
+}
+
+export const NO_SUCH_OPTION = "That is not one of the options. Pick one, or type its number or name.";
+
+export function typedAnswer(
+  choice: PendingInputRequest,
+  text: string,
+): string | { text: string } | null {
+  if (acceptsFreeText(choice)) return { text };
+  const option = choice.options.find(
+    (o) => o.label.trim().toLowerCase() === text.trim().toLowerCase(),
+  );
+  return option ? option.id : null;
 }
 
 function Composer({
   question,
   openQuestion,
+  pendingId,
+  freeText,
   onAnswer,
   onAnswerText,
   onAnswerOpen,
 }: Readonly<{
   question: AssistantQuestion | null;
   openQuestion: boolean;
+  pendingId: string | null;
+  freeText: boolean;
   onAnswer: (indices: number[]) => void;
-  onAnswerText: (text: string) => void;
+  onAnswerText: (text: string) => boolean;
   onAnswerOpen: (text: string) => void;
 }>) {
   const aui = useAui();
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const isArmed = useArmingDelay(pendingId);
+  const holdUnarmedClick = (event: React.MouseEvent) => {
+    if (isArmed()) return;
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  useEffect(() => {
+    const active = document.activeElement;
+    if (!active || active === document.body) inputRef.current?.focus();
+  }, []);
 
   const submitAnswer = (): boolean => {
     const composer = aui.thread.composer();
@@ -429,19 +465,16 @@ function Composer({
       return true;
     }
     if (!question) return false;
-    const indices = parseOptionNumbers(
-      text,
-      question.options.length,
-      question.multi,
-    );
+    const indices = numbersPickOptions(question.options, freeText)
+      ? parseOptionNumbers(text, question.options.length, question.multi)
+      : null;
     if (indices) {
       composer.setText("");
       onAnswer(indices);
       return true;
     }
     if (text.trim()) {
-      composer.setText("");
-      onAnswerText(text.trim());
+      if (onAnswerText(text.trim())) composer.setText("");
       return true;
     }
     return false;
@@ -474,13 +507,16 @@ function Composer({
       )}
     >
       <ComposerPrimitive.Input
+        ref={inputRef}
         rows={1}
-        autoFocus
-        placeholder={composerPlaceholder(question, openQuestion)}
+        placeholder={composerPlaceholder(question, openQuestion, freeText)}
         className="max-h-32 min-h-[38px] w-full resize-none bg-transparent px-0.5 py-1.5 text-sm text-nb-gray-100 outline-none placeholder:text-neutral-400/70"
       />
 
-      <div className="flex items-center justify-end gap-2">
+      <div
+        onClickCapture={holdUnarmedClick}
+        className="flex items-center justify-end gap-2"
+      >
         {(question || openQuestion) && (
           <button
             type="button"
@@ -540,9 +576,32 @@ export function AssistantThread({
     statusLine: status,
     turnActive,
     pendingInput,
+    pendingInputs,
     respondToInput,
     error,
   } = useAssistant();
+  const aui = useAui();
+
+  const [answerFailure, setAnswerFailure] = useState<{
+    requestId: string;
+    message: string;
+  } | null>(null);
+  const answerError =
+    answerFailure && answerFailure.requestId === pendingInput?.requestId
+      ? answerFailure.message
+      : null;
+
+  const respond = (answer: string | { text: string }, typed?: string) => {
+    if (!pendingInput) return;
+    const { requestId } = pendingInput;
+    setAnswerFailure(null);
+    respondToInput(answer).catch((err) => {
+      setAnswerFailure({ requestId, message: describeAssistantError(err) });
+      if (typed === undefined) return;
+      const composer = aui.thread.composer();
+      if (!composer.getState().text) composer.setText(typed);
+    });
+  };
 
   const choice =
     pendingInput?.kind === "question" && pendingInput.options.length > 0
@@ -564,24 +623,23 @@ export function AssistantThread({
 
   const answer = (indices: number[]) => {
     const option = choice?.options[indices[0]];
-    if (option) void respondToInput(option.id);
+    if (option) respond(option.id);
   };
 
-  const answerQuestion = (text: string) => {
-    if (!choice) return;
-    if (acceptsFreeText(choice)) {
-      void respondToInput({ text });
-      return;
+  const answerQuestion = (text: string): boolean => {
+    if (!choice) return false;
+    const answered = typedAnswer(choice, text);
+    if (answered === null) {
+      setAnswerFailure({ requestId: choice.requestId, message: NO_SUCH_OPTION });
+      return false;
     }
-    const option = choice.options.find(
-      (o) => o.label.trim().toLowerCase() === text.trim().toLowerCase(),
-    );
-    if (option) void respondToInput(option.id);
+    respond(answered, text);
+    return true;
   };
 
   const dismissQuestion = () => {
     if (!choice) return;
-    void respondToInput({
+    respond({
       text: "The user dismissed the question without answering. Continue without this information.",
     });
   };
@@ -654,7 +712,7 @@ export function AssistantThread({
               <ThreadPrimitive.Messages
                 components={{ UserMessage, AssistantMessage }}
               />
-              <AssistantErrorNotice error={error} />
+              <AssistantErrorNotice error={error ?? answerError} />
             </TurnActiveContext.Provider>
           </StatusContext.Provider>
         </div>
@@ -701,8 +759,10 @@ export function AssistantThread({
             {pendingInput && !openQuestion && !choice ? (
               <AssistantApprovalGate
                 request={pendingInput}
-                onRespond={respondToInput}
+                onRespond={respond}
                 onNewChat={onNewChat}
+                onStop={() => aui.thread.cancelRun()}
+                queued={pendingInputs.length}
               />
             ) : (
               <>
@@ -715,9 +775,11 @@ export function AssistantThread({
                 <Composer
                   question={question}
                   openQuestion={!!openQuestion}
+                  pendingId={openQuestion?.requestId ?? questionId}
+                  freeText={!choice || acceptsFreeText(choice)}
                   onAnswer={answer}
                   onAnswerText={answerQuestion}
-                  onAnswerOpen={(text) => respondToInput({ text })}
+                  onAnswerOpen={(text) => respond({ text }, text)}
                 />
               </>
             )}

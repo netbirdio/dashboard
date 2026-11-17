@@ -25,6 +25,7 @@ import { AssistantThread } from "@/modules/assistant/chat/AssistantThread";
 import { pageRedirect } from "@/modules/assistant/lib/page-redirect";
 import { useAssistantHeaders } from "@/modules/assistant/useAssistantHeaders";
 import { useAssistantManagementFetch } from "@/modules/assistant/useAssistantManagementFetch";
+import { draftUid } from "@/modules/control-center/utils/helpers";
 
 const EXTRA_EXECUTORS = { dashboard_page_redirect: pageRedirect };
 
@@ -138,8 +139,8 @@ export function AssistantChatPanel() {
   const [contextName, setContextName] = useState<string | undefined>();
   const pageContext = usePageContextString(contextName);
 
-  const [chatId, setChatId] = useState(() => crypto.randomUUID());
-  const startNewChat = useCallback(() => setChatId(crypto.randomUUID()), []);
+  const [chatId, setChatId] = useState(draftUid);
+  const startNewChat = useCallback(() => setChatId(draftUid()), []);
   // The MSP tenant is part of the key: a chat that outlived a tenant switch
   // would carry one tenant's reads and names into questions about another.
   const { globalApiParams } = useApplicationContext();
@@ -151,7 +152,9 @@ export function AssistantChatPanel() {
   useEffect(() => {
     if (!open) return;
     const frame = requestAnimationFrame(() => {
-      panelRef.current?.querySelector<HTMLTextAreaElement>("textarea")?.focus();
+      panelRef.current
+        ?.querySelector<HTMLElement>("textarea, [role='alertdialog']")
+        ?.focus();
     });
     return () => cancelAnimationFrame(frame);
   }, [open]);
