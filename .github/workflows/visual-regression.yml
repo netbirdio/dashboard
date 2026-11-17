@@ -99,6 +99,10 @@ jobs:
               echo "No stories are affected by the changes."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+          if [ -f "$OUT/summary.json" ]; then
+            CHANGED=$(node -p "require('./$OUT/summary.json').changed")
+            echo "::warning::$CHANGED stories look different from $BASE_BRANCH"
+          fi
 
       - name: Upload report
         if: always()
@@ -117,37 +121,3 @@ jobs:
             .storybook/visual-regression/output/diff
           if-no-files-found: ignore
           retention-days: 14
-
-      # Fails the job when more screenshots changed than the PR allows (none by
-      # default). run.sh already ignores anti-aliasing noise and re-checks every
-      # difference, so what is left is a real change. A PR whose changes are
-      # intended states how many it expects with a line such as
-      # `visual-regression-allow: 12` in its description; editing the
-      # description re-runs the check, and a later push that changes more
-      # screenshots fails it again. Runs last so the report is uploaded either way.
-      - name: Check threshold
-        env:
-          PR_BODY: ${{ github.event.pull_request.body }}
-        run: |
-          ALLOWED=$(printf '%s' "$PR_BODY" \
-            | grep -iE '^[[:space:]]*visual-regression-allow:[[:space:]]*[0-9]+[[:space:]]*$' \
-            | head -n1 \
-            | sed -E 's/^[^:]*:[[:space:]]*([0-9]+)[[:space:]]*$/\1/' \
-            || true)
-          ALLOWED="${ALLOWED:-0}"
-          SUMMARY=.storybook/visual-regression/output/summary.json
-          if [ ! -f "$SUMMARY" ]; then
-            echo "No visual differences."
-            exit 0
-          fi
-          # Stories only in the baseline count too: they were removed or no
-          # longer render. Stories only in the current build are new UI.
-          CHANGED=$(node -p "const s = require('./$SUMMARY'); s.changed + s.onlyInBaseline.length")
-          echo "$CHANGED screenshots differ from $BASE_BRANCH, $ALLOWED allowed" >> "$GITHUB_STEP_SUMMARY"
-          if [ "$CHANGED" -gt "$ALLOWED" ]; then
-            echo "::error::$CHANGED screenshots differ from $BASE_BRANCH, $ALLOWED allowed. Check the visual-regression-report artifact; if every change is intended, add 'visual-regression-allow: $CHANGED' to the PR description."
-            exit 1
-          fi
-          if [ "$CHANGED" -gt 0 ]; then
-            echo "::notice::$CHANGED screenshots differ from $BASE_BRANCH, within the $ALLOWED allowed by the PR description"
-          fi

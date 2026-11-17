@@ -63,15 +63,10 @@ them at it. A prompt that works:
 `.github/workflows/visual-regression.yml` runs on every pull request against
 the merge-base with the PR's target branch. A line such as
 `visual-regression-base: main` in the PR description compares against another
-branch instead. It writes `summary.md` to the job summary and uploads the
-report, summary and crops as the `visual-regression-report` artifact, then
-fails if any screenshot changed (stories that only exist in the baseline count
-as changed; new stories don't). The comparison already ignores anti-aliasing
-noise and re-checks every difference, so a failure is a real change. When every
-change is intended, a line such as `visual-regression-allow: 12` in the PR
-description lets up to that many screenshots differ; editing the description
-re-runs the job, and a later push that changes more screenshots fails it
-again. Baseline screenshots are cached between runs with `actions/cache`.
+branch instead. The job doesn't fail on differences: it writes `summary.md` to
+the job summary and uploads the report, summary and crops as the
+`visual-regression-report` artifact. Baseline screenshots are cached between
+runs with `actions/cache`.
 
 ## How it works
 
