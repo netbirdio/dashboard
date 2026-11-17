@@ -135,6 +135,7 @@ export class ChatSession {
     this.notify();
     const controller = new AbortController();
     this.follower = controller;
+    let ended = false;
     try {
       for await (const event of streamEvents(this.transport, session.sessionId, {
         startIndex: 0,
@@ -143,6 +144,7 @@ export class ChatSession {
       })) {
         if (controller.signal.aborted) return;
         this.accept(event);
+        if (event.type === "session.completed" || event.type === "session.failed") ended = true;
       }
     } catch (err) {
       if (controller.signal.aborted) return;
@@ -155,6 +157,10 @@ export class ChatSession {
     if (this.error) this.status = "error";
     else this.status = this.turnActive ? "streaming" : "ready";
     this.notify();
+    if (ended) {
+      if (this.follower === controller) this.follower = null;
+      return;
+    }
     void this.follow(controller);
   }
 

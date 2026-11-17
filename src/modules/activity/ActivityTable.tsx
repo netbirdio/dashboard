@@ -104,10 +104,14 @@ export default function ActivityTable({
   const eventId = params.get("id") ?? undefined;
   const removeEventParam = React.useCallback(() => {
     if (!eventId) return;
+    // The single-event view keeps nothing in storage, so the table it returns to would restore what was saved before.
+    ["columns", "search", "pagination"].forEach((state) =>
+      localStorage.removeItem(`netbird-table-${state}${path}`),
+    );
     const newParams = new URLSearchParams(params.toString());
     newParams.delete("id");
     router.replace(`?${newParams.toString()}`, { scroll: false });
-  }, [eventId, params, router]);
+  }, [eventId, params, path, router]);
 
   // Default sorting state of the table
   const [sorting, setSorting] = useState<SortingState>([

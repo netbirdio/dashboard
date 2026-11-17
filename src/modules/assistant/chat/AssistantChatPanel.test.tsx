@@ -3,7 +3,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { AssistantChatPanel } from "./AssistantChatPanel";
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: () => {} }),
+  useRouter: () => ({
+    push: () => {},
+    replace: () => {},
+    back: () => {},
+    forward: () => {},
+    refresh: () => {},
+  }),
   usePathname: () => "/peers",
 }));
 vi.mock("@/contexts/ApplicationProvider", () => ({

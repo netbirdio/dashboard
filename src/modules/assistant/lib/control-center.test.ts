@@ -109,6 +109,15 @@ describe("control_center tools validate before they reach the canvas", () => {
     ]);
   });
 
+  it("passes an empty description through, so a policy's description can be cleared", async () => {
+    const { api, step } = fakeApi();
+    await editPolicy({ node: "policy-1", description: "" }, api);
+    expect(step.mock.calls[0]).toMatchObject([{ description: "" }, false]);
+
+    await editPolicy({ node: "policy-1", enabled: false }, api);
+    expect(step.mock.calls[1]).toMatchObject([{ description: undefined }, false]);
+  });
+
   it("caps a batch and tells the model to split it", async () => {
     const { api, addNodes, steps } = fakeApi();
     const items = Array.from({ length: MAX_BATCH + 1 }, () => ({ kind: "new_group" }));

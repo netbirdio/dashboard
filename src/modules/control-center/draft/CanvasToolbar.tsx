@@ -85,6 +85,11 @@ export const CanvasToolbar = () => {
   const toolBeforeSpaceRef = React.useRef<CanvasTool | null>(null);
 
   useEffect(() => {
+    // The keyup that would restore the tool is not heard while the assistant is busy.
+    if (agentBusy && toolBeforeSpaceRef.current) {
+      setActiveTool(toolBeforeSpaceRef.current);
+      toolBeforeSpaceRef.current = null;
+    }
     if (!isDraft || agentBusy) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {

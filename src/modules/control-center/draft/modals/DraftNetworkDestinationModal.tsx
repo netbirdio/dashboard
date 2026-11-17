@@ -127,10 +127,12 @@ const PickerContent = ({
     const latest =
       (reactFlow.getNode(policyNodeId)?.data as { policy?: Policy })?.policy ?? policy;
     const latestRule = latest.rules?.[0] ?? rule;
+    const latestDestinations =
+      (latestRule.destinations as (Group | string)[]) ?? [];
     const merged = [
-      ...existingDestinations,
+      ...latestDestinations,
       ...pickedGroups.filter(
-        (g) => !existingDestinations.some((e) => groupKey(e) === groupKey(g)),
+        (g) => !latestDestinations.some((e) => groupKey(e) === groupKey(g)),
       ),
     ] as Group[];
     updateDraftPolicy({

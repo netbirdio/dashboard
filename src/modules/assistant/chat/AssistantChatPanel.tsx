@@ -2,8 +2,9 @@
 
 import { AssistantRuntimeProvider, useAuiState } from "@assistant-ui/react";
 import { cn } from "@utils/helpers";
+import { useGuardedRouter } from "@utils/navigation-guard";
 import { PanelLeft, PanelRight, Plus } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
@@ -126,7 +127,7 @@ export function AssistantChatPanel() {
 
   const headers = useAssistantHeaders();
   const fetchManagement = useAssistantManagementFetch();
-  const router = useRouter();
+  const router = useGuardedRouter();
   const pathname = usePathname();
   const pathRef = useRef(pathname ?? "/");
   // eslint-disable-next-line react-hooks/refs -- read at tool-execution time

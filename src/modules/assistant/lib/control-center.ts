@@ -443,7 +443,7 @@ export const editPolicy: ControlCenterToolAction = async (input, api) => {
     {
       node: input.node,
       name: nonEmptyString(input.name),
-      description: nonEmptyString(input.description),
+      description: typeof input.description === "string" ? input.description : undefined,
       enabled: typeof input.enabled === "boolean" ? input.enabled : undefined,
       protocol: protocol as AgentPolicyEdit["protocol"],
       ports: ports.ports,

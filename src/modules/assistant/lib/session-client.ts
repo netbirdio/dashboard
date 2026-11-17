@@ -43,13 +43,13 @@ export const serverFailure = (
   status: number,
   body: string,
 ): { code?: string; message: string } => {
-  let parsed: { code?: string; message?: string } | null = null;
+  let parsed: { code?: unknown; message?: unknown } | null = null;
   try {
     parsed = JSON.parse(body);
   } catch {
     // Not JSON, e.g. a proxy error page.
   }
-  if (parsed?.code && parsed?.message) {
+  if (typeof parsed?.code === "string" && parsed.code && typeof parsed.message === "string" && parsed.message) {
     return { code: parsed.code, message: parsed.message };
   }
   return { message: fallbackFailure(status) };

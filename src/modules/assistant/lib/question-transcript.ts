@@ -1,4 +1,5 @@
 import type { EveDynamicToolPart, EveMessage } from "eve/react";
+import { escapeRegExp } from "lodash";
 
 type QuestionReply = { question: string; answer: string };
 
@@ -22,15 +23,14 @@ function answeredQuestion(part: EveDynamicToolPart, sent: SentAnswers): Question
 
 type Part = EveMessage["parts"][number];
 
-const normalize = (text: string) => text.replace(/\s+/g, " ").trim();
-
 function withoutRestatement(parts: Part[], prompt: string): Part[] {
   const last = parts.at(-1);
-  const question = normalize(prompt);
-  if (last?.type !== "text" || !question) return parts;
-  const text = normalize(last.text);
-  if (!text.endsWith(question)) return parts;
-  const rest = text.slice(0, -question.length).trim();
+  const words = prompt.split(/\s+/).filter(Boolean);
+  if (last?.type !== "text" || words.length === 0) return parts;
+  // Whitespace is matched loosely, and the text before the question keeps its own formatting.
+  const restated = new RegExp(`${words.map(escapeRegExp).join("\\s+")}\\s*$`);
+  if (!restated.test(last.text)) return parts;
+  const rest = last.text.replace(restated, "").trim();
   return rest ? [...parts.slice(0, -1), { ...last, text: rest }] : parts.slice(0, -1);
 }
 

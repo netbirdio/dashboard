@@ -116,7 +116,13 @@ export const CanvasAgentBridge = ({
   }, []);
 
   const isDraft = deps.draft.isDraft;
-  useEffect(() => resetPlacement, [isDraft]);
+  useEffect(
+    () => () => {
+      resetPlacement();
+      cancelArrange();
+    },
+    [isDraft],
+  );
 
   return null;
 };
@@ -678,6 +684,11 @@ function buildApi(deps: Deps): CanvasAgentApi {
     let d = deps();
     const blocked = requireDraft(d);
     if (blocked) return blocked;
+    const halt = halted();
+    if (halt) {
+      unmarkByAssistant(d, marked);
+      return fail(halt);
+    }
     let result = editPolicy(edit, d);
     if (!result.ok) unmarkByAssistant(d, marked);
     // A write still in flight can land after this one and revert it, so it is
@@ -1389,6 +1400,10 @@ async function nodeOne(
       const { peer, resource, itemId } = resolveMember(target.id, d);
       if (!itemId)
         return fail("Only peers and resources can join a group.");
+      if (peer && group.type === NodeType.ResourceGroupNode)
+        return fail(
+          `${refOf(target)} is a peer. A resource group inside a network holds that network's resources only, so nothing was added. Put peers in an ordinary group (new_group).`,
+        );
       d.addMemberToGroup(group, {
         peer,
         resource,

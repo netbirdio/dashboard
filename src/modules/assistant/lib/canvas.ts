@@ -185,6 +185,7 @@ const setLocked = (next: boolean) => {
 };
 
 const scheduleClear = () => {
+  clearTimeout(clearTimer);
   clearTimer = setTimeout(() => setLocked(false), ACTIVITY_LINGER_MS);
 };
 

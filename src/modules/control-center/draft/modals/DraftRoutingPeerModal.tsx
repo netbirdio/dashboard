@@ -56,10 +56,21 @@ export const DraftRoutingPeerModal = () => {
             return standalone ? [standalone, ...absorbed] : absorbed;
           })
         : [],
-    // Read once per modal open: the canvas can't change while it's up.
+    // Read once per modal open, so the selection does not shift under the user.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [isDraft, !!routingPeerModal],
   );
+
+  // A placeholder can finish installing while the modal is open,
+  // and by then the changeset no longer knows its draft id.
+  const installed = (peer?: Peer): Peer | undefined => {
+    const install = changes.find(
+      (c) => c.type === "install-peer" && c.clientId === peer?.id,
+    );
+    return peer && install?.type === "install-peer" && install.installedPeerId
+      ? { ...peer, id: install.installedPeerId, name: install.name }
+      : peer;
+  };
 
   // An existing API router with no draft create-router behind it: live edits
   // PUT through the modal, draft records an update-router change.
@@ -105,6 +116,7 @@ export const DraftRoutingPeerModal = () => {
                   networkName: network.name,
                   routerId: routingPeerModal.router.id,
                   ...result,
+                  peer: installed(result.peer),
                 });
               }
               setRoutingPeerModal(null);
@@ -130,7 +142,11 @@ export const DraftRoutingPeerModal = () => {
                 if (editChange) {
                   removeChange(editChange.id, { replaced: true });
                 }
-                addRouterFromSelection({ networkNodeId, ...result });
+                addRouterFromSelection({
+                  networkNodeId,
+                  ...result,
+                  peer: installed(result.peer),
+                });
               }
               setRoutingPeerModal(null);
             }}

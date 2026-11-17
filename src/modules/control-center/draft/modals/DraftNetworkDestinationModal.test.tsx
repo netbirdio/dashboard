@@ -186,4 +186,25 @@ describe("a policy narrowed while the picker is open", () => {
     const saved = updateDraftPolicy.mock.calls[0][0];
     expect(saved.rules[0]).toMatchObject({ protocol: "tcp", ports: ["443"], destinationResource: { id: "new-r1" } });
   });
+
+  it("keeps a destination it gained when groups are connected", async () => {
+    const sources = [{ id: "g0", name: "Src" }];
+    nodes = buildNodes({ sources, destinations: [{ id: "g1", name: "Dest" }] });
+    render(<DraftNetworkDestinationModal />);
+    storeNodes = buildNodes({
+      sources,
+      destinations: [
+        { id: "g1", name: "Dest" },
+        { id: "g3", name: "Added meanwhile" },
+      ],
+    });
+    await act(async () => {
+      pickGroups([{ id: "g2", name: "More" } as Group]);
+    });
+    await act(async () => {
+      connectButton().click();
+    });
+    const saved = updateDraftPolicy.mock.calls[0][0];
+    expect(saved.rules[0].destinations.map((g: Group) => g.id)).toEqual(["g1", "g3", "g2"]);
+  });
 });

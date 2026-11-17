@@ -436,7 +436,7 @@ function Composer({
   openQuestion: boolean;
   pendingId: string | null;
   freeText: boolean;
-  onAnswer: (indices: number[]) => void;
+  onAnswer: (indices: number[], typed?: string) => void;
   onAnswerText: (text: string) => boolean;
   onAnswerOpen: (text: string) => void;
 }>) {
@@ -470,7 +470,7 @@ function Composer({
       : null;
     if (indices) {
       composer.setText("");
-      onAnswer(indices);
+      onAnswer(indices, text.trim());
       return true;
     }
     if (text.trim()) {
@@ -621,9 +621,9 @@ export function AssistantThread({
     [choice],
   );
 
-  const answer = (indices: number[]) => {
+  const answer = (indices: number[], typed?: string) => {
     const option = choice?.options[indices[0]];
-    if (option) respond(option.id);
+    if (option) respond(option.id, typed);
   };
 
   const answerQuestion = (text: string): boolean => {

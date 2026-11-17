@@ -439,3 +439,20 @@ describe("following the stream", () => {
     expect(streamEvents).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("resuming a stored session", () => {
+  it("does not follow a session whose replay already ended", async () => {
+    streams(async function* (_signal, opened) {
+      opened();
+      yield event("session.completed");
+    });
+    const chat = new ChatSession(transport, { sessionId: "s1", streamIndex: 0 });
+
+    chat.start();
+    await flush();
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    expect(streamEvents).toHaveBeenCalledTimes(1);
+    expect(chat.getSnapshot().status).toBe("ready");
+  });
+});

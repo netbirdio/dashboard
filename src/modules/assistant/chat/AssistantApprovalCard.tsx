@@ -95,6 +95,8 @@ export function AssistantApprovalCard({
   // the framework has already resolved.
   const [answering, setAnswering] = useState<string | null>(null);
 
+  const answeredRef = useRef(false);
+
   const cardRef = useRef<HTMLDivElement>(null);
   const isArmed = useArmingDelay();
   const canAct = useCallback(
@@ -104,12 +106,10 @@ export function AssistantApprovalCard({
 
   const respond = useCallback(
     (optionId: string) => {
-      if (!canAct()) return;
-      setAnswering((current) => {
-        if (current !== null) return current;
-        onRespond(optionId);
-        return optionId;
-      });
+      if (!canAct() || answeredRef.current) return;
+      answeredRef.current = true;
+      setAnswering(optionId);
+      onRespond(optionId);
     },
     [onRespond, canAct],
   );

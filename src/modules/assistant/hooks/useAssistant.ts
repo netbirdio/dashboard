@@ -337,8 +337,10 @@ function useAssistantEngine(): UseAssistantResult {
       .trim();
     if (!text) return;
     const vault = vaultRef.current;
+    const chatId = chatIdRef.current;
     // The page record is read before scrubbing, so its names are known when the text is tokenised.
     const clientContext = await messageContext(vault);
+    if (chatId !== chatIdRef.current) return;
     const scrubbed = vault.scrub(text);
     setStoppedAt(null);
     setStopFailure(null);
