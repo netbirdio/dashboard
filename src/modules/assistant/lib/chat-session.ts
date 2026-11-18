@@ -244,6 +244,7 @@ export class ChatSession {
       if (generation !== this.generation) return;
       if (queued && this.error) {
         // The send this one waited for failed; that failure stays on its own message.
+        // No other error can be set here: without a session nothing is followed.
         this.error = undefined;
         this.status = "submitted";
         this.notify();

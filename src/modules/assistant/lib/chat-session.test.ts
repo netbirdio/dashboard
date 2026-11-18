@@ -514,6 +514,51 @@ describe("two first messages sent at once", () => {
     chat.stop();
   });
 
+  it("ends the second message's turn as ready while the first message stays failed", async () => {
+    const first = deferred<Accepted>();
+    vi.mocked(sendTurn)
+      .mockReturnValueOnce(first.promise)
+      .mockImplementation(async () => ({ sessionId: "second" }) as Accepted);
+    streams(async function* (signal, opened) {
+      opened();
+      yield event("turn.started", { turnId: "t1" });
+      yield event("session.waiting");
+      await new Promise((resolve) => signal.addEventListener("abort", resolve, { once: true }));
+    });
+    const chat = new ChatSession(transport);
+
+    const a = chat.send("a");
+    const b = chat.send("b");
+    await flush();
+    first.reject(new AssistantHttpError(500, "refused"));
+    await Promise.all([a, b]);
+    await flush();
+
+    const { status, error, messages } = chat.getSnapshot();
+    expect(status).toBe("ready");
+    expect(error).toBeUndefined();
+    expect((messages[0].metadata as { status?: string }).status).toBe("failed");
+    chat.stop();
+  });
+
+  it("keeps the second message's own failure", async () => {
+    const first = deferred<Accepted>();
+    vi.mocked(sendTurn)
+      .mockReturnValueOnce(first.promise)
+      .mockRejectedValue(new AssistantHttpError(503, "second refused"));
+    const chat = new ChatSession(transport);
+
+    const a = chat.send("a");
+    const b = chat.send("b");
+    await flush();
+    first.reject(new AssistantHttpError(500, "first refused"));
+    await Promise.all([a, b]);
+
+    expect(chat.getSnapshot().status).toBe("error");
+    expect(chat.getSnapshot().error?.message).toBe("second refused");
+    chat.stop();
+  });
+
   it("does not adopt a prewarmed session while the first message is creating one", async () => {
     const first = deferred<Accepted>();
     vi.mocked(sendTurn).mockReturnValueOnce(first.promise);
