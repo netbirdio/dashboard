@@ -1,6 +1,5 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import FeatureCard from "@components/FeatureCard";
 import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink from "@components/InlineLink";
@@ -10,7 +9,6 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import { ExternalLinkIcon } from "lucide-react";
 import React, { Suspense } from "react";
-import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import PageContainer from "@/layouts/PageContainer";
 import AIProviderModal from "@/modules/agent-network/AIProviderModal";
@@ -88,18 +86,6 @@ export default function AgentNetworkProvidersPage() {
       >
         <AIProvidersProvider>
           <div className={"p-default py-6"}>
-            <Breadcrumbs>
-              <Breadcrumbs.Item
-                href={"/agent-network/providers"}
-                label={"Agent Network"}
-                icon={<AgentNetworkIcon size={16} />}
-              />
-              <Breadcrumbs.Item
-                href={"/agent-network/providers"}
-                label={"Providers"}
-                active={true}
-              />
-            </Breadcrumbs>
             <h1 ref={headingRef}>Providers</h1>
             <Paragraph>
               Connect AI providers and gateways like LiteLLM, OpenAI, and
