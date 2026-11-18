@@ -1,4 +1,3 @@
-import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import Separator from "@components/Separator";
@@ -9,7 +8,6 @@ import { CreditCardIcon, ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
-import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { useBilling } from "@/contexts/BillingProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -145,19 +143,6 @@ const PlansAndBillingTabContent = () => {
     >
       <PlanSuccessModal />
       <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/settings"}
-            label={"Settings"}
-            icon={<SettingsIcon size={13} />}
-          />
-          <Breadcrumbs.Item
-            href={"/settings?tab=plans-and-billing"}
-            label={"Plans & Billing"}
-            icon={<CreditCardIcon size={14} />}
-            active
-          />
-        </Breadcrumbs>
 
         <div
           className={"flex items-start justify-between -mt-1 max-w-4xl mb-4"}

@@ -1,6 +1,5 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
@@ -8,7 +7,7 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
 import { isNetBirdCloud } from "@utils/netbird";
-import { ExternalLinkIcon, User2 } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import { AccountMfaCard } from "@/cloud/mfa/AccountMFACard";
 import { useGroups } from "@/contexts/GroupsProvider";
@@ -33,14 +32,6 @@ export default function TeamUsers() {
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/team/users"}
-            label={"Users"}
-            active
-            icon={<User2 size={16} />}
-          />
-        </Breadcrumbs>
         <h1 ref={headingRef}>Users</h1>
         <Paragraph>
           Manage users and their permissions. Same-domain email users are added

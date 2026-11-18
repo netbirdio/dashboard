@@ -30,6 +30,8 @@ const ApplicationContext = React.createContext(
     setGlobalApiParams?: (p?: Params) => void;
     isNavigationCollapsed: boolean;
     toggleNavigation: () => void;
+    breadcrumbsSlot?: HTMLElement | null;
+    setBreadcrumbsSlot?: (slot: HTMLElement | null) => void;
   },
 );
 
@@ -45,6 +47,9 @@ export default function ApplicationProvider({ children }: Props) {
   const [isNavigationCollapsed, setIsNavigationCollapsed] = useLocalStorage(
     "netbird-nav-collapsed",
     false,
+  );
+  const [breadcrumbsSlot, setBreadcrumbsSlot] = useState<HTMLElement | null>(
+    null,
   );
   const requestCalled = useRef(false);
   const maxTries = 3;
@@ -124,6 +129,8 @@ export default function ApplicationProvider({ children }: Props) {
         setGlobalApiParams,
         isNavigationCollapsed,
         toggleNavigation,
+        breadcrumbsSlot,
+        setBreadcrumbsSlot,
       }}
     >
       {children}

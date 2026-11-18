@@ -1,4 +1,3 @@
-import Breadcrumbs from "@components/Breadcrumbs";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import InlineLink from "@components/InlineLink";
 import { notify } from "@components/Notification";
@@ -8,7 +7,6 @@ import { useApiCall } from "@utils/api";
 import { ChartNoAxesCombined, ExternalLinkIcon } from "lucide-react";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
-import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Account } from "@/interfaces/Account";
 
@@ -50,19 +48,6 @@ export default function MetricsTab({ account }: Readonly<Props>) {
   return (
     <Tabs.Content value={"metrics"}>
       <div className={"p-default py-6 max-w-2xl"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/settings"}
-            label={"Settings"}
-            icon={<SettingsIcon size={13} />}
-          />
-          <Breadcrumbs.Item
-            href={"/settings?tab=metrics"}
-            label={"Metrics"}
-            icon={<ChartNoAxesCombined size={14} />}
-            active
-          />
-        </Breadcrumbs>
         <div>
           <h1>Metrics</h1>
           <Paragraph className={"block"}>
