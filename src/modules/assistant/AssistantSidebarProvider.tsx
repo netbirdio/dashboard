@@ -80,6 +80,12 @@ export function AssistantSidebarProvider({
     [overlay, isNavigationCollapsed, toggleNavigation],
   );
 
+  // A restricted user has no panel and no toggle,
+  // so nothing else would give back the navigation the panel collapsed.
+  useEffect(() => {
+    if (isRestricted && open) changeOpen(false);
+  }, [isRestricted, open, changeOpen]);
+
   const navigationRef = useRef({ isNavigationCollapsed, toggleNavigation });
   useEffect(() => {
     navigationRef.current = { isNavigationCollapsed, toggleNavigation };

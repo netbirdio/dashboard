@@ -150,6 +150,18 @@ describe("AssistantSidebarProvider", () => {
     expect(result.current.inset).toBe(0);
   });
 
+  it("closes the panel and gives the navigation back once the user is restricted", () => {
+    const { result, rerender } = mount();
+
+    act(() => result.current.setOpen(true));
+    rerender();
+    permissions.isRestricted = true;
+    rerender();
+
+    expect(result.current.open).toBe(false);
+    expect(toggleNavigation).toHaveBeenCalledTimes(2);
+  });
+
   it("does not ask the assistant service about a restricted user", () => {
     permissions.isRestricted = true;
     mount();

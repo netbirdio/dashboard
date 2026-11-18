@@ -6,6 +6,7 @@ let changes: Record<string, unknown>[] = [];
 const contentProps: Record<string, unknown>[] = [];
 const removeChange = vi.fn();
 const addRouterFromSelection = vi.fn();
+const updateRouterFromSelection = vi.fn();
 const notify = vi.fn();
 const setRoutingPeerModal = vi.fn();
 
@@ -27,7 +28,13 @@ vi.mock("@components/modal/Modal", () => ({
   ),
 }));
 vi.mock("@components/modal/ModalHeader", () => ({
-  default: ({ title, description }: { title?: string; description?: string }) => (
+  default: ({
+    title,
+    description,
+  }: {
+    title?: string;
+    description?: string;
+  }) => (
     <div>
       {title}
       {description}
@@ -51,10 +58,13 @@ vi.mock("@/modules/control-center/draft/DraftChangesetContext", () => ({
 }));
 vi.mock("@/modules/control-center/hooks/useDraftNetworkActions", () => ({
   getNetworkRef: (node?: { id: string }) =>
-    node && { networkClientId: node.id.replace("network-", ""), name: "Office" },
+    node && {
+      networkClientId: node.id.replace("network-", ""),
+      name: "Office",
+    },
   useDraftNetworkActions: () => ({
     addRouterFromSelection,
-    updateRouterFromSelection: vi.fn(),
+    updateRouterFromSelection,
   }),
 }));
 vi.mock("@/modules/networks/routing-peers/NetworkRoutingPeerModal", () => ({
@@ -84,6 +94,7 @@ beforeEach(() => {
   contentProps.length = 0;
   removeChange.mockClear();
   addRouterFromSelection.mockClear();
+  updateRouterFromSelection.mockClear();
   notify.mockClear();
   setRoutingPeerModal.mockClear();
   canvasNodes = [];
@@ -98,9 +109,7 @@ describe("editing a placeholder-bound router", () => {
     changes = [createRouterChange("draft-1")];
     render(<DraftRoutingPeerModal />);
 
-    expect(
-      screen.getByTestId("routing-peer-modal-content"),
-    ).toBeTruthy();
+    expect(screen.getByTestId("routing-peer-modal-content")).toBeTruthy();
     const router = contentProps.at(-1)?.router as { peer?: string };
     expect(router?.peer).toBe("draft-1");
   });
@@ -109,9 +118,7 @@ describe("editing a placeholder-bound router", () => {
     changes = [createRouterChange("real-peer-1")];
     render(<DraftRoutingPeerModal />);
 
-    expect(
-      screen.getByTestId("routing-peer-modal-content"),
-    ).toBeTruthy();
+    expect(screen.getByTestId("routing-peer-modal-content")).toBeTruthy();
     const router = contentProps.at(-1)?.router as { peer?: string };
     expect(router?.peer).toBe("real-peer-1");
   });
@@ -194,7 +201,9 @@ describe("a peer another pending router of the network already uses", () => {
 
 describe("the placeholders offered as routing peers", () => {
   const offered = () =>
-    (contentProps.at(-1)?.additionalPeers as { id?: string }[]).map((p) => p.id);
+    (contentProps.at(-1)?.additionalPeers as { id?: string }[]).map(
+      (p) => p.id,
+    );
 
   it("includes a standalone placeholder node", () => {
     changes = [createRouterChange("draft-1")];
@@ -223,5 +232,74 @@ describe("the placeholders offered as routing peers", () => {
     render(<DraftRoutingPeerModal />);
 
     expect(offered()).toEqual(["draft-1"]);
+  });
+});
+
+describe("editing a live router in the draft", () => {
+  const network = { id: "net-1", name: "Office" };
+  const pendingCreate = {
+    ...createRouterChange("real-peer-2"),
+    id: "ch-2",
+    clientId: "router-2",
+    networkId: "net-1",
+  };
+  const pendingUpdate = {
+    id: "ch-3",
+    type: "update-router",
+    routerId: "router-live-2",
+    networkId: "net-1",
+    networkName: "Office",
+    peerId: "real-peer-3",
+  };
+  const open = () => {
+    routingPeerModal = { network, router: { id: "router-live-1", peer: "p0" } };
+    render(<DraftRoutingPeerModal />);
+    return contentProps.at(-1) as {
+      assignedPeers: string[];
+      onSaved: (r: unknown) => void;
+    };
+  };
+  const pick = (id: string) => ({
+    peer: { id, name: id },
+    peerGroups: [],
+    metric: 7,
+    masquerade: true,
+    enabled: true,
+  });
+
+  it("reserves the peers of pending creates and pending edits of other routers", () => {
+    changes = [pendingCreate, pendingUpdate];
+
+    expect(open().assignedPeers).toEqual(["real-peer-2", "real-peer-3"]);
+  });
+
+  it("does not reserve the peer of the router's own pending edit", () => {
+    changes = [{ ...pendingUpdate, routerId: "router-live-1" }];
+
+    expect(open().assignedPeers).toEqual([]);
+  });
+
+  it("refuses a peer a pending router already uses and keeps the editor open", () => {
+    changes = [pendingCreate];
+
+    open().onSaved(pick("real-peer-2"));
+
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect(updateRouterFromSelection).not.toHaveBeenCalled();
+    expect(setRoutingPeerModal).not.toHaveBeenCalled();
+  });
+
+  it("records the edit for a free peer", () => {
+    changes = [pendingCreate];
+
+    open().onSaved(pick("real-peer-9"));
+
+    expect(updateRouterFromSelection).toHaveBeenCalledWith(
+      expect.objectContaining({
+        networkId: "net-1",
+        routerId: "router-live-1",
+      }),
+    );
+    expect(setRoutingPeerModal).toHaveBeenCalledWith(null);
   });
 });

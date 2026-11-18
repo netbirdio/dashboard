@@ -487,10 +487,64 @@ describe("two first messages sent at once", () => {
     const a = chat.send("a");
     const b = chat.send("b");
     await flush();
+    expect(sendTurn).toHaveBeenCalledTimes(1);
     first.reject(new AssistantHttpError(500, "refused"));
     await Promise.all([a, b]);
 
+    expect(vi.mocked(sendTurn).mock.calls.map(([, sessionId]) => sessionId)).toEqual([undefined, undefined]);
     expect(chat.getSnapshot().session?.sessionId).toBe("second");
+    chat.stop();
+  });
+
+  it("does not leave the first message's failure on the chat once the second is accepted", async () => {
+    const first = deferred<Accepted>();
+    vi.mocked(sendTurn)
+      .mockReturnValueOnce(first.promise)
+      .mockImplementation(async () => ({ sessionId: "second" }) as Accepted);
+    const chat = new ChatSession(transport);
+
+    const a = chat.send("a");
+    const b = chat.send("b");
+    await flush();
+    first.reject(new AssistantHttpError(500, "refused"));
+    await Promise.all([a, b]);
+
+    expect(chat.getSnapshot().error).toBeUndefined();
+    expect(chat.getSnapshot().status).toBe("submitted");
+    chat.stop();
+  });
+
+  it("does not adopt a prewarmed session while the first message is creating one", async () => {
+    const first = deferred<Accepted>();
+    vi.mocked(sendTurn).mockReturnValueOnce(first.promise);
+    vi.mocked(prewarmChat).mockResolvedValue("prewarmed");
+    const chat = new ChatSession(transport);
+
+    const a = chat.send("a");
+    await flush();
+    await chat.prewarm();
+    first.resolve({ sessionId: "created" } as Accepted);
+    await a;
+
+    expect(prewarmChat).not.toHaveBeenCalled();
+    expect(chat.getSnapshot().session?.sessionId).toBe("created");
+    chat.stop();
+  });
+
+  it("cancels a turn of the new chat while a send of the old one is still pending", async () => {
+    const first = deferred<Accepted>();
+    vi.mocked(sendTurn)
+      .mockReturnValueOnce(first.promise)
+      .mockImplementation(async () => ({ sessionId: "fresh" }) as Accepted);
+    const chat = new ChatSession(transport);
+
+    void chat.send("a");
+    await flush();
+    chat.reset();
+    await chat.send("b");
+    await chat.cancel();
+
+    expect(cancelTurn).toHaveBeenCalledWith(transport, "fresh", expect.anything());
     chat.stop();
   });
 

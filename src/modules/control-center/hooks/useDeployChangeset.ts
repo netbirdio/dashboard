@@ -6,6 +6,7 @@ import { mutate } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource, NetworkRouter } from "@/interfaces/Network";
+import { Peer } from "@/interfaces/Peer";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { User } from "@/interfaces/User";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
@@ -28,11 +29,11 @@ import {
   mergeGroupMembers,
   networkCreateBody,
   networkUpdateBody,
+  peerRequiresMasquerade,
   policyRequestBody,
   RequestResolvers,
   resourceCreateBody,
   resourceUpdateBody,
-  peerRequiresMasquerade,
   routerCreateBody,
   routerUpdateBody,
 } from "@/modules/control-center/utils/changeset-request";
@@ -78,6 +79,7 @@ export function useDeployChangeset() {
   const resourceRequest = useApiCall<NetworkResource>("/networks", true);
   const routerRequest = useApiCall<NetworkRouter>("/networks", true);
   const userRequest = useApiCall<User>("/users", true);
+  const peerRequest = useApiCall<Peer>("/peers", true);
   const {
     addProvider,
     updateProvider: saveProvider,
@@ -206,6 +208,21 @@ export function useDeployChangeset() {
       return { id: created.id, type: created.type ?? r.type };
     };
 
+    // A peer installed moments ago can be missing from the `/peers` snapshot.
+    // Its router is not written from the saved masquerade value then,
+    // because a retry skips a router that already deployed and would never correct it.
+    const routingPeers = new Map((peers ?? []).map((p) => [p.id, p]));
+    const loadRoutingPeer = async (peerId?: string) => {
+      if (!peerId || isDraftPeerId(peerId) || routingPeers.has(peerId)) return;
+      const peer = await peerRequest.get(`/${peerId}`).catch(() => undefined);
+      if (!peer?.id) {
+        throw new Error(
+          "The routing peer could not be read. Check that it is still connected, then deploy again.",
+        );
+      }
+      routingPeers.set(peerId, peer);
+    };
+
     const resolvers: RequestResolvers = {
       resolveGroupIds,
       resolveResource,
@@ -226,7 +243,8 @@ export function useDeployChangeset() {
           "A routing peer is not installed yet. Install it before deploying.",
         );
       },
-      peerRequiresMasquerade: (ref) => peerRequiresMasquerade(peers, ref),
+      peerRequiresMasquerade: (ref) =>
+        peerRequiresMasquerade(Array.from(routingPeers.values()), ref),
       normalizeAddress: normalizeHostCIDR,
       // The group POST/PUT sends resources as {id, type} objects.
       resourceType: (id) =>
@@ -382,6 +400,7 @@ export function useDeployChangeset() {
         case "create-router": {
           assertNoDoomedGroups(change);
           const networkId = resolveNetworkId(change);
+          await loadRoutingPeer(change.peerId);
           const body = routerCreateBody(change, resolvers);
           const existing = createdUnder(networkId);
           const saved = existing
@@ -394,6 +413,7 @@ export function useDeployChangeset() {
         }
         case "update-router": {
           assertNoDoomedGroups(change);
+          await loadRoutingPeer(change.peerId);
           await routerRequest.put(
             routerUpdateBody(change, resolvers),
             `/${change.networkId}/routers/${change.routerId}`,
@@ -655,6 +675,7 @@ export function useDeployChangeset() {
     networkResources,
     users,
     peers,
+    peerRequest,
     groupRequest,
     policyRequest,
     networkRequest,

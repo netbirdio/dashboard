@@ -166,7 +166,9 @@ export class ChatSession {
   }
 
   async prewarm(): Promise<void> {
-    if (this.session || this.prewarming) return;
+    // A session adopted now would win over the one the first message is creating,
+    // and the reply to that message would go unseen.
+    if (this.session || this.prewarming || this.creating) return;
     const prewarming = this.adoptPrewarmed();
     this.prewarming = prewarming;
     try {
@@ -234,8 +236,18 @@ export class ChatSession {
       if (generation !== this.generation) return;
       const body = { message: text, ...(options.clientContext === undefined ? {} : { clientContext: options.clientContext }) };
       // Two first messages sent at once would each create a session, and only one of them is followed.
-      while (!this.session && this.creating) await this.creating.catch(() => {});
+      let queued = false;
+      while (!this.session && this.creating) {
+        queued = true;
+        await this.creating.catch(() => {});
+      }
       if (generation !== this.generation) return;
+      if (queued && this.error) {
+        // The send this one waited for failed; that failure stays on its own message.
+        this.error = undefined;
+        this.status = "submitted";
+        this.notify();
+      }
       const accepting = sendTurn(this.transport, this.session?.sessionId, body, options.headers);
       if (!this.session) this.creating = accepting;
       let accepted: Accepted;
@@ -329,6 +341,8 @@ export class ChatSession {
     this.generation++;
     this.prewarming = null;
     this.creating = null;
+    // A send of the chat being left must not hold up cancelling a turn of the next one.
+    this.sends.clear();
     this.projection = [];
     this.data = this.reducer.initial();
     this.serverEvents = 0;
