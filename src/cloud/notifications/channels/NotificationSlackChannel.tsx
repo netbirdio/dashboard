@@ -18,7 +18,6 @@ import {
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
 import { notify } from "@components/Notification";
-import SettingsIcon from "@/assets/icons/SettingsIcon";
 import SlackIcon from "@/assets/icons/SlackIcon";
 import { NotificationEventTypes } from "@/cloud/notifications/NotificationEventTypes";
 import {
@@ -86,11 +85,6 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
   return (
     <div className={"p-default py-6 max-w-2xl"}>
       <Breadcrumbs>
-        <Breadcrumbs.Item
-          href={"/settings"}
-          label={"Settings"}
-          icon={<SettingsIcon size={13} />}
-        />
         <Breadcrumbs.Item
           href={"/settings?tab=notifications"}
           label={"Notifications"}

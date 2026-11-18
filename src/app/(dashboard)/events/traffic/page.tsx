@@ -1,12 +1,11 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import dayjs from "dayjs";
-import { ArrowLeftRightIcon, ExternalLinkIcon } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React, { useMemo } from "react";
 import { useIsFeatureLocked } from "@/cloud/cloud-hooks/useIsFeatureLocked";
@@ -42,14 +41,6 @@ export default function NetworkTrafficPage() {
   return (
     <PageContainer>
       <div className="p-default py-6">
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href="/events/traffic"
-            label="Traffic Events"
-            icon={<ArrowLeftRightIcon size={15} />}
-          />
-        </Breadcrumbs>
-
         <h1 ref={headingRef}>Traffic Events</h1>
 
         <Paragraph>

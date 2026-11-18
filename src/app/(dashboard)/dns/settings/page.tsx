@@ -1,6 +1,5 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import Card from "@components/Card";
 import HelpText from "@components/HelpText";
@@ -10,13 +9,11 @@ import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
-import { IconSettings2 } from "@tabler/icons-react";
 import useFetchApi, { useApiCall } from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
 import React from "react";
 import Skeleton from "react-loading-skeleton";
 import { useSWRConfig } from "swr";
-import DNSIcon from "@/assets/icons/DNSIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import { Group } from "@/interfaces/Group";
@@ -38,19 +35,6 @@ export default function NameServerSettings() {
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/dns"}
-            label={"DNS"}
-            icon={<DNSIcon size={13} />}
-          />
-          <Breadcrumbs.Item
-            href={"/dns/settings"}
-            label={"DNS Settings"}
-            active
-            icon={<IconSettings2 size={15} />}
-          />
-        </Breadcrumbs>
         <h1>DNS Settings</h1>
         <Paragraph>
           {"Manage your account's DNS settings."}{" "}

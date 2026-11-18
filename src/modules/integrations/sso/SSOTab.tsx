@@ -1,11 +1,9 @@
-import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import { SkeletonIntegration } from "@components/skeletons/SkeletonIntegration";
 import * as Tabs from "@radix-ui/react-tabs";
-import { ExternalLinkIcon, KeyRoundIcon } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 import React from "react";
-import IntegrationIcon from "@/assets/icons/IntegrationIcon";
 import { useAccount } from "@/modules/account/useAccount";
 import { LockedFeatureInfoCard } from "@/modules/billing/locked-feature/LockedFeatureInfoCard";
 import { LockedFeatureOverlay } from "@/modules/billing/locked-feature/LockedFeatureOverlay";
@@ -17,19 +15,6 @@ export default function SSOTab() {
   return (
     <Tabs.Content value={"sso"}>
       <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/integrations"}
-            label={"Integrations"}
-            icon={<IntegrationIcon size={13} />}
-          />
-          <Breadcrumbs.Item
-            href={"/settings?tab=sso"}
-            label={"Single Sign-On"}
-            icon={<KeyRoundIcon size={14} />}
-            active
-          />
-        </Breadcrumbs>
         <h1>Single Sign-On</h1>
         <Paragraph>
           Configure your preferred Identity Provider (IdP) to enable Single

@@ -1,13 +1,10 @@
-import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import Card from "@components/Card";
 import { notify } from "@components/Notification";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
 import loadConfig from "@utils/config";
-import { AlertOctagonIcon } from "lucide-react";
 import React from "react";
-import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useAuthService } from "@/cloud/cloud-hooks/useAuthService";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
@@ -68,19 +65,6 @@ export default function DangerZoneTab({ account }: Props) {
   return (
     <Tabs.Content value={"danger-zone"}>
       <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/settings"}
-            label={"Settings"}
-            icon={<SettingsIcon size={13} />}
-          />
-          <Breadcrumbs.Item
-            href={"/settings"}
-            label={"Danger Zone"}
-            icon={<AlertOctagonIcon size={14} />}
-            active
-          />
-        </Breadcrumbs>
         <h1>Danger Zone</h1>
         <div className={"gap-6 mt-6 max-w-lg"}>
           <Card

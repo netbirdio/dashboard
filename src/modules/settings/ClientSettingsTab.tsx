@@ -1,4 +1,3 @@
-import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
@@ -22,7 +21,6 @@ import {
   AlertTriangle,
   ClockFadingIcon,
   ExternalLinkIcon,
-  MonitorSmartphoneIcon,
   RefreshCcw,
   TagIcon,
 } from "lucide-react";
@@ -30,7 +28,6 @@ import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
-import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Account } from "@/interfaces/Account";
@@ -264,19 +261,6 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
   return (
     <Tabs.Content value={"clients"}>
       <div className={"p-default py-6 max-w-2xl"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/settings"}
-            label={"Settings"}
-            icon={<SettingsIcon size={13} />}
-          />
-          <Breadcrumbs.Item
-            href={"/settings?tab=clients"}
-            label={"Clients"}
-            icon={<MonitorSmartphoneIcon size={14} />}
-            active
-          />
-        </Breadcrumbs>
         <div className={"flex items-start justify-between -mt-1"}>
           <h1>Clients</h1>
           <Button
