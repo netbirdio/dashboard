@@ -82,7 +82,6 @@ export default function AgentAccountControlsCard() {
 
   return (
     <div className={"p-default py-6 max-w-2xl"}>
-
       <div className={"flex items-start justify-between"}>
         <h1>Log Collection</h1>
 

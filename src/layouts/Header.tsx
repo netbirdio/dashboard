@@ -7,7 +7,6 @@ import HelpAndSupportButton from "@components/ui/HelpAndSupportButton";
 import UserDropdown from "@components/ui/UserDropdown";
 import { cn } from "@utils/helpers";
 import { useGuardedRouter } from "@utils/navigation-guard";
-import { useIsMd } from "@utils/responsive";
 import { MenuIcon, PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react";
 import React from "react";
 import { DistributorTransferAccountModal } from "@/cloud/distributor/DistributorTransferAccountModal";
@@ -21,8 +20,7 @@ export const headerHeight = 65;
 
 export default function NavbarWithDropdown() {
   const router = useGuardedRouter();
-  const { toggleMobileNav, setBreadcrumbsSlot } = useApplicationContext();
-  const isMd = useIsMd();
+  const { toggleMobileNav } = useApplicationContext();
   const { bannerHeight } = useAnnouncement();
   const { isRestricted } = usePermissions();
 
@@ -56,7 +54,7 @@ export default function NavbarWithDropdown() {
               </div>
             </Button>
           </div>
-          <div className={"flex gap-4 mr-auto min-w-0"}>
+          <div className={"flex gap-4 mr-auto"}>
             <button
               onClick={() => router.push("/peers")}
               className={
@@ -66,15 +64,6 @@ export default function NavbarWithDropdown() {
               <NetBirdLogo />
             </button>
             <ToggleCollapsableNavigationButton />
-            {/* Breadcrumbs portal into this slot.
-                Below md there is no room for it,
-                so the slot is left out and they render inside the page. */}
-            {isMd && (
-              <div
-                ref={setBreadcrumbsSlot}
-                className={"flex items-center min-w-0 text-sm"}
-              />
-            )}
           </div>
 
           <div className="flex md:order-2 gap-5 items-center">

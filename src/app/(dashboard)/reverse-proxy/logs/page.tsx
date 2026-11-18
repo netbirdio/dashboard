@@ -32,7 +32,6 @@ export default function ProxyLogsPage() {
   return (
     <PageContainer>
       <div className="p-default py-6">
-
         <h1 ref={headingRef}>Access Logs</h1>
 
         <Paragraph>

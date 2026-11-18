@@ -2,27 +2,11 @@ import { cn } from "@utils/helpers";
 import { ChevronRightIcon } from "lucide-react";
 import Link from "next/link";
 import React from "react";
-import { createPortal } from "react-dom";
-import { useApplicationContext } from "@/contexts/ApplicationProvider";
 
 type Props = {
   children: React.ReactNode;
 };
 function Breadcrumbs({ children }: Props) {
-  const { breadcrumbsSlot } = useApplicationContext();
-
-  // Inside the dashboard the trail lives in the header bar.
-  // Without a header slot (mobile, stories, blank layouts)
-  // it stays in the page where it is declared.
-  if (breadcrumbsSlot) {
-    return createPortal(
-      <div className={"flex items-center gap-2 min-w-0 whitespace-nowrap"}>
-        {children}
-      </div>,
-      breadcrumbsSlot,
-    );
-  }
-
   return <div className={"flex items-center mb-6 gap-2"}>{children}</div>;
 }
 

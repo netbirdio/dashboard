@@ -39,7 +39,6 @@ export default function NetworkTrafficPage() {
   return (
     <PageContainer>
       <div className="p-default py-6">
-
         <h1 ref={headingRef}>Traffic Events</h1>
 
         <Paragraph>

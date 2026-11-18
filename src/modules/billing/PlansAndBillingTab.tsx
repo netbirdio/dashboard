@@ -143,7 +143,6 @@ const PlansAndBillingTabContent = () => {
     >
       <PlanSuccessModal />
       <div className={"p-default py-6"}>
-
         <div
           className={"flex items-start justify-between -mt-1 max-w-4xl mb-4"}
         >

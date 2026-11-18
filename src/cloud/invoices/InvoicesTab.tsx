@@ -67,7 +67,6 @@ const InvoicesTabContent = () => {
   return (
     <Tabs.Content value={"invoices"} data-testid="settings-content-invoices">
       <div className={"p-default py-6"}>
-
         <div className={"max-w-3xl mb-4"}>
           <div className={"flex justify-between items-center mb-5"}>
             <div>
