@@ -138,6 +138,18 @@ describe("AssistantSidebarProvider", () => {
       expect(document.documentElement.style.getPropertyValue(`--nb-overlay-${side}`)).toBe("");
   });
 
+  it("makes no room for the panel once the user is restricted", () => {
+    const { result, rerender } = mount();
+
+    act(() => result.current.setOpen(true));
+    expect(result.current.reveal).toBe(true);
+    permissions.isRestricted = true;
+    rerender();
+
+    expect(result.current.reveal).toBe(false);
+    expect(result.current.inset).toBe(0);
+  });
+
   it("does not ask the assistant service about a restricted user", () => {
     permissions.isRestricted = true;
     mount();

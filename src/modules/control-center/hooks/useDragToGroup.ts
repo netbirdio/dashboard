@@ -19,6 +19,7 @@ import {
   getPlaceholderPeer,
   getPolicyRegroupUpdates,
   getTopZIndex,
+  hasFramedCard,
   isFrameNode,
   NETWORK_FRAME_CHILD_WIDTH,
 } from "@/modules/control-center/utils/helpers";
@@ -557,8 +558,11 @@ export function useDragToGroup() {
           const networkRef = getNetworkRef(targetFrame);
           const group = (draggedNode.data as { group?: Group })?.group;
           if (carried?.length && networkRef && group) {
+            const all = reactFlow.getNodes();
             carried.forEach((r) => {
               if (!r.id || !r.address) return;
+              // Its own card keeps it in the network it was created in.
+              if (hasFramedCard(r.id, all)) return;
               trackCreateResource({
                 clientId: r.id,
                 name: r.name,

@@ -6,6 +6,8 @@ let changes: Record<string, unknown>[] = [];
 const contentProps: Record<string, unknown>[] = [];
 const removeChange = vi.fn();
 const addRouterFromSelection = vi.fn();
+const notify = vi.fn();
+const setRoutingPeerModal = vi.fn();
 
 vi.mock("swr", () => ({ useSWRConfig: () => ({ mutate: vi.fn() }) }));
 let canvasNodes: Record<string, unknown>[] = [];
@@ -13,6 +15,7 @@ vi.mock("@xyflow/react", () => ({
   useReactFlow: () => ({ getNodes: () => canvasNodes }),
 }));
 vi.mock("lucide-react", () => ({ Share2Icon: () => null }));
+vi.mock("@components/Notification", () => ({ notify }));
 vi.mock("@components/modal/Modal", () => ({
   Modal: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
   ModalContent: ({ children }: { children?: React.ReactNode }) => (
@@ -40,13 +43,15 @@ vi.mock("@/modules/control-center/draft/DraftModeContext", () => ({
   useDraftMode: () => ({
     isDraft: true,
     routingPeerModal,
-    setRoutingPeerModal: vi.fn(),
+    setRoutingPeerModal,
   }),
 }));
 vi.mock("@/modules/control-center/draft/DraftChangesetContext", () => ({
   useDraftChangeset: () => ({ changes, removeChange }),
 }));
 vi.mock("@/modules/control-center/hooks/useDraftNetworkActions", () => ({
+  getNetworkRef: (node?: { id: string }) =>
+    node && { networkClientId: node.id.replace("network-", ""), name: "Office" },
   useDraftNetworkActions: () => ({
     addRouterFromSelection,
     updateRouterFromSelection: vi.fn(),
@@ -79,6 +84,8 @@ beforeEach(() => {
   contentProps.length = 0;
   removeChange.mockClear();
   addRouterFromSelection.mockClear();
+  notify.mockClear();
+  setRoutingPeerModal.mockClear();
   canvasNodes = [];
   routingPeerModal = {
     networkNodeId: "network-new-1",
@@ -125,6 +132,63 @@ describe("saving an edited draft router", () => {
     expect(removeChange.mock.invocationCallOrder[0]).toBeLessThan(
       addRouterFromSelection.mock.invocationCallOrder[0],
     );
+  });
+});
+
+describe("a peer another pending router of the network already uses", () => {
+  const other = {
+    ...createRouterChange("real-peer-2"),
+    id: "ch-2",
+    clientId: "router-2",
+    networkClientId: "new-1",
+  };
+  const edited = {
+    ...createRouterChange("real-peer-1"),
+    networkClientId: "new-1",
+  };
+  const elsewhere = { ...other, id: "ch-3", networkClientId: "new-9" };
+
+  it("is not offered in the picker, unlike the edited router's own peer", () => {
+    changes = [edited, other, { ...elsewhere, peerId: "real-peer-3" }];
+    render(<DraftRoutingPeerModal />);
+
+    expect(contentProps.at(-1)?.assignedPeers).toEqual(["real-peer-2"]);
+  });
+
+  it("keeps the edited router and the modal when it is saved anyway", () => {
+    changes = [edited, other];
+    render(<DraftRoutingPeerModal />);
+
+    const onSaved = contentProps.at(-1)?.onSaved as (r: unknown) => void;
+    onSaved({
+      peer: { id: "real-peer-2", name: "gateway" },
+      peerGroups: [],
+      metric: 7,
+      masquerade: true,
+      enabled: true,
+    });
+
+    expect(removeChange).not.toHaveBeenCalled();
+    expect(addRouterFromSelection).not.toHaveBeenCalled();
+    expect(setRoutingPeerModal).not.toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not block the same peer on another network", () => {
+    changes = [edited, elsewhere];
+    render(<DraftRoutingPeerModal />);
+
+    const onSaved = contentProps.at(-1)?.onSaved as (r: unknown) => void;
+    onSaved({
+      peer: { id: "real-peer-2", name: "gateway" },
+      peerGroups: [],
+      metric: 7,
+      masquerade: true,
+      enabled: true,
+    });
+
+    expect(removeChange).toHaveBeenCalledWith("ch-1", { replaced: true });
+    expect(addRouterFromSelection).toHaveBeenCalled();
   });
 });
 

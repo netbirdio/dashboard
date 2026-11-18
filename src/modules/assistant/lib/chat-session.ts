@@ -9,6 +9,7 @@ import {
 } from "eve/client";
 import { AssistantHttpError } from "./session-client";
 import {
+  type Accepted,
   cancelTurn,
   prewarmChat,
   sendTurn,
@@ -204,6 +205,7 @@ export class ChatSession {
     this.prewarmEpoch++;
   }
   private readonly sends = new Set<Promise<void>>();
+  private creating: Promise<unknown> | null = null;
 
   async send(text: string, options: SendOptions = {}): Promise<void> {
     const sending = this.submit(text, options);
@@ -231,7 +233,17 @@ export class ChatSession {
       if (this.prewarming) await this.prewarmSettled(this.prewarming);
       if (generation !== this.generation) return;
       const body = { message: text, ...(options.clientContext === undefined ? {} : { clientContext: options.clientContext }) };
-      const accepted = await sendTurn(this.transport, this.session?.sessionId, body, options.headers);
+      // Two first messages sent at once would each create a session, and only one of them is followed.
+      while (!this.session && this.creating) await this.creating.catch(() => {});
+      if (generation !== this.generation) return;
+      const accepting = sendTurn(this.transport, this.session?.sessionId, body, options.headers);
+      if (!this.session) this.creating = accepting;
+      let accepted: Accepted;
+      try {
+        accepted = await accepting;
+      } finally {
+        if (this.creating === accepting) this.creating = null;
+      }
       if (generation !== this.generation) return;
       if (!this.session) {
         this.session = { sessionId: accepted.sessionId, streamIndex: 0 };
@@ -316,6 +328,7 @@ export class ChatSession {
     this.follower = null;
     this.generation++;
     this.prewarming = null;
+    this.creating = null;
     this.projection = [];
     this.data = this.reducer.initial();
     this.serverEvents = 0;

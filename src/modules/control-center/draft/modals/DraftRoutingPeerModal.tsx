@@ -1,4 +1,5 @@
 import { Modal } from "@components/modal/Modal";
+import { notify } from "@components/Notification";
 import { useReactFlow } from "@xyflow/react";
 import * as React from "react";
 import { useSWRConfig } from "swr";
@@ -6,9 +7,15 @@ import { Network, NetworkRouter } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
+import {
+  getNetworkRef,
+  useDraftNetworkActions,
+} from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { getPlaceholderPeer } from "@/modules/control-center/utils/helpers";
-import { RoutingPeerModalContent } from "@/modules/networks/routing-peers/NetworkRoutingPeerModal";
+import {
+  RoutingPeerModalContent,
+  RoutingPeerModalResult,
+} from "@/modules/networks/routing-peers/NetworkRoutingPeerModal";
 
 // The networks page's routing-peer modal, run in pure-data mode for draft
 // targets: the result lands in the changeset instead of a live PUT.
@@ -72,6 +79,38 @@ export const DraftRoutingPeerModal = () => {
       : peer;
   };
 
+  // The changeset keeps one pending router per peer or group of a network,
+  // and the API does not list these yet.
+  const frameRef = getNetworkRef(
+    reactFlow.getNodes().find((n) => n.id === networkNodeId),
+  );
+  const networkKey =
+    (editChange?.type === "create-router"
+      ? editChange.networkId ?? editChange.networkClientId
+      : undefined) ||
+    network?.id ||
+    frameRef?.networkId ||
+    frameRef?.networkClientId;
+  const pendingRouters = changes.flatMap((c) =>
+    c.type === "create-router" &&
+    c.id !== editChange?.id &&
+    !!networkKey &&
+    (c.networkId ?? c.networkClientId) === networkKey
+      ? [c]
+      : [],
+  );
+  const pendingPeerIds = pendingRouters.flatMap((c) =>
+    c.peerId ? [c.peerId] : [],
+  );
+  const isTaken = (result: RoutingPeerModalResult) => {
+    const peerId = installed(result.peer)?.id;
+    const group = result.peerGroups[0];
+    const groupId = group ? group.id ?? group.name : undefined;
+    return pendingRouters.some(
+      (c) => c.peerId === peerId && c.groupId === groupId,
+    );
+  };
+
   // An existing API router with no draft create-router behind it: live edits
   // PUT through the modal, draft records an update-router change.
   const isApiRouterEdit = !!routingPeerModal?.router && !editChange;
@@ -109,6 +148,7 @@ export const DraftRoutingPeerModal = () => {
             router={routingPeerModal.router}
             useSave={false}
             additionalPeers={placeholderPeers}
+            assignedPeers={pendingPeerIds}
             onSaved={(result) => {
               if (network?.id && routingPeerModal.router) {
                 updateRouterFromSelection({
@@ -136,7 +176,20 @@ export const DraftRoutingPeerModal = () => {
             router={routerPreset}
             useSave={false}
             additionalPeers={placeholderPeers}
+            assignedPeers={pendingPeerIds}
             onSaved={(result) => {
+              // Recording it would be dropped as a duplicate,
+              // and an edit would lose the router it replaces.
+              if (isTaken(result)) {
+                notify({
+                  title: "Routing Peer",
+                  description: result.peer
+                    ? `${result.peer.name} is already a routing peer of this network in the draft.`
+                    : "This group already routes for this network in the draft.",
+                  backgroundColor: "bg-red-500",
+                });
+                return;
+              }
               if (networkNodeId) {
                 // Editing replaces the change so the dedup rules re-apply.
                 if (editChange) {

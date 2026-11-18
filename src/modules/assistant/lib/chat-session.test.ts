@@ -456,3 +456,57 @@ describe("resuming a stored session", () => {
     expect(chat.getSnapshot().status).toBe("ready");
   });
 });
+
+describe("two first messages sent at once", () => {
+  it("sends the second to the session the first one created", async () => {
+    const first = deferred<Accepted>();
+    vi.mocked(sendTurn)
+      .mockReturnValueOnce(first.promise)
+      .mockImplementation(async (_options, sessionId) => ({ sessionId: sessionId ?? "second" }) as Accepted);
+    const chat = new ChatSession(transport);
+
+    const a = chat.send("a");
+    const b = chat.send("b");
+    await flush();
+    expect(sendTurn).toHaveBeenCalledTimes(1);
+    first.resolve({ sessionId: "created" } as Accepted);
+    await Promise.all([a, b]);
+
+    expect(vi.mocked(sendTurn).mock.calls.map(([, sessionId]) => sessionId)).toEqual([undefined, "created"]);
+    expect(chat.getSnapshot().session?.sessionId).toBe("created");
+    chat.stop();
+  });
+
+  it("lets the second create the session when the first is refused", async () => {
+    const first = deferred<Accepted>();
+    vi.mocked(sendTurn)
+      .mockReturnValueOnce(first.promise)
+      .mockImplementation(async () => ({ sessionId: "second" }) as Accepted);
+    const chat = new ChatSession(transport);
+
+    const a = chat.send("a");
+    const b = chat.send("b");
+    await flush();
+    first.reject(new AssistantHttpError(500, "refused"));
+    await Promise.all([a, b]);
+
+    expect(chat.getSnapshot().session?.sessionId).toBe("second");
+    chat.stop();
+  });
+
+  it("does not hold the first message of the chat a reset starts", async () => {
+    const first = deferred<Accepted>();
+    vi.mocked(sendTurn)
+      .mockReturnValueOnce(first.promise)
+      .mockImplementation(async () => ({ sessionId: "fresh" }) as Accepted);
+    const chat = new ChatSession(transport);
+
+    void chat.send("a");
+    await flush();
+    chat.reset();
+    await chat.send("b");
+
+    expect(chat.getSnapshot().session?.sessionId).toBe("fresh");
+    chat.stop();
+  });
+});

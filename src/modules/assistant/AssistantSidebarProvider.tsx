@@ -102,7 +102,8 @@ export function AssistantSidebarProvider({
   const toggle = useCallback(() => changeOpen(!open), [open, changeOpen]);
 
   const value = useMemo(() => {
-    const reveal = open && !overlay;
+    // The layout renders no panel for a restricted user, so nothing may make room for one.
+    const reveal = open && !overlay && !isRestricted;
     return {
       // An open panel must not vanish when the server stops answering.
       available: reachable || open,
@@ -114,7 +115,7 @@ export function AssistantSidebarProvider({
       reveal,
       inset: reveal ? CARD_INSET : 0,
     };
-  }, [open, changeOpen, toggle, overlay, reachable, origin]);
+  }, [open, changeOpen, toggle, overlay, reachable, origin, isRestricted]);
 
   useEffect(() => {
     const root = document.documentElement;

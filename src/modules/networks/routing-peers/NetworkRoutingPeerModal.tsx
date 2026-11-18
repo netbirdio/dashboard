@@ -98,6 +98,8 @@ type ContentProps = {
   useSave?: boolean;
   onSaved?: (r: RoutingPeerModalResult) => void;
   additionalPeers?: Peer[];
+  // Peers taken by routers the API does not list yet (draft mode).
+  assignedPeers?: string[];
 };
 
 export function RoutingPeerModalContent({
@@ -108,6 +110,7 @@ export function RoutingPeerModalContent({
   useSave = true,
   onSaved,
   additionalPeers,
+  assignedPeers,
 }: ContentProps) {
   const isRoutingPeer = router ? router.peer != "" : true;
 
@@ -138,11 +141,13 @@ export function RoutingPeerModalContent({
 
   // The router being edited keeps its own peer selectable.
   const assignedPeerIds = useMemo(
-    () =>
-      (networkRouters ?? [])
+    () => [
+      ...(networkRouters ?? [])
         .filter((r) => r.id !== router?.id && !!r.peer)
         .map((r) => r.peer as string),
-    [networkRouters, router?.id],
+      ...(assignedPeers ?? []),
+    ],
+    [networkRouters, router?.id, assignedPeers],
   );
 
   const [selectedPeer, setSelectedPeer] = useState<Peer | undefined | null>(

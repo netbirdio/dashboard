@@ -32,6 +32,7 @@ import {
   RequestResolvers,
   resourceCreateBody,
   resourceUpdateBody,
+  peerRequiresMasquerade,
   routerCreateBody,
   routerUpdateBody,
 } from "@/modules/control-center/utils/changeset-request";
@@ -64,7 +65,8 @@ const parseSignature = <T extends DraftChange>(sig?: string): T | undefined => {
 export function useDeployChangeset() {
   const { changes } = useDraftChangeset();
   const { permission } = usePermissions();
-  const { groups, networks, networkResources, users } = useControlCenterData();
+  const { groups, networks, networkResources, users, peers } =
+    useControlCenterData();
   // Draft client ids → real API ids, persisted across deploy() calls so retries resolve them.
   const networkClientToId = useRef(new Map<string, string>());
   const resourceClientToId = useRef(
@@ -224,6 +226,7 @@ export function useDeployChangeset() {
           "A routing peer is not installed yet. Install it before deploying.",
         );
       },
+      peerRequiresMasquerade: (ref) => peerRequiresMasquerade(peers, ref),
       normalizeAddress: normalizeHostCIDR,
       // The group POST/PUT sends resources as {id, type} objects.
       resourceType: (id) =>
@@ -651,6 +654,7 @@ export function useDeployChangeset() {
     networks,
     networkResources,
     users,
+    peers,
     groupRequest,
     policyRequest,
     networkRequest,
