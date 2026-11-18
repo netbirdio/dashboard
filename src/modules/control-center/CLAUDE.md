@@ -92,7 +92,7 @@ Networks: all networks as interactive frames (resources as child rows, capped at
 
 - The shared `fitView` (useSelectNodeHandlers) waits for node measurement; the FIRST fit after mount hides the viewport (`cc-prefit` class + instant fit) so warm-cache remounts don't flash nodes at the origin.
 - Drill-downs use `drillInto` / `drillOutOf` (canvas-transition.ts); view-init fitView is suppressed while a transition runs. Browser Back exits drill-downs via `useDrillDownBrowserHistory`.
-- Side panels pan the canvas instead of covering nodes: the group panel does it per selected node (`DestinationGroupPanel`), and the assistant panel does it for the whole card via `useAssistantPanelPan` (shift = `PANEL_WIDTH + CARD_INSET`, only when a node reaches into that strip, reversed exactly on close).
+- Side panels pan the canvas instead of covering nodes: the group panel does it per selected node (`DestinationGroupPanel`), and the assistant panel does it for the whole card via `useAssistantPanelPan` (shift = `PANEL_WIDTH + CARD_INSET`, only when a node reaches into that strip, reversed exactly on close). The reversal is a DELTA, so a pan the user made meanwhile survives, and it is taken from where the running pan is HEADING, not from the viewport mid-animation — a quick close or reopen otherwise overshoots.
 
 **Behavior**:
 

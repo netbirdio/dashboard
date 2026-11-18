@@ -7,28 +7,36 @@ import { useAssistantSidebar } from "@/modules/assistant/AssistantSidebarProvide
 
 const CARD_SHRINK = PANEL_WIDTH + CARD_INSET;
 const MARGIN = 64;
+const PAN_MS = 300; // matches the card's own transition
 
 export function useAssistantPanelPan() {
   const reactFlow = useReactFlow();
   const { reveal } = useAssistantSidebar();
   const wasRevealed = useRef(reveal);
   const pannedBy = useRef(0);
+  const heading = useRef<{ x: number; until: number } | null>(null);
 
   useEffect(() => {
     if (wasRevealed.current === reveal) return;
     wasRevealed.current = reveal;
 
-    const options = { duration: 300 }; // matches the card's own transition
+    const options = { duration: PAN_MS };
     const vp = reactFlow.getViewport();
+    // A pan still under way has not arrived, so the next one starts from where it was going.
+    // Reversing from where the viewport is would overshoot when the panel is toggled quickly.
+    const x =
+      heading.current && performance.now() < heading.current.until
+        ? heading.current.x
+        : vp.x;
+    const panTo = (to: number) => {
+      heading.current = { x: to, until: performance.now() + PAN_MS };
+      void reactFlow.setViewport({ ...vp, x: to }, options);
+    };
 
     if (!reveal) {
       const back = pannedBy.current;
       pannedBy.current = 0;
-      if (back)
-        void reactFlow.setViewport(
-          { ...vp, x: vp.x + (PANEL_ON_LEFT ? -back : back) },
-          options,
-        );
+      if (back) panTo(x + (PANEL_ON_LEFT ? -back : back));
       return;
     }
 
@@ -45,7 +53,7 @@ export function useAssistantPanelPan() {
       const p = reactFlow.flowToScreenPosition(
         internal.internals.positionAbsolute,
       );
-      const left = p.x - container.left;
+      const left = p.x - container.left + (x - vp.x);
       min = Math.min(min, left);
       max = Math.max(max, left + (node.measured?.width ?? 0) * vp.zoom);
     }
@@ -59,9 +67,6 @@ export function useAssistantPanelPan() {
     if (shift <= 0) return;
 
     pannedBy.current = shift;
-    void reactFlow.setViewport(
-      { ...vp, x: vp.x + (PANEL_ON_LEFT ? shift : -shift) },
-      options,
-    );
+    panTo(x + (PANEL_ON_LEFT ? shift : -shift));
   }, [reveal, reactFlow]);
 }

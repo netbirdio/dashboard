@@ -402,6 +402,27 @@ describe("a modal beside the assistant panel", () => {
     expect(document.activeElement).toBe(form);
   });
 
+  it("moves Tab past either end of the modal into the panel, instead of wrapping inside the modal", async () => {
+    render(<PageWithConfirm panelOpen onOpenChange={vi.fn()} />);
+    fireEvent.click(screen.getByText("Open modal"));
+    await settle();
+    const chat = screen.getByLabelText("Chat");
+    const first = screen.getByLabelText("Name");
+    const last = screen.getByTestId("modal-close");
+
+    act(() => last.focus());
+    fireEvent.keyDown(last, { key: "Tab" });
+    expect(document.activeElement).toBe(chat);
+
+    act(() => first.focus());
+    fireEvent.keyDown(first, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(chat);
+
+    act(() => first.focus());
+    fireEvent.keyDown(first, { key: "Tab" });
+    expect(document.activeElement).toBe(first);
+  });
+
   it("keeps closing on focus outside while the panel is closed and the modal is non-modal by prop", async () => {
     const onOpenChange = vi.fn();
     render(

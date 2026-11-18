@@ -100,7 +100,7 @@ function DashboardPageContent({
 
   const navOpenPageWidth = isSm ? "45%" : isXs ? "60%" : "80%";
   const { bannerHeight } = useAnnouncement();
-  const { reveal, inset } = useAssistantSidebar();
+  const { reveal, inset, open, overlay } = useAssistantSidebar();
   const resizing = useIsResizing();
 
   return (
@@ -112,6 +112,9 @@ function DashboardPageContent({
         transforms, which would capture the panel's `position: fixed`.
       */}
       <div
+        // On a narrow screen the panel covers the whole page,
+        // and the controls under it must not take focus.
+        inert={!isRestricted && open && overlay ? true : undefined}
         className={cn(
           "relative z-10",
           // Not `transition-all`: that also animates the border, which flashes

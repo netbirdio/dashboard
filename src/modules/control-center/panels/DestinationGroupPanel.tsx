@@ -392,7 +392,7 @@ export const DestinationGroupPanel = ({
     isLoading: isDataLoading,
   } = useControlCenterData();
   // Structural subscription: a nodes subscription re-renders the panel on every canvas update.
-  const nodes = useStructuralNodes();
+  const nodes = useStructuralNodes({ enabled: !!groupId });
   const { setNodes, setEdges } = useCanvasState();
   const { isDraft, setResourceNetworkPicker } = useDraftMode();
   const { permission } = usePermissions();

@@ -78,10 +78,13 @@ const contentOf = (titleRef: TitleRef) =>
 const TABBABLE =
   'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]';
 
+const tabbables = (container: HTMLElement) =>
+  Array.from(container.querySelectorAll<HTMLElement>(TABBABLE)).filter(
+    (el) => el.tabIndex >= 0 && !el.closest("[hidden], [inert]"),
+  );
+
 function focusLastTabbable(content: HTMLElement) {
-  const candidates = Array.from(
-    content.querySelectorAll<HTMLElement>(TABBABLE),
-  ).filter((el) => el.tabIndex >= 0 && !el.closest("[hidden], [inert]"));
+  const candidates = tabbables(content);
   for (let i = candidates.length - 1; i >= 0; i--) {
     candidates[i].focus({ preventScroll: true });
     if (document.activeElement === candidates[i]) return;
@@ -106,8 +109,31 @@ function useFocusReturn(titleRef: TitleRef) {
       lastInPanel = inAssistantPanel(event.target);
       shiftTabbed = false;
     };
+    // Radix loops Tab inside the dialog, which would leave the chat beside it
+    // out of the keyboard's reach: Tab past either end goes to the panel instead.
+    const tabIntoPanel = (event: KeyboardEvent) => {
+      if (event.altKey || event.ctrlKey || event.metaKey) return false;
+      const content = topmostContent();
+      const panel = document.querySelector<HTMLElement>(ASSISTANT_PANEL);
+      const active = document.activeElement;
+      if (!content || !panel || !content.contains(active)) return false;
+      const own = tabbables(content);
+      if (active !== (event.shiftKey ? own[0] : own.at(-1))) return false;
+      const inPanel = tabbables(panel);
+      const target = event.shiftKey ? inPanel.at(-1) : inPanel[0];
+      if (!target) return false;
+      event.preventDefault();
+      // Stopped before it reaches the dialog, whose own handler would wrap the focus.
+      event.stopPropagation();
+      target.focus();
+      return true;
+    };
     const onKeyDown = (event: KeyboardEvent) => {
-      shiftTabbed = event.key === "Tab" && event.shiftKey;
+      if (event.key !== "Tab") {
+        shiftTabbed = false;
+        return;
+      }
+      shiftTabbed = !tabIntoPanel(event) && event.shiftKey;
     };
     const onFocusIn = (event: FocusEvent) => {
       const byShiftTab = shiftTabbed;
