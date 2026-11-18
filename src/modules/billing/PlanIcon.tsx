@@ -18,6 +18,7 @@ export const PlanIcon = ({ name, size = 40 }: Props) => {
     <div
       className={cn(
         "border shrink-0 flex items-center justify-center rounded-md overflow-hidden",
+        (isTrial || isTeam || isBusiness) && "text-white dark:text-inherit",
         isFree &&
           "bg-gradient-to-b from-nb-gray-800 to-nb-gray-600 border-nb-gray-700/70",
         isTrial &&

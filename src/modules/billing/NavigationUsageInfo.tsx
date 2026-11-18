@@ -64,7 +64,7 @@ const NavigationUsageInfoContent = () => {
       className={cn(
         "w-full rounded-md text-xs flex flex-col gap-3 whitespace-normal border text-left",
         isFreePlan
-          ? "bg-nb-gray-900/20 py-4 px-4 border-nb-gray-800/30"
+          ? "bg-white dark:bg-nb-gray-900/20 py-4 px-4 border-nb-gray-800/30"
           : "hover:border-nb-gray-900 p-3 border-transparent hover:bg-nb-gray-900/70 cursor-pointer transition-all",
         !permission?.billing?.update && "pointer-events-none",
       )}
@@ -91,7 +91,7 @@ const NavigationUsageInfoContent = () => {
             <div className={"flex gap-2 items-center"}>
               <Users2Icon size={13} />
               <div>
-                <span className={"font-medium text-white"}>
+                <span className={"font-medium text-neutral-900 dark:text-white"}>
                   {stats?.active_users}
                 </span>
                 {isFreePlan ? (
@@ -110,7 +110,7 @@ const NavigationUsageInfoContent = () => {
             <div className={"flex gap-2 items-center"}>
               <MonitorSmartphoneIcon size={13} />
               <div>
-                <span className={"font-medium text-white"}>
+                <span className={"font-medium text-neutral-900 dark:text-white"}>
                   {stats?.active_peers}
                 </span>
                 <span className={"text-nb-gray-300"}> of {maxPeers} Peers</span>

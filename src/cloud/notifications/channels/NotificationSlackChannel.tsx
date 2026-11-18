@@ -111,7 +111,7 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
       <div className={"flex flex-col gap-8 mt-4"}>
         <Card
           className={
-            "w-full flex items-center gap-4 border-nb-gray-910 bg-nb-gray-935 px-5 py-4"
+            "w-full flex items-center gap-4 border-nb-gray-910 dark:border-nb-gray-910 bg-nb-gray-935 px-5 py-4"
           }
         >
           <div

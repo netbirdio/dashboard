@@ -69,7 +69,7 @@ const NotificationsOverview = ({
       </div>
       <Card
         className={
-          "w-full flex flex-col mt-6 border-nb-gray-920 bg-nb-gray-940 p-1.5"
+          "w-full flex flex-col mt-6 border-nb-gray-920 dark:border-nb-gray-920 bg-nb-gray-940 p-1.5"
         }
       >
         <NotificationChannelListItem

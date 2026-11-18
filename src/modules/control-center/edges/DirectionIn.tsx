@@ -6,6 +6,8 @@ import {
   getStraightPath,
 } from "@xyflow/react";
 import React from "react";
+import { useTheme } from "@/contexts/ThemeProvider";
+import { canvasDisabledEdgeStroke } from "@/modules/control-center/utils/canvas-theme";
 
 type Props = {
   data: {
@@ -25,6 +27,7 @@ export function DirectionIn({
   data,
 }: Props) {
   const { enabled, type = "straight" } = data;
+  const { resolvedTheme } = useTheme();
 
   const getPath = () => {
     switch (type) {
@@ -74,7 +77,8 @@ export function DirectionIn({
       style={{
         opacity: enabled ? 1 : 0.6,
         strokeWidth: 2,
-        stroke: enabled ? "#0e9f6e" : "#787878",
+        // Green is intentionally identical in both themes.
+        stroke: enabled ? "#0e9f6e" : canvasDisabledEdgeStroke(resolvedTheme),
         strokeDasharray: "5, 5",
       }}
       className={enabled ? "cc-animated-edge" : undefined}
