@@ -55,7 +55,7 @@ export const EDRStaleGraceInput = ({
       helpText={
         <>
           Keep approved devices connected after a long absence, until they check
-          in with {name} again.
+          in with {name} again or the duration runs out.
         </>
       }
     >

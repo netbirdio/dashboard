@@ -107,6 +107,16 @@ describe("ActivityDescription EDR events", () => {
     );
   });
 
+  it("shows reasons that name object properties as sent", () => {
+    for (const reason of ["constructor", "__proto__", "toString"]) {
+      expect(
+        describeEvent(
+          edrEvent("integrated-validator.host-check.denied", { reason }),
+        ),
+      ).toBe(`Peer rejected by huntress integration, reason: ${reason}`);
+    }
+  });
+
   it("keeps the old text for events without a name or reason", () => {
     expect(
       describeEvent(edrEvent("integrated-validator.host-check.denied", {})),

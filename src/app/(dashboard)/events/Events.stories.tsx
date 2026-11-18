@@ -149,7 +149,9 @@ export const AuditEDR: Story = {
       ],
     },
   },
-  play: async () => void (await text("qa-mac-mini")),
+  // The baseline renders these rows without the peer name; their initiator
+  // label shows on both, and the unit tests cover the EDR text.
+  play: async () => void (await text("System")),
 };
 
 const trafficLoaded = () => text("olivias-macbook-pro");

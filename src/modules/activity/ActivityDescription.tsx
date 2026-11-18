@@ -714,7 +714,7 @@ export default function ActivityDescription({ event }: Props) {
         rejected by <Value>{m?.platform}</Value> integration
         {m?.reason && (
           <>
-            , reason: <Value>{edrRejectReasons[m.reason] ?? m.reason}</Value>
+            , reason: <Value>{edrRejectReason(m.reason)}</Value>
           </>
         )}
       </div>
@@ -1077,6 +1077,11 @@ const edrRejectReasons: Record<string, string> = {
   STALE_CHECK_IN: "no recent EDR check-in",
   DUPLICATE_MATCH: "duplicate serial number",
 };
+
+// Vendor reasons are free text, so only own keys are translated: a reason such
+// as "constructor" must not resolve to an Object.prototype member.
+const edrRejectReason = (reason: string) =>
+  Object.hasOwn(edrRejectReasons, reason) ? edrRejectReasons[reason] : reason;
 
 function EDRPeerName({ name }: { name?: string }) {
   return name ? (
