@@ -724,8 +724,14 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         Peer <EDRPeerName name={m?.name} />
-        keeps access for <Value>{m?.grace_minutes} minutes</Value> while it
-        waits for a <Value>{m?.platform}</Value> check-in
+        keeps access
+        {graceDuration(m?.grace_minutes) && (
+          <>
+            {" "}
+            for <Value>{graceDuration(m?.grace_minutes)}</Value>
+          </>
+        )}{" "}
+        while it checks in with <Value>{m?.platform}</Value> again
       </div>
     );
 
@@ -1082,6 +1088,12 @@ const edrRejectReasons: Record<string, string> = {
 // as "constructor" must not resolve to an Object.prototype member.
 const edrRejectReason = (reason: string) =>
   Object.hasOwn(edrRejectReasons, reason) ? edrRejectReasons[reason] : reason;
+
+const graceDuration = (minutes: unknown) => {
+  const n = Number(minutes);
+  if (!Number.isInteger(n) || n <= 0) return undefined;
+  return n === 1 ? "1 minute" : `${n} minutes`;
+};
 
 function EDRPeerName({ name }: { name?: string }) {
   return name ? (

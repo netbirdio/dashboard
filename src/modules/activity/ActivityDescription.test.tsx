@@ -127,15 +127,21 @@ describe("ActivityDescription EDR events", () => {
   });
 
   it("describes a started grace period", () => {
-    expect(
+    const grace = (meta: Record<string, string>) =>
       describeEvent(
         edrEvent("integrated-validator.peer.stale-grace-started", {
           name: "laptop-01",
-          grace_minutes: "45",
+          ...meta,
         }),
-      ),
-    ).toBe(
-      "Peer laptop-01 keeps access for 45 minutes while it waits for a huntress check-in",
+      );
+    expect(grace({ grace_minutes: "45" })).toBe(
+      "Peer laptop-01 keeps access for 45 minutes while it checks in with huntress again",
+    );
+    expect(grace({ grace_minutes: "1" })).toBe(
+      "Peer laptop-01 keeps access for 1 minute while it checks in with huntress again",
+    );
+    expect(grace({})).toBe(
+      "Peer laptop-01 keeps access while it checks in with huntress again",
     );
   });
 });
