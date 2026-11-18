@@ -152,8 +152,9 @@ const settings = (tab: Tab, card: number, modalTabIndex?: number): Story => ({
   },
 });
 
-/* The EDR grace period switched on, so its duration field shows. The setup
-   wizards switch it on at their last step; the settings load a saved value. */
+/* The EDR grace period switched on, so its duration field and the new peers
+   option show. The setup wizards switch it on at their last step; the settings
+   load a saved value. */
 const graceWizard = (card: number, steps: number): Story => ({
   parameters: at("edr", unconfigured.edr),
   play: async () => {
@@ -169,6 +170,7 @@ const graceSettings = (
   key: keyof typeof edr,
   card: number,
   modalTabIndex: number,
+  newPeers = false,
 ): Story => ({
   ...settings("edr", card, modalTabIndex),
   parameters: at("edr", {
@@ -177,6 +179,7 @@ const graceSettings = (
       ...edr[key],
       enabled: false,
       stale_grace_minutes: 45,
+      stale_grace_new_peers: newPeers,
     },
   }),
 });
@@ -491,4 +494,10 @@ export const EDRFleetDMSettingsSettingsGracePeriod = graceSettings(
   "fleetdm",
   4,
   2,
+);
+export const EDRFleetDMSettingsSettingsGracePeriodNewPeers = graceSettings(
+  "fleetdm",
+  4,
+  2,
+  true,
 );

@@ -25,6 +25,8 @@ type Props = {
   onEnabledChange: (enabled: boolean) => void;
   value: string;
   onChange: (value: string) => void;
+  newPeers: boolean;
+  onNewPeersChange: (newPeers: boolean) => void;
   className?: string;
 };
 
@@ -34,6 +36,8 @@ export const EDRStaleGraceInput = ({
   onEnabledChange,
   value,
   onChange,
+  newPeers,
+  onNewPeersChange,
   className,
 }: Props) => (
   <div className={cn("flex flex-col gap-6", className)}>
@@ -101,6 +105,20 @@ export const EDRStaleGraceInput = ({
           customSuffix={"Minutes"}
         />
       </div>
+
+      <FancyToggleSwitch
+        variant={"blank"}
+        className={"mt-5"}
+        value={newPeers}
+        onChange={onNewPeersChange}
+        label={"Include new peers"}
+        helpText={
+          <>
+            Keep new peers connected while they aren&apos;t in {name} yet or
+            haven&apos;t checked in recently.
+          </>
+        }
+      />
     </FancyToggleSwitch>
   </div>
 );

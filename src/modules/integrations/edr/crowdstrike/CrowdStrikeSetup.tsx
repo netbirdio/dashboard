@@ -118,6 +118,7 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
   );
   const [staleGraceEnabled, setStaleGraceEnabled] = useState(false);
   const [staleGrace, setStaleGrace] = useState(DEFAULT_STALE_GRACE.toString());
+  const [staleGraceNewPeers, setStaleGraceNewPeers] = useState(false);
 
   const connect = async () => {
     await settingsRequest.put({
@@ -148,6 +149,7 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
           ztaEnabled && score > 0 && score <= 100 ? score : 0,
         sync_interval: Number(syncInterval),
         stale_grace_minutes: staleGraceEnabled ? Number(staleGrace) : 0,
+        stale_grace_new_peers: staleGraceEnabled && staleGraceNewPeers,
       }).then(() => {
         mutate("/accounts");
         mutate("/integrations/edr/falcon");
@@ -315,6 +317,8 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
               onEnabledChange={setStaleGraceEnabled}
               value={staleGrace}
               onChange={setStaleGrace}
+              newPeers={staleGraceNewPeers}
+              onNewPeersChange={setStaleGraceNewPeers}
             />
           </div>
         </div>

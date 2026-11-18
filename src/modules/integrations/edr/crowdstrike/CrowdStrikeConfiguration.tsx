@@ -112,6 +112,9 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
   const [staleGrace, setStaleGrace] = useState(
     (config.stale_grace_minutes || DEFAULT_STALE_GRACE).toString(),
   );
+  const [staleGraceNewPeers, setStaleGraceNewPeers] = useState(
+    config.stale_grace_new_peers ?? false,
+  );
 
   const [groups, setGroups, { save: saveGroups }] = useGroupHelper({
     initial: config.groups.map((g) => {
@@ -159,6 +162,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
           groups: savedGroups.map((group) => group.id) || [],
           sync_interval: Number(syncInterval),
           stale_grace_minutes: staleGraceEnabled ? Number(staleGrace) : 0,
+          stale_grace_new_peers: staleGraceEnabled && staleGraceNewPeers,
           enabled: config.enabled,
         })
         .then(() => {
@@ -179,6 +183,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
     syncInterval,
     staleGraceEnabled,
     staleGrace,
+    staleGraceNewPeers,
   ]);
 
   const ztaError =
@@ -338,6 +343,8 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
               onEnabledChange={setStaleGraceEnabled}
               value={staleGrace}
               onChange={setStaleGrace}
+              newPeers={staleGraceNewPeers}
+              onNewPeersChange={setStaleGraceNewPeers}
             />
           </div>
         </TabsContent>

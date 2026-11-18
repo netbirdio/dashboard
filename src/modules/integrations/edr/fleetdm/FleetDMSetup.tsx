@@ -103,6 +103,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
   );
   const [staleGraceEnabled, setStaleGraceEnabled] = useState(false);
   const [staleGrace, setStaleGrace] = useState(DEFAULT_STALE_GRACE.toString());
+  const [staleGraceNewPeers, setStaleGraceNewPeers] = useState(false);
 
   const [matchAttributes, dispatchMatchAttributes] = useReducer(
     matchAttributesReducer,
@@ -161,6 +162,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
           last_synced_interval: Number(lastSyncedInterval || 24),
           sync_interval: Number(syncInterval),
           stale_grace_minutes: staleGraceEnabled ? Number(staleGrace) : 0,
+          stale_grace_new_peers: staleGraceEnabled && staleGraceNewPeers,
           match_attributes: matchAttributes,
         })
         .then(() => {
@@ -455,6 +457,8 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             onEnabledChange={setStaleGraceEnabled}
             value={staleGrace}
             onChange={setStaleGrace}
+            newPeers={staleGraceNewPeers}
+            onNewPeersChange={setStaleGraceNewPeers}
             className={"mt-6"}
           />
         </div>

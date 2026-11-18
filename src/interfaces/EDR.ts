@@ -8,6 +8,7 @@ export interface CrowdstrikeIntegration {
   zta_score_threshold: number; // 0 - 100
   sync_interval: number; // minutes
   stale_grace_minutes: number; // 0 disables the grace period
+  stale_grace_new_peers?: boolean;
   enabled: boolean;
 }
 
@@ -19,6 +20,7 @@ export interface IntuneIntegration {
   groups: string[] | Group[];
   sync_interval: number; // minutes
   stale_grace_minutes: number; // 0 disables the grace period
+  stale_grace_new_peers?: boolean;
   enabled: boolean;
 }
 
@@ -31,6 +33,7 @@ export interface SentinelOneIntegration {
   match_attributes: SentinelOneMatchAttributes;
   sync_interval: number; // minutes
   stale_grace_minutes: number; // 0 disables the grace period
+  stale_grace_new_peers?: boolean;
   enabled: boolean;
 }
 
@@ -65,6 +68,7 @@ export interface HuntressIntegration {
   match_attributes: HuntressMatchAttributes;
   sync_interval: number; // minutes
   stale_grace_minutes: number; // 0 disables the grace period
+  stale_grace_new_peers?: boolean;
   enabled: boolean;
 }
 
@@ -91,6 +95,7 @@ export interface FleetDMIntegration {
   match_attributes: FleetDMMatchAttributes;
   sync_interval: number; // minutes
   stale_grace_minutes: number; // 0 disables the grace period
+  stale_grace_new_peers?: boolean;
   enabled: boolean;
 }
 

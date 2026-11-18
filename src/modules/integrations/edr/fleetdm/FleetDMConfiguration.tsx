@@ -113,6 +113,9 @@ export function ConfigurationContent({
   const [staleGrace, setStaleGrace] = useState(
     (config.stale_grace_minutes || DEFAULT_STALE_GRACE).toString(),
   );
+  const [staleGraceNewPeers, setStaleGraceNewPeers] = useState(
+    config.stale_grace_new_peers ?? false,
+  );
   const [matchAttributes, dispatchMatchAttributes] = useReducer(
     matchAttributesReducer,
     config.match_attributes,
@@ -161,6 +164,7 @@ export function ConfigurationContent({
           last_synced_interval: Number(lastSyncedInterval || 24),
           sync_interval: Number(syncInterval),
           stale_grace_minutes: staleGraceEnabled ? Number(staleGrace) : 0,
+          stale_grace_new_peers: staleGraceEnabled && staleGraceNewPeers,
           match_attributes: matchAttributes,
           enabled: config.enabled,
         })
@@ -189,6 +193,7 @@ export function ConfigurationContent({
     syncInterval,
     staleGraceEnabled,
     staleGrace,
+    staleGraceNewPeers,
   ]);
   const canSave =
     hasChanges &&
@@ -393,6 +398,8 @@ export function ConfigurationContent({
             onEnabledChange={setStaleGraceEnabled}
             value={staleGrace}
             onChange={setStaleGrace}
+            newPeers={staleGraceNewPeers}
+            onNewPeersChange={setStaleGraceNewPeers}
             className={"mt-6"}
           />
         </TabsContent>
