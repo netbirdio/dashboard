@@ -74,7 +74,7 @@ export const EDRStaleGraceInput = ({
               </div>
             }
           >
-            <HelpText className={"max-w-sm mt-1"}>
+            <HelpText className={"max-w-sm"} margin={false}>
               How long a returning device keeps network{" "}
               <span className={"whitespace-nowrap"}>
                 access.
