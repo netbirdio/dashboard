@@ -149,6 +149,15 @@ export const UserDropdownOpen: StoryObj = {
   play: clickOpen("[data-testid=user-dropdown]", "[role=menu]"),
 };
 
+export const UserDropdownClosed: StoryObj = {
+  decorators: [withAppProviders],
+  render: () => (
+    <div className={"flex justify-end w-[480px]"}>
+      <UserDropdown />
+    </div>
+  ),
+};
+
 export const AddPeerDropdownOpen: StoryObj = {
   decorators: [withAppProviders],
   render: () => (
@@ -159,8 +168,11 @@ export const AddPeerDropdownOpen: StoryObj = {
   play: clickOpen("button", "[role=menu]"),
 };
 
-/* The toggle changed from a dropdown to a segmented control on this branch,
-   so the story only renders it and leaves interaction out. */
+/* Keep the beta label and segmented control at the profile menu's width. */
 export const ThemeToggle: StoryObj = {
-  render: () => <DarkModeToggle />,
+  render: () => (
+    <div className={"w-56"}>
+      <DarkModeToggle />
+    </div>
+  ),
 };

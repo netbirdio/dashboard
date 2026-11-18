@@ -17,11 +17,11 @@ const inputVariants = cva("", {
   variants: {
     variant: {
       default: [
-        "dark:bg-nb-gray-900 dark:placeholder:text-neutral-400/70 placeholder:text-neutral-500 border-neutral-200 dark:border-nb-gray-700",
+        "dark:bg-nb-gray-900 dark:placeholder:text-neutral-400/70 placeholder:text-neutral-500 border-neutral-300 dark:border-nb-gray-700",
         "ring-offset-neutral-200/20 dark:ring-offset-neutral-950/50 dark:focus-visible:ring-neutral-500/20 focus-visible:ring-neutral-300/10",
       ],
       darker: [
-        "dark:bg-nb-gray-900/40 dark:placeholder:text-neutral-400/70 placeholder:text-neutral-500 border-neutral-200 dark:border-nb-gray-900",
+        "dark:bg-nb-gray-900/40 dark:placeholder:text-neutral-400/70 placeholder:text-neutral-500 border-neutral-300 dark:border-nb-gray-900",
         "ring-offset-neutral-200/20 dark:ring-offset-neutral-950/50 dark:focus-visible:ring-neutral-500/20 focus-visible:ring-neutral-300/10",
       ],
       error: [

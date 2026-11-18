@@ -136,7 +136,9 @@ function DashboardPageContent({
         <div className={cn("flex flex-col h-full", mobileNavOpen && "flex")}>
           {mobileNavOpen && (
             <motion.div
-              className={"h-screen bg-nb-gray-950 w-11/12 max-w-[22rem]"}
+              className={
+                "h-screen bg-nb-gray dark:bg-nb-gray-950 w-11/12 max-w-[22rem]"
+              }
               layout={true}
               transition={{
                 type: "spring",

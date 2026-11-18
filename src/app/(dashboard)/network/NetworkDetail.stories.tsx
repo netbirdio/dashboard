@@ -78,6 +78,8 @@ export const ResourceGroupsPickerOpen: Story = {
     await resourcesReady();
     await clickSelector("[data-testid='add-resource']");
     await findDialog();
+    // Position the portal after the modal's opening transform has settled.
+    await settleMotion();
     await clickText("Add or select resource group(s)...");
     await waitForPopup();
   },

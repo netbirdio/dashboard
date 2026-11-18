@@ -65,7 +65,7 @@ export function IntegrationCard<T>({
     <div
       className={cn(
         " border border-nb-gray-900/50 p-5 rounded-lg transition-all h-full flex flex-col justify-between gap-4",
-        switchState ? "bg-nb-gray-930/50" : "bg-nb-gray-930/30",
+        switchState ? "bg-white dark:bg-nb-gray-930/50" : "bg-nb-gray-930/30",
         disabled && "opacity-60 pointer-events-none",
       )}
     >

@@ -830,7 +830,7 @@ export default function AIProviderModal({
         onInteractOutside={(e) => e.preventDefault()}
       >
         <ModalHeader
-          icon={<Sparkles size={18} className={"text-netbird"} />}
+          icon={<Sparkles size={18} />}
           title={isEdit ? "Edit Provider" : "Connect Provider"}
           description={
             isEdit

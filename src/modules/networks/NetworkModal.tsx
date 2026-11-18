@@ -104,7 +104,7 @@ export const NetworkModalContent = ({
       maxWidthClass={"max-w-xl"}
     >
       <ModalHeader
-        icon={<NetworkRoutesIcon className={"fill-netbird"} />}
+        icon={<NetworkRoutesIcon className={"fill-current"} />}
         title={network ? "Update Network" : "Add Network"}
         description={
           network
