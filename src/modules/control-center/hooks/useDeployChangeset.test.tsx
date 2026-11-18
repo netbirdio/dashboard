@@ -639,6 +639,7 @@ describe("resolving a network on retry", () => {
   it("uses the single match when the name is unambiguous", async () => {
     changes = [router];
     liveNetworks = [{ id: "n-a", name: "Shared" } as Network];
+    livePeers = [{ id: "peer-1", os: "Linux" }];
     const { result } = renderHook(() => useDeployChangeset());
     const ok = await act(async () => await result.current.deploy());
 
@@ -672,6 +673,41 @@ describe("resolving a network on retry", () => {
     expect(pathsOf("GET")).toEqual([]);
     const post = calls.find((c) => c.method === "POST");
     expect((post?.body as { masquerade: boolean }).masquerade).toBe(false);
+  });
+
+  it.each([
+    ["the snapshot", () => (livePeers = [{ id: "peer-1", os: "" }])],
+    ["a fresh read", () => undefined],
+  ])(
+    "does not write a router whose peer has no OS in %s",
+    async (_, arrange) => {
+      changes = [{ ...router, masquerade: false } as DraftChange];
+      liveNetworks = [{ id: "n-a", name: "Shared" } as Network];
+      arrange();
+      handlers.set("GET /peers/peer-1", () => ({ id: "peer-1", os: "" }));
+      const { result } = renderHook(() => useDeployChangeset());
+      const ok = await act(async () => await result.current.deploy());
+
+      expect(ok).toBe(false);
+      expect(pathsOf("GET")).toEqual(["/peers/peer-1"]);
+      expect(pathsOf("POST")).toEqual([]);
+    },
+  );
+
+  it("reads a snapshot peer again when it had no OS and uses what comes back", async () => {
+    changes = [{ ...router, masquerade: false } as DraftChange];
+    liveNetworks = [{ id: "n-a", name: "Shared" } as Network];
+    livePeers = [{ id: "peer-1", os: "" }];
+    handlers.set("GET /peers/peer-1", () => ({
+      id: "peer-1",
+      os: "Windows 11",
+    }));
+    const { result } = renderHook(() => useDeployChangeset());
+    const ok = await act(async () => await result.current.deploy());
+
+    expect(ok).toBe(true);
+    const post = calls.find((c) => c.method === "POST");
+    expect((post?.body as { masquerade: boolean }).masquerade).toBe(true);
   });
 
   it("does not write a router whose peer cannot be read", async () => {

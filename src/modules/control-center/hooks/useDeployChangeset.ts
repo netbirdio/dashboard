@@ -208,16 +208,18 @@ export function useDeployChangeset() {
       return { id: created.id, type: created.type ?? r.type };
     };
 
-    // A peer installed moments ago can be missing from the `/peers` snapshot.
+    // A peer installed moments ago can be missing from the `/peers` snapshot,
+    // or be in it before it has reported its OS, which would read as Linux.
     // Its router is not written from the saved masquerade value then,
     // because a retry skips a router that already deployed and would never correct it.
     const routingPeers = new Map((peers ?? []).map((p) => [p.id, p]));
     const loadRoutingPeer = async (peerId?: string) => {
-      if (!peerId || isDraftPeerId(peerId) || routingPeers.has(peerId)) return;
+      if (!peerId || isDraftPeerId(peerId)) return;
+      if (routingPeers.get(peerId)?.os) return;
       const peer = await peerRequest.get(`/${peerId}`).catch(() => undefined);
-      if (!peer?.id) {
+      if (!peer?.os) {
         throw new Error(
-          "The routing peer could not be read. Check that it is still connected, then deploy again.",
+          "The routing peer's operating system is not known yet. Check that it is connected, then deploy again.",
         );
       }
       routingPeers.set(peerId, peer);
