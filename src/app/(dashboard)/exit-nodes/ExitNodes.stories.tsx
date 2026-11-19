@@ -192,7 +192,7 @@ export const AddPeerFromTable: Story = {
     await ready();
     const row = await findRow("Contractors Egress");
     await user.click(row.querySelector("[aria-label='Add peer']")!);
-    await findDialog();
+    // The modal opens with the picker, a second role="dialog": wait for its input.
     await screen.findByPlaceholderText(
       "Search for peers by name or ip...",
       undefined,
