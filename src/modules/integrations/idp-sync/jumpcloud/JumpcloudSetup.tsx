@@ -99,8 +99,12 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
       return;
     }
     notify({
-      title: "Jumpcloud Integration",
-      description: `Jumpcloud was successfully set up`,
+      title: t("integrations.idpIntegrationTitle", {
+        name: t("integrations.idpJumpcloud"),
+      }),
+      description: t("integrations.idpSetUpDescription", {
+        name: t("integrations.idpJumpcloud"),
+      }),
       promise: integrationRequest
         .put(
           {
@@ -118,7 +122,7 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
           mutate("/integrations/scim-idp");
           onSuccess();
         }),
-      loadingMessage: "Setting up integration...",
+      loadingMessage: t("integrations.idpSettingUpLoading"),
     });
   };
 
@@ -191,10 +195,8 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
 
       <IntegrationModalHeader
         image={integrationImage}
-        title={"Connect NetBird with Jumpcloud"}
-        description={
-          "Start syncing your users and groups from Jumpcloud to NetBird. Follow the steps below to get started."
-        }
+        title={t("integrations.idpJumpcloudConnectTitle")}
+        description={t("integrations.idpJumpcloudConnectDescription")}
       />
 
       {step === -1 && (
@@ -222,16 +224,19 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
                 {t("common.requiredPermissions")}
               </div>
               <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
-                Ensure that you have an{" "}
-                <span className={"text-nb-gray-100 font-semibold"}>
-                  Jumpcloud user account
-                </span>{" "}
-                with the following{" "}
-                <span className={"text-nb-gray-100 font-semibold"}>roles</span>.{" "}
-                {
-                  "These roles have the required permissions to configure SSO applications and manage SCIM provisioning."
-                }
-              </p>
+                {t.rich("integrations.idpPermissionsIntro", {
+                  account: () => (
+                    <span className={"text-nb-gray-100 font-semibold"}>
+                      {t("integrations.idpJumpcloudUserAccount")}
+                    </span>
+                  ),
+                  requirement: () => (
+                    <span className={"text-nb-gray-100 font-semibold"}>
+                      {t("integrations.idpRolesWord")}
+                    </span>
+                  ),
+                  followup: t("integrations.idpJumpcloudRoleHelp"),
+                })}</p>
               <div
                 className={
                   "flex flex-col gap-0 mt-2 justify-start items-start max-w-lg"
@@ -243,7 +248,7 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
                   }
                 >
                   <ShieldUser size={14} className={"text-sky-500"} />
-                  Administrator (minimum required)
+                  {t("integrations.idpAdminRoleMinimum")}
                 </div>
                 <div
                   className={
@@ -251,7 +256,7 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
                   }
                 >
                   <ShieldUser size={14} className={"text-sky-500"} />
-                  Administrator with Billing
+                  {t("integrations.idpAdminRoleBilling")}
                 </div>
               </div>
             </>
@@ -266,17 +271,19 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
           ) : (
             <Callout className={"max-w-xl mt-3 text-left"} variant={"warning"}>
               <span>
-                Jumpcloud SSO needs to be enabled before you can enable IdP
-                sync.{" "}
-                <InlineLink
-                  href={
-                    "https://docs.netbird.io/how-to/single-sign-on#jump-cloud"
-                  }
-                  target={"_blank"}
-                >
-                  How to enable Jumpcloud SSO
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
+                {t.rich("integrations.idpJumpcloudSsoRequired", {
+                  docs: (chunks) => (
+                    <InlineLink
+                      href={
+                        "https://docs.netbird.io/how-to/single-sign-on#jump-cloud"
+                      }
+                      target={"_blank"}
+                    >
+                      {chunks}
+                      <ExternalLinkIcon size={12} />
+                    </InlineLink>
+                  ),
+                })}
               </span>
             </Callout>
           )}
@@ -315,8 +322,8 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
             </div>
 
             <GroupPrefixInput
-              addText={"Add user group filter"}
-              text={"User group starts with..."}
+              addText={t("integrations.idpAddUserGroupFilter")}
+              text={t("integrations.idpUserGroupStartsWith")}
               value={userGroupPrefixes}
               onChange={setUserGroupPrefixes}
             />
@@ -328,51 +335,57 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <BoxIcon size={20} />
-            Configure SCIM Application
+            {t("integrations.idpConfigureScimApp")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                Navigate to your{" "}
-                <InlineLink
-                  className={"inline"}
-                  target={"_blank"}
-                  href={"https://console.jumpcloud.com/"}
-                >
-                  Jumpcloud admin console
-                </InlineLink>
+                {t.rich("integrations.idpJumpcloudOpenConsole", {
+                  link: (chunks) => (
+                    <InlineLink
+                      className={"inline"}
+                      target={"_blank"}
+                      href={"https://console.jumpcloud.com/"}
+                    >
+                      {chunks}
+                    </InlineLink>
+                  ),
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Go to <Mark>{"SSO Applications"}</Mark> and select your{" "}
-                <Mark>NetBird</Mark> application, and then select{" "}
-                <Mark>Identity Management</Mark> tab.
+                {t.rich("integrations.idpJumpcloudOpenApp", {
+                  apps: (chunks) => <Mark>{chunks}</Mark>,
+                  netbird: (chunks) => <Mark>{chunks}</Mark>,
+                  tab: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={3}>
               <p className={"font-normal"}>
-                In the <Mark>Credentials Details</Mark> enter the following
-                details.
+                {t.rich("integrations.idpJumpcloudEnterDetails", {
+                  details: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
               <MinimalList
                 data={[
                   {
-                    label: "API Type",
+                    label: t("integrations.idpApiType"),
                     value: "SCIM API",
                     noCopy: true,
                   },
                   {
-                    label: "SCIM Version",
+                    label: t("integrations.idpScimVersion"),
                     value: "SCIM 2.0",
                     noCopy: true,
                   },
                   {
-                    label: "Base URL",
+                    label: t("integrations.idpBaseUrl"),
                     value: "https://api.netbird.io/api/scim/v2",
                   },
                   {
-                    label: "Token Key",
+                    label: t("integrations.idpTokenKey"),
                     value:
                       authToken === "" ? (
                         <Skeleton height={17} width={200} />
@@ -382,8 +395,8 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
                     noCopy: authToken === "",
                   },
                   {
-                    label: "Test User Email",
-                    value: "unused email e.g. test@yourdomain.com",
+                    label: t("integrations.idpTestUserEmail"),
+                    value: t("integrations.idpTestUserEmailValue"),
                     noCopy: true,
                   },
                 ]}
@@ -391,9 +404,10 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
             </Steps.Step>
             <Steps.Step step={4} line={false}>
               <p className={"font-normal"}>
-                After that click <Mark>Test Connection</Mark> to verify the SCIM
-                connection. If the connection is successful click{" "}
-                <Mark>Activate</Mark> to enable SCIM provisioning.
+                {t.rich("integrations.idpJumpcloudActivate", {
+                  test: (chunks) => <Mark>{chunks}</Mark>,
+                  activate: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -429,7 +443,7 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
             disabled={!jumpCloudConnection && isAuth0()}
             onClick={() => setStep(step + 1)}
           >
-            {step == 0 ? "Get Started" : t("common.continue")}
+            {step == 0 ? t("integrations.idpGetStarted") : t("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -452,8 +466,14 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
         >
           <Clock4 size={12} />
           <div>
-            Estimated setup time:
-            <span className={"font-medium"}> 5-15 Minutes</span>
+            {t.rich("integrations.idpEstimatedSetupTime", {
+              duration: () => (
+                <span className={"font-medium"}>
+                  {" "}
+                  {t("integrations.idpSetupDurationMedium")}
+                </span>
+              ),
+            })}
           </div>
         </div>
       )}

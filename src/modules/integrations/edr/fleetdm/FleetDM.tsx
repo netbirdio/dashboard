@@ -55,8 +55,10 @@ export const FleetDM = ({ account }: Props) => {
 
     const choice = isCurrentlyEnabled
       ? await confirm({
-          title: `Disable FleetDM?`,
-          description: `Are you sure you want to disable the FleetDM integration?`,
+          title: t("integrations.edrDisableTitle", { name: "FleetDM" }),
+          description: t("integrations.edrDisableDescription", {
+          name: "FleetDM",
+        }),
           confirmText: t("common.disable"),
           cancelText: t("common.cancel"),
           type: "warning",
@@ -68,10 +70,13 @@ export const FleetDM = ({ account }: Props) => {
       integration.groups?.map((group) => (group as Group).id) || [];
 
     notify({
-      title: "FleetDM Integration",
-      description: `FleetDM was successfully ${
-        isCurrentlyEnabled ? "disabled" : "enabled"
-      }`,
+      title: t("integrations.edrIntegrationTitle", { name: "FleetDM" }),
+      description: t("integrations.edrToggledDescription", {
+        name: "FleetDM",
+        state: isCurrentlyEnabled
+          ? t("integrations.edrStateDisabled")
+          : t("integrations.edrStateEnabled"),
+      }),
       promise: integrationRequest
         .put({
           ...integration,
@@ -82,7 +87,7 @@ export const FleetDM = ({ account }: Props) => {
         .then(() => {
           mutate("/integrations/edr/fleetdm");
         }),
-      loadingMessage: "Updating integration...",
+      loadingMessage: t("integrations.edrUpdatingLoading"),
     });
   };
 
@@ -92,7 +97,7 @@ export const FleetDM = ({ account }: Props) => {
     <>
       <IntegrationCard
         name={"FleetDM"}
-        description="Open-source device management platform for macOS, Windows, and Linux with osquery-based compliance policies."
+        description={t("integrations.edrFleetDMDescription")}
         url={{
           title: "fleetdm.com",
           href: "https://fleetdm.com/",
@@ -128,9 +133,12 @@ const ConfigurationButton = ({ config }: ConfigurationProps) => {
   const [configModal, setConfigModal] = useState(false);
 
   const lastSync = useMemo(() => {
-    if (isEmpty(config?.last_synced_at)) return "Not synchronized";
-    return "Synced " + dayjs().to(config?.last_synced_at);
-  }, [config]);
+    if (isEmpty(config?.last_synced_at))
+      return t("integrations.edrNotSynchronized");
+    return t("integrations.edrSyncedAgo", {
+      time: dayjs().to(config?.last_synced_at),
+    });
+  }, [config, t]);
 
   return (
     <>

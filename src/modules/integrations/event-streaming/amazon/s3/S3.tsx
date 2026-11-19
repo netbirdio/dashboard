@@ -48,9 +48,8 @@ export default function S3() {
     if (!s3Settings) return setSetupModal(true);
 
     const choice = await confirm({
-      title: `Disconnect S3?`,
-      description:
-        "Disconnecting deletes the current configuration. You will need to start the setup process again.",
+      title: t("integrations.streamingDisconnectTitle", { name: "Amazon S3" }),
+      description: t("integrations.streamingDisconnectDescription"),
       confirmText: t("integrations.disconnect"),
       cancelText: t("common.cancel"),
       type: "warning",
@@ -58,12 +57,14 @@ export default function S3() {
     if (!choice) return;
 
     notify({
-      title: "S3 Integration",
-      description: `S3 was successfully disconnected`,
+      title: t("integrations.edrIntegrationTitle", { name: "Amazon S3" }),
+      description: t("integrations.streamingDisconnectedDescription", {
+        name: "Amazon S3",
+      }),
       promise: integrationRequest.del({}, "/" + s3Settings.id).then(() => {
         mutate("/integrations/event-streaming");
       }),
-      loadingMessage: "Disconnecting integration...",
+      loadingMessage: t("integrations.streamingDisconnectingLoading"),
     });
   };
 
@@ -73,7 +74,7 @@ export default function S3() {
     <>
       <IntegrationCard
         name="Amazon S3"
-        description="Amazon S3 is a scalable storage in the cloud."
+        description={t("integrations.streamingS3Description")}
         url={{
           title: "aws.amazon.com/s3",
           href: "https://aws.amazon.com/s3",

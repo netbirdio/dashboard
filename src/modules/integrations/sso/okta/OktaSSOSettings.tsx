@@ -39,9 +39,8 @@ export const OktaSsoSettings = ({ open, onOpenChange, config }: Props) => {
 
   const deleteIntegration = async () => {
     const choice = await confirm({
-      title: `Delete Integration?`,
-      description:
-        "Are you sure you want to delete this integration? This action cannot be undone.",
+      title: t("integrations.ssoDeleteTitle"),
+      description: t("integrations.ssoDeleteDescription"),
       confirmText: t("common.delete"),
       cancelText: t("common.cancel"),
       type: "danger",
@@ -50,20 +49,22 @@ export const OktaSsoSettings = ({ open, onOpenChange, config }: Props) => {
     if (!choice) return;
 
     notify({
-      title: "Okta SSO Integration",
-      description: `Okta was successfully deleted`,
+      title: t("integrations.ssoIntegrationTitle"),
+      description: t("integrations.idpDeletedDescription", {
+        name: t("integrations.idpOkta"),
+      }),
       promise: deleteConnection(config.id).then(() => {
         onOpenChange(false);
         mutate();
       }),
-      loadingMessage: "Deleting integration...",
+      loadingMessage: t("integrations.idpDeletingLoading"),
     });
   };
 
   const addDomainHandler = async () => {
     notify({
-      title: "Okta Domains",
-      description: `${domain} has been added`,
+      title: t("integrations.ssoDomainsTitle"),
+      description: t("integrations.ssoDomainAdded", { domain }),
       promise: addDomain(config.id, domain).then((res) => {
         const result = res as unknown as EnterpriseConnectionDomain;
         mutate();
@@ -75,7 +76,7 @@ export const OktaSsoSettings = ({ open, onOpenChange, config }: Props) => {
           setDomainVerificationModal(true);
         }
       }),
-      loadingMessage: "Adding domain...",
+      loadingMessage: t("integrations.ssoAddDomainLoading"),
     });
   };
 
@@ -104,10 +105,8 @@ export const OktaSsoSettings = ({ open, onOpenChange, config }: Props) => {
 
         <IntegrationModalHeader
           image={integrationImage}
-          title={"Okta SSO Configuration"}
-          description={
-            "Use Okta as a Single Sign-On provider to authenticate users."
-          }
+          title={t("integrations.ssoConfigurationTitle")}
+          description={t("integrations.ssoConfigurationDescription")}
         />
 
         <Tabs
@@ -154,7 +153,7 @@ export const OktaSsoSettings = ({ open, onOpenChange, config }: Props) => {
                     label={
                       <>
                         <GlobeIcon size={16} />
-                        Okta Domain
+                        {t("integrations.ssoOktaDomain")}
                       </>
                     }
                     value={config?.discovery_domain}
@@ -224,9 +223,9 @@ export const OktaSsoSettings = ({ open, onOpenChange, config }: Props) => {
                 </div>
               </Label>
               <HelpText className={"max-w-lg mt-2"}>
-                Deleting this integration will remove the ability to use Okta as
-                an SSO provider. <br /> If you delete the integration you will
-                need to reconfigure it again to enable the Single Sign-On.
+                {t.rich("integrations.ssoDeleteWarning", {
+                  br: () => <br />,
+                })}
               </HelpText>
             </div>
             <Button

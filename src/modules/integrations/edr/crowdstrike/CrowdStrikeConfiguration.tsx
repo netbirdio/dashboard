@@ -113,8 +113,8 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
 
   const deleteIntegration = async () => {
     const choice = await confirm({
-      title: `Delete integration?`,
-      description: "Are you sure you want to delete this integration?",
+      title: t("integrations.edrDeleteTitle"),
+      description: t("integrations.edrConfirmDeleteDescription"),
       confirmText: t("common.delete"),
       cancelText: t("common.cancel"),
       type: "danger",
@@ -123,13 +123,15 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
     if (!choice) return;
 
     notify({
-      title: "CrowdStrike Integration",
-      description: `CrowdStrike Integration was successfully deleted`,
+      title: t("integrations.edrIntegrationTitle", { name: "CrowdStrike" }),
+      description: t("integrations.edrIntegrationDeletedDescription", {
+        name: "CrowdStrike",
+      }),
       promise: crowdStrikeRequest.del().then(() => {
         mutate("/integrations/edr/falcon");
         onSuccess();
       }),
-      loadingMessage: "Deleting integration...",
+      loadingMessage: t("integrations.edrDeletingLoading"),
     });
   };
 
@@ -138,8 +140,10 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
     const score = parseInt(ztaScore);
 
     notify({
-      title: "CrowdStrike Integration",
-      description: `CrowdStrike Integration was successfully updated`,
+      title: t("integrations.edrIntegrationTitle", { name: "CrowdStrike" }),
+      description: t("integrations.edrIntegrationUpdatedDescription", {
+        name: "CrowdStrike",
+      }),
       promise: crowdStrikeRequest
         .put({
           zta_score_threshold:
@@ -155,7 +159,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
           mutate("/integrations/edr/falcon");
           onSuccess();
         }),
-      loadingMessage: "Updating integration...",
+      loadingMessage: t("integrations.edrUpdatingLoading"),
     });
   };
 
@@ -171,7 +175,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
 
   const ztaError =
     ztaEnabled && (parseInt(ztaScore) <= 0 || parseInt(ztaScore) > 100)
-      ? "Score should be between 1 and 100"
+      ? t("integrations.edrScoreRangeError")
       : undefined;
   const canSave = hasChanges && !ztaError && isValidSyncInterval(syncInterval);
 
@@ -186,10 +190,8 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
 
       <IntegrationModalHeader
         image={integrationImage}
-        title={"CrowdStrike"}
-        description={
-          "Restrict network access only to devices managed by the company's IT department"
-        }
+        title={t("integrations.edrIntegrationTitle", { name: "CrowdStrike" })}
+        description={t("integrations.edrCrowdStrikeConnectDescription")}
       />
 
       <Tabs
@@ -237,7 +239,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
                 </div>
               </Label>
               <HelpText className={"max-w-lg mt-2"}>
-                Select groups you want to apply the CrowdStrike integration to
+                {t("integrations.edrSelectGroupsFor", { name: "CrowdStrike" })}
               </HelpText>
 
               <PeerGroupSelector values={groups} onChange={setGroups} />
@@ -277,7 +279,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
               <Label className={"mb-3"}>
                 <div className={"flex gap-2 items-center"}>
                   <KeyRound size={14} />
-                  CrowdStrike Credentials
+                  {t("integrations.edrCrowdStrikeCredentials")}
                 </div>
               </Label>
               <div className={"flex flex-col gap-3"}>
@@ -302,7 +304,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
                   customPrefix={
                     <div className={"min-w-[85px] flex gap-2 items-center"}>
                       <KeyRound size={16} />
-                      Secret
+                      {t("integrations.edrSecret")}
                     </div>
                   }
                   placeholder={"qF41DKYkQJBS53w0XPVyO6v9AtZ8WMbHp72eIdml"}
@@ -328,9 +330,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
               </div>
             </Label>
             <HelpText className={"max-w-lg mt-2"}>
-              Deleting this integration will remove the current configuration.
-              If you delete the integration you will need to reconfigure it
-              again.
+              {t("integrations.edrDeleteConfigWarning")}
             </HelpText>
           </div>
           <Button

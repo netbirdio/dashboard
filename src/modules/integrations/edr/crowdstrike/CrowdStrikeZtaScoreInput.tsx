@@ -4,6 +4,7 @@ import { Label } from "@components/Label";
 import { cn } from "@utils/helpers";
 import { ArrowUpWideNarrowIcon } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   enabled: boolean;
@@ -17,6 +18,7 @@ export const CrowdStrikeZtaScoreInput = ({
   onChange,
   error,
 }: Props) => {
+  const t = useTranslations();
   return (
     <div
       className={cn(
@@ -25,11 +27,9 @@ export const CrowdStrikeZtaScoreInput = ({
       )}
     >
       <div>
-        <Label>Score Threshold</Label>
+        <Label>{t("integrations.edrScoreThreshold")}</Label>
         <HelpText>
-          {
-            "If the peer's ZTA score is below the threshold, the peer will be rejected. The score should be between 1 and 100."
-          }
+          {t("integrations.edrScoreThresholdHelp")}
         </HelpText>
       </div>
       <Input

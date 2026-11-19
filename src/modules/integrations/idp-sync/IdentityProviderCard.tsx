@@ -69,7 +69,7 @@ export const IdentityProviderCard = () => {
       }
       title={t("common.identityProviderSync")}
       action={<FeatureCardStatus enabled={enabled} />}
-      description={"Sync users and groups from Okta, Microsoft or Google IdP"}
+      description={t("integrations.idpCardDescription")}
     />
   );
 };

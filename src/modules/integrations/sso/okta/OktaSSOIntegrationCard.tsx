@@ -16,6 +16,7 @@ import OktaSSOSetup from "@/modules/integrations/sso/okta/OktaSSOSetup";
 import { useEnterpriseConnections } from "@/modules/integrations/sso/useEnterpriseConnections";
 
 export const OktaSSOIntegrationCard = () => {
+  const t = useTranslations();
   const [setupModal, setSetupModal] = useState(false);
   const { oktaConnection, isDataLoading, toggleConnection, mutate, error } =
     useEnterpriseConnections();
@@ -24,14 +25,17 @@ export const OktaSSOIntegrationCard = () => {
   const handleToggleConnection = () => {
     if (!oktaConnection) return;
     notify({
-      title: "Okta SSO Integration",
-      description: `Okta was successfully ${
-        oktaConnection?.enabled ? "disabled" : "enabled"
-      }`,
+      title: t("integrations.ssoIntegrationTitle"),
+      description: t("integrations.idpStateDescription", {
+        name: t("integrations.idpOkta"),
+        state: oktaConnection?.enabled
+          ? t("common.disabled")
+          : t("common.enabled"),
+      }),
       promise: toggleConnection(oktaConnection.id).then(() => {
         mutate();
       }),
-      loadingMessage: "Updating integration...",
+      loadingMessage: t("integrations.idpUpdatingLoading"),
     });
   };
 
@@ -40,8 +44,8 @@ export const OktaSSOIntegrationCard = () => {
   ) : (
     <>
       <IntegrationCard
-        name="Okta"
-        description="Okta is a platform to provision and manage user accounts in cloud-based applications."
+        name={t("integrations.idpOkta")}
+        description={t("integrations.idpOktaDescription")}
         data={oktaConnection}
         url={{
           title: "okta.com",
@@ -111,11 +115,11 @@ const ConfigurationContent = ({ connection }: ConfigurationProps) => {
             )}
           ></span>
           {hasSomeVerifiedDomains
-            ? "Active"
+            ? t("integrations.ssoActive")
             : hasSomePendingDomains
-            ? "Pending Verification"
+            ? t("integrations.ssoPendingVerification")
             : hasSomeFailedDomains
-            ? "Failed Verification"
+            ? t("integrations.ssoFailedVerification")
             : t("common.inactive")}
         </div>
       ) : (

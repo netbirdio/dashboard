@@ -1,6 +1,7 @@
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import { BrickWallShieldIcon, ShieldCheckIcon, ShieldIcon } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   DEFAULT_HUNTRESS_MATCH_ATTRIBUTES,
   HuntressMatchAttributes,
@@ -15,6 +16,7 @@ export const HuntressMatchSettings = ({
   value: matchAttributes,
   dispatch: dispatchMatchAttributes,
 }: Props) => {
+  const t = useTranslations();
   return (
     <div className={"mt-6 grid grid-cols-1 gap-6 mb-3"}>
       <FancyToggleSwitch
@@ -44,12 +46,10 @@ export const HuntressMatchSettings = ({
         label={
           <>
             <ShieldIcon size={14} />
-            Managed Microsoft Defender
+            {t("integrations.edrManagedDefender")}
           </>
         }
-        helpText={
-          "Defender is enabled, up-to-date, scanned recently, and no conflicting antivirus detected"
-        }
+        helpText={t("integrations.edrManagedDefenderHelp")}
       />
 
       <FancyToggleSwitch
@@ -66,12 +66,10 @@ export const HuntressMatchSettings = ({
         label={
           <>
             <ShieldCheckIcon size={14} />
-            Defender Policy Compliance
+            {t("integrations.edrDefenderPolicyCompliance")}
           </>
         }
-        helpText={
-          "Defender configuration should match your organization's security policy requirements"
-        }
+        helpText={t("integrations.edrDefenderPolicyHelp")}
       />
 
       <FancyToggleSwitch
@@ -88,15 +86,12 @@ export const HuntressMatchSettings = ({
         label={
           <>
             <BrickWallShieldIcon size={14} />
-            Firewall
+            {t("integrations.edrFirewall")}
           </>
         }
-        helpText={
-          <span>
-            Device has an active firewall with <br />
-            all required profiles enabled
-          </span>
-        }
+        helpText={t.rich("integrations.edrHuntressFirewallHelp", {
+          br: () => <br />,
+        })}
       />
     </div>
   );

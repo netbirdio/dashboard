@@ -24,18 +24,18 @@ export const DomainVerificationCard = ({ domain, connectionId }: Props) => {
 
   const deleteDomainHandler = async () => {
     const choice = await confirm({
-      title: `Remove Domain?`,
-      description: "Are you sure you want to remove this domain?",
+      title: t("integrations.ssoRemoveDomainTitle"),
+      description: t("integrations.ssoRemoveDomainDescription"),
       confirmText: t("common.remove"),
       cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
     notify({
-      title: "Okta Domains",
-      description: `${domain.name} has been removed`,
+      title: t("integrations.ssoDomainsTitle"),
+      description: t("integrations.ssoDomainRemoved", { domain: domain.name }),
       promise: deleteDomain(connectionId, domain.name).then(() => mutate()),
-      loadingMessage: "Removing domain...",
+      loadingMessage: t("integrations.ssoRemoveDomainLoading"),
     });
   };
 
@@ -66,7 +66,7 @@ export const DomainVerificationCard = ({ domain, connectionId }: Props) => {
             size={"xs"}
             onClick={() => setModal(true)}
           >
-            Verify
+            {t("integrations.ssoVerify")}
           </Button>
         )}
 
@@ -84,6 +84,7 @@ export const DomainVerificationCard = ({ domain, connectionId }: Props) => {
 };
 
 const VerificationStatus = ({ status }: { status: DomainValidationStatus }) => {
+  const t = useTranslations();
   const isVerified = status === DomainValidationStatus.VERIFIED;
   const isPending = status === DomainValidationStatus.PENDING;
   const isFailed = status === DomainValidationStatus.FAILED;
@@ -102,9 +103,9 @@ const VerificationStatus = ({ status }: { status: DomainValidationStatus }) => {
           isFailed && "bg-red-500",
         )}
       ></span>
-      {isVerified && "Ownership Verified"}
-      {isFailed && "Verification Failed"}
-      {isPending && "Pending Verification"}
+      {isVerified && t("integrations.ssoOwnershipVerified")}
+      {isFailed && t("integrations.ssoVerificationFailed")}
+      {isPending && t("integrations.ssoPendingVerification")}
     </span>
   );
 };

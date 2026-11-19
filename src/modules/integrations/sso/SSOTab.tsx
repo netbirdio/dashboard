@@ -33,10 +33,7 @@ export default function SSOTab() {
           />
         </Breadcrumbs>
         <h1>{t("common.singleSignOn")}</h1>
-        <Paragraph>
-          Configure your preferred Identity Provider (IdP) to enable Single
-          Sign-On (SSO) for your team.
-        </Paragraph>
+        <Paragraph>{t("integrations.ssoTabDescription")}</Paragraph>
         <Paragraph>
           <InlineLink
             href={

@@ -104,9 +104,8 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
 
   const regenerateAuthToken = async () => {
     const choice = await confirm({
-      title: `Regenerate Auth Token?`,
-      description:
-        "Are you sure you want to regenerate the auth token? You will need to update the token in your Jumpcloud configuration.",
+      title: t("integrations.idpRegenerateAuthTokenTitle"),
+      description: t("integrations.idpJumpcloudRegenerateDesc"),
       confirmText: t("integrations.regenerateButton"),
       cancelText: t("common.cancel"),
       type: "default",
@@ -115,21 +114,25 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
     if (!choice) return;
 
     notify({
-      title: "Jumpcloud Integration",
-      description: `Auth token for Jumpcloud was successfully regenerated`,
+      title: t("integrations.idpIntegrationTitle", {
+        name: t("integrations.idpJumpcloud"),
+      }),
+      description: t("integrations.idpRegeneratedDescription", {
+        name: t("integrations.idpJumpcloud"),
+      }),
       promise: scimRequest.post({}, `/${config.id}/token`).then((r) => {
         mutate("/integrations/scim-idp");
         setAuthToken(r.auth_token);
         updateRef([r.auth_token, groupPrefixes, userGroupPrefixes]);
       }),
-      loadingMessage: "Updating your auth token...",
+      loadingMessage: t("integrations.idpUpdatingAuthToken"),
     });
   };
 
   const deleteIntegration = async () => {
     const choice = await confirm({
-      title: `Delete integration?`,
-      description: "Are you sure you want to delete this integration?",
+      title: t("integrations.idpDeleteIntegrationTitle"),
+      description: t("integrations.idpConfirmDeleteDesc"),
       confirmText: t("common.delete"),
       cancelText: t("common.cancel"),
       type: "danger",
@@ -138,20 +141,28 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
     if (!choice) return;
 
     notify({
-      title: "Jumpcloud Integration",
-      description: `Jumpcloud was successfully deleted`,
+      title: t("integrations.idpIntegrationTitle", {
+        name: t("integrations.idpJumpcloud"),
+      }),
+      description: t("integrations.idpDeletedDescription", {
+        name: t("integrations.idpJumpcloud"),
+      }),
       promise: scimRequest.del({}, `/${config.id}`).then(() => {
         mutate("/integrations/scim-idp");
         onSuccess();
       }),
-      loadingMessage: "Deleting integration...",
+      loadingMessage: t("integrations.idpDeletingLoading"),
     });
   };
 
   const updateIntegration = async () => {
     notify({
-      title: "Jumpcloud Integration",
-      description: `Jumpcloud was successfully updated`,
+      title: t("integrations.idpIntegrationTitle", {
+        name: t("integrations.idpJumpcloud"),
+      }),
+      description: t("integrations.idpUpdatedDescription", {
+        name: t("integrations.idpJumpcloud"),
+      }),
       promise: scimRequest
         .put(
           {
@@ -170,7 +181,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
           mutate("/integrations/scim-idp");
           onSuccess();
         }),
-      loadingMessage: "Updating integration...",
+      loadingMessage: t("integrations.idpUpdatingLoading"),
     });
   };
 
@@ -185,8 +196,10 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
 
       <IntegrationModalHeader
         image={integrationImage}
-        title={"Jumpcloud Configuration"}
-        description={"Sync your users and groups from Jumpcloud to NetBird."}
+        title={t("integrations.idpConfigurationTitle", {
+          name: t("integrations.idpJumpcloud"),
+        })}
+        description={t("integrations.idpJumpcloudConfigDescription")}
       />
 
       <Tabs
@@ -238,11 +251,11 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
               <Card.List>
                 <Card.ListItem
                   copy={!authToken.includes("*")}
-                  copyText={"Auth token"}
+                  copyText={t("integrations.idpAuthTokenCopy")}
                   label={
                     <>
                       <KeyRound size={16} />
-                      Auth Token
+                      {t("integrations.idpAuthToken")}
                     </>
                   }
                   value={authToken}
@@ -251,7 +264,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
             </Card>
             <Button variant={"secondary"} onClick={regenerateAuthToken}>
               <RefreshCcw size={16} />
-              Regenerate Auth Token
+              {t("integrations.idpRegenerateAuthToken")}
             </Button>
             <EmbeddedIdentityProviderSelect
               value={connectorId}
@@ -285,8 +298,8 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
             <GroupPrefixHelpText type={"user-groups"} />
           </div>
           <GroupPrefixInput
-            addText={"Add user group filter"}
-            text={"User group starts with..."}
+            addText={t("integrations.idpAddUserGroupFilter")}
+            text={t("integrations.idpUserGroupStartsWith")}
             value={userGroupPrefixes}
             onChange={setUserGroupPrefixes}
           />
@@ -301,10 +314,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
               </div>
             </Label>
             <HelpText className={"max-w-lg mt-2"}>
-              Deleting this integration will remove the ability to sync users
-              and groups from your IdP to NetBird. If you delete the integration
-              you will need to reconfigure it again to enable the
-              synchronization.
+              {t("integrations.idpDeleteWarning")}
             </HelpText>
           </div>
           <Button

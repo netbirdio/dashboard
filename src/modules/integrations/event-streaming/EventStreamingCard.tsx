@@ -63,7 +63,7 @@ export const EventStreamingCard = () => {
         }
         title={t("common.eventStreaming")}
         action={<FeatureCardStatus enabled={enabled} />}
-        description={"Stream your activity events to third-party services."}
+        description={t("integrations.streamingCardDescription")}
       />
     </div>
   );

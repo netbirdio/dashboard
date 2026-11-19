@@ -33,8 +33,7 @@ export default function EventStreamingTab() {
         </Breadcrumbs>
         <h1>{t("common.eventStreaming")}</h1>
         <Paragraph>
-          Event Streaming allows you to stream NetBirds audit & traffic events
-          to different third-party services.
+          {t("integrations.streamingTabDescription")}
         </Paragraph>
         <Paragraph>
           <InlineLink
@@ -47,7 +46,7 @@ export default function EventStreamingTab() {
         </Paragraph>
 
         <LockedFeatureInfoCard
-          featureText={"Event Streaming"}
+          featureText={t("common.eventStreaming")}
           feature={"EVENT_STREAMING"}
         />
         <LockedFeatureOverlay feature={"EVENT_STREAMING"} opacity={100}>

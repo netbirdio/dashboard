@@ -6,6 +6,7 @@ import Separator from "@components/Separator";
 import { IconInfoCircle } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import { TimerIcon } from "lucide-react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 export const DEFAULT_SYNC_INTERVAL = 1;
 const MAX_SYNC_INTERVAL = 1440;
@@ -29,7 +30,9 @@ export const EDRSyncIntervalInput = ({
   value,
   onChange,
   className,
-}: Props) => (
+}: Props) => {
+  const t = useTranslations();
+  return (
   <div className={cn("flex flex-col gap-6", className)}>
     <Separator />
     <div className={"flex flex-row gap-3 w-full justify-between"}>
@@ -37,29 +40,30 @@ export const EDRSyncIntervalInput = ({
         <Label htmlFor={"sync-interval"}>
           <div className={"flex gap-2 items-center"}>
             <TimerIcon size={14} />
-            Sync Frequency
+            {t("integrations.edrSyncFrequency")}
           </div>
         </Label>
         <FullTooltip
           interactive={false}
           content={
             <div className={"max-w-xs text-xs"}>
-              Example: This property is set to 1 minute. If Jane&apos;s laptop
-              stops meeting the requirements in {name}, NetBird picks up the
-              change on its next check, within 1 minute, and blocks network
-              access.
+              {t("integrations.edrSyncFrequencyExample", { name })}
             </div>
           }
         >
           <HelpText className={"max-w-sm mt-1"}>
-            How often NetBird checks {name} for device status{" "}
-            <span className={"whitespace-nowrap"}>
-              changes.
-              <IconInfoCircle
-                size={14}
-                className={"relative inline ml-1 -top-[1px]"}
-              />
-            </span>
+            {t.rich("integrations.edrSyncFrequencyHelp", {
+              name,
+              nowrap: (chunks) => (
+                <span className={"whitespace-nowrap"}>{chunks}</span>
+              ),
+              icon: () => (
+                <IconInfoCircle
+                  size={14}
+                  className={"relative inline ml-1 -top-[1px]"}
+                />
+              ),
+            })}
           </HelpText>
         </FullTooltip>
       </div>
@@ -75,12 +79,15 @@ export const EDRSyncIntervalInput = ({
         error={
           isValidSyncInterval(value)
             ? undefined
-            : `Must be a whole number between 1 and ${MAX_SYNC_INTERVAL}`
+            : t("integrations.edrSyncIntervalError", {
+                max: MAX_SYNC_INTERVAL,
+              })
         }
         errorTooltip={true}
         onChange={(e) => onChange(e.target.value)}
-        customSuffix={"Minutes"}
+        customSuffix={t("integrations.edrMinutes")}
       />
     </div>
   </div>
-);
+  );
+};

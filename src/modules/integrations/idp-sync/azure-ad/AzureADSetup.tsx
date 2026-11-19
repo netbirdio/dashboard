@@ -93,8 +93,12 @@ export function SetupContent({ onSuccess }: ModalProps) {
 
   const connect = async () => {
     notify({
-      title: "Entra ID Integration",
-      description: `Entra ID was successfully connected to NetBird.`,
+      title: translate("integrations.idpIntegrationTitle", {
+        name: translate("integrations.idpEntraId"),
+      }),
+      description: translate("integrations.idpConnectedDescription", {
+        name: translate("integrations.idpEntraId"),
+      }),
       promise: azureRequest
         .post({
           client_secret: btoa(clientSecret), // Encode client secret to base64
@@ -112,7 +116,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
           mutate("/integrations/azure-idp");
           onSuccess();
         }),
-      loadingMessage: "Setting up integration...",
+      loadingMessage: translate("integrations.idpSettingUpLoading"),
     });
   };
 
@@ -147,10 +151,8 @@ export function SetupContent({ onSuccess }: ModalProps) {
 
       <IntegrationModalHeader
         image={integrationImage}
-        title={"Connect NetBird with Entra ID (API)"}
-        description={
-          "Start syncing your users and groups from Entra ID to NetBird. Follow the steps below to get started."
-        }
+        title={translate("integrations.idpAzureConnectTitle")}
+        description={translate("integrations.idpAzureConnectDescription")}
       />
 
       {step === -1 && (
@@ -177,18 +179,21 @@ export function SetupContent({ onSuccess }: ModalProps) {
             {translate("common.requiredPermissions")}
           </div>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
-            Ensure that you have an{" "}
-            <span className={"text-nb-gray-100 font-semibold"}>
-              Azure AD user account
-            </span>{" "}
-            with the following{" "}
-            <span className={"text-nb-gray-100 font-semibold"}>
-              permissions
-            </span>
-            .{" "}
-            {
-              "If you don't have the required permissions, ask your Azure AD administrator to grant them to you."
-            }
+            {translate.rich("integrations.idpPermissionsIntro", {
+              account: () => (
+                <span className={"text-nb-gray-100 font-semibold"}>
+                  {translate("integrations.idpAzureUserAccount")}
+                </span>
+              ),
+              requirement: () => (
+                <span className={"text-nb-gray-100 font-semibold"}>
+                  {translate("integrations.idpPermissionsWord")}
+                </span>
+              ),
+              followup: translate("integrations.idpPermissionsMissing", {
+                administrator: "Azure AD",
+              }),
+            })}
           </p>
           <div
             className={
@@ -201,7 +206,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
               }
             >
               <PlusCircle size={14} className={"text-sky-500"} />
-              Create Azure AD applications
+              {translate("integrations.idpAzureCreateApps")}
             </div>
             <div
               className={
@@ -209,7 +214,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
               }
             >
               <Settings2 size={14} className={"text-sky-500"} />
-              Manage Azure AD applications
+              {translate("integrations.idpAzureManageApps")}
             </div>
           </div>
         </div>
@@ -219,34 +224,39 @@ export function SetupContent({ onSuccess }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <Box size={20} />
-            Create and configure Azure AD application
+            {translate("integrations.idpAzureCreateApp")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p>
-                Navigate to{"  "}
-                <InlineLink
-                  className={"inline"}
-                  target={"_blank"}
-                  href={
-                    "https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/Overview"
-                  }
-                >
-                  Azure Active Directory
-                </InlineLink>
+                {translate.rich("integrations.idpAzureOpenDirectory", {
+                  link: (chunks) => (
+                    <InlineLink
+                      className={"inline"}
+                      target={"_blank"}
+                      href={
+                        "https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/Overview"
+                      }
+                    >
+                      {chunks}
+                    </InlineLink>
+                  ),
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Click <Mark>App Registrations</Mark> in the left menu then click
-                on the <Mark>+ New registration</Mark> button to create a new
-                application.
+                {translate.rich("integrations.idpAzureRegisterApp", {
+                  registrations: (chunks) => <Mark>{chunks}</Mark>,
+                  new: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                Fill in the form with the following values and click{" "}
-                <Mark>Register</Mark>
+                {translate.rich("integrations.idpAzureFillRegistration", {
+                  register: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -254,20 +264,19 @@ export function SetupContent({ onSuccess }: ModalProps) {
           <MinimalList
             data={[
               {
-                label: "Name",
+                label: translate("common.name"),
                 value: "NetBird",
               },
               {
-                label: "Account Types",
-                value:
-                  "Accounts in this organizational directory only (Default Directory only - Single tenant)",
+                label: translate("integrations.idpAzureAccountTypesLabel"),
+                value: translate("integrations.idpAzureAccountTypes"),
               },
               {
-                label: "Redirect Type",
-                value: "Single-page application (SPA)",
+                label: translate("integrations.idpAzureRedirectType"),
+                value: translate("integrations.idpAzureRedirectSpa"),
               },
               {
-                label: "Redirect URI",
+                label: translate("integrations.idpAzureRedirectUri"),
                 value: "https://app.netbird.io/silent-auth",
               },
             ]}
@@ -279,32 +288,41 @@ export function SetupContent({ onSuccess }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <Shield size={20} />
-            Add API permissions
+            {translate("integrations.idpAzureAppPermissions")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                Click <Mark>API permissions</Mark> on the left side menu
+                {translate.rich("integrations.idpAzureOpenPermissions", {
+                  permissions: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Click <Mark>Add a permission</Mark> then{" "}
-                <Mark>Microsoft Graph</Mark> and then on the{" "}
-                <Mark>Application permissions</Mark> tab.
+                {translate.rich("integrations.idpAzureChooseGraph", {
+                  add: (chunks) => <Mark>{chunks}</Mark>,
+                  graph: (chunks) => <Mark>{chunks}</Mark>,
+                  application: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={3}>
               <p className={"font-normal"}>
-                In <Mark>Select permissions</Mark> select{" "}
-                <Mark>User.Read.All</Mark> and <Mark>Group.Read.All</Mark> and
-                click <Mark>Add permissions</Mark>
+                {translate.rich("integrations.idpAzureSelectPermissions", {
+                  select: (chunks) => <Mark>{chunks}</Mark>,
+                  users: (chunks) => <Mark>{chunks}</Mark>,
+                  groups: (chunks) => <Mark>{chunks}</Mark>,
+                  add: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={4} line={false}>
               <p className={"font-normal"}>
-                Click <Mark>Grant admin consent for Default Directory</Mark> and
-                click <Mark>{translate("common.yes")}</Mark>
+                {translate.rich("integrations.idpAzureGrantConsent", {
+                  grant: (chunks) => <Mark>{chunks}</Mark>,
+                  yes: () => <Mark>{translate("common.yes")}</Mark>,
+                })}
               </p>
               <Lightbox image={azureGrantAdmin} />
             </Steps.Step>
@@ -316,29 +334,39 @@ export function SetupContent({ onSuccess }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <KeyRound size={20} />
-            Generate client secret
+            {translate("integrations.idpAzureGenerateSecret")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                Navigate to <Mark>Certificates & secrets</Mark> on left side
-                menu
+                {translate.rich("integrations.idpAzureOpenSecrets", {
+                  secrets: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Click on <Mark>+ New client secret</Mark>
+                {translate.rich("integrations.idpAzureNewSecret", {
+                  new: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={3}>
               <p className={"font-normal"}>
-                {translate("common.add") + " "}<Mark copy>NetBird</Mark> as the description and click{" "}
-                <Mark>{translate("common.add")}</Mark>
+                {translate.rich("integrations.idpAzureAddSecret", {
+                  add: () => <>{translate("common.add") + " "}</>,
+                  name: () => <Mark copy>NetBird</Mark>,
+                  addAgain: () => <Mark>{translate("common.add")}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={4} line={false}>
               <p className={"font-normal"}>
-                Copy the <Mark>{translate("integrations.headerValue")}</Mark> and paste it here
+                {translate.rich("integrations.idpAzureCopySecret", {
+                  value: () => (
+                    <Mark>{translate("integrations.headerValue")}</Mark>
+                  ),
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -363,28 +391,34 @@ export function SetupContent({ onSuccess }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <Box size={20} />
-            Enter Application ID and Directory ID
+            {translate("integrations.idpAzureEnterIds")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                Navigate to{" "}
-                <InlineLink
-                  target={"_blank"}
-                  className={"inline"}
-                  href={
-                    "https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps"
-                  }
-                >
-                  All applications
-                </InlineLink>
+                {translate.rich("integrations.idpAzureOpenAllApps", {
+                  link: (chunks) => (
+                    <InlineLink
+                      target={"_blank"}
+                      className={"inline"}
+                      href={
+                        "https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps"
+                      }
+                    >
+                      {chunks}
+                    </InlineLink>
+                  ),
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2} line={false}>
               <p className={"font-normal"}>
-                {translate("common.select") + " "}<Mark>NetBird</Mark> application in overview page and
-                enter your <Mark>Application (client) ID</Mark> and{" "}
-                <Mark>Directory (tenant) ID</Mark>
+                {translate.rich("integrations.idpAzureEnterIdsHelp", {
+                  select: () => <>{translate("common.select") + " "}</>,
+                  app: (chunks) => <Mark>{chunks}</Mark>,
+                  client: (chunks) => <Mark>{chunks}</Mark>,
+                  directory: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -395,7 +429,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
               customPrefix={
                 <div className={"min-w-[165px] flex gap-2 items-center"}>
                   <Box size={16} />
-                  Application (client) ID
+                  {translate("integrations.idpApplicationClientId")}
                 </div>
               }
               placeholder={"62d3a656-c87d-4f30-a242-5b6347e29e9f"}
@@ -408,7 +442,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
               customPrefix={
                 <div className={"min-w-[165px] flex gap-2 items-center"}>
                   <Folder size={16} />
-                  Directory (tenant) ID
+                  {translate("integrations.idpDirectoryTenantId")}
                 </div>
               }
               placeholder={"5d60468a-65b7-45eb-a61a-53ecfbcd1ea3"}
@@ -451,8 +485,8 @@ export function SetupContent({ onSuccess }: ModalProps) {
             </div>
 
             <GroupPrefixInput
-              addText={"Add user group filter"}
-              text={"User group starts with..."}
+              addText={translate("integrations.idpAddUserGroupFilter")}
+              text={translate("integrations.idpUserGroupStartsWith")}
               value={userGroupPrefixes}
               onChange={setUserGroupPrefixes}
             />
@@ -489,7 +523,9 @@ export function SetupContent({ onSuccess }: ModalProps) {
             disabled={isDisabled}
             onClick={() => setStep(step + 1)}
           >
-            {step == 0 ? "Get Started" : translate("common.continue")}
+            {step == 0
+              ? translate("integrations.idpGetStarted")
+              : translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -513,8 +549,14 @@ export function SetupContent({ onSuccess }: ModalProps) {
         >
           <Clock4 size={12} />
           <div>
-            Estimated setup time:
-            <span className={"font-medium"}> 10-20 Minutes</span>
+            {translate.rich("integrations.idpEstimatedSetupTime", {
+              duration: () => (
+                <span className={"font-medium"}>
+                  {" "}
+                  {translate("integrations.idpSetupDurationLong")}
+                </span>
+              ),
+            })}
           </div>
         </div>
       )}

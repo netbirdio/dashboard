@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/jumpcloud.png";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   IdentityProviderLog,
   ScimIntegration,
@@ -20,6 +21,7 @@ import { useIntegrations } from "@/modules/integrations/idp-sync/useIntegrations
 import { IntegrationCard } from "@/modules/integrations/IntegrationCard";
 
 export const Jumpcloud = () => {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const [setupModal, setSetupModal] = useState(false);
   const { permission } = usePermissions();
@@ -43,10 +45,13 @@ export const Jumpcloud = () => {
     if (!integration) return setSetupModal(true);
 
     notify({
-      title: "Jumpcloud Integration",
-      description: `Jumpcloud was successfully ${
-        state ? "enabled" : "disabled"
-      }`,
+      title: t("integrations.idpIntegrationTitle", {
+        name: t("integrations.idpJumpcloud"),
+      }),
+      description: t("integrations.idpStateDescription", {
+        name: t("integrations.idpJumpcloud"),
+        state: state ? t("common.enabled") : t("common.disabled"),
+      }),
       promise: scimRequest
         .put(
           {
@@ -58,7 +63,7 @@ export const Jumpcloud = () => {
           mutate("/integrations/scim-idp");
           setEnabled(state);
         }),
-      loadingMessage: "Updating integration...",
+      loadingMessage: t("integrations.idpUpdatingLoading"),
     });
   };
 
@@ -67,8 +72,8 @@ export const Jumpcloud = () => {
   ) : (
     <>
       <IntegrationCard
-        name="Jumpcloud"
-        description="Jumpcloud is a unified identity, device, and access management platform."
+        name={t("integrations.idpJumpcloud")}
+        description={t("integrations.idpJumpcloudDescription")}
         url={{
           title: "jumpcloud.com",
           href: "https://jumpcloud.com/",
@@ -91,7 +96,9 @@ export const Jumpcloud = () => {
             onClick={() => setSetupModal(true)}
           >
             <Repeat size={13} />
-            Connect Jumpcloud
+            {t("integrations.idpConnectButton", {
+              name: t("integrations.idpJumpcloud"),
+            })}
           </Button>
         }
       >
@@ -114,6 +121,7 @@ type ConfigurationProps = {
   config: ScimIntegration;
 };
 const ConfigurationButton = ({ config }: ConfigurationProps) => {
+  const t = useTranslations();
   const { data: logs } = useFetchApi<IdentityProviderLog[]>(
     `/integrations/scim-idp/${config.id}/logs`,
   );
@@ -121,9 +129,11 @@ const ConfigurationButton = ({ config }: ConfigurationProps) => {
   const [configModal, setConfigModal] = useState(false);
 
   const lastSync = useMemo(() => {
-    if (isEmpty(logs)) return "Not synchronized";
-    return "Synced " + dayjs().to(logs?.[0]?.timestamp);
-  }, [logs]);
+    if (isEmpty(logs)) return t("integrations.idpNotSynchronized");
+    return t("integrations.idpSyncedAgo", {
+      time: dayjs().to(logs?.[0]?.timestamp),
+    });
+  }, [logs, t]);
 
   return (
     <>

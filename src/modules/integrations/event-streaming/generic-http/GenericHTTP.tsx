@@ -50,10 +50,12 @@ export default function GenericHTTP() {
     const enabled = !genericHTTPIntegration.enabled;
 
     notify({
-      title: `Generic HTTP Integration`,
-      description: `HTTP Integration was successfully ${
-        enabled ? "enabled" : "disabled"
-      }.`,
+      title: t("integrations.streamingGenericHttpTitle"),
+      description: t("integrations.streamingGenericHttpEnabledDescription", {
+        state: enabled
+          ? t("integrations.edrStateEnabled")
+          : t("integrations.edrStateDisabled"),
+      }),
       promise: integrationRequest
         .put(
           { config: genericHTTPIntegration.config, enabled },
@@ -62,9 +64,11 @@ export default function GenericHTTP() {
         .then(() => {
           mutate("/integrations/event-streaming");
         }),
-      loadingMessage: `${
-        enabled ? "Enabling" : "Disabling"
-      } Generic HTTP Integration...,`,
+      loadingMessage: t("integrations.streamingGenericHttpToggleLoading", {
+        action: enabled
+          ? t("integrations.streamingEnabling")
+          : t("integrations.streamingDisabling"),
+      }),
     });
   };
 
@@ -74,7 +78,7 @@ export default function GenericHTTP() {
     <>
       <IntegrationCard
         name="Generic HTTP"
-        description="Provide your custom HTTP endpoint to stream audit & traffic events."
+        description={t("integrations.streamingGenericHttpDescription")}
         url={{
           title: "docs.netbird.io",
           href: "https://docs.netbird.io/how-to/stream-activity-to-generic-http",

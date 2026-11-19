@@ -56,8 +56,10 @@ export const SentinelOne = ({ account }: Props) => {
 
     const choice = isCurrentlyEnabled
       ? await confirm({
-          title: `Disable SentinelOne?`,
-          description: `Are you sure you want to disable the SentinelOne integration?`,
+          title: t("integrations.edrDisableTitle", { name: "SentinelOne" }),
+          description: t("integrations.edrDisableDescription", {
+          name: "SentinelOne",
+        }),
           confirmText: t("common.disable"),
           cancelText: t("common.cancel"),
           type: "warning",
@@ -69,10 +71,13 @@ export const SentinelOne = ({ account }: Props) => {
       integration.groups?.map((group) => (group as Group).id) || [];
 
     notify({
-      title: "SentinelOne Integration",
-      description: `SentinelOne was successfully ${
-        isCurrentlyEnabled ? "disabled" : "enabled"
-      }`,
+      title: t("integrations.edrIntegrationTitle", { name: "SentinelOne" }),
+      description: t("integrations.edrToggledDescription", {
+        name: "SentinelOne",
+        state: isCurrentlyEnabled
+          ? t("integrations.edrStateDisabled")
+          : t("integrations.edrStateEnabled"),
+      }),
       promise: integrationRequest
         .put({
           ...integration,
@@ -83,7 +88,7 @@ export const SentinelOne = ({ account }: Props) => {
         .then(() => {
           mutate("/integrations/edr/sentinelone");
         }),
-      loadingMessage: "Updating integration...",
+      loadingMessage: t("integrations.edrUpdatingLoading"),
     });
   };
 
@@ -93,7 +98,7 @@ export const SentinelOne = ({ account }: Props) => {
     <>
       <IntegrationCard
         name={"SentinelOne"}
-        description="AI-powered endpoint protection platform for real-time threat detection and automated response."
+        description={t("integrations.edrSentinelOneDescription")}
         url={{
           title: "sentinelone.com",
           href: "https://www.sentinelone.com/",
@@ -129,9 +134,12 @@ const ConfigurationButton = ({ config }: ConfigurationProps) => {
   const [configModal, setConfigModal] = useState(false);
 
   const lastSync = useMemo(() => {
-    if (isEmpty(config?.last_synced_at)) return "Not synchronized";
-    return "Synced " + dayjs().to(config?.last_synced_at);
-  }, [config]);
+    if (isEmpty(config?.last_synced_at))
+      return t("integrations.edrNotSynchronized");
+    return t("integrations.edrSyncedAgo", {
+      time: dayjs().to(config?.last_synced_at),
+    });
+  }, [config, t]);
 
   return (
     <>

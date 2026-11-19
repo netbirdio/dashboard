@@ -34,16 +34,14 @@ export default function EDRTab({ account }: Props) {
           />
           <Breadcrumbs.Item
             href={"/integrations?tab=edr"}
-            label={"MDM & EDR"}
+            label={t("integrations.edrTabTitle")}
             icon={<ShieldCheck size={15} />}
             active
           />
         </Breadcrumbs>
-        <h1>MDM & EDR</h1>
+        <h1>{t("integrations.edrTabTitle")}</h1>
         <Paragraph className={"max-w-3xl"}>
-          Endpoint Detection and Response (EDR) and Mobile Device Management
-          (MDM) integrations allow you to restrict network access only to
-          devices managed by the IT department.
+          {t("integrations.edrTabDescription")}
         </Paragraph>
         <Paragraph>
           <InlineLink
@@ -57,7 +55,7 @@ export default function EDRTab({ account }: Props) {
           </InlineLink>
         </Paragraph>
 
-        <LockedFeatureInfoCard feature={"EDR"} featureText={"MDM & EDR"} />
+        <LockedFeatureInfoCard feature={"EDR"} featureText={t("integrations.edrTabTitle")} />
         <LockedFeatureOverlay feature={"EDR"} opacity={100}>
           <div
             className={

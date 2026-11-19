@@ -31,6 +31,7 @@ export const OidcIntegrationCard = ({
   logo,
   discoveryPlaceholder,
 }: Props) => {
+  const t = useTranslations();
   const [setupModal, setSetupModal] = useState(false);
   const { oktaConnection, isDataLoading, toggleConnection, mutate, error } =
     useEnterpriseConnections();
@@ -38,14 +39,17 @@ export const OidcIntegrationCard = ({
   const handleToggleConnection = () => {
     if (!oktaConnection) return;
     notify({
-      title: "OIDC Integration",
-      description: `Okta was successfully ${
-        oktaConnection?.enabled ? "disabled" : "enabled"
-      }`,
+      title: t("integrations.ssoOidcTitle"),
+      description: t("integrations.idpStateDescription", {
+        name: t("integrations.idpOkta"),
+        state: oktaConnection?.enabled
+          ? t("common.disabled")
+          : t("common.enabled"),
+      }),
       promise: toggleConnection(oktaConnection.id).then(() => {
         mutate();
       }),
-      loadingMessage: "Updating integration...",
+      loadingMessage: t("integrations.idpUpdatingLoading"),
     });
   };
 
@@ -132,11 +136,11 @@ const ConfigurationContent = ({ connection }: ConfigurationProps) => {
             )}
           ></span>
           {hasSomeVerifiedDomains
-            ? "Active"
+            ? t("integrations.ssoActive")
             : hasSomePendingDomains
-            ? "Pending Verification"
+            ? t("integrations.ssoPendingVerification")
             : hasSomeFailedDomains
-            ? "Failed Verification"
+            ? t("integrations.ssoFailedVerification")
             : t("common.inactive")}
         </div>
       ) : (

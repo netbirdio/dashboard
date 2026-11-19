@@ -50,9 +50,10 @@ export const Intune = ({ account }: Props) => {
 
     const choice = isCurrentlyEnabled
       ? await confirm({
-          title: `Disable Intune?`,
-          description:
-            "Are you sure you want to disable the Intune integration?",
+          title: t("integrations.edrDisableTitle", { name: "Intune" }),
+          description: t("integrations.edrDisableDescription", {
+            name: "Intune",
+          }),
           confirmText: t("common.disable"),
           cancelText: t("common.cancel"),
           type: "warning",
@@ -64,10 +65,13 @@ export const Intune = ({ account }: Props) => {
       integration.groups?.map((group) => (group as Group).id) || [];
 
     notify({
-      title: "Intune Integration",
-      description: `Intune was successfully ${
-        isCurrentlyEnabled ? "disabled" : "enabled"
-      }`,
+      title: t("integrations.edrIntegrationTitle", { name: "Intune" }),
+      description: t("integrations.edrToggledDescription", {
+        name: "Intune",
+        state: isCurrentlyEnabled
+          ? t("integrations.edrStateDisabled")
+          : t("integrations.edrStateEnabled"),
+      }),
       promise: intuneRequest
         .put({
           ...integration,
@@ -78,7 +82,7 @@ export const Intune = ({ account }: Props) => {
         .then(() => {
           mutate("/integrations/edr/intune");
         }),
-      loadingMessage: "Updating integration...",
+      loadingMessage: t("integrations.edrUpdatingLoading"),
     });
   };
 
@@ -88,7 +92,7 @@ export const Intune = ({ account }: Props) => {
     <>
       <IntegrationCard
         name="Intune"
-        description="Microsoft Intune is a cloud-based unified endpoint management for your organization."
+        description={t("integrations.edrIntuneDescription")}
         url={{
           title: "microsoft.com",
           href: "https://www.microsoft.com/en-us/security/business/endpoint-management/microsoft-intune",

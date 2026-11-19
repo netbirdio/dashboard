@@ -43,10 +43,7 @@ export default function IdentityProviderTab() {
           />
         </Breadcrumbs>
         <h1>{t("common.identityProviderSync")}</h1>
-        <Paragraph>
-          Configure your preferred Identity Provider (IdP) to synchronize your
-          users and groups to NetBird.
-        </Paragraph>
+        <Paragraph>{t("integrations.idpTabDescription")}</Paragraph>
         <Paragraph>
           <InlineLink
             href={"https://docs.netbird.io/how-to/idp-sync"}
@@ -87,15 +84,17 @@ export default function IdentityProviderTab() {
             )}
           </div>
             { isNetBirdCloud() && <Callout variant={"info"} className={"max-w-lg mt-6"}>
-            Using Keycloak or another IdP? See our{" "}
-            <InlineLink
-              href={"https://docs.netbird.io/manage/team/idp-sync"}
-              target={"_blank"}
-              className={"inline !text-netbird-500 font-medium"}
-            >
-              documentation
-            </InlineLink>
-            .
+            {t.rich("integrations.idpKeycloakCallout", {
+              docs: (chunks) => (
+                <InlineLink
+                  href={"https://docs.netbird.io/manage/team/idp-sync"}
+                  target={"_blank"}
+                  className={"inline !text-netbird-500 font-medium"}
+                >
+                  {chunks}
+                </InlineLink>
+              ),
+            })}
           </Callout>}
         </LockedFeatureOverlay>
       </div>

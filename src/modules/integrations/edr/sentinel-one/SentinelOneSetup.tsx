@@ -140,8 +140,10 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
     const savedGroups = await saveGroups();
 
     notify({
-      title: "SentinelOne Integration",
-      description: `SentinelOne was successfully connected to NetBird.`,
+      title: translate("integrations.edrIntegrationTitle", { name: "SentinelOne" }),
+      description: translate("integrations.edrConnectedDescription", {
+        name: "SentinelOne",
+      }),
       promise: sentinelOneRequest
         .post({
           api_token: apiToken,
@@ -156,7 +158,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
           mutate("/integrations/edr/sentinelone");
           onSuccess();
         }),
-      loadingMessage: "Setting up integration...",
+      loadingMessage: translate("integrations.edrSettingUpLoading"),
     });
   };
 
@@ -216,10 +218,8 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
 
       <IntegrationModalHeader
         image={integrationImage}
-        title={"Connect NetBird with SentinelOne"}
-        description={
-          "Restrict network access to devices managed by SentinelOne based on their security posture."
-        }
+        title={translate("integrations.edrConnectTitle", { name: "SentinelOne" })}
+        description={translate("integrations.edrSentinelOneConnectDescription")}
       />
 
       {step == 0 && (
@@ -237,18 +237,11 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             {translate("common.requiredPermissions")}
           </div>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
-            Ensure that you have an{" "}
-            <span className={"text-nb-gray-100 font-semibold"}>
-              SentinelOne account
-            </span>{" "}
-            with the following{" "}
-            <span className={"text-nb-gray-100 font-semibold"}>
-              permissions
-            </span>
-            .{" "}
-            {
-              "If you don't have the required permissions, ask your administrator to grant them to you."
-            }
+            {translate.rich("integrations.edrPermissionsIntro", {
+              account: translate("integrations.edrSentinelOneAccount"),
+              requirement: translate("integrations.edrPermissionsWord"),
+              followup: translate("integrations.edrPermissionsMissingAdmin"),
+            })}
           </p>
           <div
             className={
@@ -261,7 +254,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
               }
             >
               <PlusCircle size={14} className={"text-sky-500"} />
-              Create API Tokens
+              {translate("integrations.edrCreateApiTokens")}
             </div>
             <div
               className={
@@ -269,7 +262,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
               }
             >
               <Settings2 size={14} className={"text-sky-500"} />
-              Manage API Tokens
+              {translate("integrations.edrManageApiTokens")}
             </div>
           </div>
         </div>
@@ -279,18 +272,17 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <GlobeIcon size={18} />
-            Get your SentinelOne Console URL
+            {translate("integrations.edrGetConsoleUrl", { name: "SentinelOne" })}
           </p>
 
           <Steps>
             <Steps.Step step={1}>
-              <p>Navigate to your SentinelOne Management Console.</p>
+              <p>{translate("integrations.edrNavigateConsole", { name: "SentinelOne" })}</p>
             </Steps.Step>
 
             <Steps.Step step={2} line={false}>
               <p>
-                Copy your SentinelOne console URL from the browser&apos;s
-                address bar and enter it here.
+                {translate("integrations.edrCopyConsoleUrl", { name: "SentinelOne" })}
               </p>
             </Steps.Step>
           </Steps>
@@ -305,7 +297,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <Box size={20} />
-            Create a SentinelOne API Token
+            {translate("integrations.edrCreateApiToken", { name: "SentinelOne" })}
           </p>
           <Steps>
             <Steps.Step step={1}>
@@ -316,31 +308,37 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
                     href={sentinelOneServiceUsersUrl}
                     target={"_blank"}
                   >
-                    Settings » Users » Service Users
+                    {translate("integrations.edrServiceUsersPath")}
                     <ExternalLinkIcon size={14} className={"ml-1"} />
                   </InlineLink>
                 ) : (
-                  <Mark>Settings » Users » Service Users</Mark>
+                  <Mark>{translate("integrations.edrServiceUsersPath")}</Mark>
                 )}
               </p>
             </Steps.Step>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                Click <Mark>{translate("integrations.create")}</Mark>
+                {translate.rich("integrations.edrClickCreate", {
+                  create: translate("integrations.create"),
+                  mark: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={3}>
               <p className={"font-normal"}>
-                Enter <Mark copy>NetBird Integration</Mark> as the name, a
-                optional description and select your preferred expiration date.
-                Click <Mark>{translate("common.next")}</Mark>
+                {translate.rich("integrations.edrEnterServiceUser", {
+                  next: translate("common.next"),
+                  mark: (chunks) => <Mark copy>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={4} line={false}>
               <p className={"font-normal"}>
-                Select your Site and set the Scope to <Mark>Viewer</Mark>
-                <br /> Click <Mark>{translate("integrations.createUserTitle")}</Mark>, copy your API Token and
-                enter it below.
+                {translate.rich("integrations.edrSelectSiteAndScope", {
+                  createUser: translate("integrations.createUserTitle"),
+                  mark: (chunks) => <Mark>{chunks}</Mark>,
+                  br: () => <br />,
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -372,7 +370,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
           </p>
 
           <HelpText className={"max-w-lg mt-2"}>
-            Select groups you want to apply the SentinelOne integration to
+            {translate("integrations.edrSelectGroupsFor", { name: "SentinelOne" })}
           </HelpText>
 
           <PeerGroupSelector values={groups} onChange={setGroups} />
@@ -383,11 +381,10 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4 mb-3"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <ShieldCheckIcon size={16} />
-            Compliance Requirements
+            {translate("integrations.edrComplianceRequirements")}
           </p>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
-            Set the specific requirements that devices must meet to be
-            considered compliant.
+            {translate("integrations.edrComplianceHelp")}
           </p>
 
           <SentinelOneMatchSettings
@@ -401,23 +398,23 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4 mb-3"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <RefreshCcw size={16} />
-            SentinelOne Sync Window
+            {translate("integrations.edrSyncWindowTitle", { name: "SentinelOne" })}
           </p>
           <div className={"mt-2 flex flex-row gap-3"}>
             <FullTooltip
               interactive={false}
               content={
                 <div className={"max-w-xs text-xs"}>
-                  Example: This property is set to 24 hours. Jane&apos;s laptop
-                  hasn&apos;t synced with SentinelOne for 27 hours. Even though
-                  it&apos;s marked as Compliant in SentinelOne, it will still be
-                  blocked from network access.
+                  {translate("integrations.edrSyncWindowExample", {
+                    name: "SentinelOne",
+                  })}
                 </div>
               }
             >
               <HelpText className={"max-w-lg"}>
-                Devices not synced with SentinelOne in this time won&apos;t have
-                network access.
+                {translate("integrations.edrSyncWindowHelp", {
+                  name: "SentinelOne",
+                })}
                 <IconInfoCircle
                   size={14}
                   className={"relative inline ml-1 -top-[1px]"}
@@ -432,7 +429,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
               value={lastSyncedInterval}
               type={"number"}
               onChange={(e) => setLastSyncedInterval(e.target.value)}
-              customSuffix={"Hours"}
+              customSuffix={translate("integrations.edrHours")}
             />
           </div>
           <EDRSyncIntervalInput
@@ -462,7 +459,9 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             disabled={isDisabled}
             onClick={() => setStep(step + 1)}
           >
-            {step == 0 ? "Get Started" : translate("common.continue")}
+            {step == 0
+              ? translate("integrations.edrGetStarted")
+              : translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -486,8 +485,11 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         >
           <Clock4 size={12} />
           <div>
-            Estimated setup time:
-            <span className={"font-medium"}> 10-20 Minutes</span>
+            {translate("integrations.edrEstimatedSetupTime")}
+            <span className={"font-medium"}>
+              {" "}
+              {translate("integrations.edrSetupDuration", { duration: "10-20" })}
+            </span>
           </div>
         </div>
       )}

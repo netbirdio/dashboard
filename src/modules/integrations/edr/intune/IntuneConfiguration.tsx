@@ -99,8 +99,8 @@ export function ConfigurationContent({
 
   const deleteIntegration = async () => {
     const choice = await confirm({
-      title: `Delete integration?`,
-      description: "Are you sure you want to delete this integration?",
+      title: translate("integrations.edrDeleteTitle"),
+      description: translate("integrations.edrConfirmDeleteDescription"),
       confirmText: translate("common.delete"),
       cancelText: translate("common.cancel"),
       type: "danger",
@@ -109,13 +109,15 @@ export function ConfigurationContent({
     if (!choice) return;
 
     notify({
-      title: "Intune Integration",
-      description: `Intune was successfully deleted`,
+      title: translate("integrations.edrIntegrationTitle", { name: "Intune" }),
+      description: translate("integrations.edrDeletedDescription", {
+        name: "Intune",
+      }),
       promise: intuneRequest.del({}).then(() => {
         mutate("/integrations/edr/intune");
         onSuccess();
       }),
-      loadingMessage: "Deleting integration...",
+      loadingMessage: translate("integrations.edrDeletingLoading"),
     });
   };
 
@@ -123,8 +125,10 @@ export function ConfigurationContent({
     const savedGroups = await saveGroups();
 
     notify({
-      title: "Intune Integration",
-      description: `Intune was successfully updated`,
+      title: translate("integrations.edrIntegrationTitle", { name: "Intune" }),
+      description: translate("integrations.edrUpdatedDescription", {
+        name: "Intune",
+      }),
       promise: intuneRequest
         .put({
           client_id: clientId,
@@ -140,7 +144,7 @@ export function ConfigurationContent({
           mutate("/integrations/edr/intune");
           onSuccess();
         }),
-      loadingMessage: "Updating integration...",
+      loadingMessage: translate("integrations.edrUpdatingLoading"),
     });
   };
 
@@ -166,10 +170,8 @@ export function ConfigurationContent({
 
       <IntegrationModalHeader
         image={integrationImage}
-        title={"Intune Configuration"}
-        description={
-          "Restrict network access to IT-managed devices marked Compliant in Intune."
-        }
+        title={translate("integrations.edrConfigurationTitle", { name: "Intune" })}
+        description={translate("integrations.edrIntuneConfigDescription")}
       />
 
       <Tabs
@@ -194,7 +196,7 @@ export function ConfigurationContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Intune Sync Window
+            {translate("integrations.edrSyncWindowTitle", { name: "Intune" })}
           </TabsTrigger>
           <TabsTrigger value={"settings"}>
             <Cog
@@ -225,7 +227,7 @@ export function ConfigurationContent({
               customPrefix={
                 <div className={"min-w-[165px] flex gap-2 items-center"}>
                   <Box size={16} />
-                  Application (client) ID
+                  {translate("integrations.edrApplicationClientId")}
                 </div>
               }
               placeholder={"62d3a656-c87d-4f30-a242-5b6347e29e9f"}
@@ -240,7 +242,7 @@ export function ConfigurationContent({
               customPrefix={
                 <div className={"min-w-[165px] flex gap-2 items-center"}>
                   <Folder size={16} />
-                  Directory (tenant) ID
+                  {translate("integrations.edrDirectoryTenantId")}
                 </div>
               }
               placeholder={"5d60468a-65b7-45eb-a61a-53ecfbcd1ea3"}
@@ -290,7 +292,7 @@ export function ConfigurationContent({
               </div>
             </Label>
             <HelpText className={"max-w-lg mt-2"}>
-              Select groups you want to apply the Intune integration to
+              {translate("integrations.edrSelectGroupsFor", { name: "Intune" })}
             </HelpText>
 
             <PeerGroupSelector values={groups} onChange={setGroups} />
@@ -303,16 +305,14 @@ export function ConfigurationContent({
               interactive={false}
               content={
                 <div className={"max-w-xs text-xs"}>
-                  Example: This property is set to 24 hours. Jane&apos;s laptop
-                  hasn&apos;t synced with Intune for 27 hours. Even though
-                  it&apos;s marked as Compliant in Intune, it will still be
-                  blocked from network access
+                  {translate("integrations.edrSyncWindowExample", {
+                    name: "Intune",
+                  })}
                 </div>
               }
             >
               <HelpText className={"max-w-sm"}>
-                Devices not synced with Intune in this time won&apos;t have
-                network access.
+                {translate("integrations.edrSyncWindowHelp", { name: "Intune" })}
                 <IconInfoCircle
                   size={14}
                   className={"relative inline ml-1 -top-[1px]"}
@@ -327,7 +327,7 @@ export function ConfigurationContent({
               value={lastSyncedInterval}
               type={"number"}
               onChange={(e) => setLastSyncedInterval(e.target.value)}
-              customSuffix={"Hours"}
+              customSuffix={translate("integrations.edrHours")}
             />
           </div>
         </TabsContent>
@@ -341,10 +341,7 @@ export function ConfigurationContent({
               </div>
             </Label>
             <HelpText className={"max-w-lg mt-2"}>
-              Deleting this integration will remove the ability to sync users
-              and groups from your IdP to NetBird. If you delete the integration
-              you will need to reconfigure it again to enable the
-              synchronization.
+              {translate("integrations.edrDeleteIdpWarning")}
             </HelpText>
           </div>
           <Button

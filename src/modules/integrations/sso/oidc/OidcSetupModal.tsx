@@ -55,9 +55,9 @@ export default function OidcSetupModal({
 
   const connect = () => {
     notify({
-      title: "Okta SSO Integration",
-      description: "Okta SSO was successfully connected",
-      loadingMessage: "Connecting Okta SSO...",
+      title: t("integrations.ssoIntegrationTitle"),
+      description: t("integrations.ssoConnectedDescription"),
+      loadingMessage: t("integrations.ssoConnectingLoading"),
       promise: createOrUpdateConnection({
         discovery_url: discoveryUrl,
         client_id: clientId,
@@ -73,16 +73,16 @@ export default function OidcSetupModal({
         );
         if (!oktaConnection) {
           notify({
-            title: "Okta SSO Integration",
-            description: "Failed to connect Okta SSO",
+            title: t("integrations.ssoIntegrationTitle"),
+            description: t("integrations.ssoFailedToConnect"),
           });
           return;
         }
         const domain = oktaConnection.domains?.[0] || undefined;
         if (!domain) {
           notify({
-            title: "Okta SSO Integration",
-            description: "Failed to connect Okta SSO",
+            title: t("integrations.ssoIntegrationTitle"),
+            description: t("integrations.ssoFailedToConnect"),
           });
           return;
         }
@@ -120,17 +120,15 @@ export default function OidcSetupModal({
 
           <IntegrationModalHeader
             image={logo}
-            title={`Connect NetBird with ${name}`}
-            description={`Use ${name} as a Single Sign-On provider to authenticate users. Follow the steps below to get started.`}
+            title={t("integrations.ssoConnectTitle", { name })}
+            description={t("integrations.ssoConnectDescription", { name })}
           />
 
           <div className={"px-8 py-3 flex flex-col gap-0 mt-2"}>
             <Steps>
               <Steps.Step step={1}>
                 <p className={"font-normal"}>
-                  {
-                    "Obtaining the Client ID and Secret differs across providers. Please check your provider's documentation."
-                  }
+                  {t("integrations.ssoOidcClientSecretHelp")}
                 </p>
                 <Input
                   customPrefix={
@@ -155,8 +153,9 @@ export default function OidcSetupModal({
               {name.toLowerCase() !== "jumpcloud" && (
                 <Steps.Step step={2}>
                   <p className={"font-normal"}>
-                    Please provide the <Mark>OpenID Connect Discovery</Mark>{" "}
-                    endpoint. It should be publicly accessible and SSL secured.
+                    {t.rich("integrations.ssoOidcDiscoveryHelp", {
+                      endpoint: (chunks) => <Mark>{chunks}</Mark>,
+                    })}
                   </p>
                   <Input
                     customPrefix={<GlobeIcon size={16} />}
@@ -175,9 +174,9 @@ export default function OidcSetupModal({
                 line={false}
               >
                 <p className={"font-normal"}>
-                  Enter your
-                  <Mark>Primary E-Mail Domain</Mark> which will later be used to
-                  log in to NetBird.
+                  {t.rich("integrations.ssoPrimaryEmailDomain", {
+                    domain: (chunks) => <Mark>{chunks}</Mark>,
+                  })}
                 </p>
                 <Input
                   customPrefix={<GlobeIcon size={16} />}
@@ -191,16 +190,19 @@ export default function OidcSetupModal({
           <ModalFooter className={"items-center"}>
             <div className={"w-full"}>
               <Paragraph className={"text-sm mt-auto"}>
-                Learn more about
-                <InlineLink
-                  href={
-                    "https://docs.netbird.io/how-to/register-machines-using-setup-keys"
-                  }
-                  target={"_blank"}
-                >
-                  {name} Integration
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
+                {t.rich("integrations.ssoOidcLearnMore", {
+                  link: () => (
+                    <InlineLink
+                      href={
+                        "https://docs.netbird.io/how-to/register-machines-using-setup-keys"
+                      }
+                      target={"_blank"}
+                    >
+                      {t("integrations.ssoNamedIntegration", { name })}
+                      <ExternalLinkIcon size={12} />
+                    </InlineLink>
+                  ),
+                })}
               </Paragraph>
             </div>
             <div className={"flex gap-3 w-full justify-end"}>

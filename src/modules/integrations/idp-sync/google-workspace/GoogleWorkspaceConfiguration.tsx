@@ -101,8 +101,8 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
 
   const deleteIntegration = async () => {
     const choice = await confirm({
-      title: `Delete integration?`,
-      description: "Are you sure you want to delete this integration?",
+      title: t("integrations.idpDeleteIntegrationTitle"),
+      description: t("integrations.idpConfirmDeleteDesc"),
       confirmText: t("common.delete"),
       cancelText: t("common.cancel"),
       type: "danger",
@@ -111,20 +111,28 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
     if (!choice) return;
 
     notify({
-      title: "Google Workspace Integration",
-      description: `Google Workspace was successfully deleted`,
+      title: t("integrations.idpIntegrationTitle", {
+        name: t("integrations.idpGoogleWorkspace"),
+      }),
+      description: t("integrations.idpDeletedDescription", {
+        name: t("integrations.idpGoogleWorkspace"),
+      }),
       promise: googleRequest.del({}, `/${config.id}`).then(() => {
         mutate("/integrations/google-idp");
         onSuccess();
       }),
-      loadingMessage: "Deleting integration...",
+      loadingMessage: t("integrations.idpDeletingLoading"),
     });
   };
 
   const updateIntegration = async () => {
     notify({
-      title: "Google Workspace Integration",
-      description: `Google Workspace was successfully updated`,
+      title: t("integrations.idpIntegrationTitle", {
+        name: t("integrations.idpGoogleWorkspace"),
+      }),
+      description: t("integrations.idpUpdatedDescription", {
+        name: t("integrations.idpGoogleWorkspace"),
+      }),
       promise: googleRequest
         .put(
           {
@@ -148,7 +156,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
           mutate("/integrations/google-idp");
           onSuccess();
         }),
-      loadingMessage: "Updating integration...",
+      loadingMessage: t("integrations.idpUpdatingLoading"),
     });
   };
 
@@ -172,8 +180,10 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
 
       <IntegrationModalHeader
         image={integrationImage}
-        title={"Google Workspace Configuration"}
-        description={"Sync your users and groups from Google Workspace."}
+        title={t("integrations.idpConfigurationTitle", {
+          name: t("integrations.idpGoogleWorkspace"),
+        })}
+        description={t("integrations.idpGoogleConfigDescription")}
       />
 
       <Tabs
@@ -229,7 +239,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
               customPrefix={
                 <div className={"min-w-[165px] flex gap-2 items-center"}>
                   <Box size={16} />
-                  Customer ID
+                  {t("integrations.idpCustomerId")}
                 </div>
               }
               placeholder={"62d3a656-c87d-4f30-a242-5b6347e29e9f"}
@@ -244,7 +254,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
               customPrefix={
                 <div className={"min-w-[165px] flex gap-2 items-center"}>
                   <KeyRound size={16} />
-                  Service Account Key
+                  {t("integrations.idpServiceAccountKey")}
                 </div>
               }
               placeholder={"YdV7Q~JJ62Xl.LvYoBanxZR2sJA2va_3UbqvncY8"}
@@ -259,10 +269,9 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
 
             <div className={"flex justify-between mt-4"}>
               <div>
-                <Label>Sync Interval</Label>
+                <Label>{t("integrations.idpSyncInterval")}</Label>
                 <HelpText className={"max-w-[300px]"}>
-                  The interval in seconds when the synchronization should
-                  happen.
+                  {t("integrations.idpSyncIntervalHelp")}
                 </HelpText>
               </div>
               <Input
@@ -276,7 +285,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
                 customPrefix={
                   <RefreshCw size={16} className={"text-nb-gray-300"} />
                 }
-                customSuffix={"Seconds"}
+                customSuffix={t("integrations.idpSyncIntervalUnit")}
               />
             </div>
             <EmbeddedIdentityProviderSelect
@@ -311,8 +320,8 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
             <GroupPrefixHelpText type={"user-groups"} />
           </div>
           <GroupPrefixInput
-            addText={"Add user group filter"}
-            text={"User group starts with..."}
+            addText={t("integrations.idpAddUserGroupFilter")}
+            text={t("integrations.idpUserGroupStartsWith")}
             value={userGroupPrefixes}
             onChange={setUserGroupPrefixes}
           />
@@ -327,10 +336,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
               </div>
             </Label>
             <HelpText className={"max-w-lg mt-2"}>
-              Deleting this integration will remove the ability to sync users
-              and groups from your IdP to NetBird. If you delete the integration
-              you will need to reconfigure it again to enable the
-              synchronization.
+              {t("integrations.idpDeleteWarning")}
             </HelpText>
           </div>
           <Button

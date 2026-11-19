@@ -48,9 +48,8 @@ export default function Datadog() {
     if (!dataDogSettings) return setSetupModal(true);
 
     const choice = await confirm({
-      title: `Disconnect Datadog?`,
-      description:
-        "Disconnecting deletes the current configuration. You will need to start the setup process again.",
+      title: t("integrations.streamingDisconnectTitle", { name: "Datadog" }),
+      description: t("integrations.streamingDisconnectDescription"),
       confirmText: t("integrations.disconnect"),
       cancelText: t("common.cancel"),
       type: "warning",
@@ -58,12 +57,14 @@ export default function Datadog() {
     if (!choice) return;
 
     notify({
-      title: "Datadog Integration",
-      description: `Datadog was successfully disconnected`,
+      title: t("integrations.edrIntegrationTitle", { name: "Datadog" }),
+      description: t("integrations.streamingDisconnectedDescription", {
+        name: "Datadog",
+      }),
       promise: integrationRequest.del({}, "/" + dataDogSettings.id).then(() => {
         mutate("/integrations/event-streaming");
       }),
-      loadingMessage: "Disconnecting integration...",
+      loadingMessage: t("integrations.streamingDisconnectingLoading"),
     });
   };
 
@@ -73,7 +74,7 @@ export default function Datadog() {
     <>
       <IntegrationCard
         name="Datadog"
-        description="Datadog is a monitoring service for cloud-scale applications."
+        description={t("integrations.streamingDatadogDescription")}
         url={{
           title: "datadoghq.com",
           href: "https://www.datadoghq.com/",

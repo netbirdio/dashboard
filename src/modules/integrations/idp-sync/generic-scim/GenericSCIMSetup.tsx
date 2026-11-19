@@ -104,8 +104,8 @@ export function SetupContent({
       return;
     }
     notify({
-      title: `${name} Integration`,
-      description: `${name} was successfully set up`,
+      title: t("integrations.idpIntegrationTitle", { name: name ?? "" }),
+      description: t("integrations.idpSetUpDescription", { name: name ?? "" }),
       promise: integrationRequest
         .put(
           {
@@ -123,7 +123,7 @@ export function SetupContent({
           mutate("/integrations/scim-idp");
           onSuccess();
         }),
-      loadingMessage: "Setting up integration...",
+      loadingMessage: t("integrations.idpSettingUpLoading"),
     });
   };
 
@@ -196,8 +196,10 @@ export function SetupContent({
 
       <IntegrationModalHeader
         image={image || integrationImage}
-        title={`Connect NetBird with ${name}`}
-        description={`Start syncing your users and groups from ${name} to NetBird. Follow the steps below to get started.`}
+        title={t("integrations.idpConnectTitle", { name: name ?? "" })}
+        description={t("integrations.idpConnectDescription", {
+          name: name ?? "",
+        })}
       />
 
       {step === -1 && (
@@ -215,45 +217,51 @@ export function SetupContent({
           }
         >
           <p className={"mt-2 !text-nb-gray-300"}>
-            SCIM configuration varies by identity provider. Please refer to our{" "}
-            <InlineLink
-              className={"inline"}
-              target={"_blank"}
-              href={
-                "https://docs.netbird.io/how-to/idp-sync#supported-identity-providers"
-              }
-            >
-              IdP Documentation
-              <ExternalLinkIcon size={12} />
-            </InlineLink>{" "}
-            for provider-specific setup guides.
+            {t.rich("integrations.idpGenericScimIntro", {
+              docs: (chunks) => (
+                <InlineLink
+                  className={"inline"}
+                  target={"_blank"}
+                  href={
+                    "https://docs.netbird.io/how-to/idp-sync#supported-identity-providers"
+                  }
+                >
+                  {chunks}
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              ),
+            })}
           </p>
 
           <p className={"mt-2 !text-nb-gray-300"}>
-            If your identity provider is not listed in our documentation contact
-            us at{" "}
-            <InlineLink
-              className={"inline"}
-              target={"_blank"}
-              href={
-                "mailto:support@netbird.io?subject=Request%20for%20Assistance%3A%20Custom%20Identity%20Provider"
-              }
-            >
-              support@netbird.io
-            </InlineLink>
+            {t.rich("integrations.idpGenericNotListed", {
+              email: (chunks) => (
+                <InlineLink
+                  className={"inline"}
+                  target={"_blank"}
+                  href={
+                    "mailto:support@netbird.io?subject=Request%20for%20Assistance%3A%20Custom%20Identity%20Provider"
+                  }
+                >
+                  {chunks}
+                </InlineLink>
+              ),
+            })}
           </p>
           {!genericConnection && !isSSOLoading && isAuth0() && (
             <Callout className={"max-w-xl mt-5 text-left"} variant={"warning"}>
               <span>
-                Single-Sign-On needs to be enabled and active before you can
-                enable IdP sync.{" "}
-                <InlineLink
-                  href={"https://docs.netbird.io/how-to/single-sign-on"}
-                  target={"_blank"}
-                >
-                  How to enable SSO
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
+                {t.rich("integrations.idpGenericSsoRequired", {
+                  docs: (chunks) => (
+                    <InlineLink
+                      href={"https://docs.netbird.io/how-to/single-sign-on"}
+                      target={"_blank"}
+                    >
+                      {chunks}
+                      <ExternalLinkIcon size={12} />
+                    </InlineLink>
+                  ),
+                })}
               </span>
             </Callout>
           )}
@@ -292,8 +300,8 @@ export function SetupContent({
             </div>
 
             <GroupPrefixInput
-              addText={"Add user group filter"}
-              text={"User group starts with..."}
+              addText={t("integrations.idpAddUserGroupFilter")}
+              text={t("integrations.idpUserGroupStartsWith")}
               value={userGroupPrefixes}
               onChange={setUserGroupPrefixes}
             />
@@ -305,30 +313,30 @@ export function SetupContent({
         <div className={"px-8 py-3 flex flex-col gap-2 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <BoxIcon size={20} />
-            SCIM Credentials
+            {t("integrations.idpScimCredentials")}
           </p>
           <MinimalList
             data={[
               {
-                label: "Name",
+                label: t("common.name"),
                 value: "NetBird",
               },
               {
-                label: "API Type",
+                label: t("integrations.idpApiType"),
                 value: "SCIM API",
                 noCopy: true,
               },
               {
-                label: "SCIM Version",
+                label: t("integrations.idpScimVersion"),
                 value: "SCIM 2.0",
                 noCopy: true,
               },
               {
-                label: "Base URL",
+                label: t("integrations.idpBaseUrl"),
                 value: "https://api.netbird.io/api/scim/v2",
               },
               {
-                label: "Token",
+                label: t("integrations.idpToken"),
                 value:
                   authToken === "" ? (
                     <Skeleton height={17} width={200} />
@@ -371,7 +379,7 @@ export function SetupContent({
             disabled={!genericConnection && isAuth0()}
             onClick={() => setStep(step + 1)}
           >
-            {step == 0 ? "Get Started" : t("common.continue")}
+            {step == 0 ? t("integrations.idpGetStarted") : t("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
