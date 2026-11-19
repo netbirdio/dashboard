@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { useBilling } from "@/contexts/BillingProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTheme } from "@/contexts/ThemeProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
@@ -312,6 +313,7 @@ const DIMENSIONS = {
   account: 6,
   product: 7,
   subscription: 8,
+  theme: 9,
 };
 
 const setDimension = (dimension: keyof typeof DIMENSIONS, value?: string) => {
@@ -356,6 +358,8 @@ const MatomoSession = () => {
   const [ready, setReady] = useState(false);
   const [accountTimedOut, setAccountTimedOut] = useState(false);
   const sentAccountId = useRef<string>(undefined);
+  const { theme, resolvedTheme } = useTheme();
+  const sentTheme = useRef<string>(undefined);
   const { data: peers } = useSWR<Peer[]>("/peers", null);
 
   const userId = loggedInUser?.id;
@@ -461,6 +465,21 @@ const MatomoSession = () => {
       setDimension("signupMonth", createdAt?.slice(0, 7));
     });
   }, [ready, role, tier, status, product, totalPeers, age, createdAt]);
+
+  useEffect(() => {
+    ignoreErrors(() => {
+      if (!ready) return;
+      // Keeps people who follow their system apart from those who chose a theme.
+      setDimension(
+        "theme",
+        theme === "system" ? `system_${resolvedTheme}` : theme,
+      );
+      if (sentTheme.current && sentTheme.current !== theme) {
+        trackEvent("theme", "changed", theme);
+      }
+      sentTheme.current = theme;
+    });
+  }, [ready, theme, resolvedTheme]);
 
   useEffect(() => {
     if (ready && pathname) ignoreErrors(() => trackPageView(pathname));

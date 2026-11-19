@@ -15,7 +15,9 @@ const session = vi.hoisted(() => ({
   account: undefined as Record<string, unknown> | undefined,
   canReadAccounts: true,
   peers: undefined as { connected: boolean }[] | undefined,
+  theme: { theme: "dark", resolvedTheme: "dark" },
 }));
+vi.mock("@/contexts/ThemeProvider", () => ({ useTheme: () => session.theme }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/peers" }));
 vi.mock("swr", () => ({ default: () => ({ data: session.peers }) }));
 vi.mock("@/contexts/BillingProvider", () => ({ useBilling: () => ({}) }));
@@ -71,6 +73,7 @@ beforeEach(() => {
   session.account = undefined;
   session.canReadAccounts = true;
   session.peers = undefined;
+  session.theme = { theme: "dark", resolvedTheme: "dark" };
   window._paq = [];
   document.head.innerHTML = "";
   document.body.innerHTML = "";
@@ -667,5 +670,32 @@ describe("MatomoSession", () => {
     expect(dimension(4).at(-1)?.[2]).toBe("2-5");
     expect(dimension(5).at(-1)?.[2]).toBe("2026-11");
     expect(dimension(7).at(-1)?.[2]).toBe("dashboard");
+  });
+
+  it("reports the theme before the first page view, and every switch after", async () => {
+    const { MatomoProvider } = await load();
+    session.user = user;
+    session.account = account;
+    session.theme = { theme: "system", resolvedTheme: "light" };
+    const { rerender } = render(<MatomoProvider />);
+    await waitFor(() => expect(commands("trackPageView")).toHaveLength(1));
+    const order = sent().map(([command, dim]) =>
+      command === "setCustomDimension" ? `dimension_${dim}` : command,
+    );
+    expect(order.indexOf("dimension_9")).toBeLessThan(
+      order.indexOf("trackPageView"),
+    );
+    expect(dimension(9).at(-1)?.[2]).toBe("system_light");
+    expect(names()).toEqual([]);
+
+    session.theme = { theme: "system", resolvedTheme: "dark" };
+    rerender(<MatomoProvider />);
+    expect(dimension(9).at(-1)?.[2]).toBe("system_dark");
+    expect(names()).toEqual([]);
+
+    session.theme = { theme: "light", resolvedTheme: "light" };
+    rerender(<MatomoProvider />);
+    expect(dimension(9).at(-1)?.[2]).toBe("light");
+    expect(names()).toEqual(["theme_changed_light"]);
   });
 });
