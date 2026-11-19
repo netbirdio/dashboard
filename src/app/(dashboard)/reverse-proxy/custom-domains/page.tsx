@@ -43,7 +43,9 @@ export default function ReverseProxyCustomDomainsPage() {
         </Breadcrumbs>
         <h1 ref={headingRef}>{t("common.domains")}</h1>
         <Paragraph>
-          Add and manage custom domains for your reverse proxy services.{" "}
+          {t(
+            "reverseProxy.addAndManageCustomDomainsForYourReverseProxyServices",
+          )}{" "}
           <InlineLink
             href={REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK}
             target={"_blank"}

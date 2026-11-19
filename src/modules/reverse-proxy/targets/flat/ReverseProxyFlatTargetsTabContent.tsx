@@ -25,16 +25,25 @@ export const ReverseProxyFlatTargetsTabContent = ({
   targets,
   isLoading,
   hideResourceColumn,
-  emptyTableTitle = "This network has no services",
-  emptyTableDescription = "Create resources and expose services securely through NetBird's reverse proxy.",
+  emptyTableTitle,
+  emptyTableDescription,
 }: Props) => {
   const t = useTranslations();
+  const resolvedEmptyTitle =
+    emptyTableTitle ?? t("reverseProxy.thisNetworkHasNoServices");
+  const resolvedEmptyDescription =
+    emptyTableDescription ??
+    t(
+      "reverseProxy.createResourcesAndExposeServicesSecurelyThroughNetBirdSReverseProxy",
+    );
   return (
     <div className={"pb-10 px-8"}>
       <div className={"flex justify-between items-center mb-5"}>
         <div>
           <Paragraph>
-            Expose services securely through NetBird&apos;s reverse proxy.{" "}
+            {t(
+              "reverseProxy.exposeServicesSecurelyThroughNetBirdSReverseProxy",
+            )}{" "}
             <InlineLink href={REVERSE_PROXY_DOCS_LINK} target={"_blank"}>
               {t("common.learnMore")}
               <ExternalLinkIcon size={12} />
@@ -56,8 +65,8 @@ export const ReverseProxyFlatTargetsTabContent = ({
           targets={targets}
           isLoading={isLoading}
           hideResourceColumn={hideResourceColumn}
-          emptyTableTitle={emptyTableTitle}
-          emptyTableDescription={emptyTableDescription}
+          emptyTableTitle={resolvedEmptyTitle}
+          emptyTableDescription={resolvedEmptyDescription}
         />
       </Suspense>
     </div>

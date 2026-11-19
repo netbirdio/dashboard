@@ -14,11 +14,9 @@ import {
   TableFilterDef,
   TableFiltersButton,
 } from "@components/table/TableFilters";
-
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { PlusCircle, ServerIcon } from "lucide-react";
-
 import { usePathname } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -29,12 +27,12 @@ import {
   ReverseProxyCluster,
   ReverseProxyClusterType,
 } from "@/interfaces/ReverseProxy";
-import useFetchApi from "@/utils/api";
 import ClustersActionCell from "@/modules/reverse-proxy/clusters/ClustersActionCell";
 import ClustersConnectedCell from "@/modules/reverse-proxy/clusters/ClustersConnectedCell";
 import ClustersFeaturesCell from "@/modules/reverse-proxy/clusters/ClustersFeaturesCell";
 import { ClustersModal } from "@/modules/reverse-proxy/clusters/ClustersModal";
 import ClustersNameCell from "@/modules/reverse-proxy/clusters/ClustersNameCell";
+import useFetchApi from "@/utils/api";
 
 const ClustersColumns: ColumnDef<ReverseProxyCluster>[] = [
   {
@@ -60,7 +58,9 @@ const ClustersColumns: ColumnDef<ReverseProxyCluster>[] = [
   },
   {
     id: "features",
-    header: () => <span className={"font-medium text-xs"}>Features</span>,
+    header: ({ column }) => (
+      <DataTableHeader column={column} labelId="reverseProxy.features" />
+    ),
     enableSorting: false,
     cell: ({ row }) => <ClustersFeaturesCell cluster={row.original} />,
   },
@@ -228,9 +228,9 @@ export default function ClustersTable({ headingTarget }: Readonly<Props>) {
               />
             }
             title={t("reverseProxy.noClusters")}
-            description={
-              "Set up a cluster to route traffic through your own infrastructure."
-            }
+            description={t(
+              "reverseProxy.setUpAClusterToRouteTrafficThroughYourOwnInfrastructure",
+            )}
             button={
               <Button
                 variant={"primary"}
@@ -238,7 +238,7 @@ export default function ClustersTable({ headingTarget }: Readonly<Props>) {
                 disabled={!permission?.services?.create}
               >
                 <PlusCircle size={16} />
-                Setup Self-Hosted Cluster
+                {t("reverseProxy.setupSelfHostedCluster")}
               </Button>
             }
           />
@@ -253,7 +253,7 @@ export default function ClustersTable({ headingTarget }: Readonly<Props>) {
                 disabled={!permission?.services?.create}
               >
                 <PlusCircle size={16} />
-                Setup Self-Hosted Cluster
+                {t("reverseProxy.setupSelfHostedCluster")}
               </Button>
             )}
           </>

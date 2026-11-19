@@ -42,9 +42,9 @@ export default function ReverseProxyClustersPage() {
         </Breadcrumbs>
         <h1 ref={headingRef}>{t("common.clusters")}</h1>
         <Paragraph>
-          Proxy clusters route inbound traffic to your services. Shared clusters
-          are run by the platform; account clusters (self-hosted) run on your
-          own infrastructure.{" "}
+          {t(
+            "reverseProxy.proxyClustersRouteInboundTrafficToYourServicesSharedClustersAreRun",
+          )}{" "}
           <InlineLink href={REVERSE_PROXY_CLUSTERS_DOCS_LINK} target={"_blank"}>
             {t("common.learnMore")}
             <ExternalLinkIcon size={12} />

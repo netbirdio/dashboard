@@ -36,13 +36,13 @@ import {
   REVERSE_PROXY_DOCS_LINK,
   ReverseProxy,
 } from "@/interfaces/ReverseProxy";
-import ReverseProxyActionCell from "@/modules/reverse-proxy/table/ReverseProxyActionCell";
 import ReverseProxyAccessControlCell from "@/modules/reverse-proxy/table/ReverseProxyAccessControlCell";
+import ReverseProxyActionCell from "@/modules/reverse-proxy/table/ReverseProxyActionCell";
 import ReverseProxyAuthCell from "@/modules/reverse-proxy/table/ReverseProxyAuthCell";
 import ReverseProxyNameCell from "@/modules/reverse-proxy/table/ReverseProxyNameCell";
 import ReverseProxyTargetsCell from "@/modules/reverse-proxy/table/ReverseProxyTargetsCell";
-import ReverseProxyTargetsTable from "@/modules/reverse-proxy/targets/ReverseProxyTargetsTable";
 import { ReverseProxyTypeCell } from "@/modules/reverse-proxy/table/ReverseProxyTypeCell";
+import ReverseProxyTargetsTable from "@/modules/reverse-proxy/targets/ReverseProxyTargetsTable";
 
 const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
   {
@@ -239,10 +239,10 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
               size={"large"}
             />
           }
-          title={"Create Services"}
-          description={
-            "Expose your internal services securely through NetBird's reverse proxy with automatic TLS and optional authentication to protect your services."
-          }
+          title={t("reverseProxy.createServices")}
+          description={t(
+            "reverseProxy.exposeYourInternalServicesSecurelyThroughNetBirdSReverseProxyWithAutomatic",
+          )}
           button={
             <Button
               variant={"primary"}
@@ -256,7 +256,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
           }
           learnMore={
             <>
-              Learn more about
+              {t("reverseProxy.learnMoreAbout")}
               <InlineLink href={REVERSE_PROXY_DOCS_LINK} target={"_blank"}>
                 {t("common.services")}
                 <ExternalLinkIcon size={12} />

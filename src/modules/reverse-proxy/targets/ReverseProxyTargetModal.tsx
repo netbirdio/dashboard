@@ -108,9 +108,7 @@ export default function ReverseProxyTargetModal({
     !reverseProxy.mode || reverseProxy.mode === ServiceMode.HTTP;
 
   const [target, setTarget] = useState<Target | undefined>(() => {
-    if (
-      currentTarget?.target_type === ReverseProxyTargetType.CLUSTER
-    ) {
+    if (currentTarget?.target_type === ReverseProxyTargetType.CLUSTER) {
       return {
         type: ReverseProxyTargetType.CLUSTER,
         resourceId: currentTarget.target_id ?? "",
@@ -274,8 +272,14 @@ export default function ReverseProxyTargetModal({
         <ModalContent maxWidthClass="max-w-2xl">
           <ModalHeader
             icon={<Server className="text-netbird" size={16} />}
-            title={currentTarget ? "Edit Target" : "Add Target"}
-            description="Configure the target for your reverse proxy."
+            title={
+              currentTarget
+                ? translate("reverseProxy.editTarget")
+                : translate("reverseProxy.addTarget")
+            }
+            description={translate(
+              "reverseProxy.configureTheTargetForYourReverseProxy",
+            )}
             color="netbird"
           />
 
@@ -298,10 +302,11 @@ export default function ReverseProxyTargetModal({
             )}
 
             <div>
-              <Label>Location (Optional)</Label>
+              <Label>{translate("reverseProxy.locationOptional")}</Label>
               <HelpText>
-                Specify an optional path from where requests are routed to your
-                service.
+                {translate(
+                  "reverseProxy.specifyAnOptionalPathFromWhereRequestsAreRoutedToYourService",
+                )}
               </HelpText>
               <div className="flex w-full">
                 <div
@@ -341,8 +346,10 @@ export default function ReverseProxyTargetModal({
                     />
                   }
                 >
-                  This location is already used by another target and cannot be
-                  added. <br /> Please use a different location.
+                  {translate(
+                    "reverseProxy.thisLocationIsAlreadyUsedByAnotherTargetAndCannotBeAdded",
+                  )}
+                  <br /> {translate("reverseProxy.pleaseUseADifferentLocation")}
                 </Callout>
               )}
               {targetPath &&
@@ -362,31 +369,45 @@ export default function ReverseProxyTargetModal({
                     className={"mt-3.5"}
                     label={
                       <>
-                        Preserve Full Path
+                        {translate("reverseProxy.preserveFullPath")}
                         <HelpTooltip
                           content={
                             <div className="text-xs max-w-xs flex flex-col gap-2">
                               <div>
-                                When disabled, a request to e.g.,{" "}
-                                <span className="font-mono text-white">
-                                  {targetPath}/users
-                                </span>{" "}
-                                is forwarded as{" "}
-                                <span className="font-mono text-white">
-                                  /users
-                                </span>
-                                .
+                                {translate.rich(
+                                  "reverseProxy.targetStripPathExample",
+                                  {
+                                    path: targetPath,
+                                    from: (chunks) => (
+                                      <span className="font-mono text-white">
+                                        {chunks}
+                                      </span>
+                                    ),
+                                    to: (chunks) => (
+                                      <span className="font-mono text-white">
+                                        {chunks}
+                                      </span>
+                                    ),
+                                  },
+                                )}
                               </div>
                               <div>
-                                When enabled, a request to e.g.,{" "}
-                                <span className="font-mono text-white">
-                                  {targetPath}/users
-                                </span>{" "}
-                                is forwarded as{" "}
-                                <span className="font-mono text-white">
-                                  {targetPath}/users
-                                </span>
-                                .
+                                {translate.rich(
+                                  "reverseProxy.targetPreservePathExample",
+                                  {
+                                    path: targetPath,
+                                    from: (chunks) => (
+                                      <span className="font-mono text-white">
+                                        {chunks}
+                                      </span>
+                                    ),
+                                    to: (chunks) => (
+                                      <span className="font-mono text-white">
+                                        {chunks}
+                                      </span>
+                                    ),
+                                  },
+                                )}
                               </div>
                             </div>
                           }
@@ -395,9 +416,13 @@ export default function ReverseProxyTargetModal({
                     }
                     helpText={
                       <div>
-                        Keep the original full request path when forwarding.{" "}
+                        {translate(
+                          "reverseProxy.keepTheOriginalFullRequestPathWhenForwarding",
+                        )}{" "}
                         <br />
-                        When disabled the matched prefix path is stripped.
+                        {translate(
+                          "reverseProxy.whenDisabledTheMatchedPrefixPathIsStripped",
+                        )}
                       </div>
                     }
                   />
@@ -408,7 +433,7 @@ export default function ReverseProxyTargetModal({
               <div className="flex mt-1">
                 <div className="flex-1">
                   <Label>
-                    Protocol & Host / IP
+                    {translate("reverseProxy.protocolHostIP")}
                     <CidrHelpText target={target} />
                   </Label>
                   <div className="flex items-center mt-2">
@@ -451,9 +476,9 @@ export default function ReverseProxyTargetModal({
                   <Label>
                     {translate("common.port")}
                     <HelpTooltip
-                      content={
-                        "Enter the port where your service (e.g., webserver, app, API) is currently listening. If left empty, defaults to port 80 for HTTP or 443 for HTTPS."
-                      }
+                      content={translate(
+                        "reverseProxy.enterThePortWhereYourServiceEGWebserverAppAPIIsText",
+                      )}
                     />
                   </Label>
                   <div className="mt-2">
@@ -488,10 +513,12 @@ export default function ReverseProxyTargetModal({
                     label={
                       <>
                         <ShieldXIcon size={15} />
-                        Skip TLS Verification
+                        {translate("reverseProxy.skipTLSVerification")}
                       </>
                     }
-                    helpText="Skip certificate verification when connecting to this target. Useful if your service already uses a self-signed certificate."
+                    helpText={translate(
+                      "reverseProxy.skipCertificateVerificationWhenConnectingToThisTargetUsefulIfYourService",
+                    )}
                   />
                 )}
             </div>
@@ -523,16 +550,22 @@ export default function ReverseProxyTargetModal({
 
                     <div className={"flex items-center justify-between"}>
                       <div>
-                        <Label>Request Timeout</Label>
+                        <Label>
+                          {translate("reverseProxy.requestTimeout")}
+                        </Label>
                         <HelpText className={"mb-0"}>
-                          Max time to wait for a response as duration string
-                          (e.g. 30s, 2m). <br /> Leave this field empty for no
-                          timeout.
+                          {translate(
+                            "reverseProxy.maxTimeToWaitForAResponseAsDurationStringEG",
+                          )}
+                          <br />{" "}
+                          {translate(
+                            "reverseProxy.leaveThisFieldEmptyForNoTimeout",
+                          )}
                         </HelpText>
                       </div>
                       <Input
                         customPrefix={<ClockFadingIcon size={16} />}
-                        placeholder="e.g. 10s, 30s, 1m"
+                        placeholder={translate("reverseProxy.eG10s30s1m")}
                         value={options.request_timeout ?? ""}
                         onChange={(e) =>
                           setOption(
@@ -550,15 +583,20 @@ export default function ReverseProxyTargetModal({
                     {reverseProxy.mode === ServiceMode.UDP && (
                       <div className={"flex items-center justify-between"}>
                         <div>
-                          <Label>{translate("reverseProxy.sessionIdleTimeout")}</Label>
+                          <Label>
+                            {translate("reverseProxy.sessionIdleTimeout")}
+                          </Label>
                           <HelpText className={"mb-0"}>
-                            How long a UDP session stays alive without traffic
-                            (e.g., 30s, 2m). <br /> Defaults to 30s when empty.
+                            {translate(
+                              "reverseProxy.howLongAUDPSessionStaysAliveWithoutTrafficEG30s",
+                            )}
+                            <br />{" "}
+                            {translate("reverseProxy.defaultsTo30sWhenEmpty")}
                           </HelpText>
                         </div>
                         <Input
                           customPrefix={<ClockFadingIcon size={16} />}
-                          placeholder="e.g. 30s, 2m, 5m"
+                          placeholder={translate("reverseProxy.eG30s2m5m")}
                           value={options.session_idle_timeout ?? ""}
                           onChange={(e) =>
                             setOption(
@@ -583,12 +621,12 @@ export default function ReverseProxyTargetModal({
           <ModalFooter className={"items-center"}>
             <div className={"w-full"}>
               <Paragraph className={"text-sm mt-auto"}>
-                Learn more about
+                {translate("reverseProxy.learnMoreAbout")}
                 <InlineLink
                   href={REVERSE_PROXY_TARGETS_DOCS_LINK}
                   target={"_blank"}
                 >
-                  Targets
+                  {translate("reverseProxy.targetsText")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </Paragraph>
@@ -604,11 +642,11 @@ export default function ReverseProxyTargetModal({
                 disabled={!canAddTarget || errors.options}
               >
                 {currentTarget ? (
-                  "Save Changes"
+                  translate("common.saveChanges")
                 ) : (
                   <>
                     <PlusCircle size={16} />
-                    Add Target
+                    {translate("reverseProxy.addTarget")}
                   </>
                 )}
               </Button>

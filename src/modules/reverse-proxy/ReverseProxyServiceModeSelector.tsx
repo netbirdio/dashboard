@@ -1,10 +1,6 @@
-import React, { ReactNode, useEffect } from "react";
-import { useTranslations } from "@/i18n/LocaleProvider";
-import {
-  isL4Mode as isL4ServiceMode,
-  type ReverseProxyDomain,
-  ServiceMode,
-} from "@/interfaces/ReverseProxy";
+import HelpText from "@components/HelpText";
+import { HelpTooltip } from "@components/HelpTooltip";
+import { Label } from "@components/Label";
 import {
   Select,
   SelectContent,
@@ -13,9 +9,13 @@ import {
   SelectValue,
 } from "@components/Select";
 import { ArrowRightFromLine, Globe, LockKeyhole } from "lucide-react";
-import { HelpTooltip } from "@components/HelpTooltip";
-import { Label } from "@components/Label";
-import HelpText from "@components/HelpText";
+import React, { ReactNode, useEffect } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import {
+  isL4Mode as isL4ServiceMode,
+  type ReverseProxyDomain,
+  ServiceMode,
+} from "@/interfaces/ReverseProxy";
 
 type Props = {
   value?: ServiceMode;
@@ -30,32 +30,39 @@ type ServiceModeConfig = {
   icon: ReactNode;
 };
 
-export const SERVICE_MODES: Record<ServiceMode, ServiceModeConfig> = {
-  [ServiceMode.HTTP]: {
-    label: "HTTPS Service",
-    description:
-      "Reverse proxy with path routing and built-in authentication (SSO, PIN, password). Typically used for web applications and APIs.",
-    icon: <Globe size={14} />,
-  },
-  [ServiceMode.TLS]: {
-    label: "TLS Passthrough",
-    description:
-      "Passes encrypted TLS traffic straight through to the backend. Typically used for services that manage their own TLS certificates.",
-    icon: <LockKeyhole size={14} />,
-  },
-  [ServiceMode.TCP]: {
-    label: "TCP Service",
-    description:
-      "Forwards raw TCP traffic to your backend on a dedicated port. Typically used for databases, custom protocols, or any TCP-based service.",
-    icon: <ArrowRightFromLine size={14} />,
-  },
-  [ServiceMode.UDP]: {
-    label: "UDP Service",
-    description:
-      "Forwards raw UDP traffic to your backend on a dedicated port. Typically used for real-time services like voice, video, or streaming.",
-    icon: <ArrowRightFromLine size={14} />,
-  },
-};
+export function useServiceModes(): Record<ServiceMode, ServiceModeConfig> {
+  const t = useTranslations();
+  return {
+    [ServiceMode.HTTP]: {
+      label: t("reverseProxy.hTTPSService"),
+      description: t(
+        "reverseProxy.reverseProxyWithPathRoutingAndBuiltInAuthenticationSSOPINPassword",
+      ),
+      icon: <Globe size={14} />,
+    },
+    [ServiceMode.TLS]: {
+      label: t("reverseProxy.tLSPassthrough"),
+      description: t(
+        "reverseProxy.passesEncryptedTLSTrafficStraightThroughToTheBackendTypicallyUsedFor",
+      ),
+      icon: <LockKeyhole size={14} />,
+    },
+    [ServiceMode.TCP]: {
+      label: t("reverseProxy.tCPService"),
+      description: t(
+        "reverseProxy.forwardsRawTCPTrafficToYourBackendOnADedicatedPortTypically",
+      ),
+      icon: <ArrowRightFromLine size={14} />,
+    },
+    [ServiceMode.UDP]: {
+      label: t("reverseProxy.uDPService"),
+      description: t(
+        "reverseProxy.forwardsRawUDPTrafficToYourBackendOnADedicatedPortTypically",
+      ),
+      icon: <ArrowRightFromLine size={14} />,
+    },
+  };
+}
 
 export const ReverseProxyServiceModeSelector = ({
   value,
@@ -64,6 +71,7 @@ export const ReverseProxyServiceModeSelector = ({
   domain,
 }: Props) => {
   const t = useTranslations();
+  const SERVICE_MODES = useServiceModes();
   const selected = value ?? ServiceMode.HTTP;
   const selectedMode = SERVICE_MODES[selected];
   const isL4Supported = domain?.supports_custom_ports !== undefined;
@@ -78,10 +86,11 @@ export const ReverseProxyServiceModeSelector = ({
   return (
     <div className="flex justify-between items-center gap-10 mt-2">
       <div>
-        <Label>Service Type</Label>
+        <Label>{t("reverseProxy.serviceType")}</Label>
         <HelpText>
-          Select a type to define how the proxy handles and forwards traffic to
-          your backend services.
+          {t(
+            "reverseProxy.selectATypeToDefineHowTheProxyHandlesAndForwardsTraffic",
+          )}
         </HelpText>
       </div>
       <Select

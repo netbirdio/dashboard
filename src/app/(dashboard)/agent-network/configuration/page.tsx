@@ -15,6 +15,7 @@ import GroupsProvider from "@/contexts/GroupsProvider";
 import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import { REVERSE_PROXY_CLUSTERS_DOCS_LINK } from "@/interfaces/ReverseProxy";
 import PageContainer from "@/layouts/PageContainer";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
@@ -36,6 +37,7 @@ const TAB_CLUSTERS = "clusters";
 // Settings page so it reads as "settings for the Agent Network".
 export default function AgentNetworkConfigurationPage() {
   const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const { permission } = usePermissions();
   const { only: agentNetworkOnly } = useAgentNetworkMode();
   const queryParams = useSearchParams();
@@ -98,9 +100,7 @@ export default function AgentNetworkConfigurationPage() {
                       label={t("common.globalLimits")}
                       href={"/agent-network/configuration?tab=budget-settings"}
                     >
-                      Account-wide caps on token usage and spend, applied across
-                      every policy. Scope a limit to specific groups or users,
-                      or leave it account-wide.
+                      {tr("agentNetwork.globalLimitsIntro")}
                     </ConfigTabHeader>
                     {/* DataTable applies its own p-default, so it is rendered
                         directly (no extra wrapper) to align with the header. */}
@@ -124,8 +124,8 @@ export default function AgentNetworkConfigurationPage() {
                         href={"/agent-network/configuration?tab=clusters"}
                       >
                         {agentNetworkOnly
-                          ? "Proxy clusters route your agents' traffic to AI providers and run on your own infrastructure. Add multiple clusters to scale your environment."
-                          : "Proxy clusters route inbound traffic to your services. Shared clusters are run by the platform; account clusters (self-hosted) run on your own infrastructure."}{" "}
+                          ? tr("agentNetwork.clustersIntroFocused")
+                          : tr("agentNetwork.clustersIntro")}{" "}
                         <InlineLink
                           href={REVERSE_PROXY_CLUSTERS_DOCS_LINK}
                           target={"_blank"}
@@ -161,6 +161,7 @@ function ConfigTabHeader({
   children?: React.ReactNode;
 }) {
   const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   return (
     <div className={"p-default py-6"}>
       <Breadcrumbs>

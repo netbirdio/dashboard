@@ -13,6 +13,7 @@ import { cn } from "@utils/helpers";
 import { ShieldHalf } from "lucide-react";
 import React, { useState } from "react";
 import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import { AgentGuardrail } from "@/modules/agent-network/data/mockData";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 
@@ -30,6 +31,7 @@ export default function AgentGuardrailBrowseModal({
   onSuccess,
 }: Readonly<Props>) {
   const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const { guardrails } = useAIProviders();
   const [selected, setSelected] = useState<string[]>([]);
 
@@ -49,15 +51,14 @@ export default function AgentGuardrailBrowseModal({
       <ModalContent maxWidthClass={"max-w-xl"}>
         <ModalHeader
           icon={<ShieldHalf size={19} />}
-          title={"Browse Guardrails"}
-          description={"Pick one or more existing guardrails to attach."}
+          title={tr("agentNetwork.browseGuardrails")}
+          description={tr("agentNetwork.browseGuardrailsDesc")}
           color={"netbird"}
         />
         <div className={"px-8 pb-2"}>
           {available.length === 0 ? (
             <div className={"text-sm text-nb-gray-300 py-6 text-center"}>
-              No more guardrails available — all defined guardrails are already
-              attached.
+              {tr("agentNetwork.noMoreGuardrails")}
             </div>
           ) : (
             <div className={"space-y-1.5 max-h-[420px] overflow-y-auto"}>
@@ -82,10 +83,11 @@ export default function AgentGuardrailBrowseModal({
               onClick={() => onSuccess(selected)}
               disabled={selected.length === 0}
             >
-              Attach{" "}
               {selected.length > 0
-                ? `${selected.length} Guardrail${selected.length === 1 ? "" : "s"}`
-                : "Guardrails"}
+                ? tr("agentNetwork.attachGuardrailCount", {
+                    count: selected.length,
+                  })
+                : tr("agentNetwork.attachGuardrails")}
             </Button>
           </div>
         </ModalFooter>

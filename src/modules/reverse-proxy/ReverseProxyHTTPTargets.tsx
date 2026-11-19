@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network } from "@/interfaces/Network";
 import { ReverseProxyTarget } from "@/interfaces/ReverseProxy";
 import ReverseProxyTargetAccessActionBadge from "@/modules/reverse-proxy/targets/ReverseProxyTargetAccessActionBadge";
@@ -45,12 +46,14 @@ export default function ReverseProxyHTTPTargets({
   initialNetwork,
   onNavigateToResources,
 }: Readonly<Props>) {
+  const t = useTranslations();
   return (
     <div>
-      <Label>HTTPS Targets</Label>
+      <Label>{t("reverseProxy.hTTPSTargets")}</Label>
       <HelpText>
-        Add one or more devices running your service or resources to make it
-        publicly accessible.
+        {t(
+          "reverseProxy.addOneOrMoreDevicesRunningYourServiceOrResourcesToMake",
+        )}
       </HelpText>
 
       {targets.length > 0 && (
@@ -99,7 +102,11 @@ export default function ReverseProxyHTTPTargets({
                       />
                       <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="default-outline" className="!px-3" data-testid="target-row-actions">
+                          <Button
+                            variant="default-outline"
+                            className="!px-3"
+                            data-testid="target-row-actions"
+                          >
                             <MoreVertical size={16} className="shrink-0" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -113,7 +120,7 @@ export default function ReverseProxyHTTPTargets({
                           >
                             <div className="flex gap-3 items-center">
                               <Edit size={14} className="shrink-0" />
-                              Edit Target
+                              {t("reverseProxy.editTarget")}
                             </div>
                           </DropdownMenuItem>
                           <DropdownMenuItem
@@ -123,7 +130,7 @@ export default function ReverseProxyHTTPTargets({
                           >
                             <div className="flex gap-3 items-center">
                               <MinusCircleIcon size={14} className="shrink-0" />
-                              Remove Target
+                              {t("reverseProxy.removeTarget")}
                             </div>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -146,7 +153,7 @@ export default function ReverseProxyHTTPTargets({
         disabled={!!(initialNetwork && !initialNetwork.resources?.length)}
       >
         <PlusIcon size={14} />
-        Add Target
+        {t("reverseProxy.addTarget")}
       </Button>
 
       {initialNetwork && !initialNetwork.resources?.length && (
@@ -157,15 +164,21 @@ export default function ReverseProxyHTTPTargets({
             <AlertTriangle size={14} className="shrink-0 relative top-[3px]" />
           }
         >
-          There are currently no resources in your network{" "}
-          <span className={"text-netbird-100 font-medium"}>
-            {initialNetwork?.name}
-          </span>
-          . Add resources to your network before exposing it as a service.{" "}
-          <InlineButtonLink variant={"default"} onClick={onNavigateToResources}>
-            Go to Resources
-            <ArrowUpRight size={14} />
-          </InlineButtonLink>
+          {t.rich("reverseProxy.networkResourcesRequired", {
+            networkName: initialNetwork?.name ?? "",
+            name: (chunks) => (
+              <span className="text-netbird-100 font-medium">{chunks}</span>
+            ),
+            link: (chunks) => (
+              <InlineButtonLink
+                variant="default"
+                onClick={onNavigateToResources}
+              >
+                {chunks}
+                <ArrowUpRight size={14} />
+              </InlineButtonLink>
+            ),
+          })}
         </Callout>
       )}
     </div>

@@ -15,6 +15,7 @@ import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import { AIProviderId } from "@/modules/agent-network/data/mockData";
 import { APIMeProvider } from "@/modules/agent-network/useMyAgentNetworkSetup";
@@ -61,18 +62,18 @@ function ModelList({ models }: { models: string[] }) {
 // catalog) models, so "All Models" can say what it covers instead of leaving
 // the caller to guess which model ids to configure.
 function AllModelsTooltip({ models }: { models: string[] }) {
+  const { tr } = useAgentNetworkText();
   if (models.length === 0) {
     return (
       <span className={"text-xs"}>
-        No model restriction. This provider doesn&apos;t publish a model list,
-        so use any model id its upstream accepts.
+        {tr("agentNetwork.noModelListPublished")}
       </span>
     );
   }
   return (
     <div className={"flex flex-col gap-2 text-xs"}>
       <span className={"text-nb-gray-300"}>
-        No model restriction. Known models for this provider:
+        {tr("agentNetwork.knownModels")}
       </span>
       <ModelList models={models} />
     </div>
@@ -82,6 +83,7 @@ function AllModelsTooltip({ models }: { models: string[] }) {
 // Same badge the admin providers table uses for its allow-list, with the
 // model names on hover — the caller has no other page to look them up on.
 function ModelsCell({ provider }: { provider: APIMeProvider }) {
+  const { tr } = useAgentNetworkText();
   const allModels = provider.all_models_allowed;
   return (
     <div className={"flex"}>
@@ -97,7 +99,7 @@ function ModelsCell({ provider }: { provider: APIMeProvider }) {
         <Badge variant={"gray"} className={"h-[34px]"} useHover={true}>
           <Boxes size={11} />
           <span className={"font-medium text-xs"}>
-            {allModels ? "All Models" : provider.models.length}
+            {allModels ? tr("agentNetwork.allModels") : provider.models.length}
           </span>
           {allModels && provider.models.length > 0 && (
             <span className={"text-xs text-nb-gray-400"}>
@@ -110,13 +112,15 @@ function ModelsCell({ provider }: { provider: APIMeProvider }) {
   );
 }
 
-const columns: ColumnDef<APIMeProvider>[] = [
+function useConnectColumns(): ColumnDef<APIMeProvider>[] {
+  const translate = useTranslations();
+  return [
   {
     id: "name",
     accessorKey: "name",
     sortingFn: "text",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Provider</DataTableHeader>
+      <DataTableHeader column={column}>{translate("common.provider")}</DataTableHeader>
     ),
     cell: ({ row }) => <NameCell provider={row.original} />,
   },
@@ -126,11 +130,12 @@ const columns: ColumnDef<APIMeProvider>[] = [
     accessorFn: (p) => (p.all_models_allowed ? Infinity : p.models.length),
     sortingFn: "basic",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Models</DataTableHeader>
+      <DataTableHeader column={column}>{translate("common.models")}</DataTableHeader>
     ),
     cell: ({ row }) => <ModelsCell provider={row.original} />,
   },
-];
+  ];
+}
 
 type Props = {
   providers: APIMeProvider[];
@@ -142,6 +147,8 @@ type Props = {
 // here to connect, edit, or delete.
 export default function ConnectProvidersTable({ providers }: Readonly<Props>) {
   const translate = useTranslations();
+  const { tr } = useAgentNetworkText();
+  const columns = useConnectColumns();
   const path = usePathname();
   const router = useRouter();
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -178,11 +185,11 @@ export default function ConnectProvidersTable({ providers }: Readonly<Props>) {
         <NoResults
           className={"py-4"}
           icon={<AgentNetworkIcon className={"text-nb-gray-300"} size={20} />}
-          title={"No providers available yet"}
+          title={tr("agentNetwork.noProvidersAvailable")}
           description={
             canManagePolicies
-              ? "No access policy covers your user yet. Add one of your groups to a policy to route your agent through NetBird."
-              : "You don’t have access to any providers yet. Ask your administrator to add you to an Agent Network access policy."
+              ? tr("agentNetwork.noPolicyCoversYou")
+              : tr("agentNetwork.askAdminForPolicy")
           }
         >
           {canManagePolicies && (

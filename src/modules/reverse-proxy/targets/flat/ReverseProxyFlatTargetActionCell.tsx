@@ -29,12 +29,8 @@ export default function ReverseProxyFlatTargetActionCell({
 }: Readonly<Props>) {
   const t = useTranslations();
   const { permission } = usePermissions();
-  const {
-    openModal,
-    openTargetModal,
-    handleDeleteTarget,
-    handleToggleTarget,
-  } = useReverseProxies();
+  const { openModal, openTargetModal, handleDeleteTarget, handleToggleTarget } =
+    useReverseProxies();
   const [open, setOpen] = useState(false);
 
   return (
@@ -66,7 +62,7 @@ export default function ReverseProxyFlatTargetActionCell({
           >
             <div className={"flex gap-3 items-center pr-8"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
-              Edit Target
+              {t("reverseProxy.editTarget")}
             </div>
           </DropdownMenuItem>
 

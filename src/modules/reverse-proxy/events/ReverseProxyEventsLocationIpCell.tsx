@@ -1,16 +1,16 @@
 import CopyToClipboardText from "@components/CopyToClipboardText";
 import FullTooltip from "@components/FullTooltip";
+import { ListItem } from "@components/ListItem";
 import { cn } from "@utils/helpers";
 import { isEmpty } from "lodash";
 import { FlagIcon, GlobeIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
+import Skeleton from "react-loading-skeleton";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import { useCountries } from "@/contexts/CountryProvider";
 import { useTranslations } from "@/i18n/LocaleProvider";
 import { ReverseProxyEvent } from "@/interfaces/ReverseProxy";
-import Skeleton from "react-loading-skeleton";
-import { ListItem } from "@components/ListItem";
 
 type Props = {
   event: ReverseProxyEvent;
@@ -58,7 +58,7 @@ export const ReverseProxyEventsLocationIpCell = ({ event }: Props) => {
               ) : (
                 <CopyToClipboardText
                   iconAlignment={"right"}
-                  message={"Region has been copied to your clipboard"}
+                  message={t("reverseProxy.regionHasBeenCopiedToYourClipboard")}
                   alwaysShowIcon={true}
                 >
                   {region}
@@ -86,7 +86,7 @@ export const ReverseProxyEventsLocationIpCell = ({ event }: Props) => {
           )}
         </div>
         <CopyToClipboardText
-          message={"IP address has been copied to your clipboard"}
+          message={t("reverseProxy.iPAddressHasBeenCopiedToYourClipboard")}
         >
           <span className={"text-nb-gray-200 font-mono text-[0.82rem]"}>
             {event.source_ip}

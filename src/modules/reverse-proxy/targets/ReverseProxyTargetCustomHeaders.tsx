@@ -5,6 +5,7 @@ import { Label } from "@components/Label";
 import { MinusCircleIcon, PlusIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslations } from "@/i18n/LocaleProvider";
+import { englishTranslations } from "@/i18n/translate";
 
 const HEADER_NAME_RE = /^[A-Za-z0-9!#$%&'*+\-.^_`|~]+$/;
 const BLOCKED_HEADERS = new Set([
@@ -47,26 +48,32 @@ export function headerEntriesToRecord(
 function validateHeaderName(
   name: string,
   allNames: string[],
+  t = englishTranslations,
 ): string | undefined {
   if (!name) return undefined;
   if (!HEADER_NAME_RE.test(name))
-    return "Invalid characters in header name. Please use another one.";
+    return t("reverseProxy.invalidCharactersInHeaderNamePleaseUseAnotherOne");
   if (BLOCKED_HEADERS.has(name.toLowerCase()))
-    return `"${name}" is a reserved header. Please use another one.`;
+    return t("reverseProxy.targetReservedHeader", { name });
   const dupeCount = allNames.filter(
     (n) => n.toLowerCase() === name.toLowerCase(),
   ).length;
-  if (dupeCount > 1) return "Duplicate header name. Please use another one.";
+  if (dupeCount > 1)
+    return t("reverseProxy.duplicateHeaderNamePleaseUseAnotherOne");
   return undefined;
 }
 
-function validateHeaderValue(value: string): string | undefined {
+function validateHeaderValue(
+  value: string,
+  t = englishTranslations,
+): string | undefined {
   if (value.includes("\r") || value.includes("\n"))
-    return "Value must not contain line breaks";
+    return t("reverseProxy.valueMustNotContainLineBreaks");
   return undefined;
 }
 
 export function useCustomHeaders(initialHeaders?: Record<string, string>) {
+  const t = useTranslations();
   const [nextId] = useState(() => {
     let id = 0;
     return () => ++id;
@@ -98,8 +105,8 @@ export function useCustomHeaders(initialHeaders?: Record<string, string>) {
 
   const allHeaderNames = headerEntries.map((h) => h.name);
   const headerErrors = headerEntries.map((entry) => ({
-    name: validateHeaderName(entry.name, allHeaderNames),
-    value: validateHeaderValue(entry.value),
+    name: validateHeaderName(entry.name, allHeaderNames, t),
+    value: validateHeaderValue(entry.value, t),
   }));
 
   const hasHeaderErrors = headerErrors.some((e) => e.name || e.value);
@@ -136,17 +143,19 @@ export default function ReverseProxyTargetCustomHeaders({
     <div>
       <Label>{t("reverseProxy.customHeaders")}</Label>
       <HelpText>
-        Add additional headers to include when forwarding requests.
+        {t("reverseProxy.addAdditionalHeadersToIncludeWhenForwardingRequests")}
         <br />
-        Hop-by-hop headers like Host or Connection are not allowed.
+        {t("reverseProxy.hopByHopHeadersLikeHostOrConnectionAreNotAllowed")}
       </HelpText>
       {headerEntries.length > 0 && (
         <div className="flex flex-col gap-2 mb-3">
           {headerEntries.map((entry, index) => (
             <div key={entry.id} className="flex items-center gap-2">
               <Input
-                placeholder="Header, e.g., Authorization"
-                aria-label={`Header name for entry ${entry.id}`}
+                placeholder={t("reverseProxy.headerEGAuthorization")}
+                aria-label={t("reverseProxy.targetHeaderNameLabel", {
+                  id: entry.id,
+                })}
                 value={entry.name}
                 onChange={(e) =>
                   updateHeaderEntry(entry.id, "name", e.target.value)
@@ -157,8 +166,10 @@ export default function ReverseProxyTargetCustomHeaders({
                 data-testid={`custom-header-name-${index}`}
               />
               <Input
-                placeholder="Value, e.g., Bearer eyJhbGci..."
-                aria-label={`Header value for entry ${entry.id}`}
+                placeholder={t("reverseProxy.valueEGBearerEyJhbGci")}
+                aria-label={t("reverseProxy.targetHeaderValueLabel", {
+                  id: entry.id,
+                })}
                 value={entry.value}
                 onChange={(e) =>
                   updateHeaderEntry(entry.id, "value", e.target.value)

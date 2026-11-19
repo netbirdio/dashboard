@@ -1,14 +1,14 @@
+import Badge from "@components/Badge";
 import Button from "@components/Button";
 import { Modal, ModalClose, ModalContent } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
+import { CircleUser } from "lucide-react";
 import React, { useState } from "react";
+import { useUsers } from "@/contexts/UsersProvider";
 import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
-import { useUsers } from "@/contexts/UsersProvider";
-import Badge from "@components/Badge";
-import { CircleUser } from "lucide-react";
 
 type Props = {
   open: boolean;
@@ -63,7 +63,7 @@ export default function AuthSSOModal({
                   <CircleUser size={12} />
                   {t("reverseProxy.allUsers")}
                 </Badge>
-                Select user groups...
+                {t("reverseProxy.selectUserGroups")}
               </div>
             }
             users={users}
@@ -72,7 +72,11 @@ export default function AuthSSOModal({
           <div className="flex gap-3 w-full justify-between mt-6">
             {isEditing ? (
               <>
-                <Button variant="danger-text" data-testid="remove-sso" onClick={handleRemove}>
+                <Button
+                  variant="danger-text"
+                  data-testid="remove-sso"
+                  onClick={handleRemove}
+                >
                   {t("common.remove")}
                 </Button>
                 <div className="flex gap-3">
@@ -96,7 +100,7 @@ export default function AuthSSOModal({
                     onClick={handleSave}
                     data-testid="submit-sso"
                   >
-                    Add SSO
+                    {t("reverseProxy.addSSO")}
                   </Button>
                 </div>
               </>

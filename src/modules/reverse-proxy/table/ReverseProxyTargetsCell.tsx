@@ -53,11 +53,7 @@ export default function ReverseProxyTargetsCell({
         <TooltipProvider>
           <Tooltip delayDuration={1}>
             <TooltipTrigger asChild={true}>
-              <Badge
-                variant={"gray"}
-                useHover={true}
-                className={"cursor-help"}
-              >
+              <Badge variant={"gray"} useHover={true} className={"cursor-help"}>
                 <Server size={14} />
                 <div>
                   <span className={"font-medium text-xs"}>{targetsCount}</span>
@@ -92,7 +88,7 @@ export default function ReverseProxyTargetsCell({
           interactive={false}
           content={
             <span className={"text-xs text-nb-gray-100 max-w-[200px]"}>
-              L4 services (TCP / UDP / TLS) only support a single target.
+              {t("reverseProxy.l4ServicesTCPUDPTLSOnlySupportASingleTarget")}
             </span>
           }
         >

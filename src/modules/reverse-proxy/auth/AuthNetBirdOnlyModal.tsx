@@ -1,14 +1,14 @@
+import Badge from "@components/Badge";
 import Button from "@components/Button";
 import { Modal, ModalClose, ModalContent } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
+import { CircleUser } from "lucide-react";
 import React, { useState } from "react";
+import { useUsers } from "@/contexts/UsersProvider";
 import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
-import { useUsers } from "@/contexts/UsersProvider";
-import Badge from "@components/Badge";
-import { CircleUser } from "lucide-react";
 
 type Props = {
   open: boolean;
@@ -48,7 +48,7 @@ export default function AuthNetBirdOnlyModal({
       <ModalContent maxWidthClass="max-w-xl">
         <ModalHeader
           title={t("reverseProxy.netBirdOnlyAccess")}
-          description="Reachable from peers in selected groups only."
+          description={t("reverseProxy.reachableFromPeersInSelectedGroupsOnly")}
         />
 
         <GradientFadedBackground />
@@ -61,9 +61,9 @@ export default function AuthNetBirdOnlyModal({
               <div className={"flex items-center gap-2"}>
                 <Badge className={"py-[3px]"} variant={"gray-ghost"}>
                   <CircleUser size={12} />
-                  Pick groups
+                  {t("reverseProxy.pickGroups")}
                 </Badge>
-                Select access groups...
+                {t("reverseProxy.selectAccessGroups")}
               </div>
             }
             users={users}

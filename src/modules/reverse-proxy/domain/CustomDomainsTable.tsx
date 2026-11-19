@@ -211,10 +211,10 @@ export default function CustomDomainsTable({ headingTarget }: Readonly<Props>) {
                 size={"large"}
               />
             }
-            title={"Add Custom Domains"}
-            description={
-              "Use your own domains with NetBird's reverse proxy. To get started, add a CNAME record that points to a cluster and verify domain ownership."
-            }
+            title={t("reverseProxy.addCustomDomains")}
+            description={t(
+              "reverseProxy.useYourOwnDomainsWithNetBirdSReverseProxyToGetStarted",
+            )}
             button={
               <Button
                 variant={"primary"}
@@ -229,7 +229,7 @@ export default function CustomDomainsTable({ headingTarget }: Readonly<Props>) {
             }
             learnMore={
               <>
-                Learn more about
+                {t("reverseProxy.learnMoreAbout")}
                 <InlineLink href={REVERSE_PROXY_DOCS_LINK} target={"_blank"}>
                   {t("common.customDomains")}
                   <ExternalLinkIcon size={12} />
@@ -311,7 +311,7 @@ function CustomDomainStatusCell({ domain }: Readonly<CellProps>) {
     return (
       <div className={cn("flex gap-2.5 items-center text-nb-gray-300 text-sm")}>
         <span className="h-2 w-2 rounded-full bg-green-500"></span>
-        Active
+        {t("common.active")}
       </div>
     );
   }
@@ -325,15 +325,15 @@ function CustomDomainStatusCell({ domain }: Readonly<CellProps>) {
         <FullTooltip
           content={
             <div className={"text-xs max-w-xs"}>
-              DNS changes may take some time to propagate. If NetBird does not
-              find the record immediately, please wait up to 24 hours and try
-              again.
+              {t(
+                "reverseProxy.dNSChangesMayTakeSomeTimeToPropagateIfNetBirdDoesNot",
+              )}
             </div>
           }
           interactive={false}
         >
           <Badge variant={"yellow"} className={"cursor-help"}>
-            Pending Verification
+            {t("reverseProxy.pendingVerification")}
             <HelpCircle size={12} />
           </Badge>
         </FullTooltip>

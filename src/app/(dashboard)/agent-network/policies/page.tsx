@@ -11,12 +11,14 @@ import React, { Suspense } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import PageContainer from "@/layouts/PageContainer";
 import AgentPoliciesTable from "@/modules/agent-network/AgentPoliciesTable";
 import AIProvidersProvider from "@/modules/agent-network/AIProvidersProvider";
 
 export default function AgentNetworkPoliciesPage() {
   const translate = useTranslations();
+  const { tr } = useAgentNetworkText();
   const { permission } = usePermissions();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
@@ -38,10 +40,7 @@ export default function AgentNetworkPoliciesPage() {
         </Breadcrumbs>
         {/* "Agent Policies", next to Networking's Access Control › Policies. */}
         <h1 ref={headingRef}>{translate("common.agentPolicies")}</h1>
-        <Paragraph>
-          Bind IdP groups to providers: Engineering gets Claude, Finance
-          doesn&apos;t. Enforce token limits, budgets, and guardrails.
-        </Paragraph>
+        <Paragraph>{tr("agentNetwork.policiesIntro")}</Paragraph>
       </div>
 
       <RestrictedAccess

@@ -4,18 +4,18 @@ import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
+import { usePortalElement } from "@hooks/usePortalElement";
 import dayjs from "dayjs";
 import { ExternalLinkIcon } from "lucide-react";
-import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import React, { useMemo } from "react";
+import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import ServerPaginationProvider from "@/contexts/ServerPaginationProvider";
 import { useTranslations } from "@/i18n/LocaleProvider";
+import { REVERSE_PROXY_EVENTS_DOCS_LINK } from "@/interfaces/ReverseProxy";
 import PageContainer from "@/layouts/PageContainer";
 import ReverseProxyEventsTable from "@/modules/reverse-proxy/events/ReverseProxyEventsTable";
-import { usePortalElement } from "@hooks/usePortalElement";
-import { REVERSE_PROXY_EVENTS_DOCS_LINK } from "@/interfaces/ReverseProxy";
 
 export default function ProxyLogsPage() {
   const t = useTranslations();
@@ -52,10 +52,12 @@ export default function ProxyLogsPage() {
         <h1 ref={headingRef}>{t("common.accessLogs")}</h1>
 
         <Paragraph>
-          View access logs for your reverse proxy services, including allowed
-          and denied requests.{" "}
+          {t(
+            "reverseProxy.viewAccessLogsForYourReverseProxyServicesIncludingAllowedAndDenied",
+          )}{" "}
           <InlineLink href={REVERSE_PROXY_EVENTS_DOCS_LINK} target="_blank">
-            {t("common.learnMore") + " "}<ExternalLinkIcon size={12} />
+            {t("common.learnMore") + " "}
+            <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
       </div>

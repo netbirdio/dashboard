@@ -90,7 +90,7 @@ export default function ReverseProxyAccessControlCell({
     if (restrictions?.allowed_countries?.length) {
       entries.push({
         key: "allowed-countries",
-        label: "Allowed Countries",
+        label: t("reverseProxy.allowedCountries"),
         Icon: FlagIcon,
         value: restrictions.allowed_countries.map(getCountryName).join(", "),
       });
@@ -99,7 +99,7 @@ export default function ReverseProxyAccessControlCell({
     if (restrictions?.blocked_countries?.length) {
       entries.push({
         key: "blocked-countries",
-        label: "Blocked Countries",
+        label: t("reverseProxy.blockedCountries"),
         Icon: FlagIcon,
         value: restrictions.blocked_countries.map(getCountryName).join(", "),
         blocked: true,
@@ -118,7 +118,10 @@ export default function ReverseProxyAccessControlCell({
     if (allowedIps.length) {
       entries.push({
         key: "allowed-ips",
-        label: allowedIps.length === 1 ? "Allowed IP" : "Allowed IPs",
+        label:
+          allowedIps.length === 1
+            ? t("reverseProxy.allowedIP")
+            : t("reverseProxy.allowedIPs"),
         Icon: WorkflowIcon,
         value: allowedIps.map((c) => c.replace(/\/32$/, "")).join(", "),
       });
@@ -127,7 +130,10 @@ export default function ReverseProxyAccessControlCell({
     if (allowedCidrs.length) {
       entries.push({
         key: "allowed-cidrs",
-        label: allowedCidrs.length === 1 ? "Allowed CIDR" : "Allowed CIDRs",
+        label:
+          allowedCidrs.length === 1
+            ? t("reverseProxy.allowedCIDR")
+            : t("reverseProxy.allowedCIDRs"),
         Icon: NetworkIcon,
         value: allowedCidrs.join(", "),
       });
@@ -136,7 +142,10 @@ export default function ReverseProxyAccessControlCell({
     if (blockedIps.length) {
       entries.push({
         key: "blocked-ips",
-        label: blockedIps.length === 1 ? "Blocked IP" : "Blocked IPs",
+        label:
+          blockedIps.length === 1
+            ? t("reverseProxy.blockedIP")
+            : t("reverseProxy.blockedIPs"),
         Icon: WorkflowIcon,
         value: blockedIps.map((c) => c.replace(/\/32$/, "")).join(", "),
         blocked: true,
@@ -146,7 +155,10 @@ export default function ReverseProxyAccessControlCell({
     if (blockedCidrs.length) {
       entries.push({
         key: "blocked-cidrs",
-        label: blockedCidrs.length === 1 ? "Blocked CIDR" : "Blocked CIDRs",
+        label:
+          blockedCidrs.length === 1
+            ? t("reverseProxy.blockedCIDR")
+            : t("reverseProxy.blockedCIDRs"),
         Icon: NetworkIcon,
         value: blockedCidrs.join(", "),
         blocked: true,
@@ -160,13 +172,13 @@ export default function ReverseProxyAccessControlCell({
         Icon: ShieldAlert,
         value:
           restrictions?.crowdsec_mode === CrowdSecMode.ENFORCE
-            ? "Enforce"
-            : "Observe",
+            ? t("reverseProxy.enforce")
+            : t("reverseProxy.observe"),
       });
     }
 
     return entries;
-  }, [restrictions, countries, hasCrowdSec]);
+  }, [restrictions, countries, hasCrowdSec, t]);
 
   const showRulesHover = ruleGroups.length > 0;
 
@@ -190,35 +202,33 @@ export default function ReverseProxyAccessControlCell({
               sideOffset={14}
               onClick={(e) => e.stopPropagation()}
             >
-                <div className={"text-xs"}>
-                  {ruleGroups.map(({ key, label, Icon, value, blocked }) => (
+              <div className={"text-xs"}>
+                {ruleGroups.map(({ key, label, Icon, value, blocked }) => (
+                  <div
+                    key={key}
+                    className={
+                      "flex justify-between gap-12 py-2 px-4 border-b border-nb-gray-920 last:border-b-0"
+                    }
+                  >
                     <div
-                      key={key}
                       className={
-                        "flex justify-between gap-12 py-2 px-4 border-b border-nb-gray-920 last:border-b-0"
+                        "flex items-start gap-2 font-medium whitespace-nowrap text-nb-gray-100 pt-0.5"
                       }
                     >
-                      <div
-                        className={
-                          "flex items-start gap-2 font-medium whitespace-nowrap text-nb-gray-100 pt-0.5"
-                        }
-                      >
-                        <Icon
-                          size={14}
-                          className={
-                            blocked ? "text-red-500" : "text-green-500"
-                          }
-                        />
-                        {label}
-                      </div>
-                      <div
-                        className={"max-w-[200px] text-nb-gray-300 text-right"}
-                      >
-                        {value}
-                      </div>
+                      <Icon
+                        size={14}
+                        className={blocked ? "text-red-500" : "text-green-500"}
+                      />
+                      {label}
                     </div>
-                  ))}
-                </div>
+                    <div
+                      className={"max-w-[200px] text-nb-gray-300 text-right"}
+                    >
+                      {value}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </HoverCardContent>
           )}
         </HoverCard>

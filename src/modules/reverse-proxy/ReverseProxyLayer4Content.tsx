@@ -1,3 +1,4 @@
+import { HelpTooltip } from "@components/HelpTooltip";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { ArrowRight } from "lucide-react";
@@ -11,7 +12,6 @@ import ReverseProxyAddressInput, {
 import ReverseProxyTargetSelector, {
   type Target,
 } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
-import { HelpTooltip } from "@components/HelpTooltip";
 
 type Props = {
   l4Target: Target | undefined;
@@ -66,13 +66,17 @@ export default function ReverseProxyLayer4Content({
       <div className={"flex gap-4 items-center"}>
         <div className={"w-full max-w-[180px]"}>
           <Label>
-            Listen Port
+            {t("reverseProxy.listenPort")}
             <HelpTooltip
               className={isListenPortSupported ? "max-w-sm" : "max-w-xs"}
               content={
                 isListenPortSupported
-                  ? "Enter the public listen port this service will be reachable on."
-                  : "The listen port will be automatically assigned after the service is created."
+                  ? t(
+                      "reverseProxy.enterThePublicListenPortThisServiceWillBeReachableOn",
+                    )
+                  : t(
+                      "reverseProxy.theListenPortWillBeAutomaticallyAssignedAfterTheServiceIsCreated",
+                    )
               }
             />
           </Label>
@@ -82,7 +86,9 @@ export default function ReverseProxyLayer4Content({
               type="number"
               min={1}
               max={65535}
-              placeholder={!isListenPortSupported ? "Auto" : "443"}
+              placeholder={
+                !isListenPortSupported ? t("reverseProxy.auto") : "443"
+              }
               value={!isListenPortSupported ? "" : listenPort || ""}
               onChange={(e) => setListenPort(parseInt(e.target.value) || 0)}
               disabled={!isListenPortSupported || !l4Target}
@@ -95,7 +101,7 @@ export default function ReverseProxyLayer4Content({
         <div className={"w-full flex"}>
           <div className={"w-full"}>
             <Label>
-              Host / IP
+              {t("reverseProxy.hostIP")}
               <CidrHelpText target={l4Target} />
             </Label>
             <div className="flex w-full mt-2 relative">
@@ -109,9 +115,9 @@ export default function ReverseProxyLayer4Content({
             <Label>
               {t("common.port")}
               <HelpTooltip
-                content={
-                  "Enter the port where your service (e.g., webserver, app, API) is currently listening."
-                }
+                content={t(
+                  "reverseProxy.enterThePortWhereYourServiceEGWebserverAppAPIIs",
+                )}
               />
             </Label>
             <div className={"mt-2 min-w-[120px]"}>

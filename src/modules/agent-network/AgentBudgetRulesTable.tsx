@@ -40,7 +40,9 @@ import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { useTranslations } from "@/i18n/LocaleProvider";
+import { useDashboardLocale, useTranslations } from "@/i18n/LocaleProvider";
+import { defaultLocale } from "@/i18n/locales";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import { Group } from "@/interfaces/Group";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import ActiveInactiveRow from "@/modules/common-table-rows/ActiveInactiveRow";
@@ -80,6 +82,7 @@ function EnabledCell({ rule }: { rule: AgentBudgetRule }) {
 }
 
 function TargetGroupsCell({ rule }: { rule: AgentBudgetRule }) {
+  const { tr } = useAgentNetworkText();
   const { groups: realGroups } = useGroups();
   if (rule.targetGroups.length === 0 && rule.targetUsers.length === 0) {
     return (
@@ -98,8 +101,8 @@ function TargetGroupsCell({ rule }: { rule: AgentBudgetRule }) {
   return (
     <MultipleGroups
       groups={groups}
-      label={"Target Groups"}
-      description={"This limit applies to members of these groups."}
+      label={tr("agentNetwork.targetGroups")}
+      description={tr("agentNetwork.targetGroupsDesc")}
     />
   );
 }
@@ -251,14 +254,14 @@ function ActionsCell({
   onEdit: (r: AgentBudgetRule) => void;
 }) {
   const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const { confirm } = useDialog();
   const { toggleBudgetRule, deleteBudgetRule } = useAIProviders();
 
   const onDelete = async () => {
     const ok = await confirm({
-      title: `Delete '${rule.name}'?`,
-      description:
-        "Are you sure you want to delete this global limit? This action cannot be undone.",
+      title: tr("agentNetwork.deleteNamed", { name: rule.name }),
+      description: tr("agentNetwork.deleteGlobalLimitDesc"),
       confirmText: t("common.delete"),
       cancelText: t("common.cancel"),
       type: "danger",
@@ -285,7 +288,7 @@ function ActionsCell({
           <DropdownMenuItem onClick={() => onEdit(rule)}>
             <div className={"flex gap-3 items-center"}>
               <PencilLineIcon size={14} className={"shrink-0"} />
-              Edit Rule
+              {tr("agentNetwork.editRule")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => toggleBudgetRule(rule.id)}>
@@ -309,6 +312,7 @@ function ActionsCell({
 
 export default function AgentBudgetRulesTable() {
   const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const path = usePathname();
   const { budgetRules, budgetRulesLoading } = useAIProviders();
 
@@ -334,7 +338,7 @@ export default function AgentBudgetRulesTable() {
         accessorKey: "name",
         sortingFn: "text",
         header: ({ column }) => (
-          <DataTableHeader column={column}>Name</DataTableHeader>
+          <DataTableHeader column={column}>{t("common.name")}</DataTableHeader>
         ),
         cell: ({ row }) => <NameCell rule={row.original} />,
       },
@@ -343,7 +347,7 @@ export default function AgentBudgetRulesTable() {
         accessorFn: (r) => (r.enabled ? 1 : 0),
         sortingFn: "basic",
         header: ({ column }) => (
-          <DataTableHeader column={column}>Enabled</DataTableHeader>
+          <DataTableHeader column={column}>{t("common.enabled")}</DataTableHeader>
         ),
         cell: ({ row }) => <EnabledCell rule={row.original} />,
       },
@@ -352,7 +356,7 @@ export default function AgentBudgetRulesTable() {
         accessorFn: (r) => r.targetGroups.length,
         sortingFn: "basic",
         header: ({ column }) => (
-          <DataTableHeader column={column}>Target Groups</DataTableHeader>
+          <DataTableHeader column={column}>{tr("agentNetwork.targetGroups")}</DataTableHeader>
         ),
         cell: ({ row }) => <TargetGroupsCell rule={row.original} />,
       },
@@ -361,7 +365,7 @@ export default function AgentBudgetRulesTable() {
         accessorFn: (r) => r.targetUsers.length,
         sortingFn: "basic",
         header: ({ column }) => (
-          <DataTableHeader column={column}>Target Users</DataTableHeader>
+          <DataTableHeader column={column}>{tr("agentNetwork.targetUsers")}</DataTableHeader>
         ),
         cell: ({ row }) => <TargetUsersCell rule={row.original} />,
       },
@@ -371,7 +375,7 @@ export default function AgentBudgetRulesTable() {
           r.limits.tokenLimit.enabled ? r.limits.tokenLimit.groupCap : 0,
         sortingFn: "basic",
         header: ({ column }) => (
-          <DataTableHeader column={column}>Token Cap</DataTableHeader>
+          <DataTableHeader column={column}>{tr("agentNetwork.tokenCap")}</DataTableHeader>
         ),
         cell: ({ row }) => <TokenCapCell rule={row.original} />,
       },
@@ -381,7 +385,7 @@ export default function AgentBudgetRulesTable() {
           r.limits.budgetLimit.enabled ? r.limits.budgetLimit.groupCapUsd : 0,
         sortingFn: "basic",
         header: ({ column }) => (
-          <DataTableHeader column={column}>Budget Cap</DataTableHeader>
+          <DataTableHeader column={column}>{tr("agentNetwork.budgetCap")}</DataTableHeader>
         ),
         cell: ({ row }) => <BudgetCapCell rule={row.original} />,
       },
@@ -390,7 +394,7 @@ export default function AgentBudgetRulesTable() {
         accessorKey: "updatedAt",
         sortingFn: "datetime",
         header: ({ column }) => (
-          <DataTableHeader column={column}>Updated</DataTableHeader>
+          <DataTableHeader column={column}>{tr("agentNetwork.updated")}</DataTableHeader>
         ),
         cell: ({ row }) => <UpdatedCell rule={row.original} />,
       },
@@ -403,7 +407,7 @@ export default function AgentBudgetRulesTable() {
         ),
       },
     ],
-    [],
+    [tr, t],
   );
 
   return (
@@ -428,7 +432,7 @@ export default function AgentBudgetRulesTable() {
         setSorting={setSorting}
         columns={columns}
         data={budgetRules}
-        searchPlaceholder={"Search global limits by name..."}
+        searchPlaceholder={tr("agentNetwork.searchGlobalLimits")}
         onRowClick={(row) => openEdit(row.original)}
         getStartedCard={
           <GetStartedTest
@@ -444,10 +448,8 @@ export default function AgentBudgetRulesTable() {
                 size={"large"}
               />
             }
-            title={"Set a Global Limit"}
-            description={
-              "Global limits cap token usage and spend across every policy. Apply a limit account-wide, or scope it to specific groups or users."
-            }
+            title={tr("agentNetwork.setGlobalLimit")}
+            description={tr("agentNetwork.setGlobalLimitDesc")}
             button={
               <Button
                 variant={"primary"}
@@ -457,12 +459,12 @@ export default function AgentBudgetRulesTable() {
                 }}
               >
                 <PlusCircle size={16} />
-                Add Global Limit
+                {tr("agentNetwork.addGlobalLimit")}
               </Button>
             }
             learnMore={
               <>
-                Learn more about
+                {t("common.learnMore")}
                 <InlineLink
                   href={"https://docs.netbird.io/agent-network"}
                   target={"_blank"}
@@ -485,7 +487,7 @@ export default function AgentBudgetRulesTable() {
                 }}
               >
                 <IconCirclePlus size={16} />
-                Add Global Limit
+                {tr("agentNetwork.addGlobalLimit")}
               </Button>
             </div>
           )

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "@/i18n/LocaleProvider";
+import { englishTranslations } from "@/i18n/translate";
 import { isClusterConnected } from "@/interfaces/ReverseProxy";
 import { useProxyCluster } from "@/modules/reverse-proxy/clusters/useProxyCluster";
 
@@ -27,36 +28,6 @@ const CFN_TEMPLATE_URL =
   "https://netbird-deploy-templates.s3.eu-central-1.amazonaws.com/templates/netbird-proxy-cfn.yaml";
 
 const DEFAULT_WIREGUARD_PORT = 51820;
-
-const DIGITALOCEAN_REGIONS = [
-  { value: "fra1", label: "Frankfurt, Germany (fra1)" },
-  { value: "ams3", label: "Amsterdam, Netherlands (ams3)" },
-  { value: "lon1", label: "London, UK (lon1)" },
-  { value: "nyc3", label: "New York, USA (nyc3)" },
-  { value: "sfo3", label: "San Francisco, USA (sfo3)" },
-  { value: "tor1", label: "Toronto, Canada (tor1)" },
-  { value: "sgp1", label: "Singapore (sgp1)" },
-  { value: "blr1", label: "Bangalore, India (blr1)" },
-  { value: "syd1", label: "Sydney, Australia (syd1)" },
-];
-
-const DIGITALOCEAN_SIZES = [
-  { value: "s-1vcpu-1gb", label: "Basic - 1 vCPU / 1 GB" },
-  { value: "s-1vcpu-2gb", label: "Basic - 1 vCPU / 2 GB" },
-  { value: "s-2vcpu-2gb", label: "Basic - 2 vCPU / 2 GB" },
-  { value: "s-2vcpu-4gb", label: "Basic - 2 vCPU / 4 GB" },
-];
-
-const AWS_REGIONS = [
-  { value: "us-east-1", label: "US East (N. Virginia)" },
-  { value: "us-east-2", label: "US East (Ohio)" },
-  { value: "us-west-2", label: "US West (Oregon)" },
-  { value: "eu-central-1", label: "Europe (Frankfurt)" },
-  { value: "eu-west-1", label: "Europe (Ireland)" },
-  { value: "eu-west-2", label: "Europe (London)" },
-  { value: "ap-southeast-1", label: "Asia Pacific (Singapore)" },
-  { value: "ap-northeast-1", label: "Asia Pacific (Tokyo)" },
-];
 
 export type CloudProvider = "hetzner" | "digitalocean" | "aws";
 
@@ -159,7 +130,10 @@ type HetznerCatalog = {
 // fetchHetznerCatalog loads the current locations, server types, and
 // per-location availability from the Hetzner API, excluding deprecated
 // server types, so the dropdowns always offer valid combinations.
-const fetchHetznerCatalog = async (token: string): Promise<HetznerCatalog> => {
+const fetchHetznerCatalog = async (
+  token: string,
+  translate = englishTranslations,
+): Promise<HetznerCatalog> => {
   const headers = { Authorization: `Bearer ${token}` };
   const [typesRes, dcsRes, keysRes] = await Promise.all([
     fetch("https://api.hetzner.cloud/v1/server_types?per_page=50", { headers }),
@@ -170,19 +144,27 @@ const fetchHetznerCatalog = async (token: string): Promise<HetznerCatalog> => {
   if (!typesRes.ok) {
     throw new Error(
       typesBody?.error?.message ??
-        `Hetzner API error (HTTP ${typesRes.status})`,
+        translate("reverseProxy.clusterHetznerApiError", {
+          status: typesRes.status,
+        }),
     );
   }
   const dcsBody = await dcsRes.json().catch(() => null);
   if (!dcsRes.ok) {
     throw new Error(
-      dcsBody?.error?.message ?? `Hetzner API error (HTTP ${dcsRes.status})`,
+      dcsBody?.error?.message ??
+        translate("reverseProxy.clusterHetznerApiError", {
+          status: dcsRes.status,
+        }),
     );
   }
   const keysBody = await keysRes.json().catch(() => null);
   if (!keysRes.ok) {
     throw new Error(
-      keysBody?.error?.message ?? `Hetzner API error (HTTP ${keysRes.status})`,
+      keysBody?.error?.message ??
+        translate("reverseProxy.clusterHetznerApiError", {
+          status: keysRes.status,
+        }),
     );
   }
 
@@ -241,6 +223,7 @@ const RegistrationCheck = ({
   domain: string;
   onRegistered?: () => void;
 }) => {
+  const translate = useTranslations();
   const cluster = useProxyCluster(domain, {
     done: isClusterConnected,
     maxAttempts: 120,
@@ -258,14 +241,14 @@ const RegistrationCheck = ({
         <>
           <CheckCircle2 size={16} className={"text-green-500 shrink-0"} />
           <span className={"text-nb-gray-100"}>
-            Proxy registered with NetBird and connected.
+            {translate("reverseProxy.proxyRegisteredWithNetBirdAndConnected")}
           </span>
         </>
       ) : (
         <>
           <Loader2 size={16} className={"animate-spin shrink-0"} />
           <span className={"text-nb-gray-300"}>
-            Waiting for the proxy to register with NetBird...
+            {translate("reverseProxy.waitingForTheProxyToRegisterWithNetBird")}
           </span>
         </>
       )}
@@ -286,35 +269,53 @@ const DeploySuccess = ({
   onRegistered,
   children,
 }: DeploySuccessProps) => {
-  const t = useTranslations();
+  const translate = useTranslations();
   return (
     <div className={"flex flex-col gap-4"}>
       <Callout variant={"info"}>
-        {resourceLabel} <span className={"text-white font-medium"}>{name}</span>{" "}
-        was created
-        {ip ? (
-          <>
-            {" "}
-            with {isStaticIP ? "static IP" : "IP"}{" "}
-            <span className={"text-netbird font-medium"}>{ip}</span> and is still
-            bootstrapping. Meanwhile, add the DNS records below.
-          </>
-        ) : (
-          <> {ipPendingNote}</>
-        )}
+        {ip
+          ? translate.rich("reverseProxy.clusterCreatedWithAddress", {
+              resource: resourceLabel,
+              resourceName: name,
+              ipType: isStaticIP
+                ? translate("reverseProxy.staticIPText")
+                : "IP",
+              ip,
+              name: (chunks) => (
+                <span className="text-white font-medium">{chunks}</span>
+              ),
+              address: (chunks) => (
+                <span className="text-netbird font-medium">{chunks}</span>
+              ),
+            })
+          : translate.rich("reverseProxy.clusterCreatedPending", {
+              resource: resourceLabel,
+              resourceName: name,
+              note: ipPendingNote ?? "",
+              name: (chunks) => (
+                <span className="text-white font-medium">{chunks}</span>
+              ),
+            })}
       </Callout>
       {ip && (
         <div>
-          <Label>Create DNS Records</Label>
+          <Label>{translate("reverseProxy.createDNSRecords")}</Label>
           <HelpText>
-            Point these records at the new {resourceLabel.toLowerCase()}. The
-            proxy gets its certificate once they resolve.
+            {translate.rich("reverseProxy.clusterDnsPointHelp", {
+              resource: resourceLabel.toLowerCase(),
+            })}
           </HelpText>
           <CardTable>
             <CardTable.Header>
-              <CardTable.HeaderCell width={100}>{t("common.type")}</CardTable.HeaderCell>
-              <CardTable.HeaderCell>{t("common.name")}</CardTable.HeaderCell>
-              <CardTable.HeaderCell>{t("reverseProxy.contentColumn")}</CardTable.HeaderCell>
+              <CardTable.HeaderCell width={100}>
+                {translate("common.type")}
+              </CardTable.HeaderCell>
+              <CardTable.HeaderCell>
+                {translate("common.name")}
+              </CardTable.HeaderCell>
+              <CardTable.HeaderCell>
+                {translate("reverseProxy.contentColumn")}
+              </CardTable.HeaderCell>
             </CardTable.Header>
             <CardTable.Body>
               <CardTable.Row>
@@ -381,18 +382,20 @@ const HetznerDeploy = ({
     const timer = setTimeout(() => {
       setIsLoadingCatalog(true);
       setCatalogError("");
-      fetchHetznerCatalog(apiToken)
+      fetchHetznerCatalog(apiToken, translate)
         .then(setCatalog)
         .catch((err) => {
           setCatalog(null);
           setCatalogError(
-            err instanceof Error ? err.message : "request failed",
+            err instanceof Error
+              ? err.message
+              : translate("reverseProxy.requestFailed"),
           );
         })
         .finally(() => setIsLoadingCatalog(false));
     }, 600);
     return () => clearTimeout(timer);
-  }, [hetznerToken]);
+  }, [hetznerToken, translate]);
 
   const locationOptions = useMemo(
     () =>
@@ -459,7 +462,10 @@ const HetznerDeploy = ({
         const body = await res.json().catch(() => null);
         if (!res.ok) {
           throw new Error(
-            body?.error?.message ?? `Hetzner API error (HTTP ${res.status})`,
+            body?.error?.message ??
+              translate("reverseProxy.clusterHetznerApiError", {
+                status: res.status,
+              }),
           );
         }
         setServerIP(body?.server?.public_net?.ipv4?.ip ?? "");
@@ -479,9 +485,9 @@ const HetznerDeploy = ({
           if (!ipRes.ok) {
             const ipBody = await ipRes.json().catch(() => null);
             throw new Error(
-              `server created, but keeping its IP static failed: ${
-                ipBody?.error?.message ?? `HTTP ${ipRes.status}`
-              }`,
+              translate("reverseProxy.clusterStaticIpError", {
+                error: ipBody?.error?.message ?? `HTTP ${ipRes.status}`,
+              }),
             );
           }
         }
@@ -489,10 +495,10 @@ const HetznerDeploy = ({
       .finally(() => setIsDeploying(false));
 
     notify({
-      title: "Hetzner Deployment",
-      description: "Failed to create the Hetzner server",
+      title: translate("reverseProxy.hetznerDeployment"),
+      description: translate("reverseProxy.failedToCreateTheHetznerServer"),
       promise,
-      loadingMessage: "Creating Hetzner server...",
+      loadingMessage: translate("reverseProxy.creatingHetznerServer"),
       showOnlyError: true,
       preventSuccessToast: true,
     });
@@ -501,7 +507,7 @@ const HetznerDeploy = ({
   if (serverIP) {
     return (
       <DeploySuccess
-        resourceLabel={"Server"}
+        resourceLabel={translate("reverseProxy.server")}
         name={serverName}
         ip={serverIP}
         isStaticIP={staticIP}
@@ -515,32 +521,36 @@ const HetznerDeploy = ({
     <div className={"flex flex-col gap-4"}>
       <div>
         <Label>
-          Hetzner API Token
+          {translate("reverseProxy.hetznerAPIToken")}
           <HelpTooltip
             interactive={true}
             content={
               <>
-                The token goes straight from your browser to Hetzner and never
-                touches NetBird&apos;s servers, and you can delete it once setup
-                succeeds.{" "}
+                {translate(
+                  "reverseProxy.theTokenGoesStraightFromYourBrowserToHetznerAndNeverTouches",
+                )}{" "}
                 <InlineLink
                   href={
                     "https://docs.hetzner.com/cloud/api/getting-started/generating-api-token/"
                   }
                   target={"_blank"}
                 >
-                  How to create a token
+                  {translate("reverseProxy.howToCreateAToken")}
                 </InlineLink>
               </>
             }
           />
         </Label>
         <HelpText>
-          Create a read &amp; write API token. It is never stored by NetBird.
+          {translate(
+            "reverseProxy.createAReadWriteAPITokenItIsNeverStoredByNetBird",
+          )}
         </HelpText>
         <Input
           type={"password"}
-          placeholder={"Paste your Hetzner Cloud API token here"}
+          placeholder={translate(
+            "reverseProxy.pasteYourHetznerCloudAPITokenHere",
+          )}
           value={hetznerToken}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setHetznerToken(e.target.value)
@@ -549,7 +559,8 @@ const HetznerDeploy = ({
       </div>
       {catalogError && (
         <Callout variant={"warning"}>
-          Could not load Hetzner options: {catalogError}
+          {translate("reverseProxy.couldNotLoadHetznerOptions")}
+          {catalogError}
         </Callout>
       )}
       {catalog ? (
@@ -564,7 +575,7 @@ const HetznerDeploy = ({
               />
             </div>
             <div className={"w-1/2"}>
-              <Label>Server Type</Label>
+              <Label>{translate("reverseProxy.serverType")}</Label>
               <SelectDropdown
                 value={serverType}
                 onChange={(v) => setServerType(v as string)}
@@ -573,7 +584,7 @@ const HetznerDeploy = ({
             </div>
           </div>
           <div>
-            <Label>SSH Key</Label>
+            <Label>{translate("reverseProxy.sSHKey")}</Label>
             {catalog.sshKeys.length > 0 ? (
               <SelectDropdown
                 value={sshKeyId}
@@ -585,25 +596,28 @@ const HetznerDeploy = ({
               />
             ) : (
               <HelpText className={"mb-0"}>
-                No SSH keys found in this Hetzner project. Add one in the
-                Hetzner Console first if you need SSH access to the server.
+                {translate(
+                  "reverseProxy.noSSHKeysFoundInThisHetznerProjectAddOneInThe",
+                )}
               </HelpText>
             )}
           </div>
           <FancyToggleSwitch
             value={staticIP}
             onChange={setStaticIP}
-            label={"Static IP"}
-            helpText={
-              "Keep the server's IP when the server is deleted or rebuilt, so the DNS records stay valid. Hetzner bills unassigned IPs."
-            }
+            label={translate("reverseProxy.staticIPText")}
+            helpText={translate(
+              "reverseProxy.keepTheServerSIPWhenTheServerIsDeletedOrRebuilt",
+            )}
           />
         </>
       ) : (
         <HelpText className={"mb-0"}>
           {isLoadingCatalog
-            ? "Loading available locations and server types..."
-            : "Enter your API token to load the available locations and server types."}
+            ? translate("reverseProxy.loadingAvailableLocationsAndServerTypes")
+            : translate(
+                "reverseProxy.enterYourAPITokenToLoadTheAvailableLocationsAndServerTypes",
+              )}
         </HelpText>
       )}
       <Button
@@ -623,7 +637,9 @@ const HetznerDeploy = ({
         ) : (
           <RocketIcon size={16} />
         )}
-        {isGeneratingToken ? "Preparing proxy token..." : "Deploy Server"}
+        {isGeneratingToken
+          ? translate("reverseProxy.preparingProxyToken")
+          : translate("reverseProxy.deployServer")}
       </Button>
     </div>
   );
@@ -662,7 +678,27 @@ const DigitalOceanDeploy = ({
   isGeneratingToken,
   onRegistered,
 }: ProviderProps) => {
-  const t = useTranslations();
+  const translate = useTranslations();
+  const DIGITALOCEAN_SIZES = [
+    { value: "s-1vcpu-1gb", label: translate("reverseProxy.basic1VCPU1GB") },
+    { value: "s-1vcpu-2gb", label: translate("reverseProxy.basic1VCPU2GB") },
+    { value: "s-2vcpu-2gb", label: translate("reverseProxy.basic2VCPU2GB") },
+    { value: "s-2vcpu-4gb", label: translate("reverseProxy.basic2VCPU4GB") },
+  ];
+  const DIGITALOCEAN_REGIONS = [
+    { value: "fra1", label: translate("reverseProxy.frankfurtGermanyFra1") },
+    {
+      value: "ams3",
+      label: translate("reverseProxy.amsterdamNetherlandsAms3"),
+    },
+    { value: "lon1", label: translate("reverseProxy.londonUKLon1") },
+    { value: "nyc3", label: translate("reverseProxy.newYorkUSANyc3") },
+    { value: "sfo3", label: translate("reverseProxy.sanFranciscoUSASfo3") },
+    { value: "tor1", label: translate("reverseProxy.torontoCanadaTor1") },
+    { value: "sgp1", label: translate("reverseProxy.singaporeSgp1") },
+    { value: "blr1", label: translate("reverseProxy.bangaloreIndiaBlr1") },
+    { value: "syd1", label: translate("reverseProxy.sydneyAustraliaSyd1") },
+  ];
   const [rootPassword] = useState(generateRootPassword);
   const [doToken, setDoToken] = useState("");
   const [region, setRegion] = useState("fra1");
@@ -699,7 +735,10 @@ const DigitalOceanDeploy = ({
         const body = await res.json().catch(() => null);
         if (!res.ok) {
           throw new Error(
-            body?.message ?? `DigitalOcean API error (HTTP ${res.status})`,
+            body?.message ??
+              translate("reverseProxy.clusterDigitalOceanApiError", {
+                status: res.status,
+              }),
           );
         }
         setIsCreated(true);
@@ -721,9 +760,9 @@ const DigitalOceanDeploy = ({
           const ipBody = await ipRes.json().catch(() => null);
           if (!ipRes.ok) {
             throw new Error(
-              `droplet created, but reserving a static IP failed: ${
-                ipBody?.message ?? `HTTP ${ipRes.status}`
-              }`,
+              translate("reverseProxy.clusterReservedIpError", {
+                error: ipBody?.message ?? `HTTP ${ipRes.status}`,
+              }),
             );
           }
           setReservedIP(ipBody?.reserved_ip?.ip ?? "");
@@ -732,10 +771,12 @@ const DigitalOceanDeploy = ({
       .finally(() => setIsDeploying(false));
 
     notify({
-      title: "DigitalOcean Deployment",
-      description: "Failed to create the DigitalOcean droplet",
+      title: translate("reverseProxy.digitalOceanDeployment"),
+      description: translate(
+        "reverseProxy.failedToCreateTheDigitalOceanDroplet",
+      ),
       promise,
-      loadingMessage: "Creating DigitalOcean droplet...",
+      loadingMessage: translate("reverseProxy.creatingDigitalOceanDroplet"),
       showOnlyError: true,
       preventSuccessToast: true,
     });
@@ -752,15 +793,18 @@ const DigitalOceanDeploy = ({
         onRegistered={onRegistered}
         ipPendingNote={
           isDeploying
-            ? "and is provisioning. Waiting for its public IP..."
-            : "but waiting for its public IP timed out - find the IP in the DigitalOcean control panel."
+            ? translate("reverseProxy.andIsProvisioningWaitingForItsPublicIP")
+            : translate(
+                "reverseProxy.butWaitingForItsPublicIPTimedOutFindTheIPIn",
+              )
         }
       >
         <div>
-          <Label>Droplet Root Password</Label>
+          <Label>{translate("reverseProxy.dropletRootPassword")}</Label>
           <HelpText>
-            Use it with the Droplet Web Console. Copy it now - it is not stored
-            anywhere.
+            {translate(
+              "reverseProxy.useItWithTheDropletWebConsoleCopyItNowItIs",
+            )}
           </HelpText>
           <Code codeToCopy={rootPassword}>
             <Code.Line>{rootPassword}</Code.Line>
@@ -774,36 +818,44 @@ const DigitalOceanDeploy = ({
     <div className={"flex flex-col gap-4"}>
       <div>
         <Label>
-          DigitalOcean API Token
+          {translate("reverseProxy.digitalOceanAPIToken")}
           <HelpTooltip
             interactive={true}
             content={
               <>
-                For the tightest scope, grant full access to{" "}
-                <span className={"font-mono text-netbird"}>tag</span>,{" "}
-                <span className={"font-mono text-netbird"}>droplet</span>, and{" "}
-                <span className={"font-mono text-netbird"}>reserved_ip</span>{" "}
-                only. The token goes straight from your browser to DigitalOcean
-                and never touches NetBird&apos;s servers, and you can delete it
-                once setup succeeds.{" "}
-                <InlineLink
-                  href={
-                    "https://docs.digitalocean.com/reference/api/create-personal-access-token/"
-                  }
-                  target={"_blank"}
-                >
-                  How to create a token
-                </InlineLink>
+                {translate.rich("reverseProxy.clusterDigitalOceanTokenHelp", {
+                  tagScope: (chunks) => (
+                    <span className="font-mono text-netbird">{chunks}</span>
+                  ),
+                  dropletScope: (chunks) => (
+                    <span className="font-mono text-netbird">{chunks}</span>
+                  ),
+                  ipScope: (chunks) => (
+                    <span className="font-mono text-netbird">{chunks}</span>
+                  ),
+                  link: (chunks) => (
+                    <InlineLink
+                      href="https://docs.digitalocean.com/reference/api/create-personal-access-token/"
+                      target="_blank"
+                    >
+                      {chunks}
+                    </InlineLink>
+                  ),
+                })}
               </>
             }
           />
         </Label>
         <HelpText>
-          Create a token with write access. It is never stored by NetBird.
+          {translate(
+            "reverseProxy.createATokenWithWriteAccessItIsNeverStoredByNetBird",
+          )}
         </HelpText>
         <Input
           type={"password"}
-          placeholder={"Paste your DigitalOcean API token here"}
+          placeholder={translate(
+            "reverseProxy.pasteYourDigitalOceanAPITokenHere",
+          )}
           value={doToken}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setDoToken(e.target.value)
@@ -812,7 +864,7 @@ const DigitalOceanDeploy = ({
       </div>
       <div className={"flex gap-4"}>
         <div className={"w-1/2"}>
-          <Label>{t("reverseProxy.region")}</Label>
+          <Label>{translate("reverseProxy.region")}</Label>
           <SelectDropdown
             value={region}
             onChange={(v) => setRegion(v as string)}
@@ -820,7 +872,7 @@ const DigitalOceanDeploy = ({
           />
         </div>
         <div className={"w-1/2"}>
-          <Label>Droplet Size</Label>
+          <Label>{translate("reverseProxy.dropletSize")}</Label>
           <SelectDropdown
             value={size}
             onChange={(v) => setSize(v as string)}
@@ -831,10 +883,10 @@ const DigitalOceanDeploy = ({
       <FancyToggleSwitch
         value={staticIP}
         onChange={setStaticIP}
-        label={"Static IP"}
-        helpText={
-          "Reserve a static IP so DNS records remain valid after rebuilds. Free of charge while assigned to a Droplet."
-        }
+        label={translate("reverseProxy.staticIPText")}
+        helpText={translate(
+          "reverseProxy.reserveAStaticIPSoDNSRecordsRemainValidAfterRebuildsFree",
+        )}
       />
       <Button
         variant={"primary"}
@@ -846,7 +898,9 @@ const DigitalOceanDeploy = ({
         ) : (
           <RocketIcon size={16} />
         )}
-        {isGeneratingToken ? "Preparing proxy token..." : "Deploy Droplet"}
+        {isGeneratingToken
+          ? translate("reverseProxy.preparingProxyToken")
+          : translate("reverseProxy.deployDroplet")}
       </Button>
     </div>
   );
@@ -859,7 +913,23 @@ const AWSDeploy = ({
   isGeneratingToken,
   onRegistered,
 }: ProviderProps) => {
-  const t = useTranslations();
+  const translate = useTranslations();
+  const AWS_REGIONS = [
+    { value: "us-east-1", label: translate("reverseProxy.uSEastNVirginia") },
+    { value: "us-east-2", label: translate("reverseProxy.uSEastOhio") },
+    { value: "us-west-2", label: translate("reverseProxy.uSWestOregon") },
+    { value: "eu-central-1", label: translate("reverseProxy.europeFrankfurt") },
+    { value: "eu-west-1", label: translate("reverseProxy.europeIreland") },
+    { value: "eu-west-2", label: translate("reverseProxy.europeLondon") },
+    {
+      value: "ap-southeast-1",
+      label: translate("reverseProxy.asiaPacificSingapore"),
+    },
+    {
+      value: "ap-northeast-1",
+      label: translate("reverseProxy.asiaPacificTokyo"),
+    },
+  ];
   const [region, setRegion] = useState("eu-central-1");
   const [launched, setLaunched] = useState(false);
 
@@ -876,19 +946,22 @@ const AWSDeploy = ({
   return (
     <div className={"flex flex-col gap-4"}>
       <div>
-        <Label>Proxy Access Token</Label>
+        <Label>{translate("reverseProxy.proxyAccessToken")}</Label>
         <HelpText>
-          Copy this token for AWS stack creation. It is excluded from outputs and
-          logs.
+          {translate(
+            "reverseProxy.copyThisTokenForAWSStackCreationItIsExcludedFromOutputs",
+          )}
         </HelpText>
         <Code codeToCopy={token} showCopyIcon={!isGeneratingToken}>
           <Code.Line>
-            {isGeneratingToken ? "Generating proxy token..." : token}
+            {isGeneratingToken
+              ? translate("reverseProxy.generatingProxyToken")
+              : token}
           </Code.Line>
         </Code>
       </div>
       <div>
-        <Label>{t("reverseProxy.region")}</Label>
+        <Label>{translate("reverseProxy.region")}</Label>
         <SelectDropdown
           value={region}
           onChange={(v) => setRegion(v as string)}
@@ -904,12 +977,13 @@ const AWSDeploy = ({
         }}
       >
         <RocketIcon size={16} />
-        Launch Stack in AWS Console
+        {translate("reverseProxy.launchStackInAWSConsole")}
         <ExternalLinkIcon size={14} />
       </Button>
       <HelpText className={"mb-0"}>
-        The AWS Console opens with a prefilled form. Paste the token, create the
-        stack, then point your DNS records to the PublicIP output.
+        {translate(
+          "reverseProxy.theAWSConsoleOpensWithAPrefilledFormPasteTheTokenCreate",
+        )}
       </HelpText>
       {launched && (
         <RegistrationCheck domain={domain} onRegistered={onRegistered} />

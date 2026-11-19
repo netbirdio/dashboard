@@ -2,8 +2,8 @@ import Button from "@components/Button";
 import { Input } from "@components/Input";
 import { Modal, ModalClose, ModalContent } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
-import React, { useState } from "react";
 import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
+import React, { useState } from "react";
 import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
@@ -66,7 +66,7 @@ export default function AuthPasswordModal({
                 setPassword(e.target.value);
               }
             }}
-            placeholder="Enter password..."
+            placeholder={t("reverseProxy.enterPassword")}
             autoComplete="off"
             data-1p-ignore
             data-lpignore="true"
@@ -80,7 +80,11 @@ export default function AuthPasswordModal({
           <div className="flex gap-3 w-full justify-between mt-6">
             {isEditing ? (
               <>
-                <Button variant="danger-text" data-testid="remove-password" onClick={handleRemove}>
+                <Button
+                  variant="danger-text"
+                  data-testid="remove-password"
+                  onClick={handleRemove}
+                >
                   {t("common.remove")}
                 </Button>
                 <div className="flex gap-3">
@@ -109,7 +113,7 @@ export default function AuthPasswordModal({
                     disabled={!password.trim()}
                     data-testid="submit-password"
                   >
-                    Add Password
+                    {t("reverseProxy.addPassword")}
                   </Button>
                 </div>
               </>

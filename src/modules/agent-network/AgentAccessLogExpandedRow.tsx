@@ -9,6 +9,7 @@ import { GaugeIcon, ShieldXIcon } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import {
   AIAccessLogEntry,
@@ -37,6 +38,7 @@ export default function AgentAccessLogExpandedRow({
   selfScoped = false,
 }: Readonly<Props>) {
   const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const { policies, budgetRules } = useAIProviders();
   const isDeny = entry.decision === "deny";
   const hasSession = Boolean(entry.sessionId);
@@ -106,12 +108,8 @@ export default function AgentAccessLogExpandedRow({
 
       {hasSession && (
         <Section
-          heading={"Session ID"}
-          tooltip={
-            "The provider-side session this request belongs to. A single user " +
-            "can make several separate calls that the provider groups under the " +
-            "same session id."
-          }
+          heading={tr("agentNetwork.sessionId")}
+          tooltip={tr("agentNetwork.sessionIdTooltip")}
         >
           <Code dark small codeToCopy={entry.sessionId}>
             <Code.Line>{entry.sessionId}</Code.Line>
@@ -120,21 +118,21 @@ export default function AgentAccessLogExpandedRow({
       )}
 
       {isDeny && (
-        <Section heading={"Reason"}>
+        <Section heading={tr("agentNetwork.reason")}>
           <div
             className={
               "rounded-md border border-red-500/20 bg-red-500/5 p-3 text-xs text-red-300"
             }
           >
             {denyReason
-              ? `Request denied: ${denyReason}`
-              : "Request denied by policy."}
+              ? tr("agentNetwork.requestDeniedReason", { reason: denyReason })
+              : tr("agentNetwork.requestDeniedByPolicy")}
           </div>
         </Section>
       )}
 
       {errorSource && (
-        <Section heading={"Error source"}>
+        <Section heading={tr("agentNetwork.errorSource")}>
           <div className={"flex items-center gap-2 text-xs text-nb-gray-300"}>
             <Badge variant={"red"} size={"xs"} className={"shrink-0"}>
               {ERROR_SOURCE_INFO[errorSource].label}
@@ -145,13 +143,13 @@ export default function AgentAccessLogExpandedRow({
       )}
 
       {blocked && (
-        <Section heading={"Blocked by"}>
+        <Section heading={tr("agentNetwork.blockedBy")}>
           <BlockedByLink target={blocked} plain={selfScoped} />
         </Section>
       )}
 
       {errorDetail && (
-        <Section heading={"Error detail"}>
+        <Section heading={tr("agentNetwork.errorDetail")}>
           <Code dark small codeToCopy={errorDetail}>
             <pre className={"whitespace-pre-wrap break-all text-xs"}>
               {errorDetail}
@@ -161,7 +159,7 @@ export default function AgentAccessLogExpandedRow({
       )}
 
       {hasPrompt && (
-        <Section heading={"Prompt"}>
+        <Section heading={tr("agentNetwork.prompt")}>
           <Code dark small codeToCopy={entry.prompt}>
             <pre className={"whitespace-pre-wrap text-xs"}>{entry.prompt}</pre>
           </Code>
@@ -169,7 +167,7 @@ export default function AgentAccessLogExpandedRow({
       )}
 
       {!isDeny && hasBody && (
-        <Section heading={"Completion"}>
+        <Section heading={tr("agentNetwork.completion")}>
           {hasCompletion ? (
             <Code dark small codeToCopy={entry.completion}>
               <pre className={"whitespace-pre-wrap text-xs"}>
@@ -177,22 +175,18 @@ export default function AgentAccessLogExpandedRow({
               </pre>
             </Code>
           ) : (
-            <Muted>No response captured.</Muted>
+            <Muted>{tr("agentNetwork.noResponseCaptured")}</Muted>
           )}
         </Section>
       )}
 
       {!isDeny && !hasBody && (
-        <Section heading={"Prompt & Response"}>
-          <Muted>
-            No prompt or response captured for this request — only metadata is
-            recorded for non-completion calls (e.g. listing models) or when
-            prompt collection is off.
-          </Muted>
+        <Section heading={tr("agentNetwork.promptAndResponse")}>
+          <Muted>{tr("agentNetwork.noPromptCaptured")}</Muted>
         </Section>
       )}
 
-      <Section heading={"Metadata"}>
+      <Section heading={tr("agentNetwork.metadata")}>
         <Code dark small codeToCopy={metadataJSON}>
           <Code.Line>{metadataJSON}</Code.Line>
         </Code>
@@ -211,6 +205,7 @@ export function BlockedByLink({
   // Render the name without a link, for callers who can't open the target page.
   plain?: boolean;
 }) {
+  const { tr } = useAgentNetworkText();
   const Icon = target.kind === "policy" ? ShieldXIcon : GaugeIcon;
   const className =
     "group/policy inline-flex items-center gap-1.5 text-[0.82rem] text-nb-gray-300 whitespace-nowrap";
@@ -232,8 +227,8 @@ export function BlockedByLink({
     <FullTooltip
       content={
         target.kind === "policy"
-          ? "This policy blocked the request"
-          : "This global limit blocked the request"
+          ? tr("agentNetwork.policyBlockedRequest")
+          : tr("agentNetwork.globalLimitBlockedRequest")
       }
     >
       {plain ? (

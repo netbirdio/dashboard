@@ -45,6 +45,7 @@ import { useGroups } from "@/contexts/GroupsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
 import { useElementSize } from "@/hooks/useElementSize";
 import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import { Group } from "@/interfaces/Group";
 import AgentPolicyGuardrailsTab from "@/modules/agent-network/AgentPolicyGuardrailsTab";
 import AgentPolicyLimitsTab from "@/modules/agent-network/AgentPolicyLimitsTab";
@@ -124,6 +125,7 @@ function AgentPolicyModalContent({
   onSuccess: () => void;
 }) {
   const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const {
     providers: accountProviders,
     addPolicy,
@@ -292,10 +294,12 @@ function AgentPolicyModalContent({
     <ModalContent maxWidthClass={"max-w-3xl"}>
       <ModalHeader
         icon={<AccessControlIcon className={"fill-netbird"} />}
-        title={policy ? "Update Agent Policy" : "Create Agent Policy"}
-        description={
-          "Govern which groups can call which AI providers and under what guardrails."
+        title={
+          policy
+            ? tr("agentNetwork.updateAgentPolicy")
+            : tr("agentNetwork.createAgentPolicy")
         }
+        description={tr("agentNetwork.agentPolicyDescription")}
         color={"netbird"}
       />
 
@@ -307,11 +311,11 @@ function AgentPolicyModalContent({
           </TabsTrigger>
           <TabsTrigger value={"limits"}>
             <Gauge size={16} />
-            Limits
+            {tr("agentNetwork.limits")}
           </TabsTrigger>
           <TabsTrigger value={"guardrails"}>
             <ShieldHalf size={16} />
-            Guardrails
+            {tr("agentNetwork.guardrails")}
           </TabsTrigger>
         </TabsList>
 
@@ -323,13 +327,7 @@ function AgentPolicyModalContent({
                   <FolderDown size={15} />
                   {t("common.source")}
                   <HelpTooltip
-                    content={
-                      <>
-                        Group of users this policy authorises to call the
-                        destination providers. One group per policy in this
-                        release.
-                      </>
-                    }
+                    content={tr("agentNetwork.sourceTooltip")}
                   />
                 </Label>
                 <SourceGroupsSelector
@@ -338,10 +336,9 @@ function AgentPolicyModalContent({
                 />
                 {hasLegacyExtraGroups && (
                   <div className={"mt-2 text-xs text-yellow-400 leading-snug"}>
-                    This policy was created with multiple source groups. Only
-                    the first group is kept on save —{" "}
-                    {sourceGroupsRaw[0]?.name ?? "—"} will be retained, the
-                    others removed.
+                    {tr("agentNetwork.legacySourceGroups", {
+                      name: sourceGroupsRaw[0]?.name ?? "—",
+                    })}
                   </div>
                 )}
               </div>
@@ -351,7 +348,7 @@ function AgentPolicyModalContent({
                   <Sparkles size={15} />
                   {t("common.provider")}
                   <HelpTooltip
-                    content={<>AI providers the source is allowed to reach.</>}
+                    content={tr("agentNetwork.destinationProvidersTooltip")}
                   />
                 </Label>
                 <ProviderMultiSelect
@@ -363,7 +360,7 @@ function AgentPolicyModalContent({
             </div>
 
             <div>
-              <Label>Name of the Policy</Label>
+              <Label>{tr("agentNetwork.policyName")}</Label>
               <HelpText>
                 {t("agentNetwork.ruleNameHelp")}
               </HelpText>
@@ -373,7 +370,7 @@ function AgentPolicyModalContent({
                   userEditedName.current = true;
                   setName(e.target.value);
                 }}
-                placeholder={"e.g. Engineering → OpenAI"}
+                placeholder={tr("agentNetwork.policyNamePlaceholder")}
               />
             </div>
             <div>
@@ -384,9 +381,7 @@ function AgentPolicyModalContent({
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder={
-                  "e.g., Engineers can call OpenAI under production guardrails."
-                }
+                placeholder={tr("agentNetwork.policyDescriptionPlaceholder")}
                 rows={3}
               />
             </div>
@@ -497,6 +492,7 @@ function SourceGroupsSelector({
   onChange: React.Dispatch<React.SetStateAction<Group[]>>;
 }) {
   const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const { users } = useUsers();
   return (
     <PeerGroupSelector
@@ -507,7 +503,7 @@ function SourceGroupsSelector({
             <CircleUser size={12} />
             {t("common.all")}
           </Badge>
-          Select source group(s)...
+          {tr("agentNetwork.selectSourceGroups")}
         </div>
       }
       values={value}
@@ -529,6 +525,7 @@ function ProviderMultiSelect({
   value: string[];
   onChange: (next: string[]) => void;
 }) {
+  const { tr } = useAgentNetworkText();
   const [open, setOpen] = useState(false);
   // The popover is sized to the trigger, the way every other multi-select in
   // the dashboard sizes its list.
@@ -584,7 +581,9 @@ function ProviderMultiSelect({
             }
           >
             {selected.length === 0 ? (
-              <span className={"pl-1"}>Select provider(s)...</span>
+              <span className={"pl-1"}>
+                {tr("agentNetwork.selectProviders")}
+              </span>
             ) : (
               selected.map((p) => (
                 <Badge
@@ -637,7 +636,7 @@ function ProviderMultiSelect({
                 )}
                 value={search}
                 onValueChange={setSearch}
-                placeholder={"Search providers..."}
+                placeholder={tr("agentNetwork.searchProviders")}
               />
               <div
                 className={
@@ -656,8 +655,8 @@ function ProviderMultiSelect({
                 {filtered.length === 0 && (
                   <div className={"text-xs text-nb-gray-400 px-3 py-3"}>
                     {providers.length === 0
-                      ? "No providers connected yet."
-                      : "No providers found."}
+                      ? tr("agentNetwork.noProvidersConnected")
+                      : tr("agentNetwork.noProvidersFound")}
                   </div>
                 )}
                 {filtered.map((p) => {

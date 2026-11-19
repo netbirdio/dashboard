@@ -41,6 +41,7 @@ import { useSWRConfig } from "swr";
 import { useUsers } from "@/contexts/UsersProvider";
 import { useElementSize } from "@/hooks/useElementSize";
 import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import { Group } from "@/interfaces/Group";
 import { User } from "@/interfaces/User";
 import AgentPolicyLimitsTab from "@/modules/agent-network/AgentPolicyLimitsTab";
@@ -89,6 +90,7 @@ function AgentBudgetRuleModalContent({
   onSuccess: () => void;
 }) {
   const t = useTranslations();
+  const { tr, rich } = useAgentNetworkText();
   const { addBudgetRule, updateBudgetRule } = useAIProviders();
   const { mutate } = useSWRConfig();
   const { users: allUsers } = useUsers();
@@ -161,10 +163,12 @@ function AgentBudgetRuleModalContent({
     <ModalContent maxWidthClass={"max-w-3xl"}>
       <ModalHeader
         icon={<SlidersHorizontal size={19} />}
-        title={rule ? "Update Global Limit" : "Create Global Limit"}
-        description={
-          "Token and budget caps, applied account-wide or scoped to groups and users."
+        title={
+          rule
+            ? tr("agentNetwork.updateGlobalLimit")
+            : tr("agentNetwork.createGlobalLimit")
         }
+        description={tr("agentNetwork.globalLimitDescription")}
         color={"netbird"}
       />
 
@@ -176,21 +180,19 @@ function AgentBudgetRuleModalContent({
           </TabsTrigger>
           <TabsTrigger value={"limits"}>
             <Gauge size={16} />
-            Limits
+            {tr("agentNetwork.limits")}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value={"rule"} className={"pb-8"}>
           <div className={"px-8 flex-col flex gap-6 pt-2"}>
             <div>
-              <Label>Name of the Global Limit</Label>
-              <HelpText>
-                Set an easily identifiable name for this limit.
-              </HelpText>
+              <Label>{tr("agentNetwork.globalLimitName")}</Label>
+              <HelpText>{tr("agentNetwork.globalLimitNameHelp")}</HelpText>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder={"e.g. Account-wide monthly cap"}
+                placeholder={tr("agentNetwork.globalLimitNamePlaceholder")}
                 data-testid={"budget-rule-name"}
               />
             </div>
@@ -199,14 +201,9 @@ function AgentBudgetRuleModalContent({
               <div className={"w-full self-start"}>
                 <Label className={"mb-2"}>
                   <Users2 size={15} />
-                  Target Groups
+                  {tr("agentNetwork.targetGroups")}
                   <HelpTooltip
-                    content={
-                      <>
-                        Restrict this rule to members of the selected groups.
-                        Leave empty (and no users) to apply account-wide.
-                      </>
-                    }
+                    content={tr("agentNetwork.targetGroupsTooltip")}
                   />
                 </Label>
                 <PeerGroupSelector
@@ -217,7 +214,7 @@ function AgentBudgetRuleModalContent({
                         <CircleUser size={12} />
                         {t("common.all")}
                       </Badge>
-                      Select target group(s)...
+                      {tr("agentNetwork.selectTargetGroups")}
                     </div>
                   }
                   values={targetGroupsRaw}
@@ -229,15 +226,8 @@ function AgentBudgetRuleModalContent({
               <div className={"w-full self-start"}>
                 <Label className={"mb-2"}>
                   <CircleUser size={15} />
-                  Target Users
-                  <HelpTooltip
-                    content={
-                      <>
-                        Restrict this rule to specific users. Leave empty (and
-                        no groups) to apply account-wide.
-                      </>
-                    }
-                  />
+                  {tr("agentNetwork.targetUsers")}
+                  <HelpTooltip content={tr("agentNetwork.targetUsersTooltip")} />
                 </Label>
                 <UserMultiSelect
                   users={allUsers ?? []}
@@ -249,9 +239,11 @@ function AgentBudgetRuleModalContent({
 
             {accountWide && (
               <Callout variant={"warning"}>
-                With no targets selected, this rule applies{" "}
-                <span className={"font-medium"}>account-wide</span> — every
-                agent-network request is counted against its caps.
+                {rich("agentNetwork.accountWideCallout", {
+                  scope: (chunks) => (
+                    <span className={"font-medium"}>{chunks}</span>
+                  ),
+                })}
               </Callout>
             )}
           </div>
@@ -263,7 +255,7 @@ function AgentBudgetRuleModalContent({
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
+            {t("common.learnMore")}
             <InlineLink
               href={"https://docs.netbird.io/agent-network"}
               target={"_blank"}
@@ -301,7 +293,9 @@ function AgentBudgetRuleModalContent({
                     disabled={submitDisabled}
                   >
                     <PlusCircle size={16} />
-                    {rule ? "Save Global Limit" : "Add Global Limit"}
+                    {rule
+                      ? tr("agentNetwork.saveGlobalLimit")
+                      : tr("agentNetwork.addGlobalLimit")}
                   </Button>
                 </>
               )}
@@ -335,6 +329,7 @@ function UserMultiSelect({
   value: string[];
   onChange: (next: string[]) => void;
 }) {
+  const { tr } = useAgentNetworkText();
   const [open, setOpen] = useState(false);
   // The popover is sized to the trigger, the way every other multi-select in
   // the dashboard sizes its list.
@@ -395,7 +390,7 @@ function UserMultiSelect({
             }
           >
             {selectedUsers.length === 0 ? (
-              <span className={"pl-1"}>Select user(s)...</span>
+              <span className={"pl-1"}>{tr("agentNetwork.selectUsers")}</span>
             ) : (
               selectedUsers.map((u) => (
                 <Badge
@@ -452,7 +447,7 @@ function UserMultiSelect({
                 )}
                 value={search}
                 onValueChange={setSearch}
-                placeholder={"Search users by name or email..."}
+                placeholder={tr("agentNetwork.searchUsers")}
               />
               <div
                 className={
@@ -471,8 +466,8 @@ function UserMultiSelect({
                 {filtered.length === 0 && (
                   <div className={"text-xs text-nb-gray-400 px-3 py-3"}>
                     {selectable.length === 0
-                      ? "No users to select yet."
-                      : "No users match."}
+                      ? tr("agentNetwork.noUsersToSelect")
+                      : tr("agentNetwork.noUsersMatch")}
                   </div>
                 )}
                 {filtered.map((u) => (

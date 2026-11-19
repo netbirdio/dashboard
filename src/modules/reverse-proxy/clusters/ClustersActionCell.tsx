@@ -34,9 +34,10 @@ export default function ClustersActionCell({ cluster }: Readonly<Props>) {
 
   const handleDelete = async () => {
     const choice = await confirm({
-      title: `Delete '${cluster.address}'?`,
-      description:
-        "Are you sure you want to delete this proxy cluster? This action cannot be undone.",
+      title: t("reverseProxy.deleteNamedConfirm", { name: cluster.address }),
+      description: t(
+        "reverseProxy.areYouSureYouWantToDeleteThisProxyClusterThisAction",
+      ),
       confirmText: t("common.delete"),
       cancelText: t("common.cancel"),
       type: "danger",
@@ -46,13 +47,13 @@ export default function ClustersActionCell({ cluster }: Readonly<Props>) {
 
     notify({
       title: cluster.address,
-      description: "Proxy cluster was successfully deleted",
+      description: t("reverseProxy.proxyClusterWasSuccessfullyDeleted"),
       promise: request
         .del({}, `/${encodeURIComponent(cluster.address)}`)
         .then(() => {
           mutate("/reverse-proxies/clusters");
         }),
-      loadingMessage: "Deleting the proxy cluster...",
+      loadingMessage: t("reverseProxy.deletingTheProxyCluster"),
     });
   };
 

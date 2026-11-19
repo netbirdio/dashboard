@@ -1,3 +1,10 @@
+import Badge from "@components/Badge";
+import FullTooltip from "@components/FullTooltip";
+import InlineLink from "@components/InlineLink";
+import useFetchApi from "@utils/api";
+import { CircleAlert, Loader2 } from "lucide-react";
+import * as React from "react";
+import { useRef } from "react";
 import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK,
@@ -5,13 +12,6 @@ import {
   ReverseProxyMeta,
   ReverseProxyStatus,
 } from "@/interfaces/ReverseProxy";
-import useFetchApi from "@utils/api";
-import Badge from "@components/Badge";
-import FullTooltip from "@components/FullTooltip";
-import InlineLink from "@components/InlineLink";
-import { CircleAlert, Loader2 } from "lucide-react";
-import * as React from "react";
-import { useRef } from "react";
 
 type Props = {
   serviceId: string;
@@ -77,14 +77,16 @@ export default function ReverseProxyStatusCell({
           <FullTooltip
             content={
               <div className={"text-xs max-w-xs"}>
-                Something went wrong while setting up this service. See our{" "}
-                <InlineLink
-                  href={REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK}
-                  target={"_blank"}
-                >
-                  Troubleshooting Docs
-                </InlineLink>{" "}
-                for more details.
+                {translate.rich("reverseProxy.serviceSetupErrorHelp", {
+                  link: (chunks) => (
+                    <InlineLink
+                      href={REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK}
+                      target="_blank"
+                    >
+                      {chunks}
+                    </InlineLink>
+                  ),
+                })}
               </div>
             }
             align={"center"}
@@ -112,14 +114,16 @@ export default function ReverseProxyStatusCell({
           <FullTooltip
             content={
               <div className={"text-xs max-w-xs"}>
-                The tunnel to the target peer could not be established. See our{" "}
-                <InlineLink
-                  href={REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK}
-                  target={"_blank"}
-                >
-                  Troubleshooting Docs
-                </InlineLink>{" "}
-                for more details.
+                {translate.rich("reverseProxy.tunnelErrorHelp", {
+                  link: (chunks) => (
+                    <InlineLink
+                      href={REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK}
+                      target="_blank"
+                    >
+                      {chunks}
+                    </InlineLink>
+                  ),
+                })}
               </div>
             }
             align={"center"}
@@ -128,12 +132,12 @@ export default function ReverseProxyStatusCell({
             <div className={"flex"}>
               {compact ? (
                 <span className={"text-red-400 cursor-help truncate"}>
-                  Tunnel not created
+                  {translate("reverseProxy.tunnelNotCreated")}
                 </span>
               ) : (
                 <Badge variant={"red"}>
                   <CircleAlert size={11} />
-                  Tunnel not created
+                  {translate("reverseProxy.tunnelNotCreated")}
                 </Badge>
               )}
             </div>
@@ -154,15 +158,17 @@ export default function ReverseProxyStatusCell({
       <div className={"flex"} data-status-cell>
         {compact ? (
           <span
-            className={"inline-flex items-center gap-1.5 text-yellow-400 truncate"}
+            className={
+              "inline-flex items-center gap-1.5 text-yellow-400 truncate"
+            }
           >
             <Loader2 size={11} className={"animate-spin shrink-0"} />
-            Issuing certificate...
+            {translate("reverseProxy.issuingCertificate")}
           </span>
         ) : (
           <Badge variant={"yellow"}>
             <Loader2 size={12} className={"animate-spin"} />
-            Issuing certificate...
+            {translate("reverseProxy.issuingCertificate")}
           </Badge>
         )}
       </div>
@@ -173,19 +179,22 @@ export default function ReverseProxyStatusCell({
 }
 
 const SettingUpService = ({ compact }: { compact?: boolean }) => {
+  const translate = useTranslations();
   return (
     <div className={"flex"} data-status-cell>
       {compact ? (
         <span
-          className={"inline-flex items-center gap-1.5 text-yellow-400 truncate"}
+          className={
+            "inline-flex items-center gap-1.5 text-yellow-400 truncate"
+          }
         >
           <Loader2 size={11} className={"animate-spin shrink-0"} />
-          Setting up service...
+          {translate("reverseProxy.settingUpService")}
         </span>
       ) : (
         <Badge variant={"yellow"}>
           <Loader2 size={14} className={"animate-spin"} />
-          Setting up service...
+          {translate("reverseProxy.settingUpService")}
         </Badge>
       )}
     </div>

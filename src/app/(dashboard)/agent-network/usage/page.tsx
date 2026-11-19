@@ -15,6 +15,7 @@ import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import ServerPaginationProvider from "@/contexts/ServerPaginationProvider";
 import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import PageContainer from "@/layouts/PageContainer";
 import AgentAccessLogTable from "@/modules/agent-network/AgentAccessLogTable";
 import AgentOverviewPanel from "@/modules/agent-network/AgentOverviewPanel";
@@ -32,6 +33,7 @@ const TAB_ACCESS_LOGS = "access-logs";
 // tabs is instant — no re-fetch on tab change.
 export default function UsageAndLogsPage() {
   const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const { permission } = usePermissions();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -101,10 +103,7 @@ export default function UsageAndLogsPage() {
           />
         </Breadcrumbs>
         <h1>{t("common.usageAndLogs")}</h1>
-        <Paragraph>
-          Per-request audit with real caller identity, cost attribution, and
-          budget controls.
-        </Paragraph>
+        <Paragraph>{tr("agentNetwork.usageIntro")}</Paragraph>
       </div>
 
       <RestrictedAccess

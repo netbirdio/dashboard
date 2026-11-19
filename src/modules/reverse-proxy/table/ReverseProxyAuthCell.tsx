@@ -1,5 +1,6 @@
 import Badge from "@components/Badge";
 import Button from "@components/Button";
+import FullTooltip from "@components/FullTooltip";
 import {
   HoverCard,
   HoverCardContent,
@@ -28,40 +29,6 @@ import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { isL4Mode, ReverseProxy } from "@/interfaces/ReverseProxy";
-import FullTooltip from "@components/FullTooltip";
-
-const AUTH_METHODS: {
-  key: "password_auth" | "pin_auth" | "bearer_auth";
-  label: string;
-  hoverLabel: string;
-  Icon: LucideIcon;
-}[] = [
-  {
-    key: "password_auth",
-    label: "Password",
-    hoverLabel: "Password",
-    Icon: RectangleEllipsis,
-  },
-  { key: "pin_auth", label: "PIN Code", hoverLabel: "PIN Code", Icon: Binary },
-  {
-    key: "bearer_auth",
-    label: "SSO",
-    hoverLabel: "SSO (Single Sign On)",
-    Icon: Users,
-  },
-];
-
-const HEADER_AUTH_METHOD = {
-  label: "HTTP Headers",
-  hoverLabel: "HTTP Headers",
-  Icon: FileCode2Icon,
-};
-
-const NETBIRD_ONLY_METHOD = {
-  label: "NetBird Only",
-  hoverLabel: "NetBird-Only Access",
-  Icon: CircleUser,
-};
 
 type Props = {
   reverseProxy: ReverseProxy;
@@ -71,6 +38,41 @@ export default function ReverseProxyAuthCell({
   reverseProxy,
 }: Readonly<Props>) {
   const t = useTranslations();
+  const NETBIRD_ONLY_METHOD = {
+    label: t("reverseProxy.netBirdOnly"),
+    hoverLabel: t("reverseProxy.netBirdOnlyAccess"),
+    Icon: CircleUser,
+  };
+  const HEADER_AUTH_METHOD = {
+    label: t("reverseProxy.httpHeaders"),
+    hoverLabel: t("reverseProxy.httpHeaders"),
+    Icon: FileCode2Icon,
+  };
+  const AUTH_METHODS: {
+    key: "password_auth" | "pin_auth" | "bearer_auth";
+    label: string;
+    hoverLabel: string;
+    Icon: LucideIcon;
+  }[] = [
+    {
+      key: "password_auth",
+      label: t("common.password"),
+      hoverLabel: t("common.password"),
+      Icon: RectangleEllipsis,
+    },
+    {
+      key: "pin_auth",
+      label: t("reverseProxy.pinCode"),
+      hoverLabel: t("reverseProxy.pinCode"),
+      Icon: Binary,
+    },
+    {
+      key: "bearer_auth",
+      label: "SSO",
+      hoverLabel: t("reverseProxy.sSOSingleSignOn"),
+      Icon: Users,
+    },
+  ];
   const { permission } = usePermissions();
   const { openModal } = useReverseProxies();
   const { groups } = useGroups();
@@ -81,13 +83,14 @@ export default function ReverseProxyAuthCell({
         <FullTooltip
           content={
             <div className={"flex text-xs max-w-[340px]"}>
-              Auth methods are not supported for TCP/UDP and TLS passthrough
-              services as they operate at the network layer.
+              {t(
+                "reverseProxy.authMethodsAreNotSupportedForTCPUDPAndTLSPassthroughServices",
+              )}
             </div>
           }
         >
           <Badge variant={"gray"}>
-            N/A
+            {t("reverseProxy.nA")}
             <HelpCircle size={12} />
           </Badge>
         </FullTooltip>
@@ -138,12 +141,16 @@ export default function ReverseProxyAuthCell({
   const showAuthHover = authCount > 0;
 
   return (
-    <div className={"flex"} data-auth-cell onClick={(e) => {
-      e.stopPropagation();
-      if (permission?.services?.update) {
-        openModal({ proxy: reverseProxy, initialTab: "auth" });
-      }
-    }}>
+    <div
+      className={"flex"}
+      data-auth-cell
+      onClick={(e) => {
+        e.stopPropagation();
+        if (permission?.services?.update) {
+          openModal({ proxy: reverseProxy, initialTab: "auth" });
+        }
+      }}
+    >
       <div className={"flex items-center"}>
         <HoverCard openDelay={200} closeDelay={100}>
           <HoverCardTrigger asChild={true}>{authBadge}</HoverCardTrigger>
@@ -153,85 +160,87 @@ export default function ReverseProxyAuthCell({
               sideOffset={14}
               onClick={(e) => e.stopPropagation()}
             >
-                <div className={"text-xs"}>
-                  {enabled.map(({ key, hoverLabel, Icon }) => (
-                    <ListItem
-                      key={key}
-                      className={"py-0.5"}
-                      icon={<Icon size={14} />}
-                      label={hoverLabel}
-                      value={
-                        <div className={"text-green-500"}>
-                          {key === "bearer_auth" && ssoGroups.length === 0
-                            ? t("reverseProxy.allUsers")
-                            : t("common.enabled")}
-                        </div>
-                      }
-                    >
-                      {key === "bearer_auth" && ssoGroups.length > 0 && (
-                        <div className={"flex flex-col gap-2 px-4 pt-2 pb-3"}>
-                          {ssoGroups.map((group) => (
-                            <div
-                              key={group.id}
-                              className={
-                                "flex gap-2 items-center justify-between"
-                              }
-                            >
-                              <GroupBadge group={group} />
-                              <ArrowRightIcon size={14} />
-                              <UserCountStack group={group} />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </ListItem>
-                  ))}
-                  {hasHeaderAuths && (
-                    <ListItem
-                      className={"py-0.5"}
-                      icon={<FileCode2Icon size={14} />}
-                      label={HEADER_AUTH_METHOD.hoverLabel}
-                      value={
-                        <div className={"text-green-500"}>
-                          {(auth?.header_auths ?? []).filter((h) => h.enabled).length} Header{(auth?.header_auths ?? []).filter((h) => h.enabled).length !== 1 ? "s" : ""}
-                        </div>
-                      }
-                    />
-                  )}
-                  {isPrivate && (
-                    <ListItem
-                      className={"py-0.5"}
-                      icon={<CircleUser size={14} />}
-                      label={NETBIRD_ONLY_METHOD.hoverLabel}
-                      value={
-                        <div className={"text-green-500"}>
-                          {accessGroups.length === 0
-                            ? "No groups"
-                            : accessGroups.length === 1
-                              ? "1 Group"
-                              : `${accessGroups.length} Groups`}
-                        </div>
-                      }
-                    >
-                      {accessGroups.length > 0 && (
-                        <div className={"flex flex-col gap-2 px-4 pt-2 pb-3"}>
-                          {accessGroups.map((group) => (
-                            <div
-                              key={group.id}
-                              className={
-                                "flex gap-2 items-center justify-between"
-                              }
-                            >
-                              <GroupBadge group={group} />
-                              <ArrowRightIcon size={14} />
-                              <UserCountStack group={group} />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </ListItem>
-                  )}
-                </div>
+              <div className={"text-xs"}>
+                {enabled.map(({ key, hoverLabel, Icon }) => (
+                  <ListItem
+                    key={key}
+                    className={"py-0.5"}
+                    icon={<Icon size={14} />}
+                    label={hoverLabel}
+                    value={
+                      <div className={"text-green-500"}>
+                        {key === "bearer_auth" && ssoGroups.length === 0
+                          ? t("reverseProxy.allUsers")
+                          : t("common.enabled")}
+                      </div>
+                    }
+                  >
+                    {key === "bearer_auth" && ssoGroups.length > 0 && (
+                      <div className={"flex flex-col gap-2 px-4 pt-2 pb-3"}>
+                        {ssoGroups.map((group) => (
+                          <div
+                            key={group.id}
+                            className={
+                              "flex gap-2 items-center justify-between"
+                            }
+                          >
+                            <GroupBadge group={group} />
+                            <ArrowRightIcon size={14} />
+                            <UserCountStack group={group} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </ListItem>
+                ))}
+                {hasHeaderAuths && (
+                  <ListItem
+                    className={"py-0.5"}
+                    icon={<FileCode2Icon size={14} />}
+                    label={HEADER_AUTH_METHOD.hoverLabel}
+                    value={
+                      <div className={"text-green-500"}>
+                        {t.rich("reverseProxy.authHeaderCount", {
+                          count: (auth?.header_auths ?? []).filter(
+                            (h) => h.enabled,
+                          ).length,
+                        })}
+                      </div>
+                    }
+                  />
+                )}
+                {isPrivate && (
+                  <ListItem
+                    className={"py-0.5"}
+                    icon={<CircleUser size={14} />}
+                    label={NETBIRD_ONLY_METHOD.hoverLabel}
+                    value={
+                      <div className={"text-green-500"}>
+                        {t("reverseProxy.authGroupCount", {
+                          count: accessGroups.length,
+                        })}
+                      </div>
+                    }
+                  >
+                    {accessGroups.length > 0 && (
+                      <div className={"flex flex-col gap-2 px-4 pt-2 pb-3"}>
+                        {accessGroups.map((group) => (
+                          <div
+                            key={group.id}
+                            className={
+                              "flex gap-2 items-center justify-between"
+                            }
+                          >
+                            <GroupBadge group={group} />
+                            <ArrowRightIcon size={14} />
+                            <UserCountStack group={group} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </ListItem>
+                )}
+              </div>
             </HoverCardContent>
           )}
         </HoverCard>
