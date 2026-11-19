@@ -18,6 +18,8 @@ import {
   WorkflowIcon,
 } from "lucide-react";
 import React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import type { englishTranslations } from "@/i18n/translate";
 import {
   ChangeKind,
   DraftChange,
@@ -85,32 +87,34 @@ export const entityName = (change: DraftChange): string => {
   }
 };
 
-const KIND_BADGES: Record<
+const KIND_BADGES: (
+  t: typeof englishTranslations,
+) => Record<
   ChangeKind,
   { label: string; icon: React.ReactNode; className: string }
-> = {
+> = (t) => ({
   add: {
-    label: "Add",
+    label: t("common.add"),
     icon: <SquarePlusIcon size={13} />,
     className: "bg-green-900/30 text-green-400 border border-green-500/20",
   },
   update: {
-    label: "Modify",
+    label: t("controlCenter.modify"),
     icon: <SquareDotIcon size={13} />,
     className: "bg-yellow-900/30 text-yellow-400 border border-yellow-500/20",
   },
   remove: {
-    label: "Delete",
+    label: t("common.delete"),
     icon: <SquareMinusIcon size={13} />,
     className: "bg-red-900/30 text-red-400 border border-red-500/20",
   },
   // Not an API call but a step the user performs; deploy leaves these pending.
   install: {
-    label: "Install",
+    label: t("controlCenter.install"),
     icon: <TriangleAlertIcon size={13} />,
     className: "bg-amber-900/30 text-amber-400 border border-amber-500/20",
   },
-};
+});
 
 // A role=button span, not a <button>: it lives inside the accordion trigger.
 export const IssueBadge = ({
@@ -165,7 +169,8 @@ export const IssueBadge = ({
 };
 
 export const KindBadge = ({ kind }: { kind: ChangeKind }) => {
-  const badge = KIND_BADGES[kind];
+  const t = useTranslations();
+  const badge = KIND_BADGES(t)[kind];
   return (
     <span
       className={cn(

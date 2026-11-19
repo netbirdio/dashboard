@@ -1,7 +1,7 @@
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
-import { cn, singularize } from "@utils/helpers";
+import { cn } from "@utils/helpers";
 import {
   AlertTriangleIcon,
   ChevronDown,
@@ -27,6 +27,7 @@ export const RoutingPeersIndicator = ({
   className?: string;
   zeroLabel?: string;
 }) => {
+  const t = useTranslations();
   // A missing router means the network can't route, so the status bar warns
   // instead of showing the traffic-light dot.
   const showAlert = count === 0 && !!zeroLabel;
@@ -50,7 +51,7 @@ export const RoutingPeersIndicator = ({
       )}
       {count === 0 && zeroLabel
         ? zeroLabel
-        : singularize("Routing Peers", count, true)}
+        : t("controlCenter.routingPeerCount", { count: count ?? 0 })}
     </div>
   );
 };
@@ -182,7 +183,7 @@ export const RoutingPeersBar = ({
               count={count}
               dotSize={7}
               className={"gap-1.5"}
-              zeroLabel={"No Routing Peer"}
+              zeroLabel={translate("controlCenter.noRoutingPeer")}
             />
             {hasRouters && (
               <ChevronDown size={14} className={"shrink-0 text-nb-gray-400"} />
@@ -240,9 +241,7 @@ export const RoutingPeersBar = ({
                 )
               }
               renderItem={(row) => (
-                <div
-                  className={"flex items-center gap-2.5 p-1 w-full min-w-0"}
-                >
+                <div className={"flex items-center gap-2.5 p-1 w-full min-w-0"}>
                   {row.isGroup ? (
                     <span
                       className={
@@ -257,7 +256,9 @@ export const RoutingPeersBar = ({
                   <span className={"truncate flex-1 min-w-0"}>
                     {row.name}
                     {row.peersCount !== undefined &&
-                      ` (${singularize("Peers", row.peersCount, true)})`}
+                      ` (${translate("controlCenter.peerCount", {
+                        count: row.peersCount ?? 0,
+                      })})`}
                   </span>
                   {row.onEdit && (
                     <SquarePenIcon

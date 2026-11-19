@@ -37,19 +37,23 @@ export const FlowSelector = ({ value, onChange }: Props) => {
 
   const selectOptions = React.useMemo(() => {
     const options: SelectOption[] = [
-      { value: FlowView.PEERS, label: "Peer", icon: MonitorSmartphoneIcon },
-      { value: FlowView.USERS, label: "User", icon: UsersIcon },
-      { value: FlowView.GROUPS, label: "Group", icon: FolderGit2 },
+      {
+        value: FlowView.PEERS,
+        label: t("common.peer"),
+        icon: MonitorSmartphoneIcon,
+      },
+      { value: FlowView.USERS, label: t("common.user"), icon: UsersIcon },
+      { value: FlowView.GROUPS, label: t("common.group"), icon: FolderGit2 },
     ];
     if (!agentNetworkOnly) {
       options.push({
         value: FlowView.NETWORKS,
-        label: "Networks",
+        label: t("common.networks"),
         icon: NetworkIcon,
       });
     }
     return options;
-  }, [agentNetworkOnly]);
+  }, [t, agentNetworkOnly]);
 
   return (
     <>

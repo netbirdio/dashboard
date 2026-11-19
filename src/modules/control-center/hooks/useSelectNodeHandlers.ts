@@ -1,6 +1,7 @@
 import { Node, Rect, useReactFlow } from "@xyflow/react";
 import React, { useCallback, useEffect } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Policy } from "@/interfaces/Policy";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDestinationGroup } from "@/modules/control-center/contexts/ControlCenterContext";
@@ -57,6 +58,7 @@ const FIT_ANIMATION_MS = 800;
 const fitEase = (t: number) => t * (2 - t);
 
 export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
+  const t = useTranslations();
   const reactFlow = useReactFlow();
 
   const {
@@ -491,11 +493,12 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         if (resource?.id && resNetworkId) {
           void (async () => {
             const choice = await confirm({
-              title: `Edit resource “${resource.name ?? "Resource"}”?`,
-              description:
-                "You are in live mode. Saving your changes will apply them to your account immediately.",
-              confirmText: "Edit",
-              cancelText: "Cancel",
+              title: t("controlCenter.editResource", {
+                resource_Resource: resource.name ?? t("common.resource"),
+              }),
+              description: t("controlCenter.youAreInLiveModeSavingYourChanges"),
+              confirmText: t("common.edit"),
+              cancelText: t("common.cancel"),
               type: "warning",
               dismissOnOutsideClick: true,
             });
@@ -522,6 +525,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       }
     },
     [
+      t,
       onNetworkSelect,
       onDestinationGroupSelect,
       currentView,

@@ -47,6 +47,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
   const countLabel = getGroupCountLabel(
     group,
     group ? groupUserCounts.get(group.id ?? group.name) : 0,
+    t,
   );
 
   const [open, setOpen] = React.useState(false);

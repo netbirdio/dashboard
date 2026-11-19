@@ -1,4 +1,3 @@
-import { singularize } from "@utils/helpers";
 import {
   Edge as CanvasEdge,
   Node as CanvasNode,
@@ -6,6 +5,7 @@ import {
   useStore,
 } from "@xyflow/react";
 import { orderBy } from "lodash";
+import { englishTranslations } from "@/i18n/translate";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
@@ -41,19 +41,29 @@ export const getNetworksFromPolicy = (networks: Network[], policy: Policy) => {
   });
 };
 
-export const getGroupCountLabel = (group?: Group, userCount = 0) => {
+export const getGroupCountLabel = (
+  group?: Group,
+  userCount = 0,
+  t: typeof englishTranslations = englishTranslations,
+) => {
   const peerCount = group?.peers_count || 0;
   const resourceCount = group?.resources_count || 0;
   if (peerCount === 0 && resourceCount === 0 && userCount === 0) {
-    return "No Peers";
+    return t("controlCenter.noPeers");
   }
   return [
-    { count: userCount, label: singularize("Users", userCount, true) },
+    {
+      count: userCount,
+      label: t("controlCenter.userCount", { count: userCount }),
+    },
     {
       count: resourceCount,
-      label: singularize("Resources", resourceCount, true),
+      label: t("controlCenter.resourceCount", { count: resourceCount }),
     },
-    { count: peerCount, label: singularize("Peers", peerCount, true) },
+    {
+      count: peerCount,
+      label: t("controlCenter.peerCount", { count: peerCount }),
+    },
   ]
     .filter((part) => part.count > 0)
     .sort((a, b) => b.count - a.count)

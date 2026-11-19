@@ -4,6 +4,7 @@ import { useReactFlow } from "@xyflow/react";
 import { useCallback } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network } from "@/interfaces/Network";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -12,6 +13,7 @@ import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGro
 // Deletes an EXISTING network by its canvas node id. Resolves true only once the
 // network is really gone, so callers can navigate out of its view.
 export function useDeleteNetwork() {
+  const t = useTranslations();
   const reactFlow = useReactFlow();
   const { isDraft } = useDraftMode();
   const { confirm } = useDialog();
@@ -31,11 +33,12 @@ export function useDeleteNetwork() {
 
       if (isDraft) {
         const choice = await confirm({
-          title: `Delete network “${network.name}”?`,
-          description:
-            "Its resources and routing peers are removed too. It will be marked for deletion and deleted when you review and deploy.",
-          confirmText: "Delete",
-          cancelText: "Cancel",
+          title: t("controlCenter.deleteNetwork", { network: network.name }),
+          description: t(
+            "controlCenter.itsResourcesAndRoutingPeersAreRemovedToo",
+          ),
+          confirmText: t("common.delete"),
+          cancelText: t("common.cancel"),
           type: "danger",
           dismissOnOutsideClick: true,
         });
@@ -46,11 +49,10 @@ export function useDeleteNetwork() {
       }
 
       const choice = await confirm({
-        title: `Delete network '${network.name}'?`,
-        description:
-          "Are you sure you want to delete this network? Every resource and routing peer will be removed from this network. This action cannot be undone.",
-        confirmText: "Delete",
-        cancelText: "Cancel",
+        title: t("controlCenter.deleteNetworkLiveTitle", { network: network.name }),
+        description: t("controlCenter.areYouSureYouWantToDeleteThis"),
+        confirmText: t("common.delete"),
+        cancelText: t("common.cancel"),
         type: "danger",
       });
       if (!choice) return false;
@@ -62,8 +64,8 @@ export function useDeleteNetwork() {
       });
       notify({
         title: network.name,
-        description: "Network deleted successfully.",
-        loadingMessage: "Deleting network...",
+        description: t("controlCenter.networkDeletedSuccessfully"),
+        loadingMessage: t("controlCenter.deletingNetwork"),
         promise,
       });
       try {
@@ -75,6 +77,7 @@ export function useDeleteNetwork() {
       }
     },
     [
+      t,
       reactFlow,
       networks,
       isDraft,

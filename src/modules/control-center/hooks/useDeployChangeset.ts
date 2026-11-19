@@ -4,6 +4,7 @@ import { normalizeHostCIDR } from "@utils/ip";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { mutate } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource, NetworkRouter } from "@/interfaces/Network";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
@@ -59,6 +60,7 @@ const parseSignature = <T extends DraftChange>(sig?: string): T | undefined => {
 };
 
 export function useDeployChangeset() {
+  const t = useTranslations();
   const { changes } = useDraftChangeset();
   const { permission } = usePermissions();
   const { groups, networks, networkResources, users } = useControlCenterData();
@@ -121,7 +123,7 @@ export function useDeployChangeset() {
     const groupIdForName = (name: string) => {
       if (ambiguousNames.has(name)) {
         throw new Error(
-          `More than one group is named "${name}". Rename one so the change can be matched to it.`,
+          t("controlCenter.moreThanOneGroupIsNamedRenameOne", { name: name }),
         );
       }
       return nameToId.get(name);
@@ -133,9 +135,7 @@ export function useDeployChangeset() {
         if (!id.startsWith("new-")) return id;
         const mapped = providerClientMap.get(id);
         if (!mapped) {
-          throw new Error(
-            "A provider this policy points at was not created. Discard the policy or pick another provider.",
-          );
+          throw new Error(t("controlCenter.aProviderThisPolicyPointsAtWasNot"));
         }
         return mapped;
       });
@@ -160,13 +160,17 @@ export function useDeployChangeset() {
       );
       if (byName.length > 1) {
         throw new Error(
-          `More than one network is named "${change.networkName}". Rename one so the change can be matched to it.`,
+          t("controlCenter.moreThanOneNetworkIsNamedRenameOne", {
+            changeNetworkName: change.networkName,
+          }),
         );
       }
       const id = byName[0]?.id;
       if (!id) {
         throw new Error(
-          `Network "${change.networkName}" is missing. It may have been removed from the draft.`,
+          t("controlCenter.networkIsMissingItMayHaveBeenRemoved", {
+            changeNetworkName: change.networkName,
+          }),
         );
       }
       return id;
@@ -179,7 +183,9 @@ export function useDeployChangeset() {
         const id = g.id ?? groupIdForName(g.name);
         if (!id) {
           throw new Error(
-            `Group "${g.name}" is missing. It may have been removed from the draft.`,
+            t("controlCenter.groupIsMissingItMayHaveBeenRemoved", {
+              g: g.name,
+            }),
           );
         }
         return id;
@@ -195,7 +201,7 @@ export function useDeployChangeset() {
       const created = resourceClientMap.get(r.id);
       if (!created) {
         throw new Error(
-          "A referenced resource is missing. It may have been removed from the draft.",
+          t("controlCenter.aReferencedResourceIsMissingItMayHave"),
         );
       }
       return { id: created.id, type: created.type ?? r.type };
@@ -212,7 +218,7 @@ export function useDeployChangeset() {
         const id = groupIdForName(ref);
         if (id) return id;
         throw new Error(
-          `Group "${ref}" is missing. It may have been removed from the draft.`,
+          t("controlCenter.groupIsMissingItMayHaveBeenRemoved2", { ref: ref }),
         );
       },
       normalizeAddress: normalizeHostCIDR,
@@ -233,9 +239,7 @@ export function useDeployChangeset() {
     // the sink checks the policy itself rather than trusting the two to agree.
     const assertDeployable = (policy: Policy) => {
       if (isDeployablePolicy(policy, trackedResourceClientIds)) return;
-      throw new Error(
-        "It still references a peer or resource that does not exist yet, or is missing a source or destination.",
-      );
+      throw new Error(t("controlCenter.itStillReferencesAPeerOrResourceThat"));
     };
 
     // Resources and routers deploy BEFORE delete-group, and a landed reference fails
@@ -246,9 +250,10 @@ export function useDeployChangeset() {
       if (refs.length === 0) return;
       const names = refs.map((id) => `"${doomedGroups.get(id)}"`).join(", ");
       throw new Error(
-        `It references ${
-          refs.length === 1 ? "group" : "groups"
-        } ${names}, which this deploy also deletes. Take the group off this change, or discard the deletion.`,
+        t("controlCenter.itReferencesOtherWhichThisDeployAlsoDeletes", {
+          refs: refs.length,
+          names: names,
+        }),
       );
     };
 
@@ -267,7 +272,7 @@ export function useDeployChangeset() {
         if (!created) return undefined;
         if (created.networkId !== networkId) {
           throw new Error(
-            "It was already created in another network. Remove this change and add it to the new network instead.",
+            t("controlCenter.itWasAlreadyCreatedInAnotherNetworkRemove"),
           );
         }
         return created.id;
@@ -279,7 +284,7 @@ export function useDeployChangeset() {
           let saved: Group | undefined;
           if (createdId) {
             const base = await groupRequest.get(`/${createdId}`);
-            if (!base) throw new Error("Group no longer exists.");
+            if (!base) throw new Error(t("controlCenter.groupNoLongerExists"));
             const sent = deployedPayload(change);
             saved = await groupRequest.put(
               groupUpdateBody(
@@ -318,7 +323,7 @@ export function useDeployChangeset() {
           // The PUT sends the FULL member list, so it merges onto a FRESH read:
           // the SWR snapshot would erase members another admin added since.
           const base = await groupRequest.get(`/${change.groupId}`);
-          if (!base) throw new Error("Group no longer exists.");
+          if (!base) throw new Error(t("controlCenter.groupNoLongerExists"));
           const updated = await groupRequest.put(
             groupUpdateBody(
               change.name,
@@ -436,26 +441,34 @@ export function useDeployChangeset() {
           if (createdId) {
             const ok = await saveProvider(createdId, change.input);
             if (!ok) {
-              throw new Error(`Provider “${change.name}” was not saved.`);
+              throw new Error(
+                t("controlCenter.providerWasNotSaved", { change: change.name }),
+              );
             }
             providerClientMap.set(change.clientId, createdId);
             return;
           }
           const saved = await addProvider(change.input);
-          if (!saved?.id) throw new Error("The provider was not created.");
+          if (!saved?.id)
+            throw new Error(t("controlCenter.theProviderWasNotCreated"));
           providerClientMap.set(change.clientId, saved.id);
           createdIds.current.set(change.id, { id: saved.id });
           return;
         }
         case "update-provider": {
           const ok = await saveProvider(change.providerId, change.updates);
-          if (!ok) throw new Error(`Provider “${change.name}” was not saved.`);
+          if (!ok)
+            throw new Error(
+              t("controlCenter.providerWasNotSaved", { change: change.name }),
+            );
           return;
         }
         case "delete-provider": {
           const ok = await deleteProvider(change.providerId);
           if (!ok) {
-            throw new Error(`Provider “${change.name}” was not deleted.`);
+            throw new Error(
+              t("controlCenter.providerWasNotDeleted", { change: change.name }),
+            );
           }
           return;
         }
@@ -472,12 +485,17 @@ export function useDeployChangeset() {
           if (createdId) {
             const ok = await saveAgentPolicy(createdId, policy);
             if (!ok) {
-              throw new Error(`Agent policy “${change.name}” was not saved.`);
+              throw new Error(
+                t("controlCenter.agentPolicyWasNotSaved", {
+                  change: change.name,
+                }),
+              );
             }
             return;
           }
           const saved = await addAgentPolicy(policy);
-          if (!saved?.id) throw new Error("The agent policy was not created.");
+          if (!saved?.id)
+            throw new Error(t("controlCenter.theAgentPolicyWasNotCreated"));
           createdIds.current.set(change.id, { id: saved.id });
           return;
         }
@@ -500,14 +518,22 @@ export function useDeployChangeset() {
               : {}),
           });
           if (!ok) {
-            throw new Error(`Agent policy “${change.name}” was not saved.`);
+            throw new Error(
+              t("controlCenter.agentPolicyWasNotSaved", {
+                change: change.name,
+              }),
+            );
           }
           return;
         }
         case "delete-agent-policy": {
           const ok = await removeAgentPolicy(change.agentPolicyId);
           if (!ok) {
-            throw new Error(`Agent policy “${change.name}” was not deleted.`);
+            throw new Error(
+              t("controlCenter.agentPolicyWasNotDeleted", {
+                change: change.name,
+              }),
+            );
           }
           return;
         }
@@ -515,7 +541,9 @@ export function useDeployChangeset() {
           const live = users?.find((u) => u.id === change.userId);
           if (!live) {
             throw new Error(
-              `User “${change.name}” is missing. They may have been removed from the account.`,
+              t("controlCenter.userIsMissingTheyMayHaveBeenRemoved", {
+                change: change.name,
+              }),
             );
           }
           await userRequest.put(
@@ -550,12 +578,13 @@ export function useDeployChangeset() {
       setIsDeploying(false);
       deployInFlight.current = false;
       notify({
-        title: "Deploy failed",
-        description: `You don't have permission to ${forbidden
-          .map((c) => getChangeApiCall(c))
-          .join(", ")}. Remove ${
-          forbidden.length === 1 ? "that change" : "those changes"
-        } and try again.`,
+        title: t("controlCenter.deployFailed"),
+        description: t("controlCenter.youDonTHavePermissionToRemoveOther", {
+          getChangeApiCallC: forbidden
+            .map((c) => getChangeApiCall(c))
+            .join(", "),
+          forbidden: forbidden.length,
+        }),
         backgroundColor: "bg-red-500",
       });
       return false;
@@ -574,10 +603,11 @@ export function useDeployChangeset() {
       setIsDeploying(false);
       deployInFlight.current = false;
       notify({
-        title: "Deploy failed",
-        description: `Policy “${
-          (contradicted as { name?: string }).name ?? "Policy"
-        }” is marked both for update and for deletion. Remove one of the two changes and try again.`,
+        title: t("controlCenter.deployFailed"),
+        description: t("controlCenter.policyIsMarkedBothForUpdateAndFor", {
+          string_Policy:
+            (contradicted as { name?: string }).name ?? t("common.policy"),
+        }),
         backgroundColor: "bg-red-500",
       });
       return false;
@@ -595,11 +625,14 @@ export function useDeployChangeset() {
           await executeChange(change, createdIds.current.get(change.id));
         } catch (err) {
           setDeployStatus((p) => ({ ...p, [change.id]: "error" }));
-          const label = getChangeLabel(change).title;
+          const label = getChangeLabel(change, t).title;
           const e = err as { message?: string; code?: number };
           // Failed + remaining changes stay in the draft for a retry.
           throw {
-            message: `${label}: ${e?.message ?? "The API request failed."}`,
+            message: t("controlCenter.changeError", {
+              label: label,
+              requestFailed: e?.message ?? t("controlCenter.apiRequestFailed"),
+            }),
             code: e?.code ?? 0,
           };
         }
@@ -617,9 +650,9 @@ export function useDeployChangeset() {
       const rejected = Promise.reject(err);
       void rejected.catch(() => {});
       notify({
-        title: "Deploy failed",
+        title: t("controlCenter.deployFailed"),
         // Only reached on rejection, where the toast renders the error instead.
-        description: "The deploy stopped on a failed change.",
+        description: t("controlCenter.theDeployStoppedOnAFailedChange"),
         promise: rejected,
       });
       return false;
@@ -636,6 +669,7 @@ export function useDeployChangeset() {
       deployInFlight.current = false;
     }
   }, [
+    t,
     changes,
     permission,
     groups,

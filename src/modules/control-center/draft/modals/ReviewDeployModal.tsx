@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import React, { useCallback, useMemo, useRef } from "react";
 import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { ChangeAccordionItem } from "@/modules/control-center/draft/changeset/ChangeAccordionItem";
 import {
@@ -31,7 +32,6 @@ import {
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDeployChangeset } from "@/modules/control-center/hooks/useDeployChangeset";
 import { useRemoveChange } from "@/modules/control-center/hooks/useRemoveChange";
@@ -108,7 +108,7 @@ export const ReviewDeployModal = ({
   const installedCount = changes.filter(
     (c) => c.type === "install-peer" && !!c.installedPeerId,
   ).length;
-  const hasIssues = hasBlockingIssues(changes);
+  const hasIssues = hasBlockingIssues(changes, translate);
 
   // Order mirrors CHANGE_DEPLOY_ORDER so the list tells the truth. install-peer
   // is a manual prerequisite, so those rows sort to the very top.
@@ -167,9 +167,10 @@ export const ReviewDeployModal = ({
 
   // Counts install steps too, so the header matches the button badge.
   const totalCount = changes.length;
-  const description = `Review ${totalCount} change${
-    totalCount !== 1 ? "s" : ""
-  } before deploying to your network.`;
+  const description = translate(
+    "controlCenter.reviewChangeOtherBeforeDeployingToYourNetwork",
+    { totalCount: totalCount },
+  );
 
   const handleDeploy = async () => {
     const ok = await deploy();
@@ -177,13 +178,13 @@ export const ReviewDeployModal = ({
     // retry.
     if (!ok) return;
     notify({
-      title: "Deploy complete",
+      title: translate("controlCenter.deployComplete"),
       description:
         deployableCount > 0
-          ? `Your ${deployableCount} change${
-              deployableCount !== 1 ? "s were" : " was"
-            } applied to your network.`
-          : "Your installed peers are already live — no API changes were needed.",
+          ? translate("controlCenter.yourChangeOtherAppliedToYourNetwork", {
+              deployableCount: deployableCount,
+            })
+          : translate("controlCenter.yourInstalledPeersAreAlreadyLiveNoAPI"),
     });
     // Reset the changeset only AFTER the modal closed, or it flashes an empty
     // "no changes" state on the way out.
@@ -206,7 +207,7 @@ export const ReviewDeployModal = ({
           icon={
             <GitPullRequestArrowIcon size={18} className={"text-netbird"} />
           }
-          title={"Review & Deploy"}
+          title={translate("controlCenter.reviewDeploy")}
           description={description}
           color={"netbird"}
         />
@@ -216,7 +217,7 @@ export const ReviewDeployModal = ({
         <div className={"px-8 pb-6 border-t border-nb-gray-910 pt-6 min-w-0"}>
           {changes.length === 0 ? (
             <div className={"text-sm text-nb-gray-400 text-center py-10"}>
-              No pending changes.
+              {translate("controlCenter.noPendingChanges")}
             </div>
           ) : (
             <Accordion
@@ -235,7 +236,7 @@ export const ReviewDeployModal = ({
                   previewRemove={previewRemove}
                   onResolveIssue={
                     // An issue about a group deleted elsewhere has no fix on this row.
-                    getChangeIssue(change, changes)?.resolvable
+                    getChangeIssue(change, changes, translate)?.resolvable
                       ? resolveIssue
                       : undefined
                   }
@@ -250,16 +251,19 @@ export const ReviewDeployModal = ({
         <ModalFooter className={"items-center"}>
           <div className={"w-full"}>
             <Paragraph className={"text-sm mt-auto"}>
-              Learn more about
-              <InlineLink
-                // TODO: point at the Control Center / Review & Deploy docs
-                // page once it exists.
-                href={"https://docs.netbird.io/"}
-                target={"_blank"}
-              >
-                Review & Deploy
-                <ExternalLinkIcon size={12} />
-              </InlineLink>
+              {translate.rich("controlCenter.learnAboutReviewDeploy", {
+                link: (chunks) => (
+                  <InlineLink
+                    // TODO: point at the Control Center / Review & Deploy docs
+                    // page once it exists.
+                    href={"https://docs.netbird.io/"}
+                    target={"_blank"}
+                  >
+                    {chunks}
+                    <ExternalLinkIcon size={12} />
+                  </InlineLink>
+                ),
+              })}
             </Paragraph>
           </div>
           <div className={"flex gap-3 w-full justify-end"}>
@@ -271,7 +275,7 @@ export const ReviewDeployModal = ({
             {/* A disabled button emits no hover, so the wrapper div FullTooltip
                 adds carries the tooltip. */}
             <FullTooltip
-              content={"Resolve issues before deploying"}
+              content={translate("controlCenter.resolveIssuesBeforeDeploying")}
               disabled={!hasIssues}
               side={"top"}
             >
@@ -295,7 +299,7 @@ export const ReviewDeployModal = ({
                   )}
                 >
                   <ListTodoIcon size={16} />
-                  Approve & Deploy
+                  {translate("controlCenter.approveDeploy")}
                 </span>
                 {isDeploying && (
                   <span

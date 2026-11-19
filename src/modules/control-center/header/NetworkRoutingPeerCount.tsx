@@ -1,21 +1,23 @@
 import useFetchApi from "@utils/api";
 import { useMemo } from "react";
-import { Network, NetworkRouter } from "@/interfaces/Network";
-import { usePeers } from "@/contexts/PeersProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { usePeers } from "@/contexts/PeersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import { Network, NetworkRouter } from "@/interfaces/Network";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   getRoutingPeerCount,
   RoutingPeerRow,
   RoutingPeersBar,
   sortRoutingPeerRows,
 } from "@/modules/control-center/panels/RoutingPeersBar";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
 type Props = {
   network: Network;
 };
 
 export const NetworkRoutingPeerCount = ({ network }: Props) => {
+  const t = useTranslations();
   const { peers } = usePeers();
   const { groups } = useGroups();
   const { setRoutingPeerModal } = useDraftMode();
@@ -30,9 +32,7 @@ export const NetworkRoutingPeerCount = ({ network }: Props) => {
     () =>
       sortRoutingPeerRows(
         (apiRouters ?? []).map((r) => {
-          const peer = r.peer
-            ? peers?.find((p) => p.id === r.peer)
-            : undefined;
+          const peer = r.peer ? peers?.find((p) => p.id === r.peer) : undefined;
           const groupId = r.peer_groups?.[0];
           const group = groupId
             ? groups?.find((g) => g.id === groupId)
@@ -40,7 +40,7 @@ export const NetworkRoutingPeerCount = ({ network }: Props) => {
           return {
             key: r.id,
             peerOs: peer?.os,
-            name: peer?.name ?? group?.name ?? "Routing Peer",
+            name: peer?.name ?? group?.name ?? t("controlCenter.routingPeer"),
             isGroup: !r.peer,
             peersCount: !r.peer ? group?.peers_count ?? 0 : undefined,
             enabled: r.enabled,
@@ -49,7 +49,7 @@ export const NetworkRoutingPeerCount = ({ network }: Props) => {
         }),
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on network?.id so revalidation doesn't rebuild rows
-    [apiRouters, peers, groups, network?.id],
+    [t, apiRouters, peers, groups, network?.id],
   );
 
   return (

@@ -1,6 +1,7 @@
 import { cn } from "@utils/helpers";
 import { MoreHorizontal } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 // NOT a ReactFlow node: NetworkNode overlays it at an absolute rect.
 export const MoreResourcesNode = ({
@@ -10,6 +11,7 @@ export const MoreResourcesNode = ({
   count: number;
   style?: React.CSSProperties;
 }) => {
+  const t = useTranslations();
   return (
     <div
       // Own hover group, so hovering the parent frame doesn't light this up.
@@ -32,7 +34,7 @@ export const MoreResourcesNode = ({
             "font-normal text-sm text-nb-gray-400 group-hover/more:text-nb-gray-200 transition-all"
           }
         >
-          +{count} more
+          {t("controlCenter.moreResources", { count })}
         </span>
       </div>
     </div>

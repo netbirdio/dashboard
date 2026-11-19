@@ -10,8 +10,8 @@ import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
-import Steps from "@components/Steps";
 import Separator from "@components/Separator";
+import Steps from "@components/Steps";
 import useFetchApi from "@utils/api";
 import { sortBy } from "lodash";
 import { DownloadIcon, MonitorSmartphoneIcon } from "lucide-react";
@@ -87,8 +87,10 @@ const StepperContent = ({
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
         icon={<MonitorSmartphoneIcon size={18} className={"text-netbird"} />}
-        title={`Set up “${name}”`}
-        description={"Install NetBird and assign the registered peer."}
+        title={translate("controlCenter.setUp", { name: name })}
+        description={translate(
+          "controlCenter.installNetBirdAndAssignTheRegisteredPeer",
+        )}
         color={"netbird"}
       />
       <Separator />
@@ -96,7 +98,7 @@ const StepperContent = ({
         <Steps>
           <Steps.Step step={1}>
             <p className={"text-sm font-normal"}>
-              Install NetBird on the device. Skip if it is already installed.
+              {translate("controlCenter.installNetBirdOnTheDeviceSkipIfIt")}
             </p>
             <div className={"flex gap-4"}>
               <Button
@@ -117,7 +119,7 @@ const StepperContent = ({
           </Steps.Step>
           <Steps.Step step={2} line={false}>
             <p className={"text-sm font-normal"}>
-              Assign the peer this device registered as
+              {translate("controlCenter.assignThePeerThisDeviceRegisteredAs")}
             </p>
             <SelectDropdown
               variant={"secondary"}

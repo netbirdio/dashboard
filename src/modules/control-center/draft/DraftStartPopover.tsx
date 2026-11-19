@@ -1,6 +1,5 @@
-import * as React from "react";
-import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Popover, PopoverContent } from "@components/Popover";
+import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { cn } from "@utils/helpers";
 import {
   ChevronRightIcon,
@@ -8,6 +7,8 @@ import {
   GroupIcon,
   LucideIcon,
 } from "lucide-react";
+import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   open: boolean;
@@ -27,6 +28,7 @@ export const DraftStartPopover = ({
   onUseCurrent,
   children,
 }: Props) => {
+  const t = useTranslations();
   const choose = (fn: () => void) => {
     onOpenChange(false);
     // Defer past the close: the scroll-lock teardown forces a reflow that
@@ -52,15 +54,15 @@ export const DraftStartPopover = ({
         <div className={"p-1.5"}>
           <StartOption
             icon={CirclePlusIcon}
-            label={"New Empty Draft"}
-            description={"Start from a blank canvas"}
+            label={t("controlCenter.newEmptyDraft")}
+            description={t("controlCenter.startFromABlankCanvas")}
             onClick={() => choose(onStartBlank)}
             data-testid={"cc-draft-start-blank-option"}
           />
           <StartOption
             icon={GroupIcon}
-            label={"From Current View"}
-            description={"Start from the current canvas"}
+            label={t("controlCenter.fromCurrentView")}
+            description={t("controlCenter.startFromTheCurrentCanvas")}
             onClick={() => choose(onUseCurrent)}
             data-testid={"cc-draft-use-current-option"}
           />

@@ -1,4 +1,3 @@
-import React, { useEffect, useMemo, useState } from "react";
 import Button from "@components/Button";
 import { Input } from "@components/Input";
 import {
@@ -9,6 +8,7 @@ import {
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { trim } from "lodash";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
@@ -30,12 +30,21 @@ export const GroupRenameModal = ({
   onRename,
   currentName,
   takenNames,
-  duplicateError = "This group already exists. Please choose another name.",
-  title = "Rename Group",
-  description = "Set an easily identifiable name for your group.",
-  inputPlaceholder = "e.g., Developers",
+  duplicateError: duplicateErrorProp,
+  title: titleProp,
+  description: descriptionProp,
+  inputPlaceholder: inputPlaceholderProp,
 }: Props) => {
   const t = useTranslations();
+  const duplicateError =
+    duplicateErrorProp ??
+    t("controlCenter.thisGroupAlreadyExistsPleaseChooseAnotherName");
+  const title = titleProp ?? t("controlCenter.renameGroupTitle");
+  const description =
+    descriptionProp ??
+    t("controlCenter.setAnEasilyIdentifiableNameForYourGroup");
+  const inputPlaceholder =
+    inputPlaceholderProp ?? t("controlCenter.namePlaceholder");
   const [name, setName] = useState(currentName);
   const [error, setError] = useState("");
 

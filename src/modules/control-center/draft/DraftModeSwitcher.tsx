@@ -41,7 +41,11 @@ export const DraftModeSwitcher = ({}: Props) => {
 
   // Shown in BOTH modes so the active segment always reveals the current mode.
   const modeTabs = (withChooserChevron: boolean) => (
-    <SegmentedTabs value={mode} onChange={handleSwitch} activationMode={"manual"}>
+    <SegmentedTabs
+      value={mode}
+      onChange={handleSwitch}
+      activationMode={"manual"}
+    >
       <SegmentedTabs.List
         className={
           "border-b rounded-b-lg text-sm font-medium bg-nb-gray-930 p-1"
@@ -53,7 +57,7 @@ export const DraftModeSwitcher = ({}: Props) => {
           data-testid={"cc-mode-live"}
         >
           <CircleIcon active={true} size={8} className={"shrink-0"} />
-          Live
+          {t("controlCenter.live")}
         </SegmentedTabs.Trigger>
         <SegmentedTabs.Trigger
           value={"draft"}
@@ -65,7 +69,7 @@ export const DraftModeSwitcher = ({}: Props) => {
           data-testid={"cc-mode-draft"}
         >
           <PencilLineIcon size={12} />
-          Draft
+          {t("controlCenter.draft")}
           <SmallBadge
             text={t("common.beta")}
             variant={"sky"}
@@ -117,7 +121,7 @@ export const DraftModeSwitcher = ({}: Props) => {
               data-testid={"cc-draft-review"}
             >
               <GitPullRequestArrowIcon size={14} />
-              Review & Deploy
+              {t("controlCenter.reviewDeploy")}
               {changeCount > 0 && (
                 <span
                   className={

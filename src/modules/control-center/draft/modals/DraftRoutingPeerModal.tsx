@@ -10,6 +10,7 @@ import { useReactFlow } from "@xyflow/react";
 import { Share2Icon } from "lucide-react";
 import * as React from "react";
 import { useSWRConfig } from "swr";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network, NetworkRouter } from "@/interfaces/Network";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -19,6 +20,7 @@ import { RoutingPeerModalContent } from "@/modules/networks/routing-peers/Networ
 // The networks page's routing-peer modal, run in pure-data mode for draft
 // targets: the result lands in the changeset instead of a live PUT.
 export const DraftRoutingPeerModal = () => {
+  const t = useTranslations();
   const { isDraft, routingPeerModal, setRoutingPeerModal } = useDraftMode();
   const { addRouterFromSelection, updateRouterFromSelection } =
     useDraftNetworkActions();
@@ -86,17 +88,13 @@ export const DraftRoutingPeerModal = () => {
             <ModalHeader
               icon={<Share2Icon size={20} />}
               color={"netbird"}
-              title={"Routing peer not installed yet"}
-              description={
-                "This routing peer uses a peer that hasn't been installed. " +
-                "Install it to edit these settings, or remove this change " +
-                "and add the routing peer again."
-              }
+              title={t("controlCenter.routingPeerNotInstalledYet")}
+              description={t("controlCenter.routingPeerInstallDescription")}
             />
             <ModalFooter>
               <ModalClose asChild={true}>
                 <Button variant={"primary"} className={"w-full"}>
-                  Got it
+                  {t("controlCenter.gotIt")}
                 </Button>
               </ModalClose>
             </ModalFooter>

@@ -15,6 +15,7 @@ import { Virtuoso } from "react-virtuoso";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { useCanvasUI } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
@@ -53,6 +54,7 @@ interface PeerGroupsPanelProps {
 const groupRef = (g: Group) => g.id ?? g.name;
 
 export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
+  const t = useTranslations();
   const { peers, groups } = useControlCenterData();
   const { groupUserCounts } = useCanvasUI();
   const nodes = useStructuralNodes();
@@ -167,11 +169,10 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
     }
 
     const choice = await confirm({
-      title: `Save groups of “${peer.name}”?`,
-      description:
-        "You are in live mode. Saving your changes will apply them to your account immediately.",
-      confirmText: "Save",
-      cancelText: "Cancel",
+      title: t("controlCenter.saveGroupsOf", { peer: peer.name }),
+      description: t("controlCenter.youAreInLiveModeSavingYourChanges"),
+      confirmText: t("common.save"),
+      cancelText: t("common.cancel"),
       type: "warning",
       dismissOnOutsideClick: true,
     });
@@ -205,10 +206,10 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
     })();
     // useApiCall rejects but never toasts, so the promise drives the toast.
     notify({
-      title: peer.name ?? "Peer",
-      description: `Groups of ${
-        peer.name ?? "the peer"
-      } were successfully saved.`,
+      title: peer.name ?? t("common.peer"),
+      description: t("controlCenter.groupsOfWereSuccessfullySaved", {
+        thePeer: peer.name ?? t("common.peer"),
+      }),
       promise: request,
     });
     try {
@@ -271,14 +272,13 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
   const confirmDiscard = async () => {
     if (!dirty) return true;
     return !!(await confirm({
-      title: "You have unsaved group changes",
-      description: `The group assignments you toggled for “${
-        peer?.name ?? "this peer"
-      }” haven't been ${
-        isDraft ? "applied" : "saved"
-      } yet. Closing the panel will lose them.`,
-      confirmText: "Discard",
-      cancelText: "Keep editing",
+      title: t("controlCenter.youHaveUnsavedGroupChanges"),
+      description: t("controlCenter.theGroupAssignmentsYouToggledForHavenT", {
+        thisPeer: peer?.name ?? t("common.peer"),
+        isDraft: isDraft ? "true" : "false",
+      }),
+      confirmText: t("controlCenter.discard"),
+      cancelText: t("controlCenter.keepEditing"),
       type: "warning",
       dismissOnOutsideClick: true,
     }));
@@ -314,7 +314,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             autoFocus
-            placeholder={"Search group..."}
+            placeholder={t("controlCenter.searchGroup")}
           />
           <div
             className={"absolute left-0 top-1 bottom-0 flex items-center pl-5"}
@@ -343,7 +343,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
                   "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
                 }
               />
-              Groups
+              {t("common.groups")}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -399,6 +399,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
                             {getGroupCountLabel(
                               g,
                               groupUserCounts.get(g.id ?? g.name),
+                              t,
                             )}
                           </span>
                         </div>
@@ -414,8 +415,8 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
             <div className={"px-3 pt-3"}>
               <DropdownInfoText className={"mt-5 max-w-sm mx-auto text-sm"}>
                 {query
-                  ? "There are no groups matching your search. Please try a different search term."
-                  : "There are no groups yet."}
+                  ? t("controlCenter.thereAreNoGroupsMatchingYourSearchPlease")
+                  : t("controlCenter.thereAreNoGroupsYet")}
               </DropdownInfoText>
             </div>
           )}
@@ -429,7 +430,10 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
           }
         >
           <span className={"text-xs text-nb-gray-400"}>
-            {`${selectedRefs.size} of ${allGroups.length} Assigned`}
+            {t("controlCenter.assignedGroupsCount", {
+              selectedRefs: selectedRefs.size,
+              allGroups: allGroups.length,
+            })}
           </span>
           <div className={"flex items-center gap-3"}>
             <Button
@@ -438,7 +442,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
               className={"py-2.5"}
               onClick={onClose}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant={"primary"}
@@ -448,7 +452,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
               onClick={() => void saveAssignments()}
             >
               <span className={cn(saving && "invisible")}>
-                {isDraft ? "Assign" : "Save"}
+                {isDraft ? t("common.assign") : t("common.save")}
               </span>
               {saving && (
                 <Loader2

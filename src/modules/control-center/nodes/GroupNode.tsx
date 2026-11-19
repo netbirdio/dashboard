@@ -4,6 +4,7 @@ import { cn } from "@utils/helpers";
 import { type Node, Position, useConnection } from "@xyflow/react";
 import * as React from "react";
 import { useMemo } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import {
   useCanvasUI,
@@ -30,6 +31,7 @@ type GroupNodeProps = Node<
 >;
 
 export const GroupNode = ({ data, id }: GroupNodeProps) => {
+  const t = useTranslations();
   const {
     enabled,
     group,
@@ -60,7 +62,7 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
     (data as { userCountOverride?: number }).userCountOverride ??
     (group ? groupUserCounts.get(group.id ?? group.name) : 0);
   const countLabel = useMemo(
-    () => getGroupCountLabel(group, userCount),
+    () => getGroupCountLabel(group, userCount, t),
     [group, userCount],
   );
 

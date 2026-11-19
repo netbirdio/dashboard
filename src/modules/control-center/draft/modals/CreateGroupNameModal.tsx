@@ -1,4 +1,3 @@
-import React, { useEffect, useMemo, useState } from "react";
 import Button from "@components/Button";
 import { Input } from "@components/Input";
 import {
@@ -9,6 +8,7 @@ import {
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { trim } from "lodash";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 
@@ -39,11 +39,13 @@ export const CreateGroupNameModal = ({
     const trimmed = trim(newName);
     // "All" is the system group; name-based checks would misidentify a copy.
     if (trimmed === "All") {
-      setError('The name "All" is reserved. Please choose another name.');
+      setError(t("controlCenter.theNameAllIsReservedPleaseChooseAnother"));
     } else {
       const exists = groups?.some((g) => g.name === trimmed);
       setError(
-        exists ? "This group already exists. Please choose another name." : "",
+        exists
+          ? t("controlCenter.thisGroupAlreadyExistsPleaseChooseAnotherName")
+          : "",
       );
     }
     setName(newName);
@@ -61,7 +63,9 @@ export const CreateGroupNameModal = ({
       <ModalContent maxWidthClass={"max-w-md"}>
         <ModalHeader
           title={t("controlCenter.create")}
-          description={"Set an easily identifiable name for your group."}
+          description={t(
+            "controlCenter.setAnEasilyIdentifiableNameForYourGroup",
+          )}
           color={"blue"}
         />
         <div className={"p-default flex flex-col gap-4"}>

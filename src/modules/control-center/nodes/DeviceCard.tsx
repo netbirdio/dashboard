@@ -4,6 +4,7 @@ import { cn } from "@utils/helpers";
 import * as React from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import { ResourceIcon } from "@/assets/icons/ResourceIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { NetworkResource } from "@/interfaces/Network";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
@@ -29,6 +30,7 @@ export const DeviceCard = ({
   badge,
   nameMaxWidth,
 }: DeviceCardProps) => {
+  const t = useTranslations();
   if (!device && !resource) return;
 
   const isSmall = size === "small";
@@ -93,7 +95,7 @@ export const DeviceCard = ({
           )}
         >
           <TruncatedText
-            text={device?.name || resource?.name || "Unknown"}
+            text={device?.name || resource?.name || t("common.unknown")}
             maxWidth={nameMaxWidth ?? (isSmall ? "120px" : "150px")}
             hideTooltip={true}
           />

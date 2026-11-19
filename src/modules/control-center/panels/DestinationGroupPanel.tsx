@@ -26,6 +26,7 @@ import { Virtuoso } from "react-virtuoso";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
@@ -317,6 +318,7 @@ const DraftStatusChip = ({
 );
 
 const DraftPeerRowActions = ({ draftPeer }: { draftPeer: Peer }) => {
+  const t = useTranslations();
   const { setInstallModal, setUserDeviceModal } = useDraftMode();
   const isUserDevice = draftPeer.os === "draft-user-device";
   const kind = (draftPeer.os?.replace("draft-", "") ??
@@ -327,7 +329,11 @@ const DraftPeerRowActions = ({ draftPeer }: { draftPeer: Peer }) => {
   return (
     <DraftStatusChip
       label={
-        isUserDevice ? "Install or assign" : setupKey ? "Waiting" : "Install"
+        isUserDevice
+          ? t("controlCenter.installOrAssign")
+          : setupKey
+          ? t("controlCenter.waiting")
+          : t("controlCenter.install")
       }
       icon={
         isUserDevice ? undefined : setupKey ? (
@@ -338,7 +344,10 @@ const DraftPeerRowActions = ({ draftPeer }: { draftPeer: Peer }) => {
       }
       onClick={() =>
         isUserDevice
-          ? setUserDeviceModal({ nodeId, name: draftPeer.name ?? "Device" })
+          ? setUserDeviceModal({
+              nodeId,
+              name: draftPeer.name ?? t("controlCenter.device"),
+            })
           : setInstallModal({
               isUserDevice: false,
               setupKey,
@@ -354,6 +363,7 @@ export const DestinationGroupPanel = ({
   groupId,
   onClose,
 }: DestinationGroupPanelProps) => {
+  const t = useTranslations();
   const { peers, networkResources, groups, users } = useControlCenterData();
   // Structural subscription: a nodes subscription re-renders the panel on every canvas update.
   const nodes = useStructuralNodes();
@@ -826,11 +836,10 @@ export const DestinationGroupPanel = ({
     // Live — the PUT hits the account immediately, so confirm first.
     if (!group.id) return;
     const choice = await confirm({
-      title: `Save group “${group.name}”?`,
-      description:
-        "You are in live mode. Saving your changes will apply them to your account immediately.",
-      confirmText: "Save",
-      cancelText: "Cancel",
+      title: t("controlCenter.saveGroup", { group: group.name }),
+      description: t("controlCenter.youAreInLiveModeSavingYourChanges"),
+      confirmText: t("common.save"),
+      cancelText: t("common.cancel"),
       type: "warning",
       dismissOnOutsideClick: true,
     });
@@ -867,7 +876,9 @@ export const DestinationGroupPanel = ({
     if (membersDirty) {
       notify({
         title: group.name,
-        description: `${group.name} was successfully saved.`,
+        description: t("controlCenter.wasSuccessfullySaved", {
+          group: group.name,
+        }),
         promise: request,
       });
     }
@@ -878,7 +889,9 @@ export const DestinationGroupPanel = ({
       if (!membersDirty) {
         notify({
           title: group.name,
-          description: `${group.name} was successfully saved.`,
+          description: t("controlCenter.wasSuccessfullySaved", {
+            group: group.name,
+          }),
         });
       }
       // DON'T rebuild the view: the toggles already previewed it, and a rebuild refits.
@@ -959,10 +972,11 @@ export const DestinationGroupPanel = ({
     await mutate("/users?service_user=false");
     if (failed.length > 0) {
       notify({
-        title: "Some users were not updated",
-        description: `${failed.join(", ")} could not be moved in or out of “${
-          group?.name ?? "this group"
-        }”. Their membership is unchanged.`,
+        title: t("controlCenter.someUsersWereNotUpdated"),
+        description: t("controlCenter.couldNotBeMovedInOrOutOf", {
+          failed: failed.join(", "),
+          thisGroup: group?.name ?? t("common.group"),
+        }),
         backgroundColor: "bg-red-500",
       });
     }
@@ -1140,14 +1154,13 @@ export const DestinationGroupPanel = ({
   const confirmDiscard = async () => {
     if (!dirty || !canSave) return true;
     return !!(await confirm({
-      title: "Unsaved Changes",
-      description: `The members you toggled for “${
-        group?.name ?? "this group"
-      }” haven't been ${
-        isDraft ? "applied" : "saved"
-      } yet. Closing the panel will lose them.`,
-      confirmText: "Discard",
-      cancelText: "Cancel",
+      title: t("controlCenter.unsavedChanges"),
+      description: t("controlCenter.theMembersYouToggledForHavenTBeen", {
+        thisGroup: group?.name ?? t("common.group"),
+        isDraft: isDraft ? "true" : "false",
+      }),
+      confirmText: t("controlCenter.discard"),
+      cancelText: t("common.cancel"),
       type: "danger",
       dismissOnOutsideClick: true,
     }));
@@ -1211,10 +1224,10 @@ export const DestinationGroupPanel = ({
             autoFocus
             placeholder={
               tab === "peers"
-                ? "Search peer by name or ip..."
+                ? t("controlCenter.searchPeerByNameOrIp")
                 : tab === "users"
-                ? "Search user by name, email or role..."
-                : "Search resource..."
+                ? t("controlCenter.searchUserByNameEmailOrRole")
+                : t("controlCenter.searchResource")
             }
           />
           {/* top-1 mirrors the row's pt-1 so the icon centers on the input. */}
@@ -1247,7 +1260,7 @@ export const DestinationGroupPanel = ({
                   "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
                 }
               />
-              Peers
+              {t("common.peers")}
             </TabsTrigger>
             <TabsTrigger
               value={"resources"}
@@ -1259,7 +1272,7 @@ export const DestinationGroupPanel = ({
                   "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
                 }
               />
-              Resources
+              {t("common.resources")}
             </TabsTrigger>
             <TabsTrigger value={"users"} className={"text-[.8rem] font-normal"}>
               <UsersIcon
@@ -1268,7 +1281,7 @@ export const DestinationGroupPanel = ({
                   "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
                 }
               />
-              Users
+              {t("common.users")}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -1325,8 +1338,8 @@ export const DestinationGroupPanel = ({
             <div className={"px-3 pt-3"}>
               <DropdownInfoText className={"mt-5 max-w-sm mx-auto text-sm"}>
                 {query
-                  ? "There are no peers matching your search. Please try a different search term."
-                  : "There are no peers in this group yet."}
+                  ? t("controlCenter.thereAreNoPeersMatchingYourSearchPlease")
+                  : t("controlCenter.thereAreNoPeersInThisGroupYet")}
               </DropdownInfoText>
             </div>
           )}
@@ -1353,7 +1366,10 @@ export const DestinationGroupPanel = ({
                       <DeviceCard
                         resource={
                           resource.id?.startsWith("new-") && !resource.address
-                            ? { ...resource, address: "IP, CIDR or Domain" }
+                            ? {
+                                ...resource,
+                                address: t("controlCenter.addressPlaceholder"),
+                              }
                             : resource
                         }
                         size="small"
@@ -1370,7 +1386,7 @@ export const DestinationGroupPanel = ({
                         !(resource as { draftNetwork?: unknown })
                           .draftNetwork && (
                           <DraftStatusChip
-                            label={"No Network"}
+                            label={t("controlCenter.noNetwork")}
                             onClick={() =>
                               setResourceNetworkPicker({
                                 nodeId: `resource-${resource.id}`,
@@ -1389,8 +1405,10 @@ export const DestinationGroupPanel = ({
             <div className={"px-3 pt-3"}>
               <DropdownInfoText className={"mt-5 max-w-sm mx-auto text-sm"}>
                 {query
-                  ? "There are no resources matching your search. Please try a different search term."
-                  : "There are no resources in this group yet."}
+                  ? t(
+                      "controlCenter.thereAreNoResourcesMatchingYourSearchPlease",
+                    )
+                  : t("controlCenter.thereAreNoResourcesInThisGroupYet")}
               </DropdownInfoText>
             </div>
           )}
@@ -1424,10 +1442,10 @@ export const DestinationGroupPanel = ({
             <div className={"px-3 pt-3"}>
               <DropdownInfoText className={"mt-5 max-w-sm mx-auto text-sm"}>
                 {query
-                  ? "There are no users matching your search. Please try a different search term."
+                  ? t("controlCenter.thereAreNoUsersMatchingYourSearchPlease")
                   : canEditUsers
-                  ? "There are no users in this account yet."
-                  : "There are no users in this group yet."}
+                  ? t("controlCenter.thereAreNoUsersInThisAccountYet")
+                  : t("controlCenter.thereAreNoUsersInThisGroupYet")}
               </DropdownInfoText>
             </div>
           )}
@@ -1442,10 +1460,19 @@ export const DestinationGroupPanel = ({
         >
           <span className={"text-xs text-nb-gray-400"}>
             {tab === "peers"
-              ? `${selectedPeerIds.size} of ${totalPeers} Assigned`
+              ? t("controlCenter.assignedPeersCount", {
+                  selectedPeerIds: selectedPeerIds.size,
+                  totalPeers: totalPeers,
+                })
               : tab === "users"
-              ? `${selectedUserIds.size} of ${totalUsers} Assigned`
-              : `${selectedResourceIds.size} of ${totalResources} Assigned`}
+              ? t("controlCenter.assignedUsersCount", {
+                  selectedUserIds: selectedUserIds.size,
+                  totalUsers: totalUsers,
+                })
+              : t("controlCenter.assignedResourcesCount", {
+                  selectedResourceIds: selectedResourceIds.size,
+                  totalResources: totalResources,
+                })}
           </span>
           <div className={"flex items-center gap-3"}>
             <Button
@@ -1454,7 +1481,7 @@ export const DestinationGroupPanel = ({
               className={"py-2.5"}
               onClick={onClose}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant={"primary"}
@@ -1465,7 +1492,7 @@ export const DestinationGroupPanel = ({
             >
               {/* Keep the label's width while saving so nothing jumps. */}
               <span className={cn(saving && "invisible")}>
-                {isDraft ? "Assign" : "Save"}
+                {isDraft ? t("common.assign") : t("common.save")}
               </span>
               {saving && (
                 <Loader2

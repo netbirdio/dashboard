@@ -20,6 +20,7 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -54,6 +55,7 @@ interface CanvasContextMenuProps {
 }
 
 export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
+  const t = useTranslations();
   const [position, setPosition] = useState<MenuPosition | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   // Where the menu renders — flipped/clamped away from the viewport edges.
@@ -87,6 +89,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
   // Gated on the same create permissions the deploy pre-flight checks
   // (CHANGE_PERMISSION); a queued change it refuses would dead-end the draft.
   const draftItemGroups: {
+    testLabel: string;
     label: string;
     icon: React.ReactNode;
     shortcut: React.ReactNode;
@@ -95,13 +98,15 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
     const groups = [
       [
         {
-          label: "New Server",
+          testLabel: "New Server",
+          label: t("controlCenter.newServer"),
           icon: <ServerIcon size={14} />,
           permitted: true,
           action: (pos: XYPosition) => addPeerPlaceholder("server", pos),
         },
         {
-          label: "New Agent",
+          testLabel: "New Agent",
+          label: t("controlCenter.newAgent"),
           icon: <BotIcon size={14} />,
           permitted: true,
           action: (pos: XYPosition) => addPeerPlaceholder("agent", pos),
@@ -109,13 +114,15 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
       ],
       [
         {
-          label: "New Policy",
+          testLabel: "New Policy",
+          label: t("controlCenter.newPolicy"),
           icon: <ShieldIcon size={14} />,
           permitted: permission.policies.create,
           action: (pos: XYPosition) => addBlankPolicy(pos),
         },
         {
-          label: "New Group",
+          testLabel: "New Group",
+          label: t("controlCenter.newGroup"),
           icon: <FolderGit2 size={14} />,
           permitted: permission.groups.create,
           action: (pos: XYPosition) =>
@@ -125,7 +132,8 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
       drilled
         ? [
             {
-              label: "New Resource",
+              testLabel: "New Resource",
+              label: t("controlCenter.newResource"),
               icon: <WorkflowIcon size={14} />,
               permitted: permission.networks.create,
               // Created into the drilled network. Pass the right-click point so
@@ -138,7 +146,8 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
                 }),
             },
             {
-              label: "Add Routing Peer",
+              testLabel: "Add Routing Peer",
+              label: t("controlCenter.addRoutingPeer"),
               icon: <WaypointsIcon size={14} />,
               permitted: permission.networks.create,
               action: () =>
@@ -149,13 +158,15 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
           ]
         : [
             {
-              label: "New Network",
+              testLabel: "New Network",
+              label: t("controlCenter.newNetwork"),
               icon: <NetworkIcon size={14} />,
               permitted: permission.networks.create,
               action: (pos: XYPosition) => addBlankNode("network", pos),
             },
             {
-              label: "New Resource",
+              testLabel: "New Resource",
+              label: t("controlCenter.newResource"),
               icon: <WorkflowIcon size={14} />,
               permitted: permission.networks.create,
               // Open the editor first — a resource must have an IP/CIDR/domain;
@@ -166,7 +177,8 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
           ],
       [
         {
-          label: "New Agent Policy",
+          testLabel: "New Agent Policy",
+          label: t("controlCenter.newAgentPolicy"),
           icon: <ShieldIcon size={14} />,
           permitted:
             agentNetworkEnabled &&
@@ -174,7 +186,8 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
           action: (pos: XYPosition) => addBlankAgentPolicy(pos),
         },
         {
-          label: "New Agent Provider",
+          testLabel: "New Agent Provider",
+          label: t("controlCenter.newAgentProvider"),
           icon: <SparklesIcon size={14} />,
           permitted:
             agentNetworkEnabled &&
@@ -195,6 +208,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
       )
       .filter((group) => group.length > 0);
   }, [
+    t,
     drilled,
     drillDownNetworkNodeId,
     addNewGroup,
@@ -314,7 +328,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
           {group.map((item) => (
             <button
               key={item.label}
-              data-testid={`cc-canvas-menu-${menuItemSlug(item.label)}`}
+              data-testid={`cc-canvas-menu-${menuItemSlug(item.testLabel)}`}
               onClick={() => {
                 item.action(
                   reactFlow.screenToFlowPosition({

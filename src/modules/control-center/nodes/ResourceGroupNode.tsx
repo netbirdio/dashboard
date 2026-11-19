@@ -1,17 +1,18 @@
-import { SmallBadge } from "@components/ui/SmallBadge";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
-import { cn, singularize } from "@utils/helpers";
+import { SmallBadge } from "@components/ui/SmallBadge";
+import { cn } from "@utils/helpers";
 import { type Node, Position, useConnection, useStore } from "@xyflow/react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import {
   useDestinationGroup,
   useIsContextMenuTarget,
 } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { GroupNode } from "@/modules/control-center/nodes/GroupNode";
 import { AllHandles } from "@/modules/control-center/handles/AllHandles";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
+import { GroupNode } from "@/modules/control-center/nodes/GroupNode";
 
 type ResourceGroupNode = Node<
   {
@@ -26,7 +27,12 @@ type ResourceGroupNode = Node<
 
 // A resource group shown INSIDE a network frame: a flat row (no card
 // background), laid out by the frame like its resources.
-export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => {
+export const ResourceGroupNode = ({
+  data,
+  id,
+  parentId,
+}: ResourceGroupNode) => {
+  const t = useTranslations();
   const { group, showHandles = true } = data;
   const { isDraft, drillDownNetworkNodeId } = useDraftMode();
   const { selectedDestinationGroup, setSelectedDestinationGroup } =
@@ -41,9 +47,7 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
   // drill-down-only.
   const isFramed = !!parentId?.startsWith("network-");
   const handlesActive = !isFramed || drillDownNetworkNodeId === parentId;
-  const isTarget = useConnection(
-    (c) => c.inProgress && c.fromNode.id !== id,
-  );
+  const isTarget = useConnection((c) => c.inProgress && c.fromNode.id !== id);
 
   // While drilled the parent frame is HIDDEN and the row promotes to a full
   // GroupNode card. Boolean store selector on purpose, not useInternalNode.
@@ -105,8 +109,10 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
             }
           >
             {group?.resources_count
-              ? singularize("Resources", group.resources_count, true)
-              : "No Resources"}
+              ? t("controlCenter.resourceCount", {
+                  count: group.resources_count ?? 0,
+                })
+              : t("controlCenter.noResources")}
           </span>
         </div>
       </div>

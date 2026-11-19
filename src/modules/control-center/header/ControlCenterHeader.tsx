@@ -108,7 +108,7 @@ function NetworkActionsMenu({
       <DropdownMenuTrigger asChild>
         <button
           type={"button"}
-          aria-label={"Network actions"}
+          aria-label={t("controlCenter.networkActions")}
           className={
             "flex items-center justify-center h-[40px] px-4 shrink-0 rounded-r-md border border-l-0 border-gray-700/40 bg-nb-gray-920 text-gray-400 hover:text-white hover:bg-nb-gray-910 transition-colors"
           }
@@ -166,6 +166,7 @@ function AddResourceButton({ networkNodeId }: { networkNodeId: string }) {
 }
 
 function DraftDrillDownHeader() {
+  const t = useTranslations();
   const {
     drillDownNetworkNodeId,
     setDrillDownNetworkNodeId,
@@ -190,18 +191,18 @@ function DraftDrillDownHeader() {
           value: n.id,
           label:
             (n.data as { network?: { name?: string } })?.network?.name ??
-            "Network",
+            t("common.network"),
           icon: NetworkIcon,
         })),
       "label",
     );
     options.unshift({
       value: "",
-      label: "All Networks",
+      label: t("controlCenter.allNetworks"),
       icon: () => <LayoutGridIcon size={14} />,
     } as SelectOption);
     return options;
-  }, [nodes]);
+  }, [t, nodes]);
 
   const drilled = !!drillDownNetworkNodeId;
 
@@ -383,6 +384,7 @@ function HeaderTopLeft() {
 }
 
 function FocusModePill() {
+  const t = useTranslations();
   const { highlightArmed, setHighlightArmed, focusedNodeId, setFocusedNodeId } =
     useDestinationGroup();
   const nodes = useStructuralNodes();
@@ -472,8 +474,10 @@ function FocusModePill() {
           >
             <FocusIcon size={13} className={"text-sky-400 shrink-0"} />
             {focusedNodeId
-              ? `Focusing on “${focusedName || "node"}”`
-              : "Select a node to focus"}
+              ? t("controlCenter.focusingOn", {
+                  focusedNameNode: focusedName || t("controlCenter.node"),
+                })
+              : t("controlCenter.selectANodeToFocus")}
             <button
               onClick={() => {
                 setHighlightArmed(false);
@@ -482,7 +486,7 @@ function FocusModePill() {
               className={
                 "p-1.5 rounded-full text-nb-gray-400 hover:text-nb-gray-100 hover:bg-nb-gray-800 transition-colors"
               }
-              aria-label={"Exit Focus"}
+              aria-label={t("controlCenter.exitFocus")}
             >
               <XIcon size={15} />
             </button>

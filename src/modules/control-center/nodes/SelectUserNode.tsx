@@ -2,15 +2,16 @@ import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
+import TextWithTooltip from "@components/ui/TextWithTooltip";
+import TruncatedText from "@components/ui/TruncatedText";
 import useFetchApi from "@utils/api";
 import { cn, generateColorFromUser } from "@utils/helpers";
 import { Handle, type Node, Position } from "@xyflow/react";
 import { sortBy } from "lodash";
 import { ChevronsUpDown, Cog } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { User } from "@/interfaces/User";
-import TruncatedText from "@components/ui/TruncatedText";
-import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
@@ -23,6 +24,7 @@ type UserNodeProps = Node<
 >;
 
 export const SelectUserNode = ({ data, id }: UserNodeProps) => {
+  const t = useTranslations();
   // Optional: the same key is fetched across the canvas, and a role without
   // `users.read` must not raise the error boundary over it.
   const { data: users } = useFetchApi<User[]>(
@@ -96,7 +98,7 @@ export const SelectUserNode = ({ data, id }: UserNodeProps) => {
         onChange={data.onUserChange}
         options={userSelectOptions}
         showSearch={true}
-        searchPlaceholder={"Search user by name or email..."}
+        searchPlaceholder={t("controlCenter.searchUserByNameOrEmail")}
         open={open}
         onOpenChange={setOpen}
         popoverWidth={280}
