@@ -17,7 +17,10 @@ const session = vi.hoisted(() => ({
   peers: undefined as { connected: boolean }[] | undefined,
   theme: { theme: "dark", resolvedTheme: "dark" },
 }));
-vi.mock("@/contexts/ThemeProvider", () => ({ useTheme: () => session.theme }));
+vi.mock("@/contexts/ThemeProvider", () => ({
+  useTheme: () => session.theme,
+  readTheme: () => session.theme,
+}));
 vi.mock("next/navigation", () => ({ usePathname: () => "/peers" }));
 vi.mock("swr", () => ({ default: () => ({ data: session.peers }) }));
 vi.mock("@/contexts/BillingProvider", () => ({ useBilling: () => ({}) }));
@@ -207,10 +210,12 @@ describe("setup", () => {
       ["setReferrerUrl", "https://login.netbird.io"],
       ["setCustomUrl", `${origin}/peers`],
       ["setDocumentTitle", "/peers"],
+      ["setCustomDimension", 9, "dark"],
       ["trackPageView"],
       ["setReferrerUrl", `${origin}/peers`],
       ["setCustomUrl", `${origin}/groups`],
       ["setDocumentTitle", "/groups"],
+      ["setCustomDimension", 9, "dark"],
       ["trackPageView"],
     ]);
   });
@@ -478,6 +483,21 @@ describe("hooks", () => {
     expect(sent()[0]).toEqual(["disableCookies"]);
     expect(sent()).toContainEqual(["trackPageView"]);
     expect(urls().at(-1)).toBe(`${window.location.origin}/login_error`);
+  });
+
+  it("gives a screen that starts Matomo the theme before its page view", async () => {
+    const matomo = await load();
+    session.theme = { theme: "light", resolvedTheme: "light" };
+    const Screen = () => {
+      matomo.useMatomoVirtualPage("login_error");
+      return null;
+    };
+    render(<Screen />);
+    const commands = sent().map(([command]) => command);
+    expect(sent()).toContainEqual(["setCustomDimension", 9, "light"]);
+    expect(commands.indexOf("setCustomDimension")).toBeLessThan(
+      commands.indexOf("trackPageView"),
+    );
   });
 
   it("gives a full-screen view its own heatmap URL until it closes", async () => {
