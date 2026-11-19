@@ -11,6 +11,9 @@ import {
 type UseWebhookConfigOptions = {
   initialUrl?: string;
   initialHeaders?: Record<string, string>;
+  // false when the caller owns the destination field itself (e.g. an
+  // OTLP host:port endpoint) and only uses the auth and headers state.
+  requireUrl?: boolean;
 };
 
 export type WebhookConfig = ReturnType<typeof useWebhookConfig>;
@@ -18,6 +21,7 @@ export type WebhookConfig = ReturnType<typeof useWebhookConfig>;
 export function useWebhookConfig({
   initialUrl = "",
   initialHeaders,
+  requireUrl = true,
 }: UseWebhookConfigOptions = {}) {
   const [url, setUrl] = useState(initialUrl);
   const [authenticationType, setAuthenticationType] = useState<string>(
@@ -78,7 +82,7 @@ export function useWebhookConfig({
   }, [httpHeaders, authenticationType]);
 
   const canContinueToHeaders = useMemo(() => {
-    if (!url || urlError !== "") return false;
+    if (requireUrl && (!url || urlError !== "")) return false;
     switch (authenticationType) {
       case AuthType.None:
         return true;
@@ -92,6 +96,7 @@ export function useWebhookConfig({
         return false;
     }
   }, [
+    requireUrl,
     url,
     urlError,
     authenticationType,

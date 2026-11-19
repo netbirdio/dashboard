@@ -714,6 +714,23 @@ export const agentNetworkFixtures: Record<string, Handler> = {
   "GET /integrations/agent-network/managed-proxy": () => {
     throw new Error("no managed proxy deployment");
   },
+  "GET /integrations/agent-network/log-streaming": [
+    {
+      id: 1,
+      account_id: "acc-storybook",
+      enabled: true,
+      platform: "http",
+      created_at: "2026-10-01T10:00:00Z",
+      updated_at: "2026-10-20T10:00:00Z",
+      config: {
+        url: "https://insights.acme-corp.net/ingest/v1/batches",
+        signing_secret: "****",
+        headers: JSON.stringify({ Authorization: "Bearer ****" }),
+        enrich_user_info: "true",
+        batch_size: "200",
+      },
+    },
+  ],
   "GET /agent-network/access-logs": paginated(accessLogs),
   "GET /agent-network/access-log-sessions": paginated(sessions),
 };

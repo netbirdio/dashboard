@@ -656,6 +656,14 @@ renderAgentGatewayStub() {
 		header Content-Type application/json
 		respond `{"object":"list","data":[{"id":"agentgateway-e2e-model","object":"model","owned_by":"netbird-e2e"}]}` 200
 	}
+	# Receiver for the Agent Network log streaming spec. It accepts a batch
+	# only with the bearer token the spec configures, so a test delivery
+	# after an edit that lost the stored secret is rejected.
+	handle /log-streaming {
+		@authed header Authorization "Bearer e2e-log-streaming-token"
+		respond @authed 204
+		respond "missing or wrong bearer token" 401
+	}
 	handle {
 		respond 404
 	}
@@ -849,7 +857,7 @@ exportGeoDatabases() {
 renderDockerCompose() {
   # Docker may inject outbound proxy settings. Local test traffic must stay on
   # the Compose network, including upstream servers running on the test runner.
-  local test_no_proxy="${NO_PROXY:-localhost,127.0.0.1,::1},${NETBIRD_DOMAIN},caddy,management,signal,zitadel,crdb,postgres,agentgateway-stub"
+  local test_no_proxy="${NO_PROXY:-localhost,127.0.0.1,::1},${NETBIRD_DOMAIN},caddy,management,signal,zitadel,crdb,postgres,agentgateway-stub,log-receiver.e2e.test"
   # Cached geolocation databases (restored by CI into ./geo-cache) are
   # mounted into management's data dir so it skips the slow first-boot
   # download from pkgs.netbird.io. With no cache the mounts are omitted
@@ -886,7 +894,11 @@ services:
   agentgateway-stub:
     image: caddy
     restart: unless-stopped
-    networks: [ netbird ]
+    networks:
+      netbird:
+        # The log streaming spec's receiver. The dashboard's URL check wants
+        # a dotted host name, which the bare service name isn't.
+        aliases: [ log-receiver.e2e.test ]
     volumes:
       - ./agentgateway-stub.Caddyfile:/etc/caddy/Caddyfile
   # Signal is reached through Caddy by embedded clients in the reverse proxies.
