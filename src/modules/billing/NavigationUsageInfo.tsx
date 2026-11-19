@@ -97,7 +97,9 @@ const NavigationUsageInfoContent = () => {
                   {stats?.active_users}
                 </span>
                 {isFreePlan ? (
-                  <span className={"text-nb-gray-300"}> of 5 Users</span>
+                  <span className={"text-nb-gray-300"}>
+                    {t("billing.of5Users")}
+                  </span>
                 ) : (
                   <span className={"text-nb-gray-300"}>
                     {" "}
@@ -115,7 +117,12 @@ const NavigationUsageInfoContent = () => {
                 <span className={"font-medium text-white"}>
                   {stats?.active_peers}
                 </span>
-                <span className={"text-nb-gray-300"}> of {maxPeers}{" " + t("common.peers")}</span>
+                <span className={"text-nb-gray-300"}>
+                  {t.rich("billing.of", {
+                    part0: () => maxPeers,
+                    part1: () => " " + t("common.peers"),
+                  })}
+                </span>
               </div>
             </div>
           </div>
@@ -148,8 +155,8 @@ const NavigationUsageInfoContent = () => {
               >
                 <IconInfoCircle size={12} className={"font-medium"} />
                 {usagePercentage >= 100
-                  ? "Usage limit reached"
-                  : "Approaching usage limit"}
+                  ? t("billing.usageLimitReached")
+                  : t("billing.approachingUsageLimit")}
               </div>
             )}
           </div>
@@ -170,7 +177,9 @@ const NavigationUsageInfoContent = () => {
                   router.push("/settings?tab=plans-and-billing");
                 }}
               >
-                {isFreePlan ? t("common.upgradePlan") : t("common.plansAndBilling")}
+                {isFreePlan
+                  ? t("common.upgradePlan")
+                  : t("common.plansAndBilling")}
               </Button>
             </div>
           )}

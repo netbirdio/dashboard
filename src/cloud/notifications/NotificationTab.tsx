@@ -58,7 +58,7 @@ const NotificationsOverview = ({
         <div>
           <h1>{t("notifications.title")}</h1>
           <Paragraph className={"block"}>
-            Get notified when important events happen.{" "}
+            {t("notifications.getNotifiedWhenImportantEventsHappen")}{" "}
             <InlineLink
               href={NOTIFICATION_CHANNELS_DOCS_LINK}
               target={"_blank"}

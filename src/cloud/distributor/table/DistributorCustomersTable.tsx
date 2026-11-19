@@ -41,9 +41,14 @@ const CustomersTableColumns: ColumnDef<DistributorCustomer>[] = [
   {
     id: "name",
     accessorKey: "name",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Customer</DataTableHeader>
-    ),
+    header: function Header({ column }) {
+      const t = useTranslations();
+      return (
+        <DataTableHeader column={column}>
+          {t("distributor.customer")}
+        </DataTableHeader>
+      );
+    },
     cell: ({ row }) => <CustomerNameCell customer={row.original} />,
   },
   {
@@ -53,34 +58,52 @@ const CustomersTableColumns: ColumnDef<DistributorCustomer>[] = [
   {
     id: "reseller_customer_id",
     accessorKey: "reseller_customer_id",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Customer ID</DataTableHeader>
-    ),
-    cell: ({ row }) =>
+    header: function Header({ column }) {
+      const t = useTranslations();
+      return (
+        <DataTableHeader column={column}>
+          {t("distributor.customerID")}
+        </DataTableHeader>
+      );
+    },
+    cell: function Cell({ row }) {
+      const t = useTranslations();
+      return;
       row.original.reseller_customer_id ? (
-        <CopyToClipboardText message={`Customer ID copied to clipboard`}>
+        <CopyToClipboardText
+          message={t("distributor.customerIDCopiedToClipboard")}
+        >
           <span className={"text-sm text-nb-gray-300 font-mono"}>
             {row.original.reseller_customer_id}
           </span>
         </CopyToClipboardText>
       ) : (
         <EmptyRow />
-      ),
+      );
+    },
   },
   {
     id: "plan",
     accessorKey: "plan",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Plan</DataTableHeader>
-    ),
+    header: function Header({ column }) {
+      const t = useTranslations();
+      return (
+        <DataTableHeader column={column}>
+          {t("distributor.plan")}
+        </DataTableHeader>
+      );
+    },
     cell: ({ row }) => <CustomerPlanCellWithUpgrade customer={row.original} />,
   },
   {
     id: "tenants",
     accessorKey: "tenants",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Tenants</DataTableHeader>
-    ),
+    header: function Header({ column }) {
+      const t = useTranslations();
+      return (
+        <DataTableHeader column={column}>{t("common.tenants")}</DataTableHeader>
+      );
+    },
     cell: ({ row }) => <CustomerTenantsCell customer={row.original} />,
   },
   {
@@ -137,7 +160,7 @@ export default function DistributorCustomersTable({
       setSorting={setSorting}
       columns={CustomersTableColumns}
       data={customers}
-      searchPlaceholder={"Search by name, domain or id..."}
+      searchPlaceholder={translate("distributor.searchByNameDomainOrId")}
       columnVisibility={{
         domain: false,
       }}
@@ -151,10 +174,10 @@ export default function DistributorCustomersTable({
               size={"large"}
             />
           }
-          title={"Add New Customer"}
-          description={
-            "It looks like you don't have any customers yet. Add a new customer to get started."
-          }
+          title={translate("distributor.addNewCustomer")}
+          description={translate(
+            "distributor.itLooksLikeYouDonTHaveAnyCustomersYet",
+          )}
           button={<AddCustomerButton />}
           learnMore={<DistributorDocsLink />}
         />
@@ -195,11 +218,13 @@ export default function DistributorCustomersTable({
 }
 
 const AddCustomerButton = () => {
+  const t = useTranslations();
+
   const { openCreateCustomerModal } = useCustomers();
   return (
     <Button variant={"primary"} size={"sm"} onClick={openCreateCustomerModal}>
       <PlusCircle size={16} />
-      Add Customer
+      {t("distributor.addCustomer")}
     </Button>
   );
 };

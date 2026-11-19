@@ -33,9 +33,12 @@ const TenantsTableColumns: ColumnDef<Tenant>[] = [
   {
     id: "name",
     accessorKey: "name",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Tenant</DataTableHeader>
-    ),
+    header: function Header({ column }) {
+      const t = useTranslations();
+      return (
+        <DataTableHeader column={column}>{t("msp.tenant")}</DataTableHeader>
+      );
+    },
     cell: ({ row }) => <TenantNameCell tenant={row.original} />,
   },
   {
@@ -45,59 +48,77 @@ const TenantsTableColumns: ColumnDef<Tenant>[] = [
   {
     id: "plan",
     accessorKey: "plan",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Plan</DataTableHeader>
-    ),
+    header: function Header({ column }) {
+      const t = useTranslations();
+      return (
+        <DataTableHeader column={column}>
+          {t("distributor.plan")}
+        </DataTableHeader>
+      );
+    },
     cell: ({ row }) => <TenantPlanCell tenant={row.original} />,
   },
   {
     id: "users",
     accessorKey: "users",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Users</DataTableHeader>
-    ),
+    header: function Header({ column }) {
+      const t = useTranslations();
+      return (
+        <DataTableHeader column={column}>{t("common.users")}</DataTableHeader>
+      );
+    },
     cell: ({ row }) => <TenantUsersCell tenant={row.original} />,
   },
   {
     id: "peers",
     accessorKey: "peers",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Peers</DataTableHeader>
-    ),
+    header: function Header({ column }) {
+      const t = useTranslations();
+      return (
+        <DataTableHeader column={column}>{t("common.peers")}</DataTableHeader>
+      );
+    },
     cell: ({ row }) => <TenantPeersCell tenant={row.original} />,
   },
   {
     id: "cost",
     accessorKey: "id",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>
-        Est. Cost / Month
-        <FullTooltip
-          content={
-            <div className={"text-xs max-w-xs"}>
-              The estimated price is calculated based on the number of active
-              users and active peers.
-            </div>
-          }
-          interactive={false}
-        >
-          <HelpCircle
-            size={12}
-            className={
-              "text-nb-gray-300 hover:text-netbird transition-all cursor-pointer mr-2"
+    header: function Header({ column }) {
+      const t = useTranslations();
+      return (
+        <DataTableHeader column={column}>
+          {t("msp.estCostMonth")}
+          <FullTooltip
+            content={
+              <div className={"text-xs max-w-xs"}>
+                {t("msp.theEstimatedPriceIsCalculatedBasedOnTheNumberOf")}
+              </div>
             }
-          />
-        </FullTooltip>
-      </DataTableHeader>
-    ),
+            interactive={false}
+          >
+            <HelpCircle
+              size={12}
+              className={
+                "text-nb-gray-300 hover:text-netbird transition-all cursor-pointer mr-2"
+              }
+            />
+          </FullTooltip>
+        </DataTableHeader>
+      );
+    },
     cell: ({ row }) => <TenantPlanCostCell tenant={row.original} />,
   },
   {
     id: "groups",
     accessorKey: "peers",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Permission Groups</DataTableHeader>
-    ),
+    header: function Header({ column }) {
+      const t = useTranslations();
+      return (
+        <DataTableHeader column={column}>
+          {t("msp.permissionGroups")}
+        </DataTableHeader>
+      );
+    },
     cell: ({ row }) => <TenantGroupsCell tenant={row.original} />,
   },
   {
@@ -167,7 +188,7 @@ export default function MSPTenantsTable({
     <>
       <LockedFeatureInfoCard
         className={"px-4 sm:px-6 md:px-8 mt-0 mb-8"}
-        featureText={"Managing Tenants"}
+        featureText={translate("msp.managingTenants")}
         feature={"MSP"}
         offerTrial={false}
       />
@@ -184,7 +205,7 @@ export default function MSPTenantsTable({
           setSorting={setSorting}
           columns={TenantsTableColumns}
           data={tenants}
-          searchPlaceholder={"Search by name, email or group..."}
+          searchPlaceholder={translate("msp.searchByNameEmailOrGroup")}
           columnVisibility={{
             created_at: false,
             domain: false,
@@ -199,10 +220,8 @@ export default function MSPTenantsTable({
                   size={"large"}
                 />
               }
-              title={"Add New Tenant"}
-              description={
-                "It looks like you don't have any tenants yet. Add a new tenant to get started."
-              }
+              title={translate("msp.addNewTenant")}
+              description={translate("msp.itLooksLikeYouDonTHaveAnyTenantsYet")}
               button={<AddTenantButton />}
               learnMore={<MSPTenantDocsLink />}
             />
@@ -256,12 +275,13 @@ export default function MSPTenantsTable({
 }
 
 const AddTenantButton = () => {
+  const t = useTranslations();
+
   const { openCreateTenantModal } = useTenants();
   return (
     <Button variant={"primary"} size={"sm"} onClick={openCreateTenantModal}>
       <PlusCircle size={16} />
-      Add Tenant
+      {t("msp.addTenant")}
     </Button>
   );
 };
-

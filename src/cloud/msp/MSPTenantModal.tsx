@@ -104,10 +104,10 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
   const domainInputError = useMemo(() => {
     if (domain === "") return "";
     if (!validator.isValidDomain(domain)) {
-      return "Please enter a valid domain, e.g. netbird.io";
+      return translate("distributor.pleaseEnterAValidDomainEGNetbirdIo");
     }
     return "";
-  }, [domain]);
+  }, [domain, translate]);
 
   const createTenant = async () => {
     const savedGroups = await saveGroups();
@@ -122,8 +122,8 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
     });
 
     notify({
-      title: `Add ${domain} account`,
-      description: "The tenant account has been created successfully.",
+      title: translate("msp.addDomainAccount", { domain: domain }),
+      description: translate("msp.theTenantAccountHasBeenCreatedSuccessfully"),
       preventSuccessToast: true,
       promise: tenantRequest
         .post({ name, domain, groups: newTenantGroups })
@@ -155,8 +155,8 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
     });
 
     notify({
-      title: `Update ${tenant?.domain} account`,
-      description: "The tenant account has been updated successfully.",
+      title: translate("msp.updateDomainAccount", { domain: tenant?.domain }),
+      description: translate("msp.theTenantAccountHasBeenUpdatedSuccessfully"),
       promise: tenantRequest
         .put({ name, groups: newTenantGroups }, `/${tenant.id}`)
         .then(() => refreshAndClose()),
@@ -178,11 +178,13 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
     <ModalContent maxWidthClass={cn(ModalWidth[tab])}>
       <ModalHeader
         icon={<UserIcon size={18} />}
-        title={tenant ? `Update Tenant` : "Add Tenant"}
+        title={
+          tenant ? translate("msp.updateTenant") : translate("msp.addTenant")
+        }
         description={
           tenant
             ? `${tenant.name} (${tenant.domain})`
-            : "Add a new tenant account to your organization."
+            : translate("msp.addANewTenantAccountToYourOrganization")
         }
         color={"netbird"}
       />
@@ -213,7 +215,7 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
             <div className={""}>
               <Label>{translate("common.name")}</Label>
               <HelpText>
-                Set an easily recognizable name for the tenant.
+                {translate("msp.setAnEasilyRecognizableNameForTheTenant")}
               </HelpText>
 
               <Input
@@ -229,9 +231,11 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
             <div className={""}>
               <Label>{translate("common.domain")}</Label>
               {!tenant ? (
-                <HelpText>Enter the primary domain of the tenant.</HelpText>
+                <HelpText>
+                  {translate("msp.enterThePrimaryDomainOfTheTenant")}
+                </HelpText>
               ) : (
-                <HelpText>Primary domain of the tenant.</HelpText>
+                <HelpText>{translate("msp.primaryDomainOfTheTenant")}</HelpText>
               )}
 
               {tenant ? (
@@ -255,7 +259,9 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
                           isActive ? "bg-green-400" : "bg-yellow-400",
                         )}
                       ></span>
-                      {isActive ? "Ownership Verified" : "Pending Verification"}
+                      {isActive
+                        ? translate("msp.ownershipVerified")
+                        : translate("msp.pendingVerification")}
                     </span>
                   </div>
                   <div className={"flex gap-2 items-center"}>
@@ -301,14 +307,14 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            {tab === "plan" ? (
+            {tab === translate("distributor.plan2") ? (
               <>
-                Learn more about
+                {translate("trafficEvents.learnMoreAbout")}
                 <InlineLink
                   href={"https://netbird.io/pricing"}
                   target={"_blank"}
                 >
-                  Pricing & Plans
+                  {translate("distributor.pricingPlans")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </>
@@ -318,10 +324,12 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
-          {tab === "general" && !tenant && (
+          {tab === translate("msp.general2") && !tenant && (
             <>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>{translate("common.cancel")}</Button>
+                <Button variant={"secondary"}>
+                  {translate("common.cancel")}
+                </Button>
               </ModalClose>
               <Button
                 variant={"primary"}
@@ -332,7 +340,7 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
               </Button>
             </>
           )}
-          {tab === "permissions" && !tenant && (
+          {tab === translate("msp.permissions") && !tenant && (
             <>
               <Button variant={"secondary"} onClick={() => setTab("general")}>
                 {translate("common.back")}
@@ -343,16 +351,18 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
                 disabled={!canContinue}
               >
                 <PlusCircle size={16} />
-                Add Account
+                {translate("msp.addAccount")}
               </Button>
             </>
           )}
           {tenant && (
             <>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>{translate("common.cancel")}</Button>
+                <Button variant={"secondary"}>
+                  {translate("common.cancel")}
+                </Button>
               </ModalClose>
-              {tab !== "plan" && (
+              {tab !== translate("distributor.plan2") && (
                 <Button
                   variant={"primary"}
                   disabled={!hasChanges || !canContinue}

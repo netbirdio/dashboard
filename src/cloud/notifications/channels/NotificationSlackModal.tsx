@@ -13,12 +13,7 @@ import { Mark } from "@components/ui/Mark";
 import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
 import { cn, validator } from "@utils/helpers";
 import { isEmpty } from "lodash";
-import {
-  ExternalLinkIcon,
-  GlobeIcon,
-  PlusCircle,
-  Repeat,
-} from "lucide-react";
+import { ExternalLinkIcon, GlobeIcon, PlusCircle, Repeat } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import slackImage from "@/assets/integrations/slack.png";
 import { useTranslations } from "@/i18n/LocaleProvider";
@@ -62,10 +57,10 @@ function SlackModalContent({ onSave }: Readonly<ModalContentProps>) {
   const urlError = useMemo(() => {
     if (url === "") return "";
     if (!validator.isValidUrl(url)) {
-      return "Please enter a valid url, e.g., https://hooks.slack.com/services/...";
+      return t("notifications.pleaseEnterAValidUrlEGHttpsHooksSlack");
     }
     return "";
-  }, [url]);
+  }, [url, t]);
 
   const canConnect = !isEmpty(url) && urlError === "";
 
@@ -121,14 +116,20 @@ function SlackModalContent({ onSave }: Readonly<ModalContentProps>) {
                   {t("notifications.slackAppManagement")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>{" "}
-                {t("notifications.click") + " "}<Mark>{t("notifications.createAnApp")}</Mark> <br />
-                {t("notifications.andChoose") + " "}<Mark>{t("notifications.fromScratch")}</Mark>
+                {t("notifications.click") + " "}
+                <Mark>{t("notifications.createAnApp")}</Mark> <br />
+                {t("notifications.andChoose") + " "}
+                <Mark>{t("notifications.fromScratch")}</Mark>
               </p>
             </Steps.Step>
             <Steps.Step step={2} line={false}>
               <p className={"font-normal"}>
                 {t("notifications.setAppNameTo")}{" "}
-                <Mark copy={true}>{t("notifications.netBirdNotifications")}</Mark>{" " + t("notifications.andSelectWorkspace") + " "}<Mark>{t("notifications.createApp")}</Mark>
+                <Mark copy={true}>
+                  {t("notifications.netBirdNotifications")}
+                </Mark>
+                {" " + t("notifications.andSelectWorkspace") + " "}
+                <Mark>{t("notifications.createApp")}</Mark>
               </p>
             </Steps.Step>
           </Steps>
@@ -145,18 +146,26 @@ function SlackModalContent({ onSave }: Readonly<ModalContentProps>) {
           <Steps>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                {t("notifications.inAppSettings") + " "}<Mark>{t("notifications.incomingWebhooks")}</Mark>{" " + t("notifications.andToggle") + " "}<Mark>{t("notifications.activateIncomingWebhooks")}</Mark> to <Mark>{t("notifications.on")}</Mark>
+                {t("notifications.inAppSettings") + " "}
+                <Mark>{t("notifications.incomingWebhooks")}</Mark>
+                {" " + t("notifications.andToggle") + " "}
+                <Mark>{t("notifications.activateIncomingWebhooks")}</Mark>{" "}
+                {t("notifications.to")} <Mark>{t("notifications.on")}</Mark>
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Click <Mark>{t("notifications.addNewWebhook")}</Mark>{" " + t("notifications.andSelectChannel")}{" "}
+                {t("notifications.click2")}{" "}
+                <Mark>{t("notifications.addNewWebhook")}</Mark>
+                {" " + t("notifications.andSelectChannel")}{" "}
                 <Mark>{t("common.allow")}</Mark>
               </p>
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                {t("notifications.copyGenerated") + " "}<Mark>Webhook URL</Mark>{" " + t("notifications.andPasteBelow")}
+                {t("notifications.copyGenerated") + " "}
+                <Mark>{t("notifications.webhookURL")}</Mark>
+                {" " + t("notifications.andPasteBelow")}
               </p>
             </Steps.Step>
           </Steps>

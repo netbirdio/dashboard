@@ -63,15 +63,17 @@ const TenantsPageContent = () => {
         </Breadcrumbs>
         <h1 ref={headingRef}>{t("common.tenants")}</h1>
         <Paragraph>
-          A list of all tenants and their subscription details. Use this view to
-          manage accounts, plans and permissions.
+          {t("tenants.aListOfAllTenantsAndTheirSubscriptionDetailsUse")}
         </Paragraph>
         <Paragraph>
           <MSPTenantDocsLink />
           {t("tenants.inOurDocumentation")}
         </Paragraph>
       </div>
-      <RestrictedAccess page={t("common.tenants")} hasAccess={permission.tenants.read}>
+      <RestrictedAccess
+        page={t("common.tenants")}
+        hasAccess={permission.tenants.read}
+      >
         <Suspense fallback={<SkeletonTable />}>
           <TenantsProvider>
             <MSPTenantsTable

@@ -152,7 +152,8 @@ const PolicyListItem = ({
             <ArrowUpRightIcon size={14} />
           </span>
         </Link>
-        {isBlocked ? "blocked" : "allowed"} the connection
+        {isBlocked ? t("trafficEvents.blocked") : t("trafficEvents.allowed")}{" "}
+        {t("trafficEvents.theConnection")}
       </span>
     </ListItem>
   );

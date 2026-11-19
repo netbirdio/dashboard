@@ -52,7 +52,7 @@ export default function InvoicesActionCell({ invoice }: Readonly<Props>) {
 
     notify({
       title: t("invoices.downloadInvoiceCSV"),
-      description: `Downloading ${invoice.id}.csv...`,
+      description: t("invoices.downloadingIdCsv", { id: invoice.id }),
       loadingMessage: t("invoices.gettingInvoice"),
       promise,
     });

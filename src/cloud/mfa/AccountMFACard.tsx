@@ -38,7 +38,7 @@ export const AccountMfaCard = () => {
         icon={<ShieldCheckIcon size={16} />}
         title={t("common.mfa")}
         action={<FeatureCardStatus enabled={enabled} />}
-        description={"Enable NetBird MFA if not configured in your IdP"}
+        description={t("mfa.enableNetBirdMFAIfNotConfiguredInYourIdP")}
       />
     )
   );

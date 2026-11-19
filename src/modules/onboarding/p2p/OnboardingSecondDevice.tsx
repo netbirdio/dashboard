@@ -38,8 +38,8 @@ export const OnboardingSecondDevice = ({ secondDevice, onFinish }: Props) => {
   const openNavigatorShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: "Install NetBird",
-        text: "Install NetBird on another device using this link.",
+        title: t("components.installNetBird"),
+        text: t("onboarding.installNetBirdOnAnotherDeviceUsingThisLink"),
         url: getInstallUrl(),
       });
     }
@@ -47,9 +47,8 @@ export const OnboardingSecondDevice = ({ secondDevice, onFinish }: Props) => {
 
   const installUsingSetupKey = async () => {
     const choice = await confirm({
-      title: `Create a Setup Key?`,
-      description:
-        "If you continue, a one-off setup key will be automatically created and you will be able to install NetBird.",
+      title: t("onboarding.createASetupKey"),
+      description: t("onboarding.ifYouContinueAOneOffSetupKeyWillBe"),
       confirmText: t("common.continue"),
       cancelText: t("common.cancel"),
       type: "default",
@@ -77,14 +76,13 @@ export const OnboardingSecondDevice = ({ secondDevice, onFinish }: Props) => {
     <div className={"relative flex flex-col h-full gap-4"}>
       <div>
         <h1 className={"text-xl text-center max-w-sm mx-auto"}>
-          {`Time to bring in your second device`}
+          {t("onboarding.timeToBringInYourSecondDevice")}
         </h1>
         <div className="text-sm text-nb-gray-300 font-light mt-2 block text-center">
-            Each device (a.k.a. peer) in your NetBird network gets its own private IP and name to communicate securely in the network.
+          {t("onboarding.eachDeviceAKAPeerInYourNetBirdNetwork")}
         </div>
         <div className="text-sm text-nb-gray-300 font-light mt-2 block text-center">
-            To complete the setup, just share this link or email it to yourself to set up your next device
-            with ease.
+          {t("onboarding.toCompleteTheSetupJustShareThisLinkOrEmail")}
         </div>
       </div>
 
@@ -95,7 +93,7 @@ export const OnboardingSecondDevice = ({ secondDevice, onFinish }: Props) => {
       >
         <div>
           <Code
-            message={"Installation link successfully copied"}
+            message={t("onboarding.installationLinkSuccessfullyCopied")}
             className={"text-[0.8rem]"}
           >
             {getInstallUrl()}
@@ -108,14 +106,14 @@ export const OnboardingSecondDevice = ({ secondDevice, onFinish }: Props) => {
             className={"h-[42px]"}
           >
             <ShareIcon size={16} />
-            <span className={"lg:hidden"}>Share Link</span>
+            <span className={"lg:hidden"}>{t("onboarding.shareLink")}</span>
           </Button>
         )}
       </div>
       <div className="text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4">
-          Use the headless setup to register a peer without a browser or user interaction.{" "}
+        {t("onboarding.useTheHeadlessSetupToRegisterAPeerWithoutA")}{" "}
         <InlineLink onClick={installUsingSetupKey} href={"#"}>
-          Install with a setup key
+          {t("onboarding.installWithASetupKey")}
           <ArrowUpRightIcon size={12} />
         </InlineLink>{" "}
       </div>

@@ -24,12 +24,14 @@ export function WebhookGeneralTabContent({
     <TabsContent value={"general"} className={"px-8 text-sm"}>
       <div className={"mb-6"}>
         <Label>
-          {value.isEditing ? t("webhooks.endpointUrl") : t("webhooks.enterEndpointUrl")}
+          {value.isEditing
+            ? t("webhooks.endpointUrl")
+            : t("webhooks.enterEndpointUrl")}
         </Label>
         <HelpText>{urlHelpText}</HelpText>
         <Input
           customPrefix={<GlobeIcon size={16} />}
-          placeholder="https://api.example.com/webhook"
+          placeholder={t("webhooks.httpsApiExampleComWebhook")}
           maxWidthClass="w-full"
           value={value.url}
           error={value.urlError}
@@ -39,9 +41,7 @@ export function WebhookGeneralTabContent({
       </div>
 
       <Label>{t("common.authentication")}</Label>
-      <HelpText>
-        {t("webhooks.authHelpText")}
-      </HelpText>
+      <HelpText>{t("webhooks.authHelpText")}</HelpText>
       <AuthenticationSettings value={value} mask={mask} />
     </TabsContent>
   );

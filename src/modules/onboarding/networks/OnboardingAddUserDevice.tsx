@@ -69,14 +69,14 @@ export const OnboardingAddUserDevice = ({ device, policy, onNext }: Props) => {
     <div className={"relative flex flex-col h-full gap-4"}>
       <div>
         <h1 className={"text-xl text-center max-w-sm mx-auto"}>
-          {"Time to add your client device"}
+          {t("onboarding.timeToAddYourClientDevice")}
         </h1>
         <div
           className={
             "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
           }
         >
-          {`Your first resource and routing peer are all set. Now, take your device, install NetBird, and let's get you connected.`}
+          {t("onboarding.yourFirstResourceAndRoutingPeerAreAllSetNow")}
         </div>
       </div>
 
@@ -89,7 +89,10 @@ export const OnboardingAddUserDevice = ({ device, policy, onNext }: Props) => {
 
       <Modal open={open} onOpenChange={setOpen}>
         <ModalContent>
-          <SetupModalContent title={t("onboarding.installNetBird")} isUserDevice={true} />
+          <SetupModalContent
+            title={t("onboarding.installNetBird")}
+            isUserDevice={true}
+          />
         </ModalContent>
       </Modal>
     </div>

@@ -35,15 +35,17 @@ export const OnboardingAgentDevice = ({ onBack, onNext, device }: Props) => {
   return (
     <div className={"relative flex flex-col h-full gap-4"}>
       <div>
-        <h1 className={"text-xl text-center"}>Connect your device</h1>
+        <h1 className={"text-xl text-center"}>
+          {t("onboarding.connectYourDevice")}
+        </h1>
         <div
           className={
             "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
           }
         >
-          {`Agent Network endpoints are private and reachable only over the
-          NetBird overlay. Install the client and sign in to join the network
-          with keyless, encrypted access.`}
+          {t(
+            "onboarding.agentNetworkEndpointsArePrivateAndReachableOnlyOverThe",
+          )}
         </div>
       </div>
 
@@ -57,11 +59,13 @@ export const OnboardingAgentDevice = ({ onBack, onNext, device }: Props) => {
             <DeviceCard device={device} className={"justify-center"} />
             <div className={"flex items-center gap-2 text-sm"}>
               <CheckCircle2Icon size={16} className={"text-green-500"} />
-              <span>Your device is connected to the network.</span>
+              <span>{t("onboarding.yourDeviceIsConnectedToTheNetwork")}</span>
             </div>
           </div>
         ) : (
-          <WaitingForDevice text={"Waiting for your device to connect"} />
+          <WaitingForDevice
+            text={t("onboarding.waitingForYourDeviceToConnect")}
+          />
         )}
       </div>
 
@@ -86,7 +90,10 @@ export const OnboardingAgentDevice = ({ onBack, onNext, device }: Props) => {
 
       <Modal open={open} onOpenChange={setOpen}>
         <ModalContent className={"!z-[70]"}>
-          <SetupModalContent title={t("onboarding.installNetBird")} isUserDevice={true} />
+          <SetupModalContent
+            title={t("onboarding.installNetBird")}
+            isUserDevice={true}
+          />
         </ModalContent>
       </Modal>
     </div>

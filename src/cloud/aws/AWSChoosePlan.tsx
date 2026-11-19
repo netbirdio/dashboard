@@ -133,9 +133,11 @@ export const AWSChoosePlan = ({ onSuccess }: Props) => {
                       "text-xl my-0 leading-[1.5] mb-2 text-center w-full"
                     }
                   >
-                    Thanks for registering via{" "}
-                    <br className={cn(!hasActiveStripePlan && "hidden")} />
-                    AWS Marketplace!
+                    {t.rich("aws.thanksForRegisteringViaAWSMarketplace", {
+                      part0: () => (
+                        <br className={cn(!hasActiveStripePlan && "hidden")} />
+                      ),
+                    })}
                   </h2>
                   <Paragraph
                     className={cn(
@@ -143,12 +145,11 @@ export const AWSChoosePlan = ({ onSuccess }: Props) => {
                     )}
                   >
                     {hasActiveStripePlan ? (
-                      <>
-                        {t("aws.activeStripePlan")}
-                      </>
+                      <>{t("aws.activeStripePlan")}</>
                     ) : (
                       <>
-                        {t("aws.flexiblePricing") + " "}<br />
+                        {t("aws.flexiblePricing") + " "}
+                        <br />
                         {t("aws.changePlanLater")}
                       </>
                     )}
@@ -172,8 +173,8 @@ export const AWSChoosePlan = ({ onSuccess }: Props) => {
                               currentSubscription={subscription}
                               plan={plan}
                               buttonText={{
-                                upgrade: "Subscribe to",
-                                downgrade: "Downgrade to",
+                                upgrade: t("aws.subscribeTo"),
+                                downgrade: t("billing.downgradeTo"),
                               }}
                               currency={Currency.USD}
                               isSubscribing={isSubscribing}
@@ -217,7 +218,7 @@ export const AWSChoosePlan = ({ onSuccess }: Props) => {
                   onClick={logout}
                 >
                   <LogOutIcon size={12} />
-                  Logout
+                  {t("settings.logoutLabel")}
                 </button>
               )}
             </div>

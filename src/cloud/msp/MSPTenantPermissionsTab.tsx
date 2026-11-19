@@ -58,9 +58,9 @@ export const MSPTenantPermissionsTab = ({
     <div>
       <div className={"flex gap-4 justify-between w-full items-start"}>
         <div>
-          <Label>Permissions (required)</Label>
+          <Label>{t("msp.permissionsRequired")}</Label>
           <HelpText>
-            Add user groups to grant them access to this tenant.
+            {t("msp.addUserGroupsToGrantThemAccessToThisTenant")}
           </HelpText>
         </div>
         <div>
@@ -126,6 +126,7 @@ const ListItem = ({
   onChange,
   role = Role.Admin,
 }: ListItemProps) => {
+  const t = useTranslations();
   const { users } = useUsers();
   const selectedRole = UserRoles.find((r) => r.value === role) || UserRoles[0];
 
@@ -162,7 +163,7 @@ const ListItem = ({
               stopPropagation={false}
             >
               <selectedRole.icon size={14} width={14} />
-              {selectedRole?.name}
+              {t(selectedRole.nameId)}
               <ChevronDownIcon size={14} />
             </Button>
           }

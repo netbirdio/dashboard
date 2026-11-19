@@ -32,15 +32,14 @@ export const OnboardingFirstDevice = ({
     <div className={"relative flex flex-col h-full gap-4"}>
       <div>
         <h1 className={"text-xl text-center"}>
-          {`Let's get your first device online`}
+          {t("onboarding.letSGetYourFirstDeviceOnline")}
         </h1>
         <div
           className={
             "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
           }
         >
-          {`To access other machines, install NetBird, sign in, and your device joins the network.
-          Every device you add becomes a NetBird peer in your network. It's that simple.`}
+          {t("onboarding.toAccessOtherMachinesInstallNetBirdSignInAndYour")}
         </div>
       </div>
 
@@ -56,7 +55,10 @@ export const OnboardingFirstDevice = ({
 
       <Modal open={open} onOpenChange={setOpen}>
         <ModalContent className={"!z-[70]"}>
-          <SetupModalContent title={t("onboarding.installNetBird")} isUserDevice={true} />
+          <SetupModalContent
+            title={t("onboarding.installNetBird")}
+            isUserDevice={true}
+          />
         </ModalContent>
       </Modal>
     </div>

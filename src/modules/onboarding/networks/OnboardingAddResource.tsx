@@ -62,9 +62,9 @@ export const OnboardingAddResource = ({
     if (!myNetwork) return;
 
     notify({
-      title: "My First Network",
-      description: "Network & Resource created successfully",
-      loadingMessage: "Creating your resource...",
+      title: t("onboarding.myFirstNetwork"),
+      description: t("onboarding.networkResourceCreatedSuccessfully"),
+      loadingMessage: t("onboarding.creatingYourResource"),
       promise: resourceRequest
         .post(
           {
@@ -181,60 +181,64 @@ export const OnboardingAddResource = ({
 
   const description = useMemo(() => {
     if (resourceType === "ip")
-      return "Enter a single IPv4 or IPv6 address of your resource";
-    if (resourceType === "subnet") return "Enter a CIDR range of your network";
+      return t("onboarding.enterASingleIPv4OrIPv6AddressOfYourResource");
+    if (resourceType === "subnet")
+      return t("onboarding.enterACIDRRangeOfYourNetwork");
     if (resourceType === "domain")
-      return "Enter a domain name of your resource";
-  }, [resourceType]);
+      return t("onboarding.enterADomainNameOfYourResource");
+  }, [resourceType, t]);
 
   const placeholder = useMemo(() => {
-    if (resourceType === "ip") return "e.g., 192.168.31.45 or 2001:db8::1";
-    if (resourceType === "subnet") return "e.g., 192.168.1.0/24 or 2001:db8::/64";
+    if (resourceType === "ip") return t("onboarding.eG1921683145Or2001Db81");
+    if (resourceType === "subnet") return t("onboarding.eG1921681024Or2001Db8");
     if (resourceType === "domain")
-      return "e.g., service.internal or *.services.internal";
-  }, [resourceType]);
+      return t("onboarding.eGServiceInternalOrServicesInternal");
+  }, [resourceType, t]);
 
   return (
     <div className={"relative flex flex-col h-full gap-4"}>
       <div className={"flex flex-col gap-8"}>
         <div>
-          <h1 className={"text-xl text-center"}>{t("onboarding.addResource")}</h1>
+          <h1 className={"text-xl text-center"}>
+            {t("onboarding.addResource")}
+          </h1>
           <div
             className={
               "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
             }
           >
-            Resources are your subnets, services, or machines inside your network.
-            Pick the type you want to connect to.
+            {t(
+              "onboarding.resourcesAreYourSubnetsServicesOrMachinesInsideYourNetwork",
+            )}
           </div>
         </div>
 
         <RadioCardGroup value={resourceType} onValueChange={setResourceType}>
           <RadioCard
             value={"ip"}
-            title={"Single IP Address"}
+            title={t("onboarding.singleIPAddress")}
             icon={<WorkflowIcon size={12} />}
-            description={"IPv4 or IPv6 address like 192.168.31.45"}
+            description={t("onboarding.iPv4OrIPv6AddressLike1921683145")}
           />
           <RadioCard
             value={"subnet"}
-            title={"Entire Subnet"}
+            title={t("onboarding.entireSubnet")}
             icon={<NetworkIcon size={12} />}
-            description={"CIDR range like 192.168.0.0/24 or 2001:db8::/64"}
+            description={t("onboarding.cIDRRangeLike1921680024Or2001")}
           />
           <RadioCard
             value={"domain"}
             title={t("common.domain")}
             icon={<GlobeIcon size={12} />}
-            description={
-              "A domain like service.internal or a wildcard like *.services.internal"
-            }
+            description={t(
+              "onboarding.aDomainLikeServiceInternalOrAWildcardLikeServices",
+            )}
           />
         </RadioCardGroup>
 
         {resourceType && (
           <ResourceSingleAddressInput
-            label={"What is the address of your resource?"}
+            label={t("onboarding.whatIsTheAddressOfYourResource")}
             value={resourceAddress}
             onChange={setResourceAddress}
             onError={setError}

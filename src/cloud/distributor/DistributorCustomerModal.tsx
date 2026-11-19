@@ -91,10 +91,10 @@ const CustomerModalContent = ({
   const domainInputError = useMemo(() => {
     if (domain === "") return "";
     if (!validator.isValidDomain(domain)) {
-      return "Please enter a valid domain, e.g. netbird.io";
+      return t("distributor.pleaseEnterAValidDomainEGNetbirdIo");
     }
     return "";
-  }, [domain]);
+  }, [domain, t]);
 
   const createCustomer = async () => {
     const body: Record<string, string> = {
@@ -110,10 +110,12 @@ const CustomerModalContent = ({
     });
 
     notify({
-      title: `Add ${domain} customer`,
-      description: "The customer account has been created successfully.",
+      title: t("distributor.addDomainCustomer", { domain: domain }),
+      description: t(
+        "distributor.theCustomerAccountHasBeenCreatedSuccessfully",
+      ),
       preventSuccessToast: true,
-      loadingMessage: "Creating customer account...",
+      loadingMessage: t("distributor.creatingCustomerAccount"),
       promise,
     });
   };
@@ -128,17 +130,14 @@ const CustomerModalContent = ({
     });
 
     notify({
-      title: `Update ${customer.name}`,
-      description: "The customer has been updated successfully.",
-      loadingMessage: "Updating customer...",
+      title: t("distributor.updateName", { name: customer.name }),
+      description: t("distributor.theCustomerHasBeenUpdatedSuccessfully"),
+      loadingMessage: t("distributor.updatingCustomer"),
       promise,
     });
   };
 
-  const canCreate =
-    domainInputError === "" &&
-    name !== "" &&
-    domain !== "";
+  const canCreate = domainInputError === "" && name !== "" && domain !== "";
 
   const hasChanges =
     name !== (customer?.name || "") ||
@@ -150,11 +149,17 @@ const CustomerModalContent = ({
     <ModalContent maxWidthClass={cn(ModalWidth[tab] || ModalWidth.general)}>
       <ModalHeader
         icon={<UserIcon size={18} />}
-        title={customer ? "Edit Customer" : "Add Customer"}
+        title={
+          customer
+            ? t("distributor.editCustomer")
+            : t("distributor.addCustomer")
+        }
         description={
           customer
             ? `${customer.name} (${customer.domain})`
-            : "Add a new customer account to your distributor organization."
+            : t(
+                "distributor.addANewCustomerAccountToYourDistributorOrganization",
+              )
         }
         color={"netbird"}
       />
@@ -178,16 +183,16 @@ const CustomerModalContent = ({
                     "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
                   }
                 />
-                Plan
+                {t("distributor.plan")}
               </TabsTrigger>
             )}
           </TabsList>
           <TabsContent value={"general"} className={"px-8 pb-10"}>
             <div className={"flex flex-col gap-6"}>
               <div>
-                <Label>Company</Label>
+                <Label>{t("distributor.company")}</Label>
                 <HelpText>
-                  Enter the name of your customers company.
+                  {t("distributor.enterTheNameOfYourCustomersCompany")}
                 </HelpText>
                 <Input
                   autoFocus={true}
@@ -201,7 +206,7 @@ const CustomerModalContent = ({
               <div>
                 <Label>{t("common.domain")}</Label>
                 <HelpText>
-                  The domain associated with this customer account.
+                  {t("distributor.theDomainAssociatedWithThisCustomerAccount")}
                 </HelpText>
                 <Input
                   customPrefix={<GlobeIcon size={16} />}
@@ -215,10 +220,14 @@ const CustomerModalContent = ({
               </div>
 
               <div>
-                <Label>Customer ID (optional)</Label>
+                <Label>{t("distributor.customerIDOptional")}</Label>
                 <HelpText>
-                  An optional identifier to easier map customers to your{" "}
-                  <b className="text-white">internal systems</b>.
+                  {t.rich(
+                    "distributor.anOptionalIdentifierToEasierMapCustomersToYourInternal",
+                    {
+                      part0: (chunks) => <b className="text-white">{chunks}</b>,
+                    },
+                  )}
                 </HelpText>
                 <Input
                   tabIndex={0}
@@ -242,9 +251,9 @@ const CustomerModalContent = ({
           <div className={"px-8 py-6 pb-8"}>
             <div className={"flex flex-col gap-6"}>
               <div>
-                <Label>Company</Label>
+                <Label>{t("distributor.company")}</Label>
                 <HelpText>
-                  Enter the name of your customers company.
+                  {t("distributor.enterTheNameOfYourCustomersCompany")}
                 </HelpText>
                 <Input
                   autoFocus={true}
@@ -258,7 +267,7 @@ const CustomerModalContent = ({
               <div>
                 <Label>{t("common.domain")}</Label>
                 <HelpText>
-                  The domain associated with this customer account.
+                  {t("distributor.theDomainAssociatedWithThisCustomerAccount")}
                 </HelpText>
                 <Input
                   customPrefix={<GlobeIcon size={16} />}
@@ -271,10 +280,14 @@ const CustomerModalContent = ({
                 />
               </div>
               <div>
-                <Label>Customer ID (optional)</Label>
+                <Label>{t("distributor.customerIDOptional")}</Label>
                 <HelpText>
-                  An optional identifier to easier map customers to your{" "}
-                  <b className="text-white">internal systems</b>.
+                  {t.rich(
+                    "distributor.anOptionalIdentifierToEasierMapCustomersToYourInternal",
+                    {
+                      part0: (chunks) => <b className="text-white">{chunks}</b>,
+                    },
+                  )}
                 </HelpText>
                 <Input
                   tabIndex={0}
@@ -293,12 +306,12 @@ const CustomerModalContent = ({
           <Paragraph className={"text-sm mt-auto"}>
             {tab === "plan" ? (
               <>
-                Learn more about
+                {t("trafficEvents.learnMoreAbout")}
                 <InlineLink
                   href={"https://netbird.io/pricing"}
                   target={"_blank"}
                 >
-                  Pricing & Plans
+                  {t("distributor.pricingPlans")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </>
@@ -319,7 +332,7 @@ const CustomerModalContent = ({
                 disabled={!canCreate}
               >
                 <PlusCircle size={16} />
-                Add Customer
+                {t("distributor.addCustomer")}
               </Button>
             </>
           )}

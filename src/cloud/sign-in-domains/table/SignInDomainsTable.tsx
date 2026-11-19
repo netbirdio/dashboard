@@ -31,8 +31,12 @@ const isPlaceholder = (domain: SignInDomain) => domain.id === PLACEHOLDER_ID;
 
 const SignInDomainsColumns: ColumnDef<SignInDomain>[] = [
   {
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Domain</DataTableHeader>;
+    header: function Header({ column }) {
+      const t = useTranslations();
+
+      return (
+        <DataTableHeader column={column}>{t("common.domain")}</DataTableHeader>
+      );
     },
     accessorKey: "name",
     sortingFn: "text",
@@ -44,8 +48,12 @@ const SignInDomainsColumns: ColumnDef<SignInDomain>[] = [
       ),
   },
   {
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Status</DataTableHeader>;
+    header: function Header({ column }) {
+      const t = useTranslations();
+
+      return (
+        <DataTableHeader column={column}>{t("common.status")}</DataTableHeader>
+      );
     },
     accessorKey: "validation_status",
     sortingFn: "text",
@@ -100,10 +108,10 @@ export default function SignInDomainsTable({
         <NoResults
           className={"py-4"}
           hideIcon
-          title={"No sign-in domains yet"}
-          description={
-            "Add a domain, then verify ownership with a DNS record to start matching users to this account."
-          }
+          title={t("signInDomains.noSignInDomainsYet")}
+          description={t(
+            "signInDomains.addADomainThenVerifyOwnershipWithADNSRecord",
+          )}
         />
       }
       paginationPaddingClassName={"px-0 pt-8"}

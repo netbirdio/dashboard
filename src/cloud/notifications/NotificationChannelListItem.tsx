@@ -1,3 +1,4 @@
+import { useTranslations } from "@/i18n/LocaleProvider";
 import React, { useEffect, useRef, useState } from "react";
 import { ChevronRight, GlobeIcon, Loader2, MailIcon } from "lucide-react";
 import { cn } from "@utils/helpers";
@@ -21,32 +22,46 @@ const channelMeta: Record<
   NotificationChannelType,
   { name: string; icon: React.ReactNode }
 > = {
-  [NotificationChannelType.Email]: { name: "Email", icon: <MailIcon size={16} /> },
-  [NotificationChannelType.Webhook]: { name: "Webhook", icon: <GlobeIcon size={16} /> },
-  [NotificationChannelType.Slack]: { name: "Slack", icon: <SlackIcon size={16} /> },
+  [NotificationChannelType.Email]: {
+    name: "Email",
+    icon: <MailIcon size={16} />,
+  },
+  [NotificationChannelType.Webhook]: {
+    name: "Webhook",
+    icon: <GlobeIcon size={16} />,
+  },
+  [NotificationChannelType.Slack]: {
+    name: "Slack",
+    icon: <SlackIcon size={16} />,
+  },
 };
 
 const getChannelDescription = (
+  t: ReturnType<typeof useTranslations>,
   type: NotificationChannelType,
   channel?: NotificationChannel,
 ) => {
-  if (!channel) return "Disabled";
+  if (!channel) return t("common.disabled");
   if (!channel.enabled) return "Disabled";
 
   const totalTypes = ALL_NOTIFICATION_EVENT_TYPES.length;
   const activeTypes = channel.event_types.length;
   const notificationLabel =
     activeTypes === totalTypes
-      ? "All Notifications"
-      : `${activeTypes} of ${totalTypes} Notifications`;
+      ? t("notifications.allNotifications")
+      : t("notifications.activeTypesOfTotalTypesNotifications", {
+          activeTypes,
+          totalTypes,
+        });
 
   if (type === NotificationChannelType.Email) {
     const emails = (channel.target as NotificationEmailChannel)?.emails ?? [];
-    return `Enabled · ${notificationLabel} · ${emails.length} Recipient${
-      emails.length !== 1 ? "s" : ""
-    }`;
+    return t(
+      "notifications.enabledNotificationLabelCountPluralOneRecipientOtherRecipients",
+      { notificationLabel, count: emails.length },
+    );
   }
-  return `Enabled · ${notificationLabel}`;
+  return t("notifications.enabledNotificationLabel", { notificationLabel });
 };
 
 export const NotificationChannelListItem = ({
@@ -55,13 +70,15 @@ export const NotificationChannelListItem = ({
   onClick,
   disabled,
 }: NotificationChannelListItemProps) => {
+  const t = useTranslations();
+
   const { createDefaultChannel } = useNotifications();
   const [isCreating, setIsCreating] = useState(false);
   const [showLoading, setShowLoading] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const meta = channelMeta[type];
   const active = channel?.enabled ?? false;
-  const description = getChannelDescription(type, channel);
+  const description = getChannelDescription(t, type, channel);
 
   useEffect(() => {
     return () => clearTimeout(timerRef.current);
@@ -116,7 +133,9 @@ export const NotificationChannelListItem = ({
       </div>
       <div className={"flex items-start flex-col"}>
         <p className={"font-medium text-left whitespace-nowrap text-sm"}>
-          {meta.name}
+          {type === NotificationChannelType.Email
+            ? t("common.email")
+            : meta.name}
         </p>
         {description && (
           <span className={"text-xs text-nb-gray-300 text-left mt-0.5"}>

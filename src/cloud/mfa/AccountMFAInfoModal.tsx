@@ -24,15 +24,14 @@ export const AccountMFAInfoModal = ({
         <GradientFadedBackground />
         <div className={"flex items-center justify-center flex-col gap-3 px-6"}>
           <div className={"text-xl font-medium text-center"}>
-            You may not need NetBird MFA
+            {t("mfa.youMayNotNeedNetBirdMFA")}
           </div>
           <div className={"text-sm text-nb-gray-300 text-center mb-2"}>
-            {`Your`}
+            {t("mfa.your")}
             <strong className={"text-nb-gray-200 font-medium"}>
-              {" "}
-              SSO Provider
+              {t("mfa.sSOProvider")}
             </strong>
-            {` may already have MFA enabled. Enabling this setting could result in duplicated MFA checks.`}
+            {t("mfa.mayAlreadyHaveMFAEnabledEnablingThisSettingCouldResult")}
           </div>
           <div className={"flex gap-4 w-full"}>
             <Button
@@ -47,7 +46,7 @@ export const AccountMFAInfoModal = ({
               variant={"primary"}
               onClick={onConfirm}
             >
-              Enable MFA
+              {t("mfa.enableMFA")}
             </Button>
           </div>
         </div>

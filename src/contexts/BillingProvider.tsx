@@ -31,6 +31,9 @@ type Props = {
 
 export const usageLimitInfo: Announcement = {
   tag: "Notice",
+  tagId: "billing.noticeTag",
+  textId: "billing.usageLimitNotice",
+  linkTextId: "billing.goToPlansBilling",
   text: "You've reached your usage limits. For extended features and higher limits, please consider upgrading your plan.",
   link: "/settings?tab=plans-and-billing",
   linkText: "Go to Plans & Billing",
@@ -42,6 +45,8 @@ export const usageLimitInfo: Announcement = {
 
 export const trialExpiresInfo: Announcement = {
   tag: "Trial",
+  tagId: "billing.trialTag",
+  textId: "billing.trialEndingNotice",
   text: "Your trial is ending soon. Need more time? Contact us to extend your trial.",
   variant: "default", // "default" or "important"
   link: "mailto:support@netbird.io",
@@ -253,9 +258,11 @@ function BillingContextProvider({ children }: Readonly<Props>) {
           mutate("/integrations/billing/subscription");
         });
         notify({
-          title: "NetBird Subscription",
-          description: `Successfully subscribed to the ${plan.name} plan`,
-          loadingMessage: "Subscribing to NetBird via AWS Marketplace...",
+          title: t("billing.netBirdSubscription"),
+          description: t("billing.successfullySubscribedToTheNamePlan", {
+            name: plan.name,
+          }),
+          loadingMessage: t("billing.subscribingToNetBirdViaAWSMarketplace"),
           promise: promise,
         });
         return promise;
@@ -282,12 +289,14 @@ function BillingContextProvider({ children }: Readonly<Props>) {
     if (!priceID) return Promise.reject();
     const downgrade = isDowngrade(plan);
     const choice = await confirm({
-      title: `${downgrade ? "Downgrade" : "Upgrade"} to ${plan.name}?`,
+      title: t("billing.valueToName", {
+        value: downgrade ? t("billing.downgrade") : t("billing.upgrade"),
+        name: plan.name,
+      }),
       description: (
         <div className={"flex flex-col gap-2 text-sm text-nb-gray-300 mt-1"}>
           <div>
-            The transition to your new plan will take effect immediately.
-            Charges for the new plan will be incurred from this point forward.
+            {t("billing.theTransitionToYourNewPlanWillTakeEffectImmediately")}
           </div>
         </div>
       ),
@@ -314,10 +323,10 @@ function BillingContextProvider({ children }: Readonly<Props>) {
     });
 
     notify({
-      title: "Update Subscription",
-      description: "Your subscription has been successfully updated.",
+      title: t("billing.updateSubscription"),
+      description: t("billing.yourSubscriptionHasBeenSuccessfullyUpdated"),
       promise: promise,
-      loadingMessage: "Updating your subscription...",
+      loadingMessage: t("billing.updatingYourSubscription"),
     });
 
     return promise;

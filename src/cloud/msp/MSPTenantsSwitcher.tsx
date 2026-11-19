@@ -79,6 +79,8 @@ type Props = {
 };
 
 const TenantDropdown = ({ tenants, currentAccount, mspAccount }: Props) => {
+  const t = useTranslations();
+
   const { loginAs } = useMSP();
   const [open, setOpen] = useState(false);
 
@@ -145,14 +147,14 @@ const TenantDropdown = ({ tenants, currentAccount, mspAccount }: Props) => {
           <DropdownInput
             value={search}
             onChange={setSearch}
-            placeholder={"Search by name or domain..."}
+            placeholder={t("msp.searchByNameOrDomain")}
             hideEnterIcon={true}
           />
 
           {tenantListItems.length == 0 && search == "" && (
             <div className={"max-w-xs mx-auto px-4"}>
               <DropdownInfoText>
-                {"Seems like you don't have any customers."}
+                {t("msp.seemsLikeYouDonTHaveAnyCustomers")}
               </DropdownInfoText>
             </div>
           )}
@@ -160,8 +162,7 @@ const TenantDropdown = ({ tenants, currentAccount, mspAccount }: Props) => {
           {tenantListItems.length == 0 && search != "" && (
             <div className={"max-w-xs mx-auto px-4"}>
               <DropdownInfoText>
-                There are no customers matching your search. Try another search
-                term.
+                {t("msp.thereAreNoCustomersMatchingYourSearchTryAnotherSearch")}
               </DropdownInfoText>
             </div>
           )}
@@ -304,13 +305,17 @@ const TenantItem = ({
           <FullTooltip
             content={
               <div className={"max-w-xs text-xs"}>
-                Trial for this tenant has expired. Please upgrade the plan to
-                continue using the tenant.{" "}
-                {!isInTenantContext && (
-                  <InlineLink href={"/tenants"}>
-                    Go to Tenants
-                    <ArrowUpRightIcon size={14} />
-                  </InlineLink>
+                {t.rich(
+                  "msp.trialForThisTenantHasExpiredPleaseUpgradeThePlan",
+                  {
+                    part0: () =>
+                      !isInTenantContext && (
+                        <InlineLink href={"/tenants"}>
+                          {t("msp.goToTenants")}
+                          <ArrowUpRightIcon size={14} />
+                        </InlineLink>
+                      ),
+                  },
                 )}
               </div>
             }

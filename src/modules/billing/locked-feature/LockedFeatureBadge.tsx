@@ -1,3 +1,4 @@
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { IconHelpCircle } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import { isNetBirdCloud } from "@utils/netbird";
@@ -28,6 +29,8 @@ export const LockedFeatureBadge = ({
   disabled = false,
   center = false,
 }: Props) => {
+  const t = useTranslations();
+
   const isLocked = useIsFeatureLocked(feature);
   if (disabled) return <>{children}</>;
   if (!isLocked) return <>{children}</>;
@@ -63,7 +66,7 @@ export const LockedFeatureBadge = ({
           >
             <LockIcon size={12} className={"relative -top-[1px]"} />
             {isNetBirdCloud()
-              ? plan == "team"
+              ? plan == t("billing.team2")
                 ? PLAN_TEXT.TEAM
                 : PLAN_TEXT.BUSINESS
               : PLAN_TEXT.ENTERPRISE}

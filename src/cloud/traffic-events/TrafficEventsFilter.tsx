@@ -79,7 +79,7 @@ export function TrafficEventsFilter({
   closeOnSelect = false,
 }: Readonly<Props>) {
   const t = useTranslations();
-  const filterItems = useMemo(() => getFixedTypeFilters(), []);
+  const filterItems = useMemo(() => getFixedTypeFilters(t), [t]);
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [activeFilterIds, setActiveFilterIds] = useState<string[]>([]);
@@ -246,7 +246,9 @@ export function TrafficEventsFilter({
             <span className={"text-white"}>
               {activeFilterIds.length > 0 && activeFilterIds.length}
             </span>
-            {activeFilterIds.length > 0 ? ` Filter(s)` : t("common.filter")}
+            {activeFilterIds.length > 0
+              ? t("trafficEvents.filterS")
+              : t("common.filter")}
           </span>
         </Button>
       </PopoverTrigger>
@@ -319,7 +321,7 @@ export function TrafficEventsFilter({
   );
 }
 
-const getFixedTypeFilters = () => {
+const getFixedTypeFilters = (translate: ReturnType<typeof useTranslations>) => {
   let directions = [
     TrafficEventDirection.EGRESS,
     TrafficEventDirection.INGRESS,
@@ -343,7 +345,22 @@ const getFixedTypeFilters = () => {
       const directionText =
         d === TrafficEventDirection.INGRESS ? "(inbound)" : "(outbound)";
 
-      const displayText = `Connection ${eventTypeText} ${directionText}`;
+      const rawDisplayText = `Connection ${eventTypeText} ${directionText}`;
+      const displayText = translate(
+        "trafficEvents.connectionEventTypeTextDirectionText",
+        {
+          eventTypeText:
+            t === TrafficEventType.CONNECTED
+              ? translate("trafficEvents.started")
+              : t === TrafficEventType.STOPPED
+              ? translate("trafficEvents.stopped")
+              : translate("trafficEvents.blocked"),
+          directionText:
+            d === TrafficEventDirection.INGRESS
+              ? translate("trafficEvents.inbound2")
+              : translate("trafficEvents.outbound2"),
+        },
+      );
 
       const combinedFilter: CombinedFilter = {
         id: getCombinedFilterId(t, d),
@@ -355,7 +372,7 @@ const getFixedTypeFilters = () => {
       filters.push({
         id: combinedFilter.id,
         columnId: "type",
-        value: displayText,
+        value: rawDisplayText,
         filterType: "type" as const,
         filterValue: combinedFilter,
         displayText,
@@ -423,6 +440,8 @@ const TrafficEventTypeFilterItem = ({
   isP2P,
   direction,
 }: TrafficEventTypeFilterItemProps) => {
+  const translate = useTranslations();
+
   return (
     <div className={"flex gap-2 items-center justify-center"}>
       <div className={"px-0.5 flex items-center justify-center"}>
@@ -435,7 +454,7 @@ const TrafficEventTypeFilterItem = ({
           )}
         ></span>
       </div>
-      {getTrafficEventTypeText(t, isP2P, direction)}
+      {getTrafficEventTypeText(t, isP2P, direction, translate)}
     </div>
   );
 };

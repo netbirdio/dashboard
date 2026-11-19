@@ -21,7 +21,7 @@ export const TrafficEventsDirectionCell = ({ event }: Props) => {
     </Badge>
   ) : (
     <Badge variant={"gray"} className={"py-1 w-[80px]"}>
-      {isInbound ? "Inbound" : "Outbound"}
+      {isInbound ? t("trafficEvents.inbound") : t("trafficEvents.outbound")}
     </Badge>
   );
 };

@@ -69,13 +69,12 @@ export const TenantActionCell = ({ tenant }: Props) => {
         <FullTooltip
           content={
             <div className={"text-xs max-w-xs"}>
-              The account owner must log in to the dashboard to accept or
-              decline your request.
+              {t("msp.theAccountOwnerMustLogInToTheDashboardTo2")}
             </div>
           }
         >
           <Badge variant={"yellow"} className={"ml-6 cursor-help"}>
-            Pending access request
+            {t("msp.pendingAccessRequest")}
             <HelpCircle size={12} />
           </Badge>
         </FullTooltip>

@@ -13,6 +13,7 @@ import React, {
 import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { trialExpiresInfo, usageLimitInfo } from "@/contexts/BillingProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import type { MessageId } from "@/i18n/translate";
 
 const config = loadConfig();
 
@@ -43,9 +44,12 @@ interface AnnouncementStore {
 
 export interface Announcement extends AnnouncementVariant {
   tag: string;
+  tagId?: MessageId;
   text: string;
+  textId?: MessageId;
   link?: string;
   linkText?: string;
+  linkTextId?: MessageId;
   isExternal?: boolean;
   closeable: boolean;
   isCloudOnly: boolean;

@@ -89,7 +89,11 @@ function NotificationWebhookModalContent({
     <ModalContent maxWidthClass={modalWidth}>
       <ModalHeader
         icon={<GlobeIcon size={16} />}
-        title={config.isEditing ? t("notifications.webhookConfiguration") : t("notifications.connectWebhook")}
+        title={
+          config.isEditing
+            ? t("notifications.webhookConfiguration")
+            : t("notifications.connectWebhook")
+        }
         description={
           config.isEditing
             ? t("notifications.webhookUpdateDescription")
@@ -125,7 +129,9 @@ function NotificationWebhookModalContent({
 
         <WebhookGeneralTabContent
           value={config}
-          urlHelpText="Full HTTP(S) URL where notification events will be sent via a POST request."
+          urlHelpText={t(
+            "notifications.fullHTTPSURLWhereNotificationEventsWillBeSent",
+          )}
           mask={config.isEditing}
         />
         <WebhookHeadersTabContent value={config} />
@@ -135,7 +141,7 @@ function NotificationWebhookModalContent({
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
+            {t("trafficEvents.learnMoreAbout")}
             <InlineLink
               href={NOTIFICATION_CHANNELS_WEBHOOK_DOCS_LINK}
               target={"_blank"}

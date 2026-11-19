@@ -14,6 +14,8 @@ type Props = {
 };
 
 export const OnboardingEnd = ({ onFinish }: Props) => {
+  const t = useTranslations();
+
   const translate = useTranslations();
   const { oidcUser: user } = useOidcUser();
   const name = user?.given_name || user?.name || user?.preferred_username;
@@ -50,7 +52,9 @@ export const OnboardingEnd = ({ onFinish }: Props) => {
           />
           <VideoGuide
             title={translate("onboarding.videoHowNetBirdWorksTitle")}
-            description={translate("onboarding.videoHowNetBirdWorksDescription")}
+            description={translate(
+              "onboarding.videoHowNetBirdWorksDescription",
+            )}
             src={ActivityImage}
             href={"https://www.youtube.com/watch?v=CFa7SY4Up9k&t=261s"}
           />

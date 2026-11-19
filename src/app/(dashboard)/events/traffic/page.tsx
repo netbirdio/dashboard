@@ -53,14 +53,16 @@ export default function NetworkTrafficPage() {
         <h1 ref={headingRef}>{t("common.trafficEvents")}</h1>
 
         <Paragraph>
-          Traffic events is an experimental feature. Functionality and behavior
-          may evolve, including changes to how data is collected or reported.
+          {t(
+            "trafficEvents.trafficEventsIsAnExperimentalFeatureFunctionalityAndBehaviorMay2",
+          )}
         </Paragraph>
 
         <Paragraph>
-          Learn more about{" "}
+          {t("trafficEvents.learnMoreAbout")}{" "}
           <InlineLink href={TRAFFIC_EVENTS_DOC_LINK} target="_blank">
-            {t("common.trafficEvents") + " "}<ExternalLinkIcon size={12} />
+            {t("common.trafficEvents") + " "}
+            <ExternalLinkIcon size={12} />
           </InlineLink>{" "}
           {t("events.inOurDocumentation")}
         </Paragraph>
@@ -74,7 +76,7 @@ export default function NetworkTrafficPage() {
           <LockedFeatureInfoCard
             className={"mb-6"}
             feature={"TRAFFIC_EVENTS"}
-            featureText={"Traffic Events"}
+            featureText={t("common.trafficEvents")}
           />
         </div>
         <LockedFeatureOverlay feature={"TRAFFIC_EVENTS"}>

@@ -5,12 +5,7 @@ import Button from "@components/Button";
 import Card from "@components/Card";
 import TruncatedText from "@components/ui/TruncatedText";
 import { cn } from "@utils/helpers";
-import {
-  MessageSquareDot,
-  Link2Off,
-  MoreVertical,
-  Repeat,
-} from "lucide-react";
+import { MessageSquareDot, Link2Off, MoreVertical, Repeat } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,8 +57,7 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
   const handleDisconnect = async () => {
     const choice = await confirm({
       title: t("notifications.disconnectSlack"),
-      description:
-        t("notifications.disconnectSlackConfirm"),
+      description: t("notifications.disconnectSlackConfirm"),
       confirmText: t("notifications.disconnect"),
       cancelText: t("common.cancel"),
       type: "danger",
@@ -71,13 +65,13 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
     if (!choice) return;
     notify({
       title: t("notifications.slackNotifications"),
-      description: "Slack has been successfully disconnected.",
+      description: t("notifications.slackHasBeenSuccessfullyDisconnected"),
       promise: updateChannel({
         ...channel,
         enabled: false,
         target: undefined,
       }),
-      loadingMessage: "Disconnecting Slack...",
+      loadingMessage: t("notifications.disconnectingSlack"),
     });
   };
 

@@ -45,7 +45,7 @@ const CustomersPageContent = () => {
         </Breadcrumbs>
         <h1 ref={headingRef}>{t("customers.customers")}</h1>
         <Paragraph>
-          Use this view to manage customer accounts and their plans.
+          {t("customers.useThisViewToManageCustomerAccountsAndTheirPlans")}
         </Paragraph>
         <Paragraph>
           <DistributorDocsLink />

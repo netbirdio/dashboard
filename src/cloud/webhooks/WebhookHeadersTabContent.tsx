@@ -5,13 +5,8 @@ import { Label } from "@components/Label";
 import { Callout } from "@components/Callout";
 import { TabsContent } from "@components/Tabs";
 import { AlertTriangleIcon, PlusIcon } from "lucide-react";
-import {
-  AuthType,
-} from "@/cloud/webhooks/WebhookAuthenticationSettings";
-import {
-  ActionType,
-  HeadersInput,
-} from "@/cloud/webhooks/WebhookHeadersInput";
+import { AuthType } from "@/cloud/webhooks/WebhookAuthenticationSettings";
+import { ActionType, HeadersInput } from "@/cloud/webhooks/WebhookHeadersInput";
 import { WebhookConfig } from "@/cloud/webhooks/useWebhookConfig";
 import { useTranslations } from "@/i18n/LocaleProvider";
 
@@ -24,9 +19,7 @@ export function WebhookHeadersTabContent({ value }: Readonly<Props>) {
   return (
     <TabsContent value={"headers"} className={"px-8"}>
       <Label>{t("webhooks.httpHeaders")}</Label>
-      <HelpText>
-        {t("webhooks.httpHeadersHelp")}
-      </HelpText>
+      <HelpText>{t("webhooks.httpHeadersHelp")}</HelpText>
       {value.httpHeaders.length > 0 && (
         <div className={"flex gap-3 w-full mb-3"}>
           <div className={"flex flex-col gap-2 w-full"}>
@@ -74,15 +67,18 @@ export function WebhookHeadersTabContent({ value }: Readonly<Props>) {
           }
           className={"mt-5"}
         >
-          Warning: You have added an {"'Authorization'"} header. This will
-          override the{" "}
-          <span className={"text-nb-gray-100 font-medium"}>
-            {value.authenticationType === AuthType.Basic
-              ? t("webhooks.basicAuth")
-              : t("webhooks.bearerToken")}
-          </span>{" "}
-          authentication from the previous step. Please remove the{" "}
-          {"'Authorization'"} header.
+          {t.rich(
+            "webhooks.warningYouHaveAddedAnAuthorizationHeaderThisWillOverride",
+            {
+              part0: (chunks) => (
+                <span className={"text-nb-gray-100 font-medium"}>{chunks}</span>
+              ),
+              part1: () =>
+                value.authenticationType === AuthType.Basic
+                  ? t("webhooks.basicAuth")
+                  : t("webhooks.bearerToken"),
+            },
+          )}
         </Callout>
       )}
     </TabsContent>

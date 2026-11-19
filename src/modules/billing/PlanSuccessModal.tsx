@@ -26,12 +26,14 @@ export const PlanSuccessModal = () => {
           }
         >
           <h2 className={"text-xl my-0 leading-[1.5] mb-2"}>
-            Thank you for subscribing <br />
-            to NetBird! 🎉
+            {t.rich("billing.thankYouForSubscribingToNetBird", {
+              part0: () => <br />,
+            })}
           </h2>
           <Paragraph className={cn("text-sm text-center max-w-xs")}>
-            Your subscription has been successfully activated. You have now full
-            access to all NetBird features of your selected plan.
+            {t(
+              "billing.yourSubscriptionHasBeenSuccessfullyActivatedYouHaveNowFull",
+            )}
           </Paragraph>
           <ModalClose asChild={true}>
             <Button variant={"primary"} className={"w-full mt-4"} size={"xs"}>

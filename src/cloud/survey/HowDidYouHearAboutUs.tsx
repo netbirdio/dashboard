@@ -106,7 +106,7 @@ export default function HowDidYouHearAboutUs() {
             }
           >
             <h2 className={"text-xl my-0 leading-[1.5] text-center"}>
-              We’d love to hear from you
+              {t("survey.weDLoveToHearFromYou")}
             </h2>
             <Paragraph
               className={cn("text-sm text-center max-w-[400px] px-4 mt-2")}
@@ -120,7 +120,10 @@ export default function HowDidYouHearAboutUs() {
               <SelectDropdown
                 value={referralSource}
                 onChange={setReferralSource}
-                options={randomizedOptions}
+                options={randomizedOptions.map((option) => ({
+                  ...option,
+                  label: option.labelId ? t(option.labelId) : option.label,
+                }))}
                 showValues={false}
                 placeholder={t("survey.selectOption")}
                 variant={"dropdown"}

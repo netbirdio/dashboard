@@ -46,25 +46,31 @@ export const OnboardingTestResource = ({
     <div className={"relative flex flex-col h-full gap-4"}>
       <div>
         <h1 className={"text-xl text-center max-w-sm mx-auto"}>
-          {`Let's put that connection to the test`}
+          {translate("onboarding.letSPutThatConnectionToTheTest")}
         </h1>
         <div
           className={
             "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
           }
         >
-          {`Nice work connecting your client device! Now, let’s have a little fun and test if it can reach your resource.`}
+          {translate(
+            "onboarding.niceWorkConnectingYourClientDeviceNowLetSHave",
+          )}
         </div>
       </div>
 
       <Steps className={"stepper-bg-variant"}>
         <Steps.Step step={1}>
           <p className={"!text-nb-gray-300"}>
-            Open your command line and run this command from{" "}
-            <span className={cn(device && "text-white")}>
-              {device?.name || "your device"}
-            </span>{" "}
-            to ping your resource.
+            {translate.rich(
+              "onboarding.openYourCommandLineAndRunThisCommandFromTo",
+              {
+                part0: (chunks) => (
+                  <span className={cn(device && "text-white")}>{chunks}</span>
+                ),
+                part1: () => device?.name || "your device",
+              },
+            )}
           </p>
           <Code showCopyIcon={!isSubnet && !isWildCard}>
             ping {pingAddress}
@@ -72,14 +78,15 @@ export const OnboardingTestResource = ({
         </Steps.Step>
         <Steps.Step step={2} line={false} className={"pb-0"} disabled={!device}>
           <p className={"!text-nb-gray-300"}>
-            Everything working? Great! You can now continue with the onboarding.
-            If something isn’t right, please check our{" "}
+            {translate(
+              "onboarding.everythingWorkingGreatYouCanNowContinueWithTheOnboarding",
+            )}{" "}
             <InlineLink
               href={"https://docs.netbird.io/how-to/troubleshooting-client"}
               target={"_blank"}
               onClick={onTroubleshootingClick}
             >
-              troubleshooting guide
+              {translate("onboarding.troubleshootingGuide")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </p>
@@ -89,7 +96,7 @@ export const OnboardingTestResource = ({
               onClick={onNext}
               className={"w-full"}
             >
-              It works! - Continue
+              {translate("onboarding.itWorksContinue")}
             </Button>
           </div>
         </Steps.Step>

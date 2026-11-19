@@ -29,23 +29,22 @@ export default function DomainActionCell({ domain }: Readonly<Props>) {
 
   const removeBlockedReason: React.ReactNode = domain.is_primary ? (
     <>
-      This is the primary domain of your account
-      <br />
-      and cannot be removed.
+      {t.rich("signInDomains.thisIsThePrimaryDomainOfYourAccountAndCannot", {
+        part0: () => <br />,
+      })}
     </>
   ) : connections.length > 0 ? (
     <>
-      This domain is used by an SSO integration.
-      <br />
-      Remove it there before deleting it.
+      {t.rich("signInDomains.thisDomainIsUsedByAnSSOIntegrationRemoveIt", {
+        part0: () => <br />,
+      })}
     </>
   ) : undefined;
 
   const deleteDomainHandler = async () => {
     const choice = await confirm({
-      title: `Remove ${domain.name}?`,
-      description:
-        "Users with an email address on this domain will no longer be matched to your account.",
+      title: t("signInDomains.removeName", { name: domain.name }),
+      description: t("signInDomains.usersWithAnEmailAddressOnThisDomainWillNo"),
       confirmText: t("common.remove"),
       cancelText: t("common.cancel"),
       type: "danger",
@@ -53,13 +52,13 @@ export default function DomainActionCell({ domain }: Readonly<Props>) {
     });
     if (!choice) return;
     notify({
-      title: "Sign-in Domains",
-      description: `${domain.name} has been removed`,
+      title: t("signInDomains.signInDomains"),
+      description: t("signInDomains.nameHasBeenRemoved", { name: domain.name }),
       promise: deleteDomain(domain.id).then((res) => {
         mutate().catch(() => {});
         return res;
       }),
-      loadingMessage: "Removing domain...",
+      loadingMessage: t("signInDomains.removingDomain"),
     });
   };
 
@@ -91,14 +90,14 @@ export default function DomainActionCell({ domain }: Readonly<Props>) {
           onClick={() => setModal(true)}
           data-testid={"verify-domain"}
         >
-          Verify
+          {t("signInDomains.verify")}
         </Button>
       )}
 
       <FullTooltip
         content={
           <div className={"text-xs max-w-xs"}>
-            {removeBlockedReason ?? "Remove domain"}
+            {removeBlockedReason ?? t("signInDomains.removeDomain")}
           </div>
         }
         interactive={false}
@@ -112,7 +111,7 @@ export default function DomainActionCell({ domain }: Readonly<Props>) {
           )}
           disabled={!!removeBlockedReason || !permission.settings.update}
           onClick={deleteDomainHandler}
-          aria-label={"Remove domain"}
+          aria-label={t("signInDomains.removeDomain")}
           data-testid={"remove-domain"}
         >
           <TrashIcon size={14} />

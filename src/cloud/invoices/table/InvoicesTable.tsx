@@ -24,8 +24,12 @@ type Props = {
 
 const InvoicesColumns: ColumnDef<Invoice>[] = [
   {
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Date</DataTableHeader>;
+    header: function Header({ column }) {
+      const t = useTranslations();
+
+      return (
+        <DataTableHeader column={column}>{t("common.date")}</DataTableHeader>
+      );
     },
     accessorKey: "period_start",
     cell: ({ row }) => <InvoicesPeriodCell invoice={row.original} />,
@@ -34,8 +38,12 @@ const InvoicesColumns: ColumnDef<Invoice>[] = [
     accessorKey: "period_end",
   },
   {
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Type</DataTableHeader>;
+    header: function Header({ column }) {
+      const t = useTranslations();
+
+      return (
+        <DataTableHeader column={column}>{t("common.type")}</DataTableHeader>
+      );
     },
     accessorKey: "type",
     cell: ({ row }) => <InvoicesTypeCell invoice={row.original} />,

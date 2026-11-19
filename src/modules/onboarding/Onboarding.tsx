@@ -35,6 +35,7 @@ import { OnboardingExplainDefaultPolicy } from "@/modules/onboarding/p2p/Onboard
 import { OnboardingFirstDevice } from "@/modules/onboarding/p2p/OnboardingFirstDevice";
 import { OnboardingSecondDevice } from "@/modules/onboarding/p2p/OnboardingSecondDevice";
 import { OnboardingTestP2P } from "@/modules/onboarding/p2p/OnboardingTestP2P";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 export interface OnboardingState {
   intent: Intent;
@@ -110,6 +111,8 @@ export const Onboarding = ({
   isOnboardingPending,
   domainCategory,
 }: Props) => {
+  const t = useTranslations();
+
   const { data: networks } = useFetchApi<Network[]>("/networks", true, false);
   const { data: policies } = useFetchApi<Policy[]>("/policies", true);
   const router = useRouter();
@@ -234,10 +237,12 @@ export const Onboarding = ({
     } else {
       notify({
         title: p.name + " Policy",
-        description: `Policy was successfully ${
-          !enabled ? "enabled" : "disabled"
-        }`,
-        loadingMessage: "Updating policy...",
+        description: t("onboarding.policyWasSuccessfullyValue", {
+          value: !enabled
+            ? t("trafficEvents.enabled")
+            : t("trafficEvents.disabled"),
+        }),
+        loadingMessage: t("onboarding.updatingPolicy"),
         promise: request.then(() => mutate("/policies")),
         duration: 800,
       });
@@ -333,7 +338,7 @@ export const Onboarding = ({
         >
           <div data-testid={"regular-onboarding"}>
             <VisuallyHidden asChild>
-              <DialogTitle>Onboarding</DialogTitle>
+              <DialogTitle>{t("onboarding.onboarding")}</DialogTitle>
             </VisuallyHidden>
             <div
               className={cn(
@@ -612,19 +617,25 @@ export const Onboarding = ({
                     "text-sm text-nb-gray-400 font-light pb-10 text-center px-4"
                   }
                 >
-                  Already know how NetBird works?
-                  <InlineLink
-                    href={"#"}
-                    className={"!text-nb-gray-200 ml-1"}
-                    onClick={() => {
-                      dispatch({
-                        type: "SKIP",
-                      });
-                      onSkip(intent, step);
-                    }}
-                  >
-                    Skip to Dashboard
-                  </InlineLink>
+                  {t.rich(
+                    "onboarding.alreadyKnowHowNetBirdWorksSkipToDashboard",
+                    {
+                      part0: (chunks) => (
+                        <InlineLink
+                          href={"#"}
+                          className={"!text-nb-gray-200 ml-1"}
+                          onClick={() => {
+                            dispatch({
+                              type: "SKIP",
+                            });
+                            onSkip(intent, step);
+                          }}
+                        >
+                          {chunks}
+                        </InlineLink>
+                      ),
+                    },
+                  )}
                 </span>
               )}
             </div>

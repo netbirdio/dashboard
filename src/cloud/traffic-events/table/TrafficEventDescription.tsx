@@ -1,3 +1,4 @@
+import { defaultLocale } from "@/i18n/locales";
 import { cn } from "@utils/helpers";
 import dayjs from "dayjs";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
@@ -14,7 +15,7 @@ import {
 import { getTrafficEventTypeText } from "@/cloud/traffic-events/TrafficEventsTable";
 import { stripZeroPort } from "@/cloud/traffic-events/utils/parseAddress";
 import { usePeers } from "@/contexts/PeersProvider";
-import { useTranslations } from "@/i18n/LocaleProvider";
+import { useTranslations, useDashboardLocale } from "@/i18n/LocaleProvider";
 
 type Props = {
   event: TrafficEvent;
@@ -26,16 +27,19 @@ const isResource = (m: TrafficEventMachine) => {
   return m.type !== TrafficEventMachineType.PEER;
 };
 
-const getNamePrefix = (m: TrafficEventMachine) => {
+const getNamePrefix = (
+  t: ReturnType<typeof useTranslations>,
+  m: TrafficEventMachine,
+) => {
   switch (m.type) {
     case TrafficEventMachineType.PEER:
-      return "Peer ";
+      return t("trafficEvents.peer2");
     case TrafficEventMachineType.ROUTE:
-      return "Route ";
+      return t("trafficEvents.route");
     case TrafficEventMachineType.UNKNOWN:
       return "";
     default:
-      return "Resource ";
+      return t("trafficEvents.resource");
   }
 };
 
@@ -44,13 +48,19 @@ export const TrafficEventDescription = ({
   type,
   showCaret = false,
 }: Props) => {
+  const { locale } = useDashboardLocale();
+
   const t = useTranslations();
   const { peers } = usePeers();
 
   const routerName = useMemo(() => {
     const reporter = peers?.find((peer) => peer.id === event.reporter_id);
-    return reporter ? <Mark>{reporter.name}</Mark> : <Mark>Unknown</Mark>;
-  }, [event.reporter_id, peers]);
+    return reporter ? (
+      <Mark>{reporter.name}</Mark>
+    ) : (
+      <Mark>{t("common.unknown")}</Mark>
+    );
+  }, [event.reporter_id, peers, t]);
 
   const timestamp = event.events?.find((e) => e.type === type)?.timestamp;
 
@@ -78,13 +88,13 @@ export const TrafficEventDescription = ({
     const destinationAddress = stripZeroPort(event.destination.address);
     const sourceName = (
       <>
-        {getNamePrefix(event.source)}
+        {getNamePrefix(t, event.source)}
         <Mark>{event.source.name || sourceAddress}</Mark>
       </>
     );
     const destinationName = (
       <>
-        {getNamePrefix(event.destination)}
+        {getNamePrefix(t, event.destination)}
         <Mark>{event.destination.name || destinationAddress}</Mark>
       </>
     );
@@ -101,25 +111,29 @@ export const TrafficEventDescription = ({
       destinationName,
       type,
     };
-  }, [event]);
+  }, [event, t]);
 
   const aggregatedMessage = () => {
     const { starts, ends, drops } = getTrafficEventCounts(event);
     const connections = (n: number) =>
-      `${n.toLocaleString()} ${n === 1 ? "connection" : "connections"}`;
+      t("trafficEvents.countPluralOneConnectionOtherConnections", { count: n });
 
     const joinClauses = (clauses: string[]) =>
       clauses.map((clause, index) => (
         <React.Fragment key={clause}>
-          {index > 0 && (index === clauses.length - 1 ? " and " : ", ")}
+          {index > 0 &&
+            (index === clauses.length - 1 ? t("trafficEvents.and") : ", ")}
           {clause}
         </React.Fragment>
       ));
 
-    const startVerb = info.isInbound ? "accepted" : "started";
+    const startVerb = info.isInbound
+      ? t("trafficEvents.accepted")
+      : t("trafficEvents.started");
     const initiated = [
       starts > 0 && `${startVerb} ${connections(starts)}`,
-      ends > 0 && `ended ${connections(ends)}`,
+      ends > 0 &&
+        t("trafficEvents.endedConnections", { connections: connections(ends) }),
     ].filter(Boolean) as string[];
 
     const sentences: React.ReactNode[] = [];
@@ -127,12 +141,16 @@ export const TrafficEventDescription = ({
       sentences.push(
         info.isInbound ? (
           <>
-            {info.destinationName} {joinClauses(initiated)}{" " + t("trafficEvents.from")}{" "}
-            {info.sourceName}
+            {info.destinationName} {joinClauses(initiated)}
+            {" " + t("trafficEvents.from")} {info.sourceName}
           </>
         ) : (
           <>
-            {info.sourceName} {joinClauses(initiated)} to {info.destinationName}
+            {t.rich("trafficEvents.to", {
+              part0: () => info.sourceName,
+              part1: () => joinClauses(initiated),
+              part2: () => info.destinationName,
+            })}
           </>
         ),
       );
@@ -140,9 +158,13 @@ export const TrafficEventDescription = ({
     if (drops > 0) {
       sentences.push(
         <>
-          {info.sourceName} got blocked {drops.toLocaleString()}{" "}
-          {drops === 1 ? "time" : "times"} trying to connect to{" "}
-          {info.destinationName}
+          {t.rich("trafficEvents.gotBlockedTryingToConnectTo", {
+            part0: () => info.sourceName,
+            part1: () => drops.toLocaleString(),
+            part2: () =>
+              drops === 1 ? t("trafficEvents.time") : t("trafficEvents.times"),
+            part3: () => info.destinationName,
+          })}
         </>,
       );
     }
@@ -173,7 +195,10 @@ export const TrafficEventDescription = ({
     ) {
       return (
         <>
-          {info.sourceName} requested connection to {info.destinationName}
+          {t.rich("trafficEvents.requestedConnectionTo", {
+            part0: () => info.sourceName,
+            part1: () => info.destinationName,
+          })}
         </>
       );
     }
@@ -186,7 +211,10 @@ export const TrafficEventDescription = ({
     ) {
       return (
         <>
-          {info.sourceName} stopped connection to {info.destinationName}
+          {t.rich("trafficEvents.stoppedConnectionTo", {
+            part0: () => info.sourceName,
+            part1: () => info.destinationName,
+          })}
         </>
       );
     }
@@ -202,8 +230,13 @@ export const TrafficEventDescription = ({
     ) {
       return (
         <>
-          {t("common.routingPeer") + " "}{routerName} received connection to{" "}
-          {info.destinationName}{" " + t("trafficEvents.from") + " "}{info.sourceName}
+          {t.rich("trafficEvents.receivedConnectionTo", {
+            part0: () => t("common.routingPeer") + " ",
+            part1: () => routerName,
+            part2: () => info.destinationName,
+            part3: () => " " + t("trafficEvents.from") + " ",
+            part4: () => info.sourceName,
+          })}
         </>
       );
     }
@@ -216,8 +249,13 @@ export const TrafficEventDescription = ({
     ) {
       return (
         <>
-          {t("common.routingPeer") + " "}{routerName} started routing to {info.destinationName}{" "}
-          {t("trafficEvents.from") + " "}{info.sourceName}
+          {t.rich("trafficEvents.startedRoutingTo", {
+            part0: () => t("common.routingPeer") + " ",
+            part1: () => routerName,
+            part2: () => info.destinationName,
+            part3: () => t("trafficEvents.from") + " ",
+            part4: () => info.sourceName,
+          })}
         </>
       );
     }
@@ -230,8 +268,13 @@ export const TrafficEventDescription = ({
     ) {
       return (
         <>
-          {t("common.routingPeer") + " "}{routerName} stopped routing to {info.destinationName}{" "}
-          {t("trafficEvents.from") + " "}{info.sourceName}
+          {t.rich("trafficEvents.stoppedRoutingTo", {
+            part0: () => t("common.routingPeer") + " ",
+            part1: () => routerName,
+            part2: () => info.destinationName,
+            part3: () => t("trafficEvents.from") + " ",
+            part4: () => info.sourceName,
+          })}
         </>
       );
     }
@@ -244,8 +287,13 @@ export const TrafficEventDescription = ({
     ) {
       return (
         <>
-          {t("common.routingPeer") + " "}{routerName} stopped connection to {info.destinationName}{" "}
-          {t("trafficEvents.from") + " "}{info.sourceName}
+          {t.rich("trafficEvents.stoppedConnectionTo2", {
+            part0: () => t("common.routingPeer") + " ",
+            part1: () => routerName,
+            part2: () => info.destinationName,
+            part3: () => t("trafficEvents.from") + " ",
+            part4: () => info.sourceName,
+          })}
         </>
       );
     }
@@ -256,7 +304,13 @@ export const TrafficEventDescription = ({
       info.isBlocked &&
       info.isOutbound
     ) {
-      return <>Connection to {info.destinationName} was blocked</>;
+      return (
+        <>
+          {t.rich("trafficEvents.connectionToWasBlocked", {
+            part0: () => info.destinationName,
+          })}
+        </>
+      );
     }
 
     if (
@@ -267,7 +321,11 @@ export const TrafficEventDescription = ({
     ) {
       return (
         <>
-          {t("common.routingPeer") + " "}{routerName} blocked connection to {info.destinationName}
+          {t.rich("trafficEvents.blockedConnectionTo", {
+            part0: () => t("common.routingPeer") + " ",
+            part1: () => routerName,
+            part2: () => info.destinationName,
+          })}
         </>
       );
     }
@@ -278,7 +336,10 @@ export const TrafficEventDescription = ({
     if (info.isP2P && info.isOutbound && info.isStarted) {
       return (
         <>
-          {info.sourceName} requested P2P connection to {info.destinationName}
+          {t.rich("trafficEvents.requestedP2PConnectionTo", {
+            part0: () => info.sourceName,
+            part1: () => info.destinationName,
+          })}
         </>
       );
     }
@@ -286,7 +347,10 @@ export const TrafficEventDescription = ({
     if (info.isP2P && info.isInbound && info.isStarted) {
       return (
         <>
-          {info.destinationName} received P2P connection from {info.sourceName}
+          {t.rich("trafficEvents.receivedP2PConnectionFrom", {
+            part0: () => info.destinationName,
+            part1: () => info.sourceName,
+          })}
         </>
       );
     }
@@ -294,7 +358,10 @@ export const TrafficEventDescription = ({
     if (info.isP2P && info.isOutbound && info.isStopped) {
       return (
         <>
-          {info.sourceName} stopped P2P connection to {info.destinationName}
+          {t.rich("trafficEvents.stoppedP2PConnectionTo", {
+            part0: () => info.sourceName,
+            part1: () => info.destinationName,
+          })}
         </>
       );
     }
@@ -302,7 +369,10 @@ export const TrafficEventDescription = ({
     if (info.isP2P && info.isInbound && info.isStopped) {
       return (
         <>
-          {info.destinationName} stopped P2P connection from {info.sourceName}
+          {t.rich("trafficEvents.stoppedP2PConnectionFrom", {
+            part0: () => info.destinationName,
+            part1: () => info.sourceName,
+          })}
         </>
       );
     }
@@ -310,7 +380,10 @@ export const TrafficEventDescription = ({
     if (info.isP2P && info.isOutbound && info.isBlocked) {
       return (
         <>
-          {info.sourceName} blocked P2P connection to {info.destinationName}
+          {t.rich("trafficEvents.blockedP2PConnectionTo", {
+            part0: () => info.sourceName,
+            part1: () => info.destinationName,
+          })}
         </>
       );
     }
@@ -318,14 +391,17 @@ export const TrafficEventDescription = ({
     if (info.isP2P && info.isInbound && info.isBlocked) {
       return (
         <>
-          {info.destinationName} blocked P2P connection from {info.sourceName}
+          {t.rich("trafficEvents.blockedP2PConnectionFrom", {
+            part0: () => info.destinationName,
+            part1: () => info.sourceName,
+          })}
         </>
       );
     }
 
     // Fallback to generic message
     return (
-      <>{getTrafficEventTypeText(info.type, info.isP2P, event.direction)}</>
+      <>{getTrafficEventTypeText(info.type, info.isP2P, event.direction, t)}</>
     );
   };
 
@@ -335,15 +411,31 @@ export const TrafficEventDescription = ({
         <span className={"text-xs text-nb-gray-300 block"}>
           {isAggregated && eventWindow ? (
             <span>
-              {eventWindow.first.format("MMM D, YYYY [at] h:mm A")} &ndash;{" "}
-              {eventWindow.last.format(
-                eventWindow.first.isSame(eventWindow.last, "day")
-                  ? "h:mm A"
-                  : "MMM D, h:mm A",
-              )}
+              {locale === defaultLocale
+                ? eventWindow.first.format("MMM D, YYYY [at] h:mm A")
+                : new Intl.DateTimeFormat(locale, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  }).format(eventWindow.first.toDate())}{" "}
+              &ndash;{" "}
+              {locale === defaultLocale
+                ? eventWindow.last.format(
+                    eventWindow.first.isSame(eventWindow.last, "day")
+                      ? "h:mm A"
+                      : "MMM D, h:mm A",
+                  )
+                : new Intl.DateTimeFormat(locale, {
+                    ...(eventWindow.first.isSame(eventWindow.last, "day")
+                      ? {}
+                      : { month: "short" as const, day: "numeric" as const }),
+                    hour: "numeric",
+                    minute: "2-digit",
+                  }).format(eventWindow.last.toDate())}
             </span>
           ) : (
-            <span>{dayjs(timestamp).format("MMM D, YYYY [at] h:mm:ss A")}</span>
+            <span>
+              {locale === defaultLocale ? dayjs(timestamp).format("MMM D, YYYY [at] h:mm:ss A") : new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "medium" }).format(dayjs(timestamp).toDate())}
+            </span>
           )}
         </span>
       </div>

@@ -61,8 +61,8 @@ export const OnboardingDevices = ({
         <WaitingForDevice
           text={
             !firstDevice
-              ? "Waiting for your first device to connect"
-              : "Waiting for your second device to connect"
+              ? t("onboarding.waitingForYourFirstDeviceToConnect")
+              : t("onboarding.waitingForYourSecondDeviceToConnect")
           }
         />
       )}
@@ -76,7 +76,9 @@ export const OnboardingDevices = ({
       )}
     >
       {firstRoutingPeer && resource && (
-        <span className={"text-xs text-nb-gray-500"}>{t("onboarding.network")}</span>
+        <span className={"text-xs text-nb-gray-500"}>
+          {t("onboarding.network")}
+        </span>
       )}
 
       <div
@@ -120,8 +122,8 @@ export const OnboardingDevices = ({
           <WaitingForDevice
             text={
               !firstRoutingPeer
-                ? "Waiting for your routing peer to connect"
-                : "Waiting for your own device to connect"
+                ? t("onboarding.waitingForYourRoutingPeerToConnect")
+                : t("onboarding.waitingForYourOwnDeviceToConnect")
             }
           />
         )}

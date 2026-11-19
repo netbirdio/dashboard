@@ -70,14 +70,12 @@ const ListItem = ({ userId }: Props) => {
       label={
         <>
           <ShieldCheckIcon size={16} />
-          NetBird MFA
+          {t("mfa.netBirdMFA")}
           <FullTooltip
             variant={"lighter"}
             content={
               <div className={"text-xs max-w-xs"}>
-                NetBird MFA is primarily intended for users who log in with
-                email and password. You may not need NetBird MFA if your SSO
-                provider (e.g., Google, Microsoft) already has MFA enabled.{" "}
+                {t("mfa.netBirdMFAIsPrimarilyIntendedForUsersWhoLogIn")}{" "}
                 <InlineLink
                   href={
                     "https://docs.netbird.io/how-to/multi-factor-authentication"
@@ -125,6 +123,8 @@ const MFAStatus = ({
   hasAuthMethods: boolean;
   userId: string;
 }) => {
+  const t = useTranslations();
+
   return (
     <div className={"flex gap-4 items-center"}>
       {hasAuthMethods && enabled && <ResetMFAButton userId={userId} />}
@@ -138,19 +138,19 @@ const MFAStatus = ({
           {hasAuthMethods ? (
             <>
               <span className={cn("h-2 w-2 rounded-full", "bg-green-500")} />{" "}
-              Active
+              {t("common.active")}
             </>
           ) : (
             <>
               <span className={cn("h-2 w-2 rounded-full", "bg-yellow-400")} />{" "}
-              Not Enrolled
+              {t("mfa.notEnrolled")}
             </>
           )}
         </div>
       ) : (
         <div className={"h-[30px] flex items-center"}>
           <InlineLink href={"/settings?tab=authentication"}>
-            Activate
+            {t("mfa.activate")}
             <ArrowUpRightIcon size={14} />
           </InlineLink>
         </div>
@@ -170,9 +170,8 @@ const ResetMFAButton = ({ userId }: Props) => {
 
   const resetMFA = async () => {
     const choice = await confirm({
-      title: `Reset Multi-factor Authentication?`,
-      description:
-        "Are you sure you want to reset the current MFA methods for this user? The user will be prompted to set up MFA again on their next login.",
+      title: t("mfa.resetMultiFactorAuthentication"),
+      description: t("mfa.areYouSureYouWantToResetTheCurrentMFA"),
       confirmText: t("common.confirm"),
       cancelText: t("common.cancel"),
       type: "warning",
@@ -181,9 +180,9 @@ const ResetMFAButton = ({ userId }: Props) => {
 
     setIsLoading(true);
     notify({
-      title: "Multi-factor authentication (MFA)",
-      description: "MFA settings have been reset",
-      loadingMessage: "Resetting MFA for user...",
+      title: t("mfa.multiFactorAuthenticationMFA"),
+      description: t("mfa.mFASettingsHaveBeenReset"),
+      loadingMessage: t("mfa.resettingMFAForUser"),
       promise: mfaDeleteRequest({}).finally(() =>
         mutate(`/service/mfa/${userId}`).then(() => setIsLoading(false)),
       ),
@@ -197,12 +196,14 @@ const ResetMFAButton = ({ userId }: Props) => {
       className={"h-[30px]"}
       onClick={resetMFA}
     >
-      {isLoading ? (
-        <Loader2Icon size={12} className={"block animate-spin"} />
-      ) : (
-        <RotateCcw size={12} />
-      )}
-      Reset MFA
+      {t.rich("mfa.resetMFA", {
+        part0: () =>
+          isLoading ? (
+            <Loader2Icon size={12} className={"block animate-spin"} />
+          ) : (
+            <RotateCcw size={12} />
+          ),
+      })}
     </Button>
   );
 };

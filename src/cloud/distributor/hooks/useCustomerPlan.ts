@@ -7,6 +7,7 @@ import { useBilling } from "@/contexts/BillingProvider";
 import { AccountUsageStats } from "@/interfaces/AccountUsageStats";
 import { Plan } from "@/interfaces/Plan";
 import { PlanTier } from "@/interfaces/Subscription";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   accountId: string;
@@ -14,6 +15,8 @@ type Props = {
 };
 
 export const useCustomerPlan = ({ accountId, withUsage = false }: Props) => {
+  const t = useTranslations();
+
   const { mutate } = useSWRConfig();
   const subscriptionRequest = useApiCall<string>(
     "/integrations/msp/reseller/msps",
@@ -83,9 +86,11 @@ export const useCustomerPlan = ({ accountId, withUsage = false }: Props) => {
         );
 
     notify({
-      title: `Subscription Plan`,
-      description: `Successfully subscribed to the ${plan.name} plan.`,
-      loadingMessage: `Subscribing to ${plan.name}...`,
+      title: t("distributor.subscriptionPlan"),
+      description: t("msp.successfullySubscribedToTheNamePlan", {
+        name: plan.name,
+      }),
+      loadingMessage: t("msp.subscribingToName", { name: plan.name }),
       promise,
     });
 

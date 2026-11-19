@@ -111,40 +111,39 @@ export const OnboardingAddRoutingPeer = ({
 
   return (
     <div className={"relative flex flex-col h-full gap-4"}>
-        <div>
-            <h1 className={"text-xl text-center"}>
-                Add a routing peer and get the traffic flowing
-            </h1>
-            <div
-                className={
-                    "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
-                }
-            >
-                Think of a routing peer as a connector to your internal network.
-                It runs NetBird and lets your remote devices access internal resources, while enforcing access control policies.
-            </div>
-            <div
-                className={
-                    "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
-                }
-            >
-                Generate a setup key and install NetBird on that machine.
-            </div>
-        </div>
-
+      <div>
+        <h1 className={"text-xl text-center"}>
+          {t("onboarding.addARoutingPeerAndGetTheTrafficFlowing")}
+        </h1>
         <div
-            className={cn(
-                "relative block rounded-lg border border-nb-gray-900 px-5 py-3 transition-all",
-                "flex justify-between items-center mt-3",
-            )}
+          className={
+            "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
+          }
         >
-            <div>
-                <div className="text-nb-gray-100 font-normal text-sm text-left gap-2 flex items-center">
+          {t("onboarding.thinkOfARoutingPeerAsAConnectorToYour")}
+        </div>
+        <div
+          className={
+            "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
+          }
+        >
+          {t("onboarding.generateASetupKeyAndInstallNetBirdOnThatMachine")}
+        </div>
+      </div>
+
+      <div
+        className={cn(
+          "relative block rounded-lg border border-nb-gray-900 px-5 py-3 transition-all",
+          "flex justify-between items-center mt-3",
+        )}
+      >
+        <div>
+          <div className="text-nb-gray-100 font-normal text-sm text-left gap-2 flex items-center">
             <KeyRoundIcon size={12} />
-            Setup-Key
+            {t("onboarding.setupKey")}
           </div>
           <div className={"text-nb-gray-300 text-[0.8rem] text-left mt-0.5"}>
-            {setupKey?.key || "Not yet generated"}
+            {setupKey?.key || t("onboarding.notYetGenerated")}
           </div>
         </div>
         {setupKey ? (
@@ -156,7 +155,7 @@ export const OnboardingAddRoutingPeer = ({
           </Button>
         ) : (
           <Button variant={"primary"} onClick={generateSetupKey} size={"xs"}>
-            Generate Setup Key
+            {t("onboarding.generateSetupKey")}
           </Button>
         )}
       </div>
@@ -168,7 +167,7 @@ export const OnboardingAddRoutingPeer = ({
         onClick={() => setOpen(true)}
       >
         <DownloadIcon size={16} />
-        Install Routing Peer
+        {t("onboarding.installRoutingPeer")}
       </Button>
 
       {setupKey && (

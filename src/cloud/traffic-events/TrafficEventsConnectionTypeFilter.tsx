@@ -30,7 +30,7 @@ export const TrafficEventsConnectionTypeFilter = ({
         onClick={() => onChange?.("ROUTED")}
         variant={value === "ROUTED" ? "tertiary" : "secondary"}
       >
-        Routed
+        {t("trafficEvents.routed")}
       </ButtonGroup.Button>
     </ButtonGroup>
   );

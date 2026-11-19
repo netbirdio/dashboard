@@ -23,9 +23,11 @@ export const TrialNavigationInfoCard = () => {
       <div className={"flex items-center text-sm gap-3"}>
         <PlanIcon name={"trial"} size={33} />
         <div className={"min-w-0"}>
-          <div className={"font-semibold"}>Free Trial</div>
+          <div className={"font-semibold"}>{t("billing.freeTrial")}</div>
           <div className={"truncate text-xs text-nb-gray-300 transition-all"}>
-            Trial ends in {trialDaysRemaining} days
+            {t.rich("billing.trialEndsInDays", {
+              part0: () => trialDaysRemaining,
+            })}
           </div>
         </div>
       </div>

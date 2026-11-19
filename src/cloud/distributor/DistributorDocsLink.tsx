@@ -7,7 +7,7 @@ export const DistributorDocsLink = () => {
   const t = useTranslations();
   return (
     <>
-      Learn more about
+      {t("trafficEvents.learnMoreAbout")}
       <InlineLink
         href={"https://docs.netbird.io/manage/for-partners/distributor-portal"}
         target={"_blank"}

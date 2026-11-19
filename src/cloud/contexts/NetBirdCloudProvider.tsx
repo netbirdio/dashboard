@@ -23,8 +23,11 @@ import { PlanTier } from "@/interfaces/Subscription";
 import { useAccount } from "@/modules/account/useAccount";
 import { requestAgentNetworkOnboarding } from "@/modules/onboarding/agent-network/existingAccountOnboarding";
 import { OnboardingProvider } from "@/modules/onboarding/OnboardingProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 export const NetBirdCloudProvider = () => {
+  const t = useTranslations();
+
   const { mutate } = useSWRConfig();
   const { subscription } = useBilling();
   const [awsUserId, setAwsUserId] = useState<string | undefined>();
@@ -90,7 +93,7 @@ export const NetBirdCloudProvider = () => {
         ...(isNewAccount ? { agent_network_only: true } : {}),
       };
       notify({
-        title: "Agent Network",
+        title: t("common.agentNetwork"),
         description: isNewAccount
           ? "Agent Network focused view enabled for your account."
           : "Agent Network enabled for your account.",

@@ -24,11 +24,12 @@ export const OnboardingPolicy = ({ policy, onToggle }: Props) => {
       <div>
         <div className="text-nb-gray-100 font-normal text-sm text-left gap-2 flex items-center">
           <ShieldIcon size={12} className={"shrink-0"} />
-          {policy?.name}{" " + t("common.policy")}
+          {policy?.name}
+          {" " + t("common.policy")}
         </div>
         <div className={"text-nb-gray-300 text-[0.8rem] text-left mt-0.5"}>
-          {policy?.name.includes("Default")
-            ? "Allows connections between all your devices"
+          {policy?.name.includes(t("onboarding.default"))
+            ? t("onboarding.allowsConnectionsBetweenAllYourDevices")
             : policy?.description}
         </div>
       </div>

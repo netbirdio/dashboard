@@ -69,9 +69,10 @@ export const TenantsProvider = ({ children }: Props) => {
 
   const deleteTenant = async (tenant: Tenant) => {
     const choice = await confirm({
-      title: `Delete '${tenant.name}'?`,
-      description:
-        "Deleting this tenant will permanently remove all of its associated data, including its peers, users, groups and everything else. Please be aware that this action is irreversible and cannot be undone.",
+      title: translate("msp.deleteName", { name: tenant.name }),
+      description: translate(
+        "msp.deletingThisTenantWillPermanentlyRemoveAllOfItsAssociated",
+      ),
       confirmText: translate("common.delete"),
       cancelText: translate("common.cancel"),
       type: "danger",
@@ -84,9 +85,12 @@ export const TenantsProvider = ({ children }: Props) => {
     });
 
     notify({
-      title: `Deleting ${tenant.name}`,
-      description: `Successfully deleted ${tenant.name} (${tenant.domain})`,
-      loadingMessage: `Deleting ${tenant.name}...`,
+      title: translate("msp.deletingName", { name: tenant.name }),
+      description: translate("msp.successfullyDeletedNameDomain", {
+        name: tenant.name,
+        domain: tenant.domain,
+      }),
+      loadingMessage: translate("msp.deletingName2", { name: tenant.name }),
       promise,
     });
 
@@ -108,9 +112,12 @@ export const TenantsProvider = ({ children }: Props) => {
       });
 
     notify({
-      title: `Unlinking ${tenant.name}`,
-      description: `Successfully unlinked ${tenant.name} (${tenant.domain})`,
-      loadingMessage: `Unlinking ${tenant.name}...`,
+      title: translate("msp.unlinkingName", { name: tenant.name }),
+      description: translate("msp.successfullyUnlinkedNameDomain", {
+        name: tenant.name,
+        domain: tenant.domain,
+      }),
+      loadingMessage: translate("msp.unlinkingName2", { name: tenant.name }),
       promise,
     });
     return promise;
@@ -140,9 +147,11 @@ export const TenantsProvider = ({ children }: Props) => {
         );
 
     notify({
-      title: `Subscription for ${tenant.name}`,
-      description: `Successfully subscribed to the ${plan.name} plan.`,
-      loadingMessage: `Subscribing to ${plan.name}...`,
+      title: translate("msp.subscriptionForName", { name: tenant.name }),
+      description: translate("msp.successfullySubscribedToTheNamePlan", {
+        name: plan.name,
+      }),
+      loadingMessage: translate("msp.subscribingToName", { name: plan.name }),
       promise,
     });
     return promise;
@@ -167,15 +176,21 @@ export const TenantsProvider = ({ children }: Props) => {
       });
 
     notify({
-      title: `Verification of ${domain}`,
-      description: "The domain ownership has been verified successfully.",
-      loadingTitle: `Verifying ownership of ${domain}`,
-      loadingMessage: "Please wait while we verify the domain ownership...",
+      title: translate("msp.verificationOfDomain", { domain: domain }),
+      description: translate(
+        "msp.theDomainOwnershipHasBeenVerifiedSuccessfully",
+      ),
+      loadingTitle: translate("msp.verifyingOwnershipOfDomain", {
+        domain: domain,
+      }),
+      loadingMessage: translate(
+        "msp.pleaseWaitWhileWeVerifyTheDomainOwnership",
+      ),
       promise: dnsPromise,
       errorMessages: [
         {
           code: 501,
-          message: "DNS record not found. Please try again...",
+          message: translate("msp.dNSRecordNotFoundPleaseTryAgain"),
         },
       ],
     });
@@ -202,9 +217,9 @@ export const TenantsProvider = ({ children }: Props) => {
       });
 
     notify({
-      title: `Request Account Access`,
-      description: "Request has been sent successfully.",
-      loadingMessage: "Sending request...",
+      title: translate("msp.requestAccountAccess"),
+      description: translate("msp.requestHasBeenSentSuccessfully"),
+      loadingMessage: translate("msp.sendingRequest"),
       promise: request,
     });
 

@@ -203,13 +203,15 @@ export const TrafficEventsPeerTabContent = () => {
         <div className={"flex justify-between items-center mb-5"}>
           <div>
             <Paragraph>
-              Here you can see all the {isInbound ? "inbound" : "outbound"}{" "}
-              traffic events for this peer.
+              {t.rich("trafficEvents.hereYouCanSeeAllTheTrafficEventsForThis", {
+                part0: () => (isInbound ? "inbound" : "outbound"),
+              })}
             </Paragraph>
             <Paragraph>
-              Learn more about{" "}
+              {t("trafficEvents.learnMoreAbout")}{" "}
               <InlineLink href={TRAFFIC_EVENTS_DOC_LINK} target="_blank">
-                {t("common.trafficEvents") + " "}<ExternalLinkIcon size={12} />
+                {t("common.trafficEvents") + " "}
+                <ExternalLinkIcon size={12} />
               </InlineLink>{" "}
               {t("trafficEvents.inOurDocumentation")}
             </Paragraph>
@@ -360,7 +362,9 @@ const TrafficEventsPeerDetailTable = ({
       globalFilter={searchQuery}
       onGlobalFilterChange={onSearchChange}
       manualFiltering={true}
-      searchPlaceholder={"Search by ip, port, peer or resource..."}
+      searchPlaceholder={translate(
+        "trafficEvents.searchByIpPortPeerOrResource",
+      )}
       columnVisibility={{
         user: false,
         source: true,
@@ -387,12 +391,18 @@ const TrafficEventsPeerDetailTable = ({
         <NoResults
           className={"py-4"}
           title={
-            isSettingEnabled ? "No Traffic Events" : "Traffic Events Disabled"
+            isSettingEnabled
+              ? translate("trafficEvents.noTrafficEvents")
+              : translate("trafficEvents.trafficEventsDisabled")
           }
           description={
             isSettingEnabled
-              ? "It looks like you don't have any traffic events. Traffic events will appear here once clients start connecting to your network."
-              : "It looks like you don't have any traffic events. To start receiving traffic events, you need to enable it in your account settings."
+              ? translate(
+                  "trafficEvents.itLooksLikeYouDonTHaveAnyTrafficEvents",
+                )
+              : translate(
+                  "trafficEvents.itLooksLikeYouDonTHaveAnyTrafficEvents2",
+                )
           }
           icon={<ArrowLeftRightIcon size={20} className={"text-nb-gray-200"} />}
         >

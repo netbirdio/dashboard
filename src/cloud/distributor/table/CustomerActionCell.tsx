@@ -37,13 +37,12 @@ export const CustomerActionCell = ({ customer }: Props) => {
         <FullTooltip
           content={
             <div className={"text-xs max-w-xs"}>
-              The customer account owner must log in to the dashboard to accept
-              or decline your invitation.
+              {t("distributor.theCustomerAccountOwnerMustLogInToTheDashboard")}
             </div>
           }
         >
           <Badge variant={"yellow"} className={"ml-6 cursor-help"}>
-            Pending invitation
+            {t("distributor.pendingInvitation")}
             <HelpCircle size={12} />
           </Badge>
         </FullTooltip>

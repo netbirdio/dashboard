@@ -33,15 +33,15 @@ export const OnboardingAgentConfigure = ({ onBack, onNext }: Props) => {
   return (
     <div className={"relative flex flex-col h-full gap-4"}>
       <div>
-        <h1 className={"text-xl text-center"}>Configure your agent</h1>
+        <h1 className={"text-xl text-center"}>
+          {t("onboarding.configureYourAgent")}
+        </h1>
         <div
           className={
             "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
           }
         >
-          {`Point your agent to the NetBird base URL. No client API key is needed,
-          NetBird authorizes each request and injects the upstream key server
-          side.`}
+          {t("onboarding.pointYourAgentToTheNetBirdBaseURLNoClient")}
         </div>
       </div>
 
@@ -59,8 +59,7 @@ export const OnboardingAgentConfigure = ({ onBack, onNext }: Props) => {
             "mt-2 text-center text-sm text-nb-gray-400 font-light sm:px-4"
           }
         >
-          Connect a provider to generate your endpoint, then your agent config
-          appears here.
+          {t("onboarding.connectAProviderToGenerateYourEndpointThenYourAgent")}
         </div>
       )}
 

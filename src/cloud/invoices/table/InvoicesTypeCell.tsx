@@ -14,7 +14,7 @@ export default function InvoicesTypeCell({ invoice }: Readonly<Props>) {
   const { type } = invoice;
   return (
     <div className={"flex items-center text-sm text-nb-gray-300 gap-2 mr-auto"}>
-      {type == "account" ? (
+      {type == t("invoices.account") ? (
         <>
           <UserIcon size={14} />
           {t("common.account")}

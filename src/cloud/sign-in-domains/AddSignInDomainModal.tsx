@@ -37,9 +37,9 @@ export const AddSignInDomainModal = ({ open, onOpenChange }: Props) => {
       allowOnlyTld: false,
       preventLeadingAndTrailingDots: true,
     });
-    if (!valid) return "Please enter a valid domain, e.g. company.com";
+    if (!valid) return t("signInDomains.pleaseEnterAValidDomainEGCompanyCom");
     return "";
-  }, [name]);
+  }, [name, t]);
 
   const setOpen = (next: boolean) => {
     if (!next) setName("");
@@ -53,8 +53,8 @@ export const AddSignInDomainModal = ({ open, onOpenChange }: Props) => {
     setOpen(false);
 
     notify({
-      title: "Sign-in Domains",
-      description: `${domain} has been added`,
+      title: t("signInDomains.signInDomains"),
+      description: t("signInDomains.domainHasBeenAdded", { domain: domain }),
       promise: addDomain(domain).then((added) => {
         if (
           added &&
@@ -66,7 +66,7 @@ export const AddSignInDomainModal = ({ open, onOpenChange }: Props) => {
         mutate().catch(() => {});
         return added;
       }),
-      loadingMessage: "Adding domain...",
+      loadingMessage: t("signInDomains.addingDomain"),
     });
   };
 
@@ -91,8 +91,10 @@ export const AddSignInDomainModal = ({ open, onOpenChange }: Props) => {
         <ModalContent maxWidthClass={"max-w-md"}>
           <ModalHeader
             className={"pb-4 px-8"}
-            title={"Add Sign-in Domain"}
-            description={"Users on this domain are matched to your account."}
+            title={t("signInDomains.addSignInDomain")}
+            description={t(
+              "signInDomains.usersOnThisDomainAreMatchedToYourAccount",
+            )}
           />
 
           <form
@@ -106,7 +108,7 @@ export const AddSignInDomainModal = ({ open, onOpenChange }: Props) => {
                 <Input
                   autoFocus
                   data-testid={"add-domain-input"}
-                  placeholder={"e.g. company.com"}
+                  placeholder={t("signInDomains.eGCompanyCom")}
                   value={name}
                   error={validationError}
                   onChange={(event) => setName(event.target.value)}

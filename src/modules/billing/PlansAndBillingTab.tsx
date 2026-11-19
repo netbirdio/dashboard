@@ -210,24 +210,23 @@ const PlansAndBillingTabContent = () => {
         <div className={"max-w-3xl"}>
           <h2>
             {subscription?.active
-              ? "Update your NetBird Plan"
-              : "Upgrade your NetBird Plan"}
+              ? t("billing.updateYourNetBirdPlan")
+              : t("billing.upgradeYourNetBirdPlan")}
           </h2>
 
           <Paragraph>
-            Increase your user and peer limit by upgrading your plan.
+            {t("billing.increaseYourUserAndPeerLimitByUpgradingYourPlan")}
           </Paragraph>
           <Paragraph>
-            With our flexible pricing, you are only billed for active users and
-            active peers.
+            {t("billing.withOurFlexiblePricingYouAreOnlyBilledForActive")}
           </Paragraph>
           <Paragraph>
-            Find out which{" "}
+            {t("billing.findOutWhich")}{" "}
             <InlineLink href={"https://netbird.io/pricing"} target={"_blank"}>
-              Pricing Plan
+              {t("billing.pricingPlan")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
-            suits you the best by visiting our website.
+            {t("billing.suitsYouTheBestByVisitingOurWebsite")}
           </Paragraph>
 
           <div

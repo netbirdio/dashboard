@@ -143,6 +143,7 @@ const MultipleGroupsWithUser = ({
 };
 
 const GroupWithUserItem = ({ group }: { group: TenantGroup }) => {
+  const t = useTranslations();
   const { users } = useUsers();
   const usersOfGroup =
     users?.filter((user) => user.auto_groups.includes(group.id as string)) ||
@@ -165,7 +166,7 @@ const GroupWithUserItem = ({ group }: { group: TenantGroup }) => {
             }
           >
             <selectedRole.icon size={14} width={14} className={"shrink-0"} />
-            {selectedRole?.name}
+            {t(selectedRole.nameId)}
           </div>
         </div>
       )}
@@ -174,6 +175,7 @@ const GroupWithUserItem = ({ group }: { group: TenantGroup }) => {
 };
 
 const GroupSuffix = () => {
+  const t = useTranslations();
   const oneOrTwo = Math.random() > 0.5 ? 1 : 2;
   const selectedRole = UserRoles[oneOrTwo];
   return (
@@ -190,7 +192,7 @@ const GroupSuffix = () => {
         )}
       >
         <selectedRole.icon size={12} width={12} className={"shrink-0"} />
-        {selectedRole?.name}
+        {t(selectedRole.nameId)}
       </div>
     </div>
   );

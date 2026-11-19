@@ -49,21 +49,21 @@ export const MSPUnlinkModal = ({ open, setOpen, tenant }: Props) => {
         <ModalContent maxWidthClass={"max-w-lg"}>
           <ModalHeader
             icon={<UnlinkIcon size={16} />}
-            title={"Unlink Tenant"}
+            title={t("msp.unlinkTenant")}
             description={`${tenant.name} (${tenant.domain})`}
             color={"yellow"}
           />
           <Separator />
           <div className={"px-8 py-6"}>
-            <Label>New Owner</Label>
+            <Label>{t("msp.newOwner")}</Label>
             <HelpText>
-              In order to unlink this tenant, you need to assign a new owner.
+              {t("msp.inOrderToUnlinkThisTenantYouNeedToAssign")}
             </HelpText>
             <UserSelector
               onChange={setSelectedUser}
               value={selectedUser}
               options={users}
-              placeholder={"Select a new owner..."}
+              placeholder={t("msp.selectANewOwner")}
             />
             <div
               className={cn(
@@ -74,18 +74,18 @@ export const MSPUnlinkModal = ({ open, setOpen, tenant }: Props) => {
             >
               <InfoIcon size={14} className={"shrink-0 relative top-[2.5px]"} />
               <div>
-                After unlinking, the existing subscription for this tenant will
-                be canceled, and the new owner will need to set up their own
-                billing information.
+                {t(
+                  "msp.afterUnlinkingTheExistingSubscriptionForThisTenantWillBe",
+                )}
               </div>
             </div>
           </div>
           <ModalFooter className={"items-center"}>
             <div className={"w-full"}>
               <Paragraph className={"text-sm mt-auto"}>
-                Learn more about
+                {t("trafficEvents.learnMoreAbout")}
                 <InlineLink href={"https://docs.netbird.io/"} target={"_blank"}>
-                  Unlinking Tenants
+                  {t("msp.unlinkingTenants")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </Paragraph>

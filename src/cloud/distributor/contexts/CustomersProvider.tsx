@@ -21,7 +21,10 @@ const CustomersContext = React.createContext(
   {} as {
     customers?: DistributorCustomer[];
     openCreateCustomerModal: () => void;
-    openEditCustomerModal: (customer: DistributorCustomer, initialTab?: string) => void;
+    openEditCustomerModal: (
+      customer: DistributorCustomer,
+      initialTab?: string,
+    ) => void;
     openAccountExistsModal: (customer: DistributorCustomer) => void;
     unlinkCustomer: (customer: DistributorCustomer) => Promise<void>;
   },
@@ -47,9 +50,10 @@ export const CustomersProvider = ({ children }: Props) => {
 
   const unlinkCustomer = async (customer: DistributorCustomer) => {
     const choice = await confirm({
-      title: `Unlink '${customer.name}'?`,
-      description:
-        "Unlinking this customer will remove it from your distributor account. The account will continue to exist independently.",
+      title: t("distributor.unlinkName", { name: customer.name }),
+      description: t(
+        "distributor.unlinkingThisCustomerWillRemoveItFromYourDistributorAccount",
+      ),
       confirmText: t("common.unlink"),
       cancelText: t("common.cancel"),
       type: "danger",
@@ -62,9 +66,12 @@ export const CustomersProvider = ({ children }: Props) => {
     });
 
     notify({
-      title: `Unlinking ${customer.name}`,
-      description: `Successfully unlinked ${customer.name} (${customer.domain})`,
-      loadingMessage: `Unlinking ${customer.name}...`,
+      title: t("msp.unlinkingName", { name: customer.name }),
+      description: t("msp.successfullyUnlinkedNameDomain", {
+        name: customer.name,
+        domain: customer.domain,
+      }),
+      loadingMessage: t("msp.unlinkingName2", { name: customer.name }),
       promise,
     });
 
@@ -88,9 +95,9 @@ export const CustomersProvider = ({ children }: Props) => {
       });
 
     notify({
-      title: `Request Account Access`,
-      description: "Request has been sent successfully.",
-      loadingMessage: "Sending request...",
+      title: t("msp.requestAccountAccess"),
+      description: t("msp.requestHasBeenSentSuccessfully"),
+      loadingMessage: t("msp.sendingRequest"),
       promise: request,
     });
 

@@ -63,8 +63,7 @@ export const NotificationWebhookChannel = ({ channel }: Props) => {
   const handleDeleteConnection = async () => {
     const choice = await confirm({
       title: t("notifications.deleteWebhookConnection"),
-      description:
-        t("notifications.deleteWebhookConfirm"),
+      description: t("notifications.deleteWebhookConfirm"),
       confirmText: t("common.delete"),
       cancelText: t("common.cancel"),
       type: "danger",
@@ -72,13 +71,15 @@ export const NotificationWebhookChannel = ({ channel }: Props) => {
     if (!choice) return;
     notify({
       title: t("notifications.webhookNotifications"),
-      description: "Webhook connection has been successfully deleted.",
+      description: t(
+        "notifications.webhookConnectionHasBeenSuccessfullyDeleted",
+      ),
       promise: updateChannel({
         ...channel,
         enabled: false,
         target: undefined,
       }),
-      loadingMessage: "Deleting webhook...",
+      loadingMessage: t("notifications.deletingWebhook"),
     });
   };
 
@@ -153,7 +154,12 @@ export const NotificationWebhookChannel = ({ channel }: Props) => {
           {isConnected ? (
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild={true}>
-                <Button variant={"secondary"} size={"xs"} className={"!px-2"} data-testid="webhook-actions">
+                <Button
+                  variant={"secondary"}
+                  size={"xs"}
+                  className={"!px-2"}
+                  data-testid="webhook-actions"
+                >
                   <MoreVertical size={14} className={"shrink-0"} />
                 </Button>
               </DropdownMenuTrigger>
@@ -161,7 +167,11 @@ export const NotificationWebhookChannel = ({ channel }: Props) => {
                 className={"w-auto min-w-[140px]"}
                 align="end"
               >
-                <DropdownMenuItem onClick={() => setModalOpen(true)} disabled={!canUpdate} data-testid="webhook-edit">
+                <DropdownMenuItem
+                  onClick={() => setModalOpen(true)}
+                  disabled={!canUpdate}
+                  data-testid="webhook-edit"
+                >
                   <div className={"flex gap-3 items-center"}>
                     <SquarePen size={14} className={"shrink-0"} />
                     {t("common.edit")}

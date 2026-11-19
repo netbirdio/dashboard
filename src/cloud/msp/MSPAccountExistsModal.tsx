@@ -44,19 +44,18 @@ export const MSPAccountExistsModal = ({
             {tenant?.domain}
           </div>
           <div className={"text-xl font-medium text-center mb-1"}>
-            This NetBird account already <br />
-            exists in our system
+            {t.rich("msp.thisNetBirdAccountAlreadyExistsInOurSystem", {
+              part0: () => <br />,
+            })}
           </div>
           <div className={"text-sm text-nb-gray-300 text-center"}>
-            To manage the account{" "}
-            <span className="text-white">{tenant?.domain}</span>, you must first
-            request access from the account owner.
+            {t.rich("msp.toManageTheAccountYouMustFirstRequestAccessFrom", {
+              part0: (chunks) => <span className="text-white">{chunks}</span>,
+              part1: () => tenant?.domain,
+            })}
           </div>
           <div className={"text-sm text-nb-gray-300 text-center"}></div>
-          <Callout>
-            The account owner must log in to the dashboard to accept or decline
-            your request. Please inform them after you have requested access.
-          </Callout>
+          <Callout>{t("msp.theAccountOwnerMustLogInToTheDashboardTo")}</Callout>
         </div>
 
         <ModalFooter separator={false} className={"gap-x-2"}>

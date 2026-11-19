@@ -114,11 +114,10 @@ const LimitReachedContent = () => {
           </div>
 
           <div className={"text-xl font-medium text-center max-w-xs mb-1"}>
-            Subscription Limit Reached
+            {t("billing.subscriptionLimitReached")}
           </div>
           <div className={"text-sm text-nb-gray-300 text-center"}>
-            It looks like you’ve hit the limit of your current subscription.
-            Upgrade now to unlock additional features and increase your limits.
+            {t("billing.itLooksLikeYouVeHitTheLimitOfYour")}
           </div>
         </div>
         <ModalFooter separator={false} className={"gap-x-2 mt-1"}>
@@ -139,7 +138,7 @@ const LimitReachedContent = () => {
             variant={"primary"}
             onClick={redirectToPlansAndBilling}
           >
-            {"Upgrade Now"}
+            {t("billing.upgradeNow")}
           </Button>
         </ModalFooter>
       </ModalContent>

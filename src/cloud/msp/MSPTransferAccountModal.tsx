@@ -43,18 +43,22 @@ export const MSPTransferAccountModal = () => {
 
   const grantAccess = async () => {
     const choice = await confirm({
-      title: `Granting access to ${mspInfo?.parent_domain}?`,
-      description: `Are you sure you want to grant access? This action cannot be undone.`,
-      confirmText: "Grant Access",
+      title: t("msp.grantingAccessToParentDomain", {
+        parent_domain: mspInfo?.parent_domain ?? "",
+      }),
+      description: t("msp.areYouSureYouWantToGrantAccessThisAction"),
+      confirmText: t("msp.grantAccess"),
       cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
 
     notify({
-      title: `Granting access to ${mspInfo?.parent_domain}`,
-      description: "Access has been successfully granted.",
-      loadingMessage: "Granting access...",
+      title: t("msp.grantingAccessToParentDomain2", {
+        parent_domain: mspInfo?.parent_domain ?? "",
+      }),
+      description: t("msp.accessHasBeenSuccessfullyGranted"),
+      loadingMessage: t("msp.grantingAccess"),
       promise: tenantRequest
         .put(
           {
@@ -71,9 +75,9 @@ export const MSPTransferAccountModal = () => {
 
   const deny = () => {
     notify({
-      title: "Access request denied",
-      description: "You have denied the access request.",
-      loadingMessage: "Declining access...",
+      title: t("msp.accessRequestDenied"),
+      description: t("msp.youHaveDeniedTheAccessRequest"),
+      loadingMessage: t("msp.decliningAccess"),
       promise: tenantRequest
         .put(
           {
@@ -141,37 +145,40 @@ export const MSPTransferAccountModal = () => {
             }
           >
             <h2 className={"text-lg my-0 leading-[1.5 text-center]"}>
-              {mspInfo?.parent_owner_name
-                ? mspInfo?.parent_owner_name + " from "
-                : ""}
-              <span>{mspInfo?.parent_name || mspInfo?.name}</span> is requesting
-              access to your account
+              {t.rich("msp.isRequestingAccessToYourAccount", {
+                part0: () =>
+                  mspInfo?.parent_owner_name
+                    ? mspInfo?.parent_owner_name + " from "
+                    : "",
+                part1: (chunks) => <span>{chunks}</span>,
+                part2: () => mspInfo?.parent_name || mspInfo?.name,
+              })}
             </h2>
             <Paragraph
               className={cn("text-sm text-center max-w-[450px] px-4 mt-2")}
             >
-              A Managed Service Provider (MSP) is requesting access to manage
-              your account and all of its associated resources.
+              {t("msp.aManagedServiceProviderMSPIsRequestingAccessToManage")}
             </Paragraph>
             <div
               className={"bg-nb-gray-920 px-5 py-4 rounded-lg mt-4 text-left"}
             >
               <div className={"text-sm text-nb-gray-200 mb-2 text-left"}>
-                Please review the request carefully before proceeding. Granting
-                them access will allow them to:
+                {t(
+                  "msp.pleaseReviewTheRequestCarefullyBeforeProceedingGrantingThemAccess",
+                )}
               </div>
               <ul className="flex flex-col gap-1.5 mt-4 mb-1">
                 <li className="flex items-center gap-2 text-sm text-nb-gray-200">
                   <SettingsIcon size={16} className={"text-netbird"} />
-                  Manage your account, settings and configurations
+                  {t("msp.manageYourAccountSettingsAndConfigurations")}
                 </li>
                 <li className="flex items-center gap-2 text-sm text-nb-gray-200">
                   <MonitorSmartphoneIcon size={16} className={"text-netbird"} />
-                  Manage all devices and associated resources
+                  {t("msp.manageAllDevicesAndAssociatedResources")}
                 </li>
                 <li className="flex items-center gap-2 text-sm text-nb-gray-200">
                   <UserIcon size={16} className={"text-netbird"} />
-                  Manage all users, groups and permissions
+                  {t("msp.manageAllUsersGroupsAndPermissions")}
                 </li>
               </ul>
             </div>
@@ -184,7 +191,7 @@ export const MSPTransferAccountModal = () => {
                 variant={"danger"}
                 onClick={grantAccess}
               >
-                Grant Access
+                {t("msp.grantAccess")}
               </Button>
             </div>
           </div>
