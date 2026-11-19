@@ -18,21 +18,21 @@ export const DNSRecordsTableColumns: ColumnDef<DNSRecord>[] = [
   {
     accessorKey: "type",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Type</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.type" />;
     },
     cell: ({ row }) => <DNSRecordTypeCell record={row.original} />,
   },
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Hostname</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.hostname" />;
     },
     cell: ({ row }) => <DNSRecordNameCell record={row.original} />,
   },
   {
     accessorKey: "content",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Content</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="dns.recordContent" />;
     },
     cell: ({ row }) => <DNSRecordContentCell record={row.original} />,
   },

@@ -100,7 +100,7 @@ export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
+          ariaLabelId="tables.selectAll"
         />
       </div>
     ),
@@ -109,7 +109,7 @@ export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
         <Checkbox
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
+          ariaLabelId="tables.selectRow"
           variant={"tableCell"}
         />
       </div>
@@ -120,7 +120,7 @@ export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.name" />;
     },
     cell: ({ row }) => (
       <PostureCheckNameCell small={true} check={row.original} />
@@ -129,7 +129,7 @@ export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
   {
     accessorKey: "id",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Checks</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="postureChecks.checks" />;
     },
     cell: ({ row }) => <PostureCheckChecksCell check={row.original} />,
   },

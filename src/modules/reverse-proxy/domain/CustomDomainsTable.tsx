@@ -49,7 +49,7 @@ const CustomDomainsColumns: ColumnDef<ReverseProxyDomain>[] = [
   {
     accessorKey: "domain",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Domain</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.domain" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <CustomDomainNameCell domain={row.original} />,
@@ -57,7 +57,7 @@ const CustomDomainsColumns: ColumnDef<ReverseProxyDomain>[] = [
   {
     accessorKey: "validated",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Status</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.status" />;
     },
     filterFn: "exactMatch",
     cell: ({ row }) => <CustomDomainStatusCell domain={row.original} />,
@@ -65,7 +65,7 @@ const CustomDomainsColumns: ColumnDef<ReverseProxyDomain>[] = [
   {
     accessorKey: "target_cluster",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Cluster</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.cluster" />;
     },
     cell: ({ row }) => <CustomDomainClusterCell domain={row.original} />,
   },
@@ -116,18 +116,33 @@ export default function CustomDomainsTable({ headingTarget }: Readonly<Props>) {
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Active", dotClass: "bg-green-500" },
-      { value: false, label: "Pending", dotClass: "bg-yellow-400" },
+      {
+        value: undefined,
+        id: "all",
+        label: t("common.all"),
+        dotClass: "bg-nb-gray-500",
+      },
+      {
+        value: true,
+        id: "active",
+        label: t("common.active"),
+        dotClass: "bg-green-500",
+      },
+      {
+        value: false,
+        id: "pending",
+        label: t("common.pending"),
+        dotClass: "bg-yellow-400",
+      },
     ],
-    [],
+    [t],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "validated",
-        label: "Status",
+        label: t("common.status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -140,7 +155,7 @@ export default function CustomDomainsTable({ headingTarget }: Readonly<Props>) {
           formatRadioChip(v as boolean | undefined, statusOptions),
       },
     ],
-    [statusOptions],
+    [statusOptions, t],
   );
 
   return (
@@ -182,7 +197,7 @@ export default function CustomDomainsTable({ headingTarget }: Readonly<Props>) {
         columns={CustomDomainsColumns}
         data={data}
         useRowId={true}
-        searchPlaceholder={"Search by domain..."}
+        searchPlaceholder={t("reverseProxy.searchDomain")}
         aboveTable={(table) => (
           <TableFilterChips table={table} filters={filterDefs} />
         )}

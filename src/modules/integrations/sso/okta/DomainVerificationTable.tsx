@@ -33,7 +33,7 @@ export const DomainTableColumns: ColumnDef<EnterpriseConnectionDomain>[] = [
     cell: ({ row }) => (
       <LastTimeRow
         date={dayjs(row.original.validation_last_updated).toDate()}
-        text={"Last checked on"}
+        textId="tables.lastCheckedOn"
       />
     ),
   },

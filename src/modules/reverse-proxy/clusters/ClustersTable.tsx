@@ -40,7 +40,7 @@ const ClustersColumns: ColumnDef<ReverseProxyCluster>[] = [
   {
     accessorKey: "address",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Cluster</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.cluster" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <ClustersNameCell cluster={row.original} />,
@@ -49,7 +49,10 @@ const ClustersColumns: ColumnDef<ReverseProxyCluster>[] = [
     accessorKey: "connected_proxies",
     header: ({ column }) => {
       return (
-        <DataTableHeader column={column}>Connected Proxies</DataTableHeader>
+        <DataTableHeader
+          column={column}
+          labelId="reverseProxy.connectedProxies"
+        />
       );
     },
     sortingFn: "basic",
@@ -112,27 +115,50 @@ export default function ClustersTable({ headingTarget }: Readonly<Props>) {
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Online", dotClass: "bg-green-500" },
-      { value: false, label: "Offline", dotClass: "bg-red-500" },
+      {
+        value: undefined,
+        id: "all",
+        label: t("common.all"),
+        dotClass: "bg-nb-gray-500",
+      },
+      {
+        value: true,
+        id: "online",
+        label: t("common.online"),
+        dotClass: "bg-green-500",
+      },
+      {
+        value: false,
+        id: "offline",
+        label: t("common.offline"),
+        dotClass: "bg-red-500",
+      },
     ],
-    [],
+    [t],
   );
 
   const typeOptions = useMemo<RadioOption<string | undefined>[]>(
     () => [
-      { value: undefined, label: "All" },
-      { value: ReverseProxyClusterType.SHARED, label: "Shared" },
-      { value: ReverseProxyClusterType.ACCOUNT, label: "Self-Hosted" },
+      { value: undefined, id: "all", label: t("common.all") },
+      {
+        value: ReverseProxyClusterType.SHARED,
+        id: "shared",
+        label: t("reverseProxy.shared"),
+      },
+      {
+        value: ReverseProxyClusterType.ACCOUNT,
+        id: "self-hosted",
+        label: t("reverseProxy.selfHosted"),
+      },
     ],
-    [],
+    [t],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "online",
-        label: "Status",
+        label: t("common.status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -146,7 +172,7 @@ export default function ClustersTable({ headingTarget }: Readonly<Props>) {
       },
       {
         id: "type",
-        label: "Type",
+        label: t("common.type"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as string | undefined}
@@ -159,7 +185,7 @@ export default function ClustersTable({ headingTarget }: Readonly<Props>) {
           formatRadioChip(v as string | undefined, typeOptions),
       },
     ],
-    [statusOptions, typeOptions],
+    [statusOptions, typeOptions, t],
   );
 
   return (
@@ -183,7 +209,7 @@ export default function ClustersTable({ headingTarget }: Readonly<Props>) {
         columns={ClustersColumns}
         data={rows}
         useRowId={true}
-        searchPlaceholder={"Search by cluster domain..."}
+        searchPlaceholder={t("reverseProxy.searchClusterDomain")}
         aboveTable={(table) => (
           <TableFilterChips table={table} filters={filterDefs} />
         )}

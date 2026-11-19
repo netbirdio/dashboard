@@ -46,7 +46,7 @@ export const NameserverGroupTableColumns: ColumnDef<NameserverGroup>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.name" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <NameserverNameCell ns={row.original} />,
@@ -71,7 +71,7 @@ export const NameserverGroupTableColumns: ColumnDef<NameserverGroup>[] = [
     accessorFn: (row) => row.domains?.length || 0,
     id: "domains",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Match Domains</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="dns.matchDomains" />;
     },
     cell: ({ row }) => <NameserverMatchDomainsCell ns={row.original} />,
   },
@@ -79,7 +79,7 @@ export const NameserverGroupTableColumns: ColumnDef<NameserverGroup>[] = [
     accessorFn: (row) => row.nameservers?.length || 0,
     id: "nameservers",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Nameservers</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.nameservers" />;
     },
     cell: ({ row }) => <NameserverNameserversCell ns={row.original} />,
   },
@@ -87,15 +87,14 @@ export const NameserverGroupTableColumns: ColumnDef<NameserverGroup>[] = [
     accessorFn: (row) => row.groups?.length || 0,
     id: "groups",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Groups</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.groups" />;
     },
     cell: ({ row }) => <NameserverDistributionGroupsCell ns={row.original} />,
   },
   {
     id: "group_names_filter",
     accessorFn: (row) =>
-      ((row as NameserverGroup & { _group_names?: string[] })._group_names) ??
-      [],
+      (row as NameserverGroup & { _group_names?: string[] })._group_names ?? [],
     filterFn: "arrIncludesSome",
   },
   {
@@ -164,18 +163,33 @@ export default function NameserverGroupTable({
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Active", dotClass: "bg-green-500" },
-      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+      {
+        value: undefined,
+        id: "all",
+        label: translate("common.all"),
+        dotClass: "bg-nb-gray-500",
+      },
+      {
+        value: true,
+        id: "active",
+        label: translate("common.active"),
+        dotClass: "bg-green-500",
+      },
+      {
+        value: false,
+        id: "inactive",
+        label: translate("common.inactive"),
+        dotClass: "bg-nb-gray-700",
+      },
     ],
-    [],
+    [translate],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "enabled",
-        label: "Status",
+        label: translate("common.status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -189,7 +203,7 @@ export default function NameserverGroupTable({
       },
       {
         id: "group_names_filter",
-        label: "Groups",
+        label: translate("common.groups"),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -198,10 +212,11 @@ export default function NameserverGroupTable({
             groups={tableGroups}
           />
         ),
-        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+        formatChip: (v) =>
+          formatGroupsChip(v as string[] | undefined, translate),
       },
     ],
-    [statusOptions, tableGroups],
+    [statusOptions, tableGroups, translate],
   );
 
   return (
@@ -217,7 +232,7 @@ export default function NameserverGroupTable({
       <DataTable
         headingTarget={headingTarget}
         isLoading={isLoading}
-        text={translate("common.networkRoutes")}
+        text={translate("common.nameservers")}
         sorting={sorting}
         setSorting={setSorting}
         wrapperComponent={isGroupPage ? Card : undefined}

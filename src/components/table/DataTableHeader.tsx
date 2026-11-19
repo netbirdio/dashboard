@@ -7,10 +7,13 @@ import type { Column } from "@tanstack/table-core";
 import { cn } from "@utils/helpers";
 import React from "react";
 import { useOptionalServerPagination } from "@/contexts/ServerPaginationProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import type { MessageId } from "@/i18n/translate";
 
 type Props = {
   column: Column<any>;
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  labelId?: MessageId;
   tooltip?: string | React.ReactNode;
   center?: boolean;
   className?: string;
@@ -20,6 +23,7 @@ type Props = {
 };
 export default function DataTableHeader({
   children,
+  labelId,
   column,
   tooltip,
   center,
@@ -30,6 +34,7 @@ export default function DataTableHeader({
 }: Props) {
   const serverPagination = useOptionalServerPagination();
   const table = useDataTable();
+  const t = useTranslations();
 
   const handleSort = () => {
     // A click replaces the sort with this column alone. The direction only
@@ -63,7 +68,7 @@ export default function DataTableHeader({
           className,
         )}
       >
-        {children}
+        {labelId ? t(labelId) : children}
         {sorting &&
           (column.getIsSorted() === "desc" ? (
             <IconSortDescending size={16} />

@@ -52,7 +52,7 @@ export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
   const create = async () => {
     notify({
       title: t("users.userCreatedNotify"),
-      description: `${name} was successfully created.`,
+      description: t("users.serviceUserCreatedMessage", { name }),
       promise: userRequest
         .post({
           name,

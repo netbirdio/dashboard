@@ -16,15 +16,22 @@ const meta: Meta = {
 };
 export default meta;
 
+async function switchToChinese() {
+  await clickRole("button", "Interface language");
+  await clickRole("menuitemradio", "简体中文");
+}
+
 export const SimplifiedChinese: StoryObj<typeof meta> = {
   play: async () => {
-    await clickRole("button", "Interface language");
-    await clickRole("menuitemradio", "简体中文");
+    await switchToChinese();
     await expect(
       await screen.findByRole("heading", { name: /分组/ }),
     ).toBeVisible();
     await expect(
-      screen.getByRole("button", { name: "界面语言" }),
+      await screen.findByPlaceholderText("按分组名称搜索…"),
+    ).toBeVisible();
+    await expect(
+      await screen.findByRole("columnheader", { name: "名称" }),
     ).toBeVisible();
   },
 };

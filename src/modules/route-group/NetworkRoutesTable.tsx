@@ -49,7 +49,7 @@ export const GroupedRouteTableColumns: ColumnDef<GroupedRoute>[] = [
   {
     accessorKey: "network_id",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.name" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <GroupedRouteNameCell groupedRoute={row.original} />,
@@ -94,7 +94,7 @@ export const GroupedRouteTableColumns: ColumnDef<GroupedRoute>[] = [
   {
     accessorKey: "network",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Network</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.network" />;
     },
     cell: ({ row }) => (
       <GroupedRouteNetworkRangeCell
@@ -107,7 +107,7 @@ export const GroupedRouteTableColumns: ColumnDef<GroupedRoute>[] = [
     id: "type",
     accessorFn: (row) => row.is_using_route_groups,
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Type</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.type" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <GroupedRouteTypeCell groupedRoute={row.original} />,
@@ -117,7 +117,7 @@ export const GroupedRouteTableColumns: ColumnDef<GroupedRoute>[] = [
     accessorKey: "high_availability_count",
     header: ({ column }) => {
       return (
-        <DataTableHeader column={column}>High Availability</DataTableHeader>
+        <DataTableHeader column={column} labelId="routes.highAvailability" />
       );
     },
     cell: ({ row }) => (
@@ -178,11 +178,26 @@ export default function NetworkRoutesTable({
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Enabled", dotClass: "bg-green-500" },
-      { value: false, label: "Disabled", dotClass: "bg-nb-gray-700" },
+      {
+        value: undefined,
+        id: "all",
+        label: translate("common.all"),
+        dotClass: "bg-nb-gray-500",
+      },
+      {
+        value: true,
+        id: "enabled",
+        label: translate("common.enabled"),
+        dotClass: "bg-green-500",
+      },
+      {
+        value: false,
+        id: "disabled",
+        label: translate("common.disabled"),
+        dotClass: "bg-nb-gray-700",
+      },
     ],
-    [],
+    [translate],
   );
 
   const tableGroups = useMemo(() => {
@@ -202,7 +217,7 @@ export default function NetworkRoutesTable({
     () => [
       {
         id: "enabled",
-        label: "Status",
+        label: translate("common.status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -216,7 +231,7 @@ export default function NetworkRoutesTable({
       },
       {
         id: "group_names_filter",
-        label: "Groups",
+        label: translate("common.groups"),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -225,10 +240,11 @@ export default function NetworkRoutesTable({
             groups={tableGroups}
           />
         ),
-        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+        formatChip: (v) =>
+          formatGroupsChip(v as string[] | undefined, translate),
       },
     ],
-    [statusOptions, tableGroups],
+    [statusOptions, tableGroups, translate],
   );
 
   return (

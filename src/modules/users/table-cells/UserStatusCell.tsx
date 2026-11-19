@@ -22,30 +22,28 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
 
   const getStatusDisplay = () => {
     if (isLocalAuthDisabled) {
-      return { text: "Disabled", color: "bg-gray-400" };
+      return { text: t("common.disabled"), color: "bg-gray-400" };
     }
     if (isPendingApproval) {
-      return { text: "Pending", color: "bg-netbird" };
+      return { text: t("common.pending"), color: "bg-netbird" };
     }
     if (status === "blocked") {
-      return { text: "Blocked", color: "bg-red-500" };
+      return { text: t("common.blocked"), color: "bg-red-500" };
     }
     if (status === "invited") {
-      return { text: "Invited", color: "bg-yellow-400" };
+      return { text: t("common.invited"), color: "bg-yellow-400" };
     }
     if (status === "active") {
-      return { text: "Active", color: "bg-green-500" };
+      return { text: t("users.activeStatus"), color: "bg-green-500" };
     }
-    return { text: status || "Unknown", color: "bg-gray-400" };
+    return { text: status || t("common.unknown"), color: "bg-gray-400" };
   };
 
   const isInvitedOnCloud = status === "invited" && isNetBirdCloud();
 
   const tooltipContent = isLocalAuthDisabled ? (
     <div className={"max-w-xs text-xs flex flex-col gap-2"}>
-      <div>
-        {t("users.localAuthDisabledTooltip")}
-      </div>
+      <div>{t("users.localAuthDisabledTooltip")}</div>
       <div>
         <InlineLink
           href={
@@ -53,32 +51,36 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
           }
           target={"_blank"}
         >
-          {t("common.learnMore") + " "}<ExternalLinkIcon size={12} />
+          {t("common.learnMore") + " "}
+          <ExternalLinkIcon size={12} />
         </InlineLink>
       </div>
     </div>
   ) : isInvitedOnCloud ? (
     <div className={"max-w-xs text-xs flex flex-col gap-2"}>
-      <div>
-        {t("users.invitedTooltip")}
-      </div>
+      <div>{t("users.invitedTooltip")}</div>
     </div>
   ) : (
     <div className={"max-w-xs text-xs flex flex-col gap-2"}>
       <div>
-        {t("users.pendingApprovalTooltip")}{" "}
-        <span className={"font-medium text-white"}>
-          {t("users.userApprovalRequiredLabel")}
-        </span>{" "}
-        in{" "}
-        <InlineLink href={"/settings?tab=authentication"}>{t("common.settings")}</InlineLink>.
+        {t.rich("users.pendingApprovalHint", {
+          setting: (chunks) => (
+            <span className="font-medium text-white">{chunks}</span>
+          ),
+          settingsLink: (chunks) => (
+            <InlineLink href="/settings?tab=authentication">
+              {chunks}
+            </InlineLink>
+          ),
+        })}
       </div>
       <div>
         <InlineLink
           href={"https://docs.netbird.io/how-to/approve-users"}
           target={"_blank"}
         >
-          {t("common.learnMore") + " "}<ExternalLinkIcon size={12} />
+          {t("common.learnMore") + " "}
+          <ExternalLinkIcon size={12} />
         </InlineLink>
       </div>
     </div>

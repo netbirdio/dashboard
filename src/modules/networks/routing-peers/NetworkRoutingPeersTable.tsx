@@ -45,7 +45,7 @@ const NetworkRouterColumns: ColumnDef<NetworkRouter>[] = [
     id: "name",
     accessorKey: "id",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Peer</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.peer" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <NetworkRoutingPeerName router={row.original} />,
@@ -57,9 +57,11 @@ const NetworkRouterColumns: ColumnDef<NetworkRouter>[] = [
     meta: { className: ENABLED_COLUMN_CLASS.xl },
     header: ({ column }) => {
       return (
-        <DataTableHeader column={column} sorting={false}>
-          Active
-        </DataTableHeader>
+        <DataTableHeader
+          column={column}
+          sorting={false}
+          labelId="common.active"
+        />
       );
     },
     cell: ({ row }) => <RoutingPeersEnabledCell router={row.original} />,
@@ -68,7 +70,7 @@ const NetworkRouterColumns: ColumnDef<NetworkRouter>[] = [
     id: "metric",
     accessorKey: "metric",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Metric</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="networks.metric" />;
     },
     cell: ({ row }) => (
       <RouteMetricCell metric={row.original.metric} useHoverStyle={false} />
@@ -78,7 +80,7 @@ const NetworkRouterColumns: ColumnDef<NetworkRouter>[] = [
     id: "masquerade",
     accessorKey: "masquerade",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Masquerade</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="networks.masquerade" />;
     },
     cell: ({ row }) => <RoutingPeersMasqueradeCell router={row.original} />,
   },
@@ -116,18 +118,33 @@ export default function NetworkRoutingPeersTable({
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Active", dotClass: "bg-green-500" },
-      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+      {
+        value: undefined,
+        id: "all",
+        label: t("common.all"),
+        dotClass: "bg-nb-gray-500",
+      },
+      {
+        value: true,
+        id: "active",
+        label: t("common.active"),
+        dotClass: "bg-green-500",
+      },
+      {
+        value: false,
+        id: "inactive",
+        label: t("common.inactive"),
+        dotClass: "bg-nb-gray-700",
+      },
     ],
-    [],
+    [t],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "enabled",
-        label: "Status",
+        label: t("common.status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -140,7 +157,7 @@ export default function NetworkRoutingPeersTable({
           formatRadioChip(v as boolean | undefined, statusOptions),
       },
     ],
-    [statusOptions],
+    [statusOptions, t],
   );
 
   return (

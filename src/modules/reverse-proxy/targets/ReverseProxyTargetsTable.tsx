@@ -16,14 +16,14 @@ const ReverseProxyTargetColumns: ColumnDef<ReverseProxyTarget>[] = [
   {
     accessorKey: "target_type",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Resource</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.resource" />;
     },
     cell: ({ row }) => <ReverseProxyTargetDevice target={row.original} />,
   },
   {
     accessorKey: "path",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Location</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.location" />;
     },
     cell: ({ row }) => <ReverseProxyTargetPath target={row.original} />,
   },
@@ -37,7 +37,7 @@ const ReverseProxyTargetColumns: ColumnDef<ReverseProxyTarget>[] = [
   {
     accessorKey: "host",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Destination</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.destination" />;
     },
     cell: ({ row }) => <ReverseProxyDestinationCell target={row.original} />,
   },
@@ -47,9 +47,11 @@ const ReverseProxyTargetColumns: ColumnDef<ReverseProxyTarget>[] = [
     meta: { className: ENABLED_COLUMN_CLASS.xl },
     header: ({ column }) => {
       return (
-        <DataTableHeader column={column} sorting={false}>
-          Active
-        </DataTableHeader>
+        <DataTableHeader
+          column={column}
+          sorting={false}
+          labelId="common.active"
+        />
       );
     },
     cell: ({ row }) => <ReverseProxyTargetActiveCell target={row.original} />,

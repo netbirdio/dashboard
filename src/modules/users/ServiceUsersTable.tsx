@@ -42,7 +42,7 @@ export const ServiceUsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.name" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <ServiceUserNameCell user={row.original} />,
@@ -54,7 +54,7 @@ export const ServiceUsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "role",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Role</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.role" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <UserRoleCell user={row.original} />,
@@ -62,7 +62,7 @@ export const ServiceUsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "status",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Status</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.status" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <UserStatusCell user={row.original} />,
@@ -117,29 +117,44 @@ export default function ServiceUsersTable({
 
   const statusOptions = useMemo<RadioOption<string | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: "active", label: "Active", dotClass: "bg-green-500" },
-      { value: "blocked", label: "Blocked", dotClass: "bg-red-500" },
+      {
+        value: undefined,
+        id: "all",
+        label: translate("common.all"),
+        dotClass: "bg-nb-gray-500",
+      },
+      {
+        value: "active",
+        id: "active",
+        label: translate("users.activeStatus"),
+        dotClass: "bg-green-500",
+      },
+      {
+        value: "blocked",
+        id: "blocked",
+        label: translate("common.blocked"),
+        dotClass: "bg-red-500",
+      },
     ],
-    [],
+    [translate],
   );
 
   const roleOptions = useMemo<CheckboxOption<string>[]>(
     () => [
-      { value: "admin", label: "Admin" },
-      { value: "user", label: "User" },
-      { value: "network_admin", label: "Network Admin" },
-      { value: "billing_admin", label: "Billing Admin" },
-      { value: "auditor", label: "Auditor" },
+      { value: "admin", label: translate("users.admin") },
+      { value: "user", label: translate("users.user") },
+      { value: "network_admin", label: translate("users.networkAdmin") },
+      { value: "billing_admin", label: translate("users.billingAdmin") },
+      { value: "auditor", label: translate("users.auditor") },
     ],
-    [],
+    [translate],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "status",
-        label: "Status",
+        label: translate("common.status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as string | undefined}
@@ -153,7 +168,7 @@ export default function ServiceUsersTable({
       },
       {
         id: "role_filter",
-        label: "Role",
+        label: translate("common.role"),
         renderPicker: (p) => (
           <CheckboxListPicker
             value={p.value as string[] | undefined}
@@ -163,10 +178,12 @@ export default function ServiceUsersTable({
           />
         ),
         formatChip: (v) =>
-          formatCheckboxChip(v as string[] | undefined, roleOptions, "roles"),
+          formatCheckboxChip(v as string[] | undefined, roleOptions, (count) =>
+            translate("tables.roleCount", { count }),
+          ),
       },
     ],
-    [statusOptions, roleOptions],
+    [statusOptions, roleOptions, translate],
   );
 
   return (
@@ -191,7 +208,7 @@ export default function ServiceUsersTable({
         is_current: false,
         role_filter: false,
       }}
-      searchPlaceholder={"Search by name or role..."}
+      searchPlaceholder={translate("users.searchByNameOrRole")}
       getStartedCard={
         <GetStartedTest
           icon={

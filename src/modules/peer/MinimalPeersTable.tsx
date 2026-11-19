@@ -41,7 +41,7 @@ const MinimalPeersTableColumns: ColumnDef<Peer>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.name" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <PeerNameCell peer={row.original} />,
@@ -66,14 +66,14 @@ const MinimalPeersTableColumns: ColumnDef<Peer>[] = [
   {
     accessorKey: "dns_label",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Address</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.address" />;
     },
     cell: ({ row }) => <PeerAddressCell peer={row.original} />,
   },
   {
     accessorKey: "last_seen",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Last seen</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="tables.lastSeen" />;
     },
     sortingFn: "datetime",
     cell: ({ row }) => <PeerLastSeenCell peer={row.original} />,
@@ -81,7 +81,9 @@ const MinimalPeersTableColumns: ColumnDef<Peer>[] = [
   {
     accessorKey: "os",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>OS</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} labelId="tables.operatingSystem" />
+      );
     },
     cell: ({ row }) => <PeerOSCell os={row.original.os} />,
   },
@@ -138,7 +140,7 @@ export default function MinimalPeersTable({
       columns={columns}
       keepStateInLocalStorage={false}
       data={peers}
-      searchPlaceholder={"Search by name, IP, owner or group..."}
+      searchPlaceholder={t("peers.searchByIdentity")}
       isLoading={isLoading}
       getStartedCard={
         !getStartedCard ? (

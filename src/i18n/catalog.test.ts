@@ -98,4 +98,18 @@ describe("Dashboard catalogs", () => {
       englishTranslations("routeGroup.deleteTitle", { name: "office-west" }),
     ).toBe("Delete Network office-west");
   });
+
+  it("localizes multiple selections and preserves text entered by users", () => {
+    const t = createTranslations("zh-Hans", locales["zh-Hans"].messages);
+    expect(t("tables.roleCount", { count: 2 })).toBe("2 个角色");
+    expect(t("tables.removeFilter", { filter: "状态" })).toBe(
+      "移除「状态」筛选条件",
+    );
+    expect(
+      t("networks.resourceCreatedMessage", { name: "office {blue}" }),
+    ).toBe("资源「office {blue}」已创建。");
+    expect(t("users.creatingNamedInvite", { name: "Ava" })).toBe(
+      "正在为「Ava」创建邀请链接…",
+    );
+  });
 });

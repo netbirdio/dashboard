@@ -1,11 +1,7 @@
 "use client";
 
 import Button from "@components/Button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@components/Popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { Table } from "@tanstack/react-table";
 import { cn } from "@utils/helpers";
 import {
@@ -113,7 +109,9 @@ export function TableFiltersButton<TData>({
             </div>
             <div className={"p-2"}>
               {activeFilter.renderPicker({
-                value: table.getColumn(activeFilter.id)?.getFilterValue() as never,
+                value: table
+                  .getColumn(activeFilter.id)
+                  ?.getFilterValue() as never,
                 onChange: (next) => {
                   table.setPageIndex(0);
                   table.getColumn(activeFilter.id)?.setFilterValue(next);
@@ -206,6 +204,7 @@ type FilterChipProps<TData> = {
 };
 
 function FilterChip<TData>({ def, text, table }: FilterChipProps<TData>) {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
 
   return (
@@ -224,12 +223,14 @@ function FilterChip<TData>({ def, text, table }: FilterChipProps<TData>) {
               "hover:bg-nb-gray-900 transition-colors",
             )}
           >
-            <span className={"text-nb-gray-400"}>{def.label}:</span>
+            <span className={"text-nb-gray-400"}>
+              {t("tables.filterChipLabel", { filter: def.label })}
+            </span>
             <span className={"font-medium"}>{text}</span>
           </button>
         </PopoverTrigger>
         <button
-          aria-label={`Remove ${def.label} filter`}
+          aria-label={t("tables.removeFilter", { filter: def.label })}
           className={cn(
             "flex items-center justify-center px-2",
             "border-l border-nb-gray-900",

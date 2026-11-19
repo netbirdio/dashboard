@@ -25,7 +25,8 @@ import Avatar1 from "@/assets/avatars/009.jpg";
 import Avatar2 from "@/assets/avatars/030.jpg";
 import Avatar3 from "@/assets/avatars/063.jpg";
 import Avatar4 from "@/assets/avatars/086.jpg";
-import { useTranslations } from "@/i18n/LocaleProvider";
+import { useDashboardLocale, useTranslations } from "@/i18n/LocaleProvider";
+import { defaultLocale } from "@/i18n/locales";
 import { Group } from "@/interfaces/Group";
 import { Role, User, UserInvite } from "@/interfaces/User";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -39,15 +40,12 @@ type Props = {
   groups?: Group[];
 };
 
-const passwordCopyMessage = "Password was copied to your clipboard!";
-const inviteLinkCopyMessage = "Invite link was copied to your clipboard!";
-
 type SuccessData =
   | { type: "password"; user: User }
   | { type: "invite"; invite: UserInvite };
 
 export default function UserInviteModal({ children, groups }: Readonly<Props>) {
-  const t = useTranslations();
+  const { locale, t } = useDashboardLocale();
   const [open, setOpen] = useState(false);
   const [successModal, setSuccessModal] = useState(false);
   const [successData, setSuccessData] = useState<SuccessData | null>(null);
@@ -93,8 +91,8 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
   const handleCopyAndClose = () => {
     const message =
       successData?.type === "password"
-        ? passwordCopyMessage
-        : inviteLinkCopyMessage;
+        ? t("users.passwordCopiedMessage")
+        : t("users.inviteLinkCopiedMessage");
     copyToClipboard(message).then(() => {
       setSuccessData(null);
       setSuccessModal(false);
@@ -135,14 +133,12 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
             <div className={"flex flex-col items-center justify-center gap-3"}>
               <div>
                 <h2 className={"text-2xl text-center mb-2"}>
-                  {isPasswordSuccess && "User created successfully!"}
-                  {isInviteSuccess && "Invite link created!"}
+                  {isPasswordSuccess && t("users.userCreatedTitle")}
+                  {isInviteSuccess && t("users.inviteCreatedTitle")}
                 </h2>
                 <Paragraph className={"mt-0 text-sm text-center"}>
-                  {isPasswordSuccess &&
-                    "This password will not be shown again, so be sure to copy it and store in a secure location."}
-                  {isInviteSuccess &&
-                    "Share this link with the user. They will be able to set their own password."}
+                  {isPasswordSuccess && t("users.copyPasswordPrompt")}
+                  {isInviteSuccess && t("users.inviteLinkShareInfo")}
                 </Paragraph>
               </div>
             </div>
@@ -151,7 +147,9 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
           <div className={"px-8 pb-6"}>
             <Code
               message={
-                isPasswordSuccess ? passwordCopyMessage : inviteLinkCopyMessage
+                isPasswordSuccess
+                  ? t("users.passwordCopiedMessage")
+                  : t("users.inviteLinkCopiedMessage")
               }
               codeToCopy={getCopyValue()}
             >
@@ -168,8 +166,11 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
               <Paragraph
                 className={"mt-3 text-xs text-nb-gray-400 text-center"}
               >
-                {t("users.expiresOn")}{" "}
-                {new Date(successData.invite.expires_at).toLocaleString()}
+                {t("users.inviteExpiresAt", {
+                  date: new Date(successData.invite.expires_at).toLocaleString(
+                    locale === defaultLocale ? undefined : locale,
+                  ),
+                })}
               </Paragraph>
             )}
           </div>
@@ -222,7 +223,7 @@ export function UserInviteModalContent({
     const groupIds = groups.map((group) => group.id) as string[];
     notify({
       title: t("users.createUserTitle"),
-      description: `Creating user account for ${name}...`,
+      description: t("users.creatingNamedUser", { name }),
       promise: userRequest
         .post({
           name,
@@ -244,7 +245,7 @@ export function UserInviteModalContent({
     const groupIds = groups.map((group) => group.id) as string[];
     notify({
       title: t("users.createInviteNotify"),
-      description: `Creating invite link for ${name}...`,
+      description: t("users.creatingNamedInvite", { name }),
       promise: inviteRequest
         .post({
           name,
@@ -412,9 +413,7 @@ export function UserInviteModalContent({
 
         <div className={"mb-4"}>
           <Label>{t("common.autoAssignedGroups")}</Label>
-          <HelpText>
-            {t("users.autoAssignedGroupsHelp")}
-          </HelpText>
+          <HelpText>{t("users.autoAssignedGroupsHelp")}</HelpText>
           <PeerGroupSelector
             onChange={setSelectedGroups}
             values={selectedGroups}

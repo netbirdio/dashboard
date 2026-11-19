@@ -11,6 +11,8 @@ import { orderBy, trim } from "lodash";
 import { MonitorSmartphoneIcon, SearchIcon } from "lucide-react";
 import * as React from "react";
 import { useRef } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import { englishTranslations } from "@/i18n/translate";
 import { Group } from "@/interfaces/Group";
 
 // GroupsPicker — multi-select search list of group names. The value
@@ -24,6 +26,7 @@ type Props = {
 };
 
 export function GroupsPicker({ value, onChange, groups }: Props) {
+  const t = useTranslations();
   const searchRef = useRef<HTMLInputElement>(null);
   const selected = value ?? [];
 
@@ -54,7 +57,7 @@ export function GroupsPicker({ value, onChange, groups }: Props) {
               "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-9",
             )}
             ref={searchRef}
-            placeholder={"Search group..."}
+            placeholder={t("tables.searchGroup")}
           />
           <div
             className={
@@ -66,9 +69,7 @@ export function GroupsPicker({ value, onChange, groups }: Props) {
         </div>
 
         <ScrollArea
-          className={
-            "max-h-[300px] overflow-y-auto flex flex-col gap-1 p-1.5"
-          }
+          className={"max-h-[300px] overflow-y-auto flex flex-col gap-1 p-1.5"}
         >
           <CommandGroup>
             <div className={"grid grid-cols-1 gap-0.5"}>
@@ -123,8 +124,11 @@ export function GroupsPicker({ value, onChange, groups }: Props) {
   );
 }
 
-export function formatGroupsChip(value: string[] | undefined): string | null {
+export function formatGroupsChip(
+  value: string[] | undefined,
+  t = englishTranslations,
+): string | null {
   if (!value || value.length === 0) return null;
   if (value.length === 1) return value[0];
-  return `${value.length} groups`;
+  return t("tables.groupCount", { count: value.length });
 }

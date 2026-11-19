@@ -46,7 +46,7 @@ export const DNSZonesColumns: ColumnDef<DNSZone>[] = [
   {
     accessorKey: "domain",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Zone</DataTableHeader>
+      <DataTableHeader column={column} labelId="dns.zone" />
     ),
     sortingFn: "text",
     cell: ({ row }) => <DNSZonesNameCell zone={row.original} />,
@@ -57,7 +57,7 @@ export const DNSZonesColumns: ColumnDef<DNSZone>[] = [
   {
     accessorKey: "records",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Records</DataTableHeader>
+      <DataTableHeader column={column} labelId="dns.records" />
     ),
     sortingFn: "text",
     cell: ({ row }) => <DNSZonesRecordsCell zone={row.original} />,
@@ -65,20 +65,20 @@ export const DNSZonesColumns: ColumnDef<DNSZone>[] = [
   {
     accessorKey: "distribution_groups",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Groups</DataTableHeader>
+      <DataTableHeader column={column} labelId="common.groups" />
     ),
     cell: ({ row }) => <DNSZonesGroupCell zone={row.original} />,
   },
   {
     id: "group_names_filter",
     accessorFn: (row) =>
-      ((row as DNSZone & { _group_names?: string[] })._group_names) ?? [],
+      (row as DNSZone & { _group_names?: string[] })._group_names ?? [],
     filterFn: "arrIncludesSome",
   },
   {
     accessorKey: "enable_search_domain",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Search Domain</DataTableHeader>
+      <DataTableHeader column={column} labelId="dns.searchDomain" />
     ),
     cell: ({ row }) => <DNSZonesSearchDomainCell zone={row.original} />,
   },
@@ -165,18 +165,33 @@ export default function DNSZonesTable({
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Active", dotClass: "bg-green-500" },
-      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+      {
+        value: undefined,
+        id: "all",
+        label: translate("common.all"),
+        dotClass: "bg-nb-gray-500",
+      },
+      {
+        value: true,
+        id: "active",
+        label: translate("common.active"),
+        dotClass: "bg-green-500",
+      },
+      {
+        value: false,
+        id: "inactive",
+        label: translate("common.inactive"),
+        dotClass: "bg-nb-gray-700",
+      },
     ],
-    [],
+    [translate],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "enabled",
-        label: "Status",
+        label: translate("common.status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -190,7 +205,7 @@ export default function DNSZonesTable({
       },
       {
         id: "group_names_filter",
-        label: "Groups",
+        label: translate("common.groups"),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -199,10 +214,11 @@ export default function DNSZonesTable({
             groups={tableGroups}
           />
         ),
-        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+        formatChip: (v) =>
+          formatGroupsChip(v as string[] | undefined, translate),
       },
     ],
-    [statusOptions, tableGroups],
+    [statusOptions, tableGroups, translate],
   );
 
   return (

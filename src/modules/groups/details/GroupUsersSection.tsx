@@ -95,7 +95,7 @@ export const GroupUsersTableColumns: ColumnDef<User>[] = [
     cell: ({ row }) => (
       <LastTimeRow
         date={dayjs(row.original.last_login).toDate()}
-        text={"Last login on"}
+        textId="tables.lastLoginOn"
       />
     ),
   },

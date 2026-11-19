@@ -48,7 +48,7 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
   {
     accessorKey: "domain",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Domain</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.domain" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <ReverseProxyNameCell reverseProxy={row.original} />,
@@ -56,7 +56,7 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
   {
     accessorKey: "mode",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Type</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.type" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <ReverseProxyTypeCell reverseProxy={row.original} />,
@@ -69,14 +69,16 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
   {
     accessorKey: "targets",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Target(s)</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="reverseProxy.targets" />;
     },
     cell: ({ row }) => <ReverseProxyTargetsCell reverseProxy={row.original} />,
   },
   {
     id: "auth_and_access",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Auth &amp; Access</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} labelId="reverseProxy.authAndAccess" />
+      );
     },
     cell: ({ row }) => (
       <div className={"flex items-center gap-2"}>
@@ -127,11 +129,26 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Active", dotClass: "bg-green-500" },
-      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+      {
+        value: undefined,
+        id: "all",
+        label: t("common.all"),
+        dotClass: "bg-nb-gray-500",
+      },
+      {
+        value: true,
+        id: "active",
+        label: t("common.active"),
+        dotClass: "bg-green-500",
+      },
+      {
+        value: false,
+        id: "inactive",
+        label: t("common.inactive"),
+        dotClass: "bg-nb-gray-700",
+      },
     ],
-    [],
+    [t],
   );
 
   const typeOptions = useMemo<CheckboxOption<string>[]>(
@@ -148,7 +165,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
     () => [
       {
         id: "enabled",
-        label: "Status",
+        label: t("common.status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -162,7 +179,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
       },
       {
         id: "mode",
-        label: "Type",
+        label: t("common.type"),
         renderPicker: (p) => (
           <CheckboxListPicker
             value={p.value as string[] | undefined}
@@ -172,10 +189,12 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
           />
         ),
         formatChip: (v) =>
-          formatCheckboxChip(v as string[] | undefined, typeOptions, "types"),
+          formatCheckboxChip(v as string[] | undefined, typeOptions, (count) =>
+            t("tables.typeCount", { count }),
+          ),
       },
     ],
-    [statusOptions, typeOptions],
+    [statusOptions, typeOptions, t],
   );
 
   return (
@@ -191,7 +210,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
       useRowId={true}
       initialPageSize={25}
       showResetFilterButton={false}
-      searchPlaceholder={"Search by URL, domain, or target..."}
+      searchPlaceholder={t("reverseProxy.searchServices")}
       rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
       aboveTable={(table) => (
         <TableFilterChips table={table} filters={filterDefs} />

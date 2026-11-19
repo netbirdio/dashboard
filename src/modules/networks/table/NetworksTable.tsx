@@ -43,7 +43,7 @@ export const NetworkTableColumns: ColumnDef<Network>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Network</DataTableHeader>
+      <DataTableHeader column={column} labelId="common.network" />
     ),
     sortingFn: "text",
     cell: ({ row }) => <NetworkNameCell network={row.original} />,
@@ -55,7 +55,7 @@ export const NetworkTableColumns: ColumnDef<Network>[] = [
     accessorKey: "resources",
     accessorFn: (network) => network?.resources?.length,
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Resources</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.resources" />;
     },
     cell: ({ row }) => <NetworkResourceCell network={row.original} />,
   },
@@ -63,7 +63,7 @@ export const NetworkTableColumns: ColumnDef<Network>[] = [
     accessorKey: "policies",
     accessorFn: (network) => network?.policies?.length,
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Policies</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.policies" />;
     },
     cell: ({ row }) => <NetworkPolicyCell network={row.original} />,
   },
@@ -71,7 +71,7 @@ export const NetworkTableColumns: ColumnDef<Network>[] = [
     accessorKey: "routers",
     accessorFn: (network) => network?.routers?.length,
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Routing Peers</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.routingPeers" />;
     },
     cell: ({ row }) => <NetworkRoutingPeerCell network={row.original} />,
   },
@@ -115,18 +115,33 @@ export default function NetworksTable({
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Active", dotClass: "bg-green-500" },
-      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+      {
+        value: undefined,
+        id: "all",
+        label: translate("common.all"),
+        dotClass: "bg-nb-gray-500",
+      },
+      {
+        value: true,
+        id: "active",
+        label: translate("common.active"),
+        dotClass: "bg-green-500",
+      },
+      {
+        value: false,
+        id: "inactive",
+        label: translate("common.inactive"),
+        dotClass: "bg-nb-gray-700",
+      },
     ],
-    [],
+    [translate],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "active",
-        label: "Status",
+        label: translate("common.status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -139,7 +154,7 @@ export default function NetworksTable({
           formatRadioChip(v as boolean | undefined, statusOptions),
       },
     ],
-    [statusOptions],
+    [statusOptions, translate],
   );
 
   return (

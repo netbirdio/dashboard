@@ -191,8 +191,7 @@ export function ResourceModalContent({
     if (allResourcePolicies.length > 0) return true;
     return confirm({
       title: t("networks.noPoliciesConfirmTitle"),
-      description:
-        t("networks.noPoliciesConfirmDesc"),
+      description: t("networks.noPoliciesConfirmDesc"),
       type: "warning",
       confirmText: resource ? t("common.saveChanges") : t("common.addResource"),
       cancelText: t("common.cancel"),
@@ -216,7 +215,7 @@ export function ResourceModalContent({
 
     notify({
       title: t("networks.resourceCreated"),
-      description: `The resource "${name}" has been created successfully.`,
+      description: t("networks.resourceCreatedMessage", { name }),
       loadingMessage: t("networks.resourceCreating"),
       promise,
     });
@@ -239,7 +238,7 @@ export function ResourceModalContent({
     });
     notify({
       title: t("networks.resourceUpdated"),
-      description: `Resource "${name}" has been updated successfully.`,
+      description: t("networks.resourceUpdatedMessage", { name }),
       loadingMessage: t("networks.updatingResource"),
       promise,
     });
@@ -291,9 +290,7 @@ export function ResourceModalContent({
           <div className={"px-8 flex-col flex gap-6"}>
             <div>
               <Label>{t("common.name")}</Label>
-              <HelpText>
-                {t("networks.resourceNameHelp")}
-              </HelpText>
+              <HelpText>{t("networks.resourceNameHelp")}</HelpText>
               <Input
                 ref={nameRef}
                 autoFocus={true}
@@ -362,7 +359,9 @@ export function ResourceModalContent({
                         {t("networks.resourceDescriptionHelp")}
                       </HelpText>
                       <Input
-                        placeholder={t("networks.resourceDescriptionPlaceholder")}
+                        placeholder={t(
+                          "networks.resourceDescriptionPlaceholder",
+                        )}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         data-testid="resource-description-input"
@@ -387,8 +386,11 @@ export function ResourceModalContent({
                         <Callout variant={"info"} className={"mt-3"}>
                           Your selected resource groups are used in{" "}
                           <span className="text-white font-medium">
-                            {groupPolicyCount}{" " + t("common.accessControl")}{" "}
-                            {groupPolicyCount === 1 ? t("common.policy") : t("common.policies")}
+                            {groupPolicyCount}
+                            {" " + t("common.accessControl")}{" "}
+                            {groupPolicyCount === 1
+                              ? t("common.policy")
+                              : t("common.policies")}
                           </span>
                           . This resource will inherit access from{" "}
                           {groupPolicyCount === 1

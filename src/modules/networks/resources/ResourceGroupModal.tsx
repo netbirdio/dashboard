@@ -70,7 +70,9 @@ const ResourceGroupModalContent = ({
     const savedGroups = await saveGroups();
     notify({
       title: t("networks.updateResource"),
-      description: `'${resource?.name}' groups updated`,
+      description: t("networks.resourceGroupsUpdatedMessage", {
+        name: resource?.name ?? "",
+      }),
       loadingMessage: t("networks.updatingGroups"),
       promise: update({
         ...resource,

@@ -29,7 +29,13 @@ share the same meaning. A client component reads the message with
 Keep an entire sentence in one message. Use ICU arguments for names, counts
 and other values, and `t.rich` for a sentence containing links or styled
 text. All languages must keep the same argument and markup tag names.
-Plural cases can follow the target language's rules. Keep route segments,
+Plural cases can follow the target language's rules. Static TanStack column
+definitions can pass a message key via `DataTableHeader.labelId`. When
+translating custom radio options, give them stable `id` values and preserve
+the existing filter `value`. Include the translator in the dependencies of
+memoized filter definitions so their labels and chips update together.
+
+Keep route segments,
 API values, object names supplied by users, selectors and test IDs separate
 from translation keys.
 

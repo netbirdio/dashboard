@@ -102,7 +102,7 @@ function PeersView() {
         </Breadcrumbs>
         <h1 ref={headingRef}>{t("common.peers")}</h1>
         <Paragraph>
-            User devices and headless machines, such as servers and autonomous agents, connected to your network.{" "}
+          {t("peers.pageDescription")}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/add-machines-to-your-network"}
             target={"_blank"}

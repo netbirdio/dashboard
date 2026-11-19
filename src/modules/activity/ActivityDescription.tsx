@@ -44,16 +44,22 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "setupkey.revoke")
     return (
       <div className={"inline"}>
-        Setup-Key <Value> {m.name}</Value> with key <Value>{m.key}</Value> was
-        revoked
+        {t.rich("activity.setupkeyRevoke", {
+          name: m.name ?? "",
+          key: m.key ?? "",
+          Value: highlightValue,
+        })}
       </div>
     );
 
   if (event.activity_code == "setupkey.delete")
     return (
       <div className={"inline"}>
-        Setup-Key <Value> {m.name}</Value> with key <Value>{m.key}</Value> was
-        deleted
+        {t.rich("activity.setupkeyDelete", {
+          name: m.name ?? "",
+          key: m.key ?? "",
+          Value: highlightValue,
+        })}
       </div>
     );
 
@@ -71,9 +77,13 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "peer.setupkey.add")
     return (
       <div className={"inline"}>
-        Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> was added
-        with the NetBird IP <Value>{m.ip}</Value> using the setup key{" "}
-        <Value>{m.setup_key_name}</Value>
+        {t.rich("activity.peerSetupkeyAdd", {
+          name: m.name ?? "",
+          ip: m.ip ?? "",
+          setupKey: m.setup_key_name ?? "",
+          Value: highlightValue,
+          connection: () => <PeerConnectionInfo meta={m} />,
+        })}
       </div>
     );
 
@@ -151,34 +161,50 @@ export default function ActivityDescription({ event }: Props) {
    */
 
   if (event.activity_code == "route.delete") {
-    let hasDomains = m?.domains && m?.domains.length > 0;
     return (
       <div className={"inline"}>
-        Route <Value>{m.name}</Value> with the {hasDomains ? "domain(s)" : ""}{" "}
-        <Value>{hasDomains ? m?.domains : m.network_range}</Value>{" "}
-        {hasDomains ? "" : "range"} was deleted
+        {t.rich(
+          m.domains
+            ? "activity.routeDeleteDomains"
+            : "activity.routeDeleteRange",
+          {
+            name: m.name ?? "",
+            target: m.domains || m.network_range || "",
+            Value: highlightValue,
+          },
+        )}
       </div>
     );
   }
 
   if (event.activity_code == "route.update") {
-    let hasDomains = m?.domains && m?.domains.length > 0;
     return (
       <div className={"inline"}>
-        Route <Value>{m.name}</Value> with the {hasDomains ? "domain(s)" : ""}{" "}
-        <Value>{hasDomains ? m?.domains : m.network_range}</Value>{" "}
-        {hasDomains ? "" : "range"} was updated
+        {t.rich(
+          m.domains
+            ? "activity.routeUpdateDomains"
+            : "activity.routeUpdateRange",
+          {
+            name: m.name ?? "",
+            target: m.domains || m.network_range || "",
+            Value: highlightValue,
+          },
+        )}
       </div>
     );
   }
 
   if (event.activity_code == "route.add") {
-    let hasDomains = m?.domains && m?.domains.length > 0;
     return (
       <div className={"inline"}>
-        Route <Value>{m.name}</Value> with the {hasDomains ? "domain(s)" : ""}{" "}
-        <Value>{hasDomains ? m?.domains : m.network_range}</Value>{" "}
-        {hasDomains ? "" : "range"} was created
+        {t.rich(
+          m.domains ? "activity.routeAddDomains" : "activity.routeAddRange",
+          {
+            name: m.name ?? "",
+            target: m.domains || m.network_range || "",
+            Value: highlightValue,
+          },
+        )}
       </div>
     );
   }
@@ -190,24 +216,36 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "user.peer.delete")
     return (
       <div className={"inline"}>
-        Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> with
-        NetBird IP <Value>{m.ip}</Value> was deleted
+        {t.rich("activity.peerDelete", {
+          name: m.name ?? "",
+          ip: m.ip ?? "",
+          Value: highlightValue,
+          connection: () => <PeerConnectionInfo meta={m} />,
+        })}
       </div>
     );
 
   if (event.activity_code == "user.peer.add")
     return (
       <div className={"inline"}>
-        Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> was added
-        with the NetBird IP <Value>{m.ip}</Value>
+        {t.rich("activity.peerAdd", {
+          name: m.name ?? "",
+          ip: m.ip ?? "",
+          Value: highlightValue,
+          connection: () => <PeerConnectionInfo meta={m} />,
+        })}
       </div>
     );
 
   if (event.activity_code == "user.peer.update")
     return (
       <div className={"inline"}>
-        Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> with
-        NetBird IP <Value>{m.ip}</Value> was updated
+        {t.rich("activity.peerUpdate", {
+          name: m.name ?? "",
+          ip: m.ip ?? "",
+          Value: highlightValue,
+          connection: () => <PeerConnectionInfo meta={m} />,
+        })}
       </div>
     );
 
@@ -529,8 +567,12 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "peer.user.add")
     return (
       <div className={"inline"}>
-        Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> was added
-        with the NetBird IP <Value>{m.ip}</Value>
+        {t.rich("activity.peerAdd", {
+          name: m.name ?? "",
+          ip: m.ip ?? "",
+          Value: highlightValue,
+          connection: () => <PeerConnectionInfo meta={m} />,
+        })}
       </div>
     );
 
@@ -1285,25 +1327,26 @@ function Value({
 }
 
 function PeerConnectionInfo({ meta }: { meta: any }) {
+  const t = useTranslations();
   const hasMeta =
     !isEmpty(meta?.location_country_code) ||
     !isEmpty(meta?.location_connection_ip);
   const { countries } = useCountries();
 
   const countryText = useMemo(() => {
-    if (!countries) return "Unknown";
+    if (!countries) return t("common.unknown");
     const country = countries.find(
       (c) => c.country_code === meta?.location_country_code,
     );
-    if (!country) return "Unknown";
+    if (!country) return t("common.unknown");
     if (!meta?.location_city_name) return country.country_name;
     return `${country.country_name}, ${meta?.location_city_name}`;
-  }, [countries, meta]);
+  }, [countries, meta, t]);
 
   return hasMeta ? (
     <>
       {" "}
-      from{" "}
+      {t("activity.connectionFrom")}{" "}
       {meta?.location_connection_ip && (
         <Value>{meta?.location_connection_ip}</Value>
       )}{" "}

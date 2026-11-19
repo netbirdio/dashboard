@@ -45,7 +45,7 @@ const ActivityFeedColumnsTable: ColumnDef<ActivityEvent>[] = [
   {
     accessorKey: "activity_code",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Code</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="activity.code" />;
     },
     sortingFn: "text",
     filterFn: "arrIncludesSomeExact",
@@ -131,7 +131,7 @@ export default function ActivityTable({
     () => [
       {
         id: "activity_code",
-        label: "Type",
+        label: translate("common.type"),
         renderPicker: (p) => (
           <ActivityTypePicker
             value={p.value as string[] | undefined}
@@ -144,7 +144,7 @@ export default function ActivityTable({
       },
       {
         id: "initiator_email",
-        label: "Initiator",
+        label: translate("activity.initiator"),
         renderPicker: (p) => (
           <UsersPicker
             value={p.value as string | undefined}
@@ -157,7 +157,7 @@ export default function ActivityTable({
           formatUsersChip(v as string | undefined, userOptions),
       },
     ],
-    [events, userOptions],
+    [events, userOptions, translate],
   );
 
   return (

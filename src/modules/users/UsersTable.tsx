@@ -65,7 +65,7 @@ export const UsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.name" />;
     },
     accessorFn: (row) => row.name + " " + row.email,
     sortingFn: "text",
@@ -78,7 +78,7 @@ export const UsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "role",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Role</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.role" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <UserRoleCell user={row.original} />,
@@ -95,7 +95,7 @@ export const UsersTableColumns: ColumnDef<User>[] = [
       return row.status ?? "";
     },
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Status</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.status" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <UserStatusCell user={row.original} />,
@@ -104,7 +104,7 @@ export const UsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "auto_groups",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Groups</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.groups" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <UserGroupCell user={row.original} />,
@@ -113,13 +113,13 @@ export const UsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "last_login",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Last Login</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="tables.lastLogin" />;
     },
     sortingFn: "text",
     cell: ({ row }) => (
       <LastTimeRow
         date={dayjs(row.original.last_login).toDate()}
-        text={"Last login on"}
+        textId="tables.lastLoginOn"
       />
     ),
   },
@@ -238,43 +238,68 @@ export default function UsersTable({
 
   const statusOptions = useMemo<RadioOption<string | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: "active", label: "Active", dotClass: "bg-green-500" },
-      { value: "pending", label: "Pending", dotClass: "bg-netbird" },
-      { value: "invited", label: "Invited", dotClass: "bg-yellow-400" },
-      { value: "blocked", label: "Blocked", dotClass: "bg-red-500" },
+      {
+        value: undefined,
+        id: "all",
+        label: translate("common.all"),
+        dotClass: "bg-nb-gray-500",
+      },
+      {
+        value: "active",
+        id: "active",
+        label: translate("users.activeStatus"),
+        dotClass: "bg-green-500",
+      },
+      {
+        value: "pending",
+        id: "pending",
+        label: translate("common.pending"),
+        dotClass: "bg-netbird",
+      },
+      {
+        value: "invited",
+        id: "invited",
+        label: translate("common.invited"),
+        dotClass: "bg-yellow-400",
+      },
+      {
+        value: "blocked",
+        id: "blocked",
+        label: translate("common.blocked"),
+        dotClass: "bg-red-500",
+      },
     ],
-    [],
+    [translate],
   );
 
   const roleOptions = useMemo<CheckboxOption<string>[]>(
     () => [
-      { value: "owner", label: "Owner" },
-      { value: "admin", label: "Admin" },
-      { value: "user", label: "User" },
-      { value: "network_admin", label: "Network Admin" },
+      { value: "owner", label: translate("users.owner") },
+      { value: "admin", label: translate("users.admin") },
+      { value: "user", label: translate("users.user") },
+      { value: "network_admin", label: translate("users.networkAdmin") },
       // Agent Network roles can only be assigned where the surface exists, so
       // don't offer them as filters elsewhere.
       ...(agentNetworkEnabled
         ? [
             {
               value: "agent_network_admin",
-              label: "Agent Network Admin",
+              label: translate("common.agentNetworkAdmin"),
             },
-            { value: "usage_viewer", label: "Usage Viewer" },
+            { value: "usage_viewer", label: translate("users.usageViewer") },
           ]
         : []),
-      { value: "billing_admin", label: "Billing Admin" },
-      { value: "auditor", label: "Auditor" },
+      { value: "billing_admin", label: translate("users.billingAdmin") },
+      { value: "auditor", label: translate("users.auditor") },
     ],
-    [agentNetworkEnabled],
+    [agentNetworkEnabled, translate],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "status",
-        label: "Status",
+        label: translate("common.status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as string | undefined}
@@ -288,7 +313,7 @@ export default function UsersTable({
       },
       {
         id: "role_filter",
-        label: "Role",
+        label: translate("common.role"),
         renderPicker: (p) => (
           <CheckboxListPicker
             value={p.value as string[] | undefined}
@@ -298,11 +323,13 @@ export default function UsersTable({
           />
         ),
         formatChip: (v) =>
-          formatCheckboxChip(v as string[] | undefined, roleOptions, "roles"),
+          formatCheckboxChip(v as string[] | undefined, roleOptions, (count) =>
+            translate("tables.roleCount", { count }),
+          ),
       },
       {
         id: "group_names_filter",
-        label: "Groups",
+        label: translate("common.groups"),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -311,10 +338,11 @@ export default function UsersTable({
             groups={tableGroups}
           />
         ),
-        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+        formatChip: (v) =>
+          formatGroupsChip(v as string[] | undefined, translate),
       },
     ],
-    [statusOptions, roleOptions, tableGroups],
+    [statusOptions, roleOptions, tableGroups, translate],
   );
 
   if (showInvites) {

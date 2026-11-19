@@ -48,7 +48,7 @@ const Columns: ColumnDef<PostureCheck>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.name" />;
     },
     cell: ({ row }) => <PostureCheckNameCell check={row.original} />,
   },
@@ -61,14 +61,14 @@ const Columns: ColumnDef<PostureCheck>[] = [
     id: "checks",
     accessorFn: (row) => Object.keys(row.checks).length,
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Checks</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="postureChecks.checks" />;
     },
     cell: ({ row }) => <PostureCheckChecksCell check={row.original} />,
   },
   {
     id: "access_control_usage",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Policies</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.policies" />;
     },
     cell: ({ row }) => <PostureCheckPolicyUsageCell check={row.original} />,
   },
@@ -127,18 +127,33 @@ export default function PostureCheckTable({
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Active", dotClass: "bg-green-500" },
-      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+      {
+        value: undefined,
+        id: "all",
+        label: t("common.all"),
+        dotClass: "bg-nb-gray-500",
+      },
+      {
+        value: true,
+        id: "active",
+        label: t("common.active"),
+        dotClass: "bg-green-500",
+      },
+      {
+        value: false,
+        id: "inactive",
+        label: t("common.inactive"),
+        dotClass: "bg-nb-gray-700",
+      },
     ],
-    [],
+    [t],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "active",
-        label: "Status",
+        label: t("common.status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -151,7 +166,7 @@ export default function PostureCheckTable({
           formatRadioChip(v as boolean | undefined, statusOptions),
       },
     ],
-    [statusOptions],
+    [statusOptions, t],
   );
 
   return (

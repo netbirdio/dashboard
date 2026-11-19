@@ -27,7 +27,7 @@ export const AccessTokensTableColumns: ColumnDef<AccessToken>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.name" />;
     },
     sortingFn: "text",
     cell: ({ row }) => {
@@ -38,7 +38,7 @@ export const AccessTokensTableColumns: ColumnDef<AccessToken>[] = [
   {
     accessorKey: "expiration_date",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Expires</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="tables.expires" />;
     },
     cell: ({ row }) => (
       <ExpirationDateRow date={row.original.expiration_date} />
@@ -47,14 +47,14 @@ export const AccessTokensTableColumns: ColumnDef<AccessToken>[] = [
   {
     accessorKey: "last_used",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Last used</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="tables.lastUsed" />;
     },
     sortingFn: "datetime",
     cell: ({ row }) => {
       return typeof row.original.last_used === "undefined" ? (
         <EmptyRow />
       ) : (
-        <LastTimeRow date={row.original.last_used} text={"Last used on"} />
+        <LastTimeRow date={row.original.last_used} textId="tables.lastUsedOn" />
       );
     },
   },

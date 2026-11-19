@@ -26,7 +26,7 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
   {
     accessorKey: "network_id",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.name" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <PeerRouteNameCell route={row.original} />,
@@ -34,7 +34,7 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
   {
     accessorKey: "network",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Network</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.network" />;
     },
     cell: ({ row }) => (
       <GroupedRouteNetworkRangeCell
@@ -48,7 +48,7 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     accessorFn: (r) => r.groups?.length,
     header: ({ column }) => {
       return (
-        <DataTableHeader column={column}>Distribution Groups</DataTableHeader>
+        <DataTableHeader column={column} labelId="routes.distributionGroups" />
       );
     },
     cell: ({ row }) => <RouteDistributionGroupsCell route={row.original} />,
@@ -59,9 +59,11 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     enableSorting: false,
     meta: { className: ENABLED_COLUMN_CLASS.xl },
     header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false}>
-        Active
-      </DataTableHeader>
+      <DataTableHeader
+        column={column}
+        sorting={false}
+        labelId="common.active"
+      />
     ),
     cell: ({ row }) => <PeerRouteActiveCell route={row.original} />,
   },

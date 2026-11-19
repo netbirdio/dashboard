@@ -415,9 +415,9 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
 
   const usageOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: t("common.all") },
-      { value: true, label: t("groups.used") },
-      { value: false, label: t("groups.unused") },
+      { value: undefined, id: "all", label: t("common.all") },
+      { value: true, id: "used", label: t("groups.used") },
+      { value: false, id: "unused", label: t("groups.unused") },
     ],
     [t],
   );

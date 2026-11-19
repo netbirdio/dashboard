@@ -63,7 +63,7 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
     id: "name",
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Resource</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.resource" />;
     },
     cell: ({ row }) => {
       return <ResourceNameCell resource={row.original} />;
@@ -79,7 +79,7 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
     id: "address",
     accessorKey: "address",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Address</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.address" />;
     },
     cell: ({ row }) => {
       return <ResourceAddressCell resource={row.original} />;
@@ -92,9 +92,11 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
     meta: { className: ENABLED_COLUMN_CLASS.xl },
     header: ({ column }) => {
       return (
-        <DataTableHeader column={column} sorting={false}>
-          Active
-        </DataTableHeader>
+        <DataTableHeader
+          column={column}
+          sorting={false}
+          labelId="common.active"
+        />
       );
     },
     cell: ({ row }) => <ResourceEnabledCell resource={row.original} />,
@@ -106,7 +108,7 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
       return groups.map((group) => group.name).join(", ");
     },
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Groups</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.groups" />;
     },
     cell: ({ row }) => {
       return <ResourceGroupCell resource={row.original} />;
@@ -124,7 +126,7 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
     id: "policies",
     accessorKey: "id",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Policies</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.policies" />;
     },
     cell: ({ row }) => {
       return <ResourcePolicyCell resource={row.original} />;
@@ -210,27 +212,42 @@ export default function ResourcesTable({
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Active", dotClass: "bg-green-500" },
-      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+      {
+        value: undefined,
+        id: "all",
+        label: t("common.all"),
+        dotClass: "bg-nb-gray-500",
+      },
+      {
+        value: true,
+        id: "active",
+        label: t("common.active"),
+        dotClass: "bg-green-500",
+      },
+      {
+        value: false,
+        id: "inactive",
+        label: t("common.inactive"),
+        dotClass: "bg-nb-gray-700",
+      },
     ],
-    [],
+    [t],
   );
 
   const exposedOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All" },
-      { value: true, label: "Exposed" },
-      { value: false, label: "Not Exposed" },
+      { value: undefined, id: "all", label: t("common.all") },
+      { value: true, id: "exposed", label: t("networks.exposed") },
+      { value: false, id: "not-exposed", label: t("networks.notExposed") },
     ],
-    [],
+    [t],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "enabled",
-        label: "Status",
+        label: t("common.status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -244,7 +261,7 @@ export default function ResourcesTable({
       },
       {
         id: "group_names",
-        label: "Groups",
+        label: t("common.groups"),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -253,11 +270,11 @@ export default function ResourcesTable({
             groups={tableGroups}
           />
         ),
-        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+        formatChip: (v) => formatGroupsChip(v as string[] | undefined, t),
       },
       {
         id: "exposed",
-        label: "Service",
+        label: t("networks.service"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -270,7 +287,7 @@ export default function ResourcesTable({
           formatRadioChip(v as boolean | undefined, exposedOptions),
       },
     ],
-    [statusOptions, exposedOptions, tableGroups],
+    [statusOptions, exposedOptions, tableGroups, t],
   );
 
   const removeResourceParam = React.useCallback(() => {

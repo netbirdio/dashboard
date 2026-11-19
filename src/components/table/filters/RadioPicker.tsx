@@ -10,6 +10,8 @@ import * as React from "react";
 export type RadioOption<V> = {
   value: V;
   label: string;
+  // Keep the test selector and React key stable when the label is localized.
+  id?: string;
   dotClass?: string;
 };
 
@@ -20,22 +22,16 @@ type Props<V> = {
   options: RadioOption<V | undefined>[];
 };
 
-export function RadioPicker<V>({
-  value,
-  onChange,
-  close,
-  options,
-}: Props<V>) {
+export function RadioPicker<V>({ value, onChange, close, options }: Props<V>) {
   return (
     <div className={"flex flex-col gap-0.5"}>
       {options.map((option) => {
         const selected = value === option.value;
+        const id = option.id ?? option.label.replace(/\s+/g, "-").toLowerCase();
         return (
           <button
-            key={option.label}
-            data-testid={`radio-option-${option.label
-              .replace(/\s+/g, "-")
-              .toLowerCase()}`}
+            key={option.id ?? option.label}
+            data-testid={`radio-option-${id}`}
             className={cn(
               "flex items-center gap-2.5 px-2 py-1.5 rounded text-sm transition-colors",
               "text-nb-gray-300 hover:bg-nb-gray-900 hover:text-white",
@@ -55,10 +51,7 @@ export function RadioPicker<V>({
             />
             {option.dotClass && (
               <span
-                className={cn(
-                  "h-2 w-2 rounded-full shrink-0",
-                  option.dotClass,
-                )}
+                className={cn("h-2 w-2 rounded-full shrink-0", option.dotClass)}
               />
             )}
             {option.label}

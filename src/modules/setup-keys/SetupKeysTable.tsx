@@ -48,7 +48,7 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name & Key</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="setupKeys.nameAndKey" />;
     },
     sortingFn: "text",
     cell: ({ row }) => (
@@ -69,7 +69,7 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
   {
     accessorKey: "usage_limit",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Usage</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="setupKeys.usage" />;
     },
     cell: ({ row }) => (
       <SetupKeyUsageCell
@@ -87,11 +87,11 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
   {
     accessorKey: "last_used",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Last used</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="tables.lastUsed" />;
     },
     sortingFn: "datetime",
     cell: ({ row }) => (
-      <LastTimeRow date={row.original.last_used} text={"Last used on"} />
+      <LastTimeRow date={row.original.last_used} textId="tables.lastUsedOn" />
     ),
   },
   {
@@ -108,7 +108,7 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
     accessorFn: (item) => item.auto_groups?.length,
     id: "groups",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Groups</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.groups" />;
     },
     cell: ({ row }) => <SetupKeyGroupsCell setupKey={row.original} />,
   },
@@ -116,7 +116,7 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
   {
     accessorKey: "expires",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Expires</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="tables.expires" />;
     },
     cell: ({ row }) => {
       let expires = dayjs(row.original.expires);
@@ -183,10 +183,8 @@ export default function SetupKeysTable({
   // only offers groups that actually appear in the table.
   const tableGroups = useMemo<Group[]>(
     () =>
-      (uniqBy(
-        setupKeys?.flatMap((k) => k.groups || []),
-        "name",
-      ) as Group[]) || [],
+      (uniqBy(setupKeys?.flatMap((k) => k.groups || []), "name") as Group[]) ||
+      [],
     [setupKeys],
   );
 
@@ -195,27 +193,42 @@ export default function SetupKeysTable({
   // re-route it through the consolidated filter UI.
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Valid", dotClass: "bg-green-500" },
-      { value: false, label: "Expired", dotClass: "bg-nb-gray-700" },
+      {
+        value: undefined,
+        id: "all",
+        label: t("common.all"),
+        dotClass: "bg-nb-gray-500",
+      },
+      {
+        value: true,
+        id: "valid",
+        label: t("common.valid"),
+        dotClass: "bg-green-500",
+      },
+      {
+        value: false,
+        id: "expired",
+        label: t("common.expired"),
+        dotClass: "bg-nb-gray-700",
+      },
     ],
-    [],
+    [t],
   );
 
   const usageOptions = useMemo<RadioOption<string | undefined>[]>(
     () => [
-      { value: undefined, label: "All" },
-      { value: "one-off", label: "One-off" },
-      { value: "reusable", label: "Reusable" },
+      { value: undefined, id: "all", label: t("common.all") },
+      { value: "one-off", id: "one-off", label: t("setupKeys.oneOff") },
+      { value: "reusable", id: "reusable", label: t("setupKeys.reusable") },
     ],
-    [],
+    [t],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "valid",
-        label: "Status",
+        label: t("common.status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -229,7 +242,7 @@ export default function SetupKeysTable({
       },
       {
         id: "type",
-        label: "Usage",
+        label: t("setupKeys.usage"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as string | undefined}
@@ -243,7 +256,7 @@ export default function SetupKeysTable({
       },
       {
         id: "group_names",
-        label: "Groups",
+        label: t("common.groups"),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -252,10 +265,10 @@ export default function SetupKeysTable({
             groups={tableGroups}
           />
         ),
-        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+        formatChip: (v) => formatGroupsChip(v as string[] | undefined, t),
       },
     ],
-    [statusOptions, usageOptions, tableGroups],
+    [statusOptions, usageOptions, tableGroups, t],
   );
 
   return (
@@ -278,7 +291,7 @@ export default function SetupKeysTable({
         showResetFilterButton={false}
         columns={SetupKeysTableColumns}
         data={setupKeys}
-        searchPlaceholder={"Search by name, type or group..."}
+        searchPlaceholder={t("setupKeys.searchKeys")}
         columnVisibility={{
           valid: false,
           group_strings: false,

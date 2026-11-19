@@ -76,17 +76,13 @@ export function UsersPicker({ value, onChange, close, options }: Props) {
 
       {options.length === 0 && !search && (
         <div className={"max-w-xs mx-auto"}>
-          <DropdownInfoText>
-            {"No users available to select."}
-          </DropdownInfoText>
+          <DropdownInfoText>{"No users available to select."}</DropdownInfoText>
         </div>
       )}
 
       {filteredItems.length === 0 && search !== "" && (
         <div className={"px-10"}>
-          <DropdownInfoText>
-            There are no users matching your search.
-          </DropdownInfoText>
+          <DropdownInfoText>{t("tables.noMatchingUsers")}</DropdownInfoText>
         </div>
       )}
 
@@ -107,8 +103,7 @@ export function UsersPicker({ value, onChange, close, options }: Props) {
           renderItem={(user) => {
             const isSystemUser = user.email === "NetBird";
             const isSelected =
-              value === user.email ||
-              (user.id === ALL_USERS_ID && !value);
+              value === user.email || (user.id === ALL_USERS_ID && !value);
             return (
               <div
                 className={"flex items-center gap-2 w-full"}
@@ -131,9 +126,15 @@ export function UsersPicker({ value, onChange, close, options }: Props) {
                 )}
 
                 <div className={"flex flex-col text-xs w-full min-w-0"}>
-                  <span className={"text-nb-gray-200 flex items-center gap-1.5"}>
+                  <span
+                    className={"text-nb-gray-200 flex items-center gap-1.5"}
+                  >
                     <TextWithTooltip
-                      text={isSystemUser ? "System" : user?.name || user?.id}
+                      text={
+                        isSystemUser
+                          ? t("tables.systemUser")
+                          : user?.name || user?.id
+                      }
                       maxChars={22}
                     />
                   </span>

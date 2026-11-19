@@ -13,6 +13,25 @@ test("switches the dashboard language and remembers the preference", async ({
       page.getByRole("heading", { name: /分组/ }).first(),
     ).toBeVisible();
 
+    await expect(page.getByPlaceholder("按分组名称搜索…")).toBeVisible();
+    await expect(
+      page.getByRole("columnheader", { name: "名称" }),
+    ).toBeVisible();
+    await page.getByTestId("table-filters-button").click();
+    await page.getByTestId("table-filter-in_use").click();
+    await page.getByTestId("radio-option-used").click();
+    await expect(
+      page.getByRole("button", { name: /使用情况：.*使用中/ }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "界面语言" }).click();
+    await page.getByRole("menuitemradio", { name: "English" }).click();
+    await expect(
+      page.getByRole("button", { name: "Usage: Used" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Remove Usage filter" }).click();
+    await page.getByRole("button", { name: "Interface language" }).click();
+    await page.getByRole("menuitemradio", { name: "简体中文" }).click();
+
     await page.reload();
     await expect(page.getByRole("button", { name: "界面语言" })).toBeVisible();
     await page.getByRole("button", { name: "界面语言" }).click();
