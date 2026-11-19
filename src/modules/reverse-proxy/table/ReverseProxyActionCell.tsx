@@ -11,6 +11,7 @@ import * as React from "react";
 import { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { ReverseProxy } from "@/interfaces/ReverseProxy";
 
 type Props = {
@@ -20,6 +21,7 @@ type Props = {
 export default function ReverseProxyActionCell({
   reverseProxy,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { openModal, handleDelete, handleToggle } = useReverseProxies();
   const [open, setOpen] = useState(false);
@@ -51,7 +53,7 @@ export default function ReverseProxyActionCell({
           >
             <div className={"flex gap-3 items-center"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
-              Edit
+              {t("common.edit")}
             </div>
           </DropdownMenuItem>
 
@@ -66,7 +68,7 @@ export default function ReverseProxyActionCell({
           >
             <div className={"flex gap-3 items-center"}>
               <PowerIcon size={14} className={"shrink-0"} />
-              {reverseProxy.enabled ? "Disable" : "Enable"}
+              {reverseProxy.enabled ? t("common.disable") : t("common.enable")}
             </div>
           </DropdownMenuItem>
 
@@ -83,7 +85,7 @@ export default function ReverseProxyActionCell({
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {t("common.delete")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

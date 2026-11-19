@@ -10,12 +10,13 @@ import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
-import Steps from "@components/Steps";
 import Separator from "@components/Separator";
+import Steps from "@components/Steps";
 import useFetchApi from "@utils/api";
 import { sortBy } from "lodash";
 import { DownloadIcon, MonitorSmartphoneIcon } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { usePlaceholderUpgrade } from "@/modules/control-center/hooks/useDraftPeerUpgrade";
@@ -49,6 +50,7 @@ const StepperContent = ({
   name: string;
   onClose: () => void;
 }) => {
+  const translate = useTranslations();
   const { setInstallModal } = useDraftMode();
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const nodes = useStructuralNodes();
@@ -85,8 +87,10 @@ const StepperContent = ({
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
         icon={<MonitorSmartphoneIcon size={18} />}
-        title={`Set up “${name}”`}
-        description={"Install NetBird and assign the registered peer."}
+        title={translate("controlCenter.setUp", { name: name })}
+        description={translate(
+          "controlCenter.installNetBirdAndAssignTheRegisteredPeer",
+        )}
         color={"netbird"}
       />
       <Separator />
@@ -94,7 +98,7 @@ const StepperContent = ({
         <Steps>
           <Steps.Step step={1}>
             <p className={"text-sm font-normal"}>
-              Install NetBird on the device. Skip if it is already installed.
+              {translate("controlCenter.installNetBirdOnTheDeviceSkipIfIt")}
             </p>
             <div className={"flex gap-4"}>
               <Button
@@ -109,13 +113,13 @@ const StepperContent = ({
                 }
               >
                 <DownloadIcon size={14} />
-                Install NetBird
+                {translate("controlCenter.installNetBird")}
               </Button>
             </div>
           </Steps.Step>
           <Steps.Step step={2} line={false}>
             <p className={"text-sm font-normal"}>
-              Assign the peer this device registered as
+              {translate("controlCenter.assignThePeerThisDeviceRegisteredAs")}
             </p>
             <SelectDropdown
               variant={"secondary"}
@@ -123,8 +127,8 @@ const StepperContent = ({
               onChange={setSelected}
               options={options}
               showSearch={true}
-              searchPlaceholder={"Search peers..."}
-              placeholder={"Select a peer..."}
+              searchPlaceholder={translate("controlCenter.searchPeer")}
+              placeholder={translate("controlCenter.selectPeer")}
               maxHeight={280}
             />
           </Steps.Step>
@@ -135,7 +139,7 @@ const StepperContent = ({
       <ModalFooter className={"items-center"} separator={false}>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{translate("common.cancel")}</Button>
           </ModalClose>
           <Button
             variant={"primary"}
@@ -143,7 +147,7 @@ const StepperContent = ({
             onClick={apply}
             data-testid={"cc-user-device-select"}
           >
-            Assign
+            {translate("common.assign")}
           </Button>
         </div>
       </ModalFooter>

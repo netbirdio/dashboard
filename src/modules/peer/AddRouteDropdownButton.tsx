@@ -12,10 +12,12 @@ import React, { useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePeer } from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import RouteAddRoutingPeerModal from "@/modules/routes/RouteAddRoutingPeerModal";
 import { RouteModalContent } from "@/modules/routes/RouteModal";
 
 export default function AddRouteDropdownButton() {
+  const t = useTranslations();
   const [modal, setModal] = useState(false);
   const [existingNetworkModal, setExistingNetworkModal] = useState(false);
   const { peer } = usePeer();
@@ -44,7 +46,7 @@ export default function AddRouteDropdownButton() {
           }}
         >
           <Button variant={"primary"}>
-            Add Route
+            {t("common.addRoute")}
             <ChevronDown size={16} />
           </Button>
         </DropdownMenuTrigger>
@@ -61,11 +63,9 @@ export default function AddRouteDropdownButton() {
                 size={"small"}
               />
               <div className={"flex flex-col text-left"}>
-                <div className={"text-left text-nb-gray-100 dark:text-white"}>
-                  New Network Route
-                </div>
+                <div className={"text-left text-nb-gray-100 dark:text-white"}>{t("peer.newNetworkRoute")}</div>
                 <div className={"text-xs"}>
-                  Create a new network route with this peer
+                  {t("peer.newNetworkRouteDesc")}
                 </div>
               </div>
             </div>
@@ -85,9 +85,9 @@ export default function AddRouteDropdownButton() {
                 size={"small"}
               />
               <div className={"flex flex-col text-left"}>
-                <div className={"text-left text-nb-gray-100 dark:text-white"}>Existing Network</div>
+                <div className={"text-left text-nb-gray-100 dark:text-white"}>{t("peer.existingNetwork")}</div>
                 <div className={"text-xs"}>
-                  Add this peer to an existing network
+                  {t("peer.existingNetworkDesc")}
                 </div>
               </div>
             </div>

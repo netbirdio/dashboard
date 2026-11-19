@@ -4,6 +4,7 @@ import { cva, VariantProps } from "class-variance-authority";
 import { ArrowRightIcon, XIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 const variants = cva(
   {},
@@ -39,6 +40,8 @@ const variants = cva(
 export type AnnouncementVariant = VariantProps<typeof variants>;
 
 export const AnnouncementBanner = () => {
+  const t = useTranslations();
+
   const { closeAnnouncement, announcements, setBannerHeight } =
     useAnnouncement();
   const announcement = announcements?.find((a) => a.isOpen);
@@ -58,6 +61,14 @@ export const AnnouncementBanner = () => {
     return () => observer.disconnect();
   }, [announcement, setBannerHeight]);
 
+  const tag = announcement?.tagId ? t(announcement.tagId) : announcement?.tag;
+  const text = announcement?.textId
+    ? t(announcement.textId)
+    : announcement?.text;
+  const linkText = announcement?.linkTextId
+    ? t(announcement.linkTextId)
+    : announcement?.linkText || t("common.learnMore");
+
   return announcement ? (
     <div
       ref={ref}
@@ -67,18 +78,18 @@ export const AnnouncementBanner = () => {
       )}
     >
       <div className={"flex items-center gap-2 leading-tight"}>
-        {announcement.tag && (
+        {tag && (
           <div
             className={cn(
               "shrink-0 bg-nb-gray-200/10 backdrop-blur text-nb-gray-100 font-medium tracking-wide uppercase text-[10px] py-2.5 px-2 rounded-md leading-[0]",
               variants({ tagBadge: announcement.variant }),
             )}
           >
-            {announcement.tag}
+            {tag}
           </div>
         )}
         <div>
-          <span className={"mr-2"}>{announcement.text}</span>
+          <span className={"mr-2"}>{text}</span>
           {announcement.link && (
             <InlineLink
               href={announcement.link || "#"}
@@ -88,7 +99,7 @@ export const AnnouncementBanner = () => {
                 variants({ inlineLink: announcement.variant }),
               )}
             >
-              {announcement.linkText || "Learn more"}
+              {linkText}
               <ArrowRightIcon size={14} />
             </InlineLink>
           )}

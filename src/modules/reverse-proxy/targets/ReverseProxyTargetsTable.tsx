@@ -3,6 +3,7 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import { ENABLED_COLUMN_CLASS } from "@components/table/enabledColumnClass";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import React, { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { ReverseProxy, ReverseProxyTarget } from "@/interfaces/ReverseProxy";
 import ReverseProxyArrowCell from "@/modules/reverse-proxy/table/ReverseProxyArrowCell";
 import ReverseProxyDestinationCell from "@/modules/reverse-proxy/table/ReverseProxyDestinationCell";
@@ -16,14 +17,14 @@ const ReverseProxyTargetColumns: ColumnDef<ReverseProxyTarget>[] = [
   {
     accessorKey: "target_type",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Resource</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.resource" />;
     },
     cell: ({ row }) => <ReverseProxyTargetDevice target={row.original} />,
   },
   {
     accessorKey: "path",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Location</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.location" />;
     },
     cell: ({ row }) => <ReverseProxyTargetPath target={row.original} />,
   },
@@ -37,7 +38,7 @@ const ReverseProxyTargetColumns: ColumnDef<ReverseProxyTarget>[] = [
   {
     accessorKey: "host",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Destination</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.destination" />;
     },
     cell: ({ row }) => <ReverseProxyDestinationCell target={row.original} />,
   },
@@ -47,9 +48,11 @@ const ReverseProxyTargetColumns: ColumnDef<ReverseProxyTarget>[] = [
     meta: { className: ENABLED_COLUMN_CLASS.xl },
     header: ({ column }) => {
       return (
-        <DataTableHeader column={column} sorting={false}>
-          Active
-        </DataTableHeader>
+        <DataTableHeader
+          column={column}
+          sorting={false}
+          labelId="common.active"
+        />
       );
     },
     cell: ({ row }) => <ReverseProxyTargetActiveCell target={row.original} />,
@@ -66,6 +69,7 @@ type Props = {
 };
 
 export default function ReverseProxyTargetsTable({ reverseProxy }: Props) {
+  const t = useTranslations();
   const [sorting, setSorting] = useState<SortingState>([]);
 
   return (
@@ -80,7 +84,7 @@ export default function ReverseProxyTargetsTable({ reverseProxy }: Props) {
         tableCellClassName={"py-0"}
         className={"bg-nb-gray-960 py-2"}
         inset={true}
-        text={"Targets"}
+        text={t("reverseProxy.targetsText")}
         initialPageSize={reverseProxy?.targets?.length}
         manualPagination={true}
         sorting={sorting}

@@ -11,6 +11,7 @@ import { trim } from "lodash";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   initialName: string;
@@ -24,6 +25,7 @@ export const EditGroupNameModal = ({
   open,
   onSuccess,
 }: Props) => {
+  const t = useTranslations();
   const [name, setName] = useState(initialName);
   const { groups } = useGroups();
   const [error, setError] = useState("");
@@ -39,7 +41,7 @@ export const EditGroupNameModal = ({
     const newName = e.target.value;
     const findGroup = groups?.find((g) => g.name === newName);
     if (findGroup) {
-      setError("This group already exists. Please choose another name.");
+      setError(t("groups.nameAlreadyExists"));
     } else {
       setError("");
     }
@@ -50,8 +52,8 @@ export const EditGroupNameModal = ({
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent maxWidthClass={"max-w-md"}>
         <ModalHeader
-          title={"Rename Group"}
-          description={"Set an easily identifiable name for your group."}
+          title={t("groups.rename")}
+          description={t("groups.renameDescription")}
           color={"blue"}
         />
 
@@ -59,7 +61,7 @@ export const EditGroupNameModal = ({
           <div>
             <Input
               data-testid="group-name-input"
-              placeholder={"e.g., Developers"}
+              placeholder={t("groups.namePlaceholder")}
               value={name}
               onChange={handleNameChange}
               error={error}
@@ -71,7 +73,7 @@ export const EditGroupNameModal = ({
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
               <Button variant={"secondary"} className={"w-full"}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </ModalClose>
 
@@ -83,7 +85,7 @@ export const EditGroupNameModal = ({
               disabled={isDisabled}
               type={"submit"}
             >
-              Save
+              {t("common.save")}
             </Button>
           </div>
         </ModalFooter>

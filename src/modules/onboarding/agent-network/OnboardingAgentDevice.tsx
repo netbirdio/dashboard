@@ -4,6 +4,7 @@ import { Modal, ModalContent } from "@components/modal/Modal";
 import { ArrowRightIcon, CheckCircle2Icon, DownloadIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import type { Peer } from "@/interfaces/Peer";
 import { WaitingForDevice } from "@/modules/onboarding/OnboardingDevices";
 import { SetupModalContent } from "@/modules/setup-netbird-modal/SetupModal";
@@ -22,6 +23,7 @@ type Props = {
 // NetBird overlay, so the operator's device must run the client and be
 // authenticated before anything else works.
 export const OnboardingAgentDevice = ({ onBack, onNext, device }: Props) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
 
   // Close the install modal automatically once the device shows up so the
@@ -33,15 +35,17 @@ export const OnboardingAgentDevice = ({ onBack, onNext, device }: Props) => {
   return (
     <div className={"relative flex flex-col h-full gap-4"}>
       <div>
-        <h1 className={"text-xl text-center"}>Connect your device</h1>
+        <h1 className={"text-xl text-center"}>
+          {t("onboarding.connectYourDevice")}
+        </h1>
         <div
           className={
             "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
           }
         >
-          {`Agent Network endpoints are private and reachable only over the
-          NetBird overlay. Install the client and sign in to join the network
-          with keyless, encrypted access.`}
+          {t(
+            "onboarding.agentNetworkEndpointsArePrivateAndReachableOnlyOverThe",
+          )}
         </div>
       </div>
 
@@ -55,36 +59,41 @@ export const OnboardingAgentDevice = ({ onBack, onNext, device }: Props) => {
             <DeviceCard device={device} className={"justify-center"} />
             <div className={"flex items-center gap-2 text-sm"}>
               <CheckCircle2Icon size={16} className={"text-green-500"} />
-              <span>Your device is connected to the network.</span>
+              <span>{t("onboarding.yourDeviceIsConnectedToTheNetwork")}</span>
             </div>
           </div>
         ) : (
-          <WaitingForDevice text={"Waiting for your device to connect"} />
+          <WaitingForDevice
+            text={t("onboarding.waitingForYourDeviceToConnect")}
+          />
         )}
       </div>
 
       <div className={"flex items-center justify-center mt-4 gap-3"}>
         {onBack && (
           <Button variant={"secondary"} onClick={onBack}>
-            Go Back
+            {t("onboarding.goBack")}
           </Button>
         )}
         {device ? (
           <Button variant={"primary"} onClick={onNext}>
-            Continue
+            {t("common.continue")}
             <ArrowRightIcon size={16} />
           </Button>
         ) : (
           <Button variant={"primary"} onClick={() => setOpen(true)}>
             <DownloadIcon size={16} />
-            Install NetBird
+            {t("onboarding.installNetBird")}
           </Button>
         )}
       </div>
 
       <Modal open={open} onOpenChange={setOpen}>
         <ModalContent className={"!z-[70]"}>
-          <SetupModalContent title={"Install NetBird"} isUserDevice={true} />
+          <SetupModalContent
+            title={t("onboarding.installNetBird")}
+            isUserDevice={true}
+          />
         </ModalContent>
       </Modal>
     </div>

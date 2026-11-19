@@ -34,14 +34,15 @@ import {
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
+import { idpIcon } from "@/assets/icons/IdentityProviderIcons";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   SSOIdentityProvider,
   SSOIdentityProviderOptions,
   SSOIdentityProviderRequest,
   SSOIdentityProviderType,
 } from "@/interfaces/IdentityProvider";
-import { idpIcon } from "@/assets/icons/IdentityProviderIcons";
 
 const issuerHints: Partial<Record<SSOIdentityProviderType, string>> = {
   keycloak: "https://keycloak.example.com/realms/{REALM}",
@@ -72,8 +73,6 @@ type Props = {
   provider?: SSOIdentityProvider | null;
 };
 
-const copyMessage = "Redirect URL was copied to your clipboard!";
-const logoutCopyMessage = "Logout URL was copied to your clipboard!";
 const config = loadConfig();
 const redirectUrl = `${config.apiOrigin}/oauth2/callback`;
 const logoutUrl = `${config.apiOrigin}/oauth2/logout/callback`;
@@ -83,6 +82,7 @@ export default function IdentityProviderModal({
   onClose,
   provider,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
   const isEditing = !!provider;
@@ -118,7 +118,15 @@ export default function IdentityProviderModal({
       return true;
 
     return false;
-  }, [name, issuer, clientId, clientSecret, isEditing, clientIdChanged, requiresIssuer]);
+  }, [
+    name,
+    issuer,
+    clientId,
+    clientSecret,
+    isEditing,
+    clientIdChanged,
+    requiresIssuer,
+  ]);
 
   const submit = () => {
     const payload: SSOIdentityProviderRequest = {
@@ -131,23 +139,23 @@ export default function IdentityProviderModal({
 
     if (isEditing) {
       notify({
-        title: "Update Identity Provider",
-        description: "Identity provider was updated successfully.",
+        title: t("settings.idpUpdateTitle"),
+        description: t("settings.idpUpdated"),
         promise: updateRequest.put(payload).then(() => {
           mutate("/identity-providers");
           onClose();
         }),
-        loadingMessage: "Updating identity provider...",
+        loadingMessage: t("settings.idpUpdating"),
       });
     } else {
       notify({
-        title: "Create Identity Provider",
-        description: "Identity provider was created successfully.",
+        title: t("settings.idpCreateTitle"),
+        description: t("settings.idpCreated"),
         promise: createRequest.post(payload).then(() => {
           mutate("/identity-providers");
           onClose();
         }),
-        loadingMessage: "Creating identity provider...",
+        loadingMessage: t("settings.idpCreating"),
       });
     }
   };
@@ -162,13 +170,11 @@ export default function IdentityProviderModal({
         <ModalContent maxWidthClass={"max-w-xl"}>
           <ModalHeader
             icon={<FingerprintIcon size={20} />}
-            title={
-              isEditing ? "Edit Identity Provider" : "Add Identity Provider"
-            }
+            title={isEditing ? t("settings.idpEdit") : t("settings.idpAdd")}
             description={
               isEditing
-                ? "Update the identity provider configuration"
-                : "Configure a new identity provider for authentication"
+                ? t("settings.idpEditDescription")
+                : t("settings.idpAddDescription")
             }
             color={"netbird"}
           />
@@ -177,8 +183,8 @@ export default function IdentityProviderModal({
 
           <div className={"px-8 py-6 flex flex-col gap-6"}>
             <div>
-              <Label>Provider Type</Label>
-              <HelpText>Select the type of identity provider</HelpText>
+              <Label>{t("settings.idpProviderType")}</Label>
+              <HelpText>{t("settings.idpProviderTypeHelp")}</HelpText>
               <Select
                 value={type}
                 onValueChange={(v) => {
@@ -191,7 +197,7 @@ export default function IdentityProviderModal({
                 disabled={isEditing}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select provider type..." />
+                  <SelectValue placeholder={t("settings.idpSelectType")} />
                 </SelectTrigger>
                 <SelectContent>
                   {SSOIdentityProviderOptions.map((idp) => (
@@ -207,10 +213,10 @@ export default function IdentityProviderModal({
             </div>
 
             <div>
-              <Label>Name</Label>
-              <HelpText>A friendly name to identify this provider</HelpText>
+              <Label>{t("common.name")}</Label>
+              <HelpText>{t("settings.idpNameHelp")}</HelpText>
               <Input
-                placeholder={"e.g., Corporate SSO"}
+                placeholder={t("settings.idpNamePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 customPrefix={
@@ -221,8 +227,8 @@ export default function IdentityProviderModal({
 
             {requiresIssuer && (
               <div>
-                <Label>Issuer URL</Label>
-                <HelpText>The OIDC issuer URL for this provider</HelpText>
+                <Label>{t("settings.idpIssuerUrl")}</Label>
+                <HelpText>{t("settings.idpIssuerUrlHelp")}</HelpText>
                 <Input
                   placeholder={issuerHints[type] ?? "https://login.example.com"}
                   value={issuer}
@@ -235,10 +241,10 @@ export default function IdentityProviderModal({
             )}
 
             <div>
-              <Label>Client ID</Label>
-              <HelpText>The OAuth2 confidential client ID</HelpText>
+              <Label>{t("settings.idpClientId")}</Label>
+              <HelpText>{t("settings.idpClientIdHelp")}</HelpText>
               <Input
-                placeholder={"Enter client ID"}
+                placeholder={t("settings.idpClientIdPlaceholder")}
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
                 customPrefix={<IdCard size={16} className="text-nb-gray-300" />}
@@ -246,17 +252,19 @@ export default function IdentityProviderModal({
             </div>
 
             <div>
-              <Label>Client Secret</Label>
+              <Label>{t("settings.idpClientSecret")}</Label>
               <HelpText>
                 {isEditing
                   ? clientIdChanged
-                    ? "Required when client ID is changed"
-                    : "Leave empty to keep the existing secret, or enter a new one"
-                  : "The OAuth2 client secret"}
+                    ? t("settings.idpSecretRequired")
+                    : t("settings.idpSecretKeep")
+                  : t("settings.idpSecretHelp")}
               </HelpText>
               <Input
                 type="password"
-                placeholder={isEditing ? "••••••••" : "Enter client secret"}
+                placeholder={
+                  isEditing ? "••••••••" : t("settings.idpSecretPlaceholder")
+                }
                 value={clientSecret}
                 onChange={(e) => setClientSecret(e.target.value)}
                 customPrefix={
@@ -269,33 +277,43 @@ export default function IdentityProviderModal({
 
             <div className={"flex flex-col gap-3"}>
               <div>
-                <Label>Endpoint URLs</Label>
+                <Label>{t("settings.endpointUrls")}</Label>
                 <HelpText margin={false}>
-                  Add these to your identity provider configuration
+                  {t("settings.endpointUrlsHelp")}
                 </HelpText>
               </div>
 
               <div>
-                <Label className={"text-xs mb-1"}>Redirect / Callback</Label>
-                <Code codeToCopy={redirectUrl} message={copyMessage}>
+                <Label className={"text-xs mb-1"}>
+                  {t("settings.redirectCallback")}
+                </Label>
+                <Code
+                  codeToCopy={redirectUrl}
+                  message={t("settings.redirectCopied")}
+                >
                   <Code.Line>{redirectUrl}</Code.Line>
                 </Code>
               </div>
 
               <div>
-                <Label className={"text-xs mb-1"}>Logout</Label>
-                <Code codeToCopy={logoutUrl} message={logoutCopyMessage}>
+                <Label className={"text-xs mb-1"}>
+                  {t("settings.logoutLabel")}
+                </Label>
+                <Code
+                  codeToCopy={logoutUrl}
+                  message={t("settings.logoutCopied")}
+                >
                   <Code.Line>{logoutUrl}</Code.Line>
                 </Code>
                 <HelpText margin={false} className={"mt-1.5"}>
-                  Not all identity providers support logout.{" "}
+                  {t("settings.notAllProvidersLogout")}{" "}
                   <InlineLink
                     href={
                       "https://docs.netbird.io/selfhosted/identity-providers"
                     }
                     target={"_blank"}
                   >
-                    Learn more
+                    {t("common.learnMore")}
                   </InlineLink>
                 </HelpText>
               </div>
@@ -305,7 +323,7 @@ export default function IdentityProviderModal({
           <ModalFooter className={"items-center"}>
             <div className={"flex gap-3 w-full justify-end"}>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{t("common.cancel")}</Button>
               </ModalClose>
 
               <Button
@@ -321,12 +339,12 @@ export default function IdentityProviderModal({
                 {isEditing ? (
                   <>
                     <SaveIcon size={16} />
-                    Save Changes
+                    {t("common.saveChanges")}
                   </>
                 ) : (
                   <>
                     <PlusCircle size={16} />
-                    Add Provider
+                    {t("settings.idpAddButton")}
                   </>
                 )}
               </Button>

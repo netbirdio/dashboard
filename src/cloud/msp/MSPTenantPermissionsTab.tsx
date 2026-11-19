@@ -13,6 +13,7 @@ import {
 import * as React from "react";
 import { TenantGroup } from "@/cloud/msp/interfaces/Tenant";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Role } from "@/interfaces/User";
 import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
@@ -31,6 +32,7 @@ export const MSPTenantPermissionsTab = ({
   tenantGroups,
   setTenantGroups,
 }: Props) => {
+  const t = useTranslations();
   const { users } = useUsers();
 
   const handleGroupRemove = (group: Group) => {
@@ -56,9 +58,9 @@ export const MSPTenantPermissionsTab = ({
     <div>
       <div className={"flex gap-4 justify-between w-full items-start"}>
         <div>
-          <Label>Permissions (required)</Label>
+          <Label>{t("msp.permissionsRequired")}</Label>
           <HelpText>
-            Add user groups to grant them access to this tenant.
+            {t("msp.addUserGroupsToGrantThemAccessToThisTenant")}
           </HelpText>
         </div>
         <div>
@@ -71,7 +73,7 @@ export const MSPTenantPermissionsTab = ({
                 className={"pl-3"}
               >
                 <PlusIcon size={14} />
-                Add Group
+                {t("common.addGroup")}
               </Button>
             }
             onChange={onGroupsChange}
@@ -124,6 +126,7 @@ const ListItem = ({
   onChange,
   role = Role.Admin,
 }: ListItemProps) => {
+  const t = useTranslations();
   const { users } = useUsers();
   const selectedRole = UserRoles.find((r) => r.value === role) || UserRoles[0];
 
@@ -160,7 +163,7 @@ const ListItem = ({
               stopPropagation={false}
             >
               <selectedRole.icon size={14} width={14} />
-              {selectedRole?.name}
+              {t(selectedRole.nameId)}
               <ChevronDownIcon size={14} />
             </Button>
           }

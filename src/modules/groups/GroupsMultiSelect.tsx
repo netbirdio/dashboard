@@ -8,6 +8,7 @@ import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { GroupUsage } from "@/modules/groups/useGroupsUsage";
 
@@ -20,6 +21,7 @@ export const GroupsMultiSelect = ({
   selectedGroups = [],
   onCanceled,
 }: Readonly<Props>) => {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
   const { deleteGroupDropdownOption } = useGroups();
@@ -31,12 +33,13 @@ export const GroupsMultiSelect = ({
     if (!permission.groups.delete || groupCount === 0) return;
 
     const choice = await confirm({
-      title: `Delete ${groupCount} ${groupCount > 1 ? "groups" : "group"}?`,
-      description: `Are you sure you want to delete ${
-        groupCount > 1 ? "these groups" : "this group"
-      }? This action cannot be undone.`,
-      confirmText: "Delete All",
-      cancelText: "Cancel",
+      title: t("groups.deleteCountTitle", { count: groupCount }),
+      description:
+        groupCount > 1
+          ? t("groups.deleteTheseDescription")
+          : t("groups.deleteThisDescription"),
+      confirmText: t("groups.deleteAll"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
@@ -64,46 +67,55 @@ export const GroupsMultiSelect = ({
       if (failures.length === 0) return;
 
       const firstError = failures[0].reason as ErrorResponse | undefined;
-      const failureMessage = firstError?.message ?? "Something went wrong...";
+      const failureMessage =
+        firstError?.message ?? t("groups.somethingWentWrong");
       return Promise.reject({
         code: firstError?.code ?? 418,
         requestId: firstError?.requestId,
         message:
           failures.length === groupCount
             ? failureMessage
-            : `${failures.length} of ${groupCount} groups could not be deleted. ${failureMessage}`,
+            : t("groups.deletePartialFailure", {
+                failed: failures.length,
+                total: groupCount,
+                message: failureMessage,
+              }),
       } satisfies ErrorResponse);
     });
 
     notify({
-      title: "Delete Groups",
+      title: t("groups.deleteGroupsTitle"),
       description:
         groupCount > 1
-          ? "Groups were successfully deleted"
-          : "Group was successfully deleted",
+          ? t("groups.groupsDeletedDescription")
+          : t("groups.groupDeletedDescription"),
       promise,
       loadingMessage:
         groupCount > 1
-          ? "Deleting the selected groups..."
-          : "Deleting the selected group...",
+          ? t("groups.deletingSelectedGroups")
+          : t("groups.deletingSelectedGroup"),
     });
   };
 
   return (
     <DataTableMultiSelectPopup
       selectedItems={selectedGroups}
-      label={groupCount === 1 ? "Group selected" : "Groups selected"}
+      label={
+        groupCount === 1
+          ? t("groups.groupSelected")
+          : t("groups.groupsSelected")
+      }
       onCanceled={onCanceled}
       icon={<FolderGit2 size={16} />}
       rightSide={
-        <FullTooltip content={<span className={"text-xs"}>Delete All</span>}>
+        <FullTooltip content={<span className={"text-xs"}>{t("groups.deleteAll")}</span>}>
           <Button
             variant={"danger-outline"}
             size={"xs"}
             className={"!h-9 !w-9"}
             onClick={deleteAllGroups}
             disabled={!permission.groups.delete}
-            aria-label={"Delete selected groups"}
+            aria-label={t("groups.deleteSelectedGroups")}
           >
             <Trash2 size={16} className={"shrink-0"} />
           </Button>

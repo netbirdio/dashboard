@@ -12,6 +12,7 @@ import {
   ServerIcon,
 } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import type { Peer } from "@/interfaces/Peer";
 import {
   useCanvasUI,
@@ -53,6 +54,7 @@ export type PeerNodeType = Node<
 >;
 
 export const PeerNode = ({ data, id }: PeerNodeType) => {
+  const t = useTranslations();
   const {
     peer,
     enabled,
@@ -126,10 +128,10 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
               <DownloadIcon size={12} className={"text-yellow-400"} />
             )}
             {placeholderKind === "user-device"
-              ? "Install or assign"
+              ? t("controlCenter.installOrAssign")
               : setupKey
-              ? "Waiting"
-              : "Install"}
+              ? t("controlCenter.waiting")
+              : t("controlCenter.install")}
           </Button>
         </div>
         <div className={"flex items-center gap-2.5 text-nb-gray-300"}>

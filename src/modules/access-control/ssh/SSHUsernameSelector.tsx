@@ -17,6 +17,7 @@ import {
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 
 interface MultiSelectProps {
@@ -32,6 +33,7 @@ export function SSHUsernameSelector({
   disabled = false,
   popoverWidth = "auto",
 }: Readonly<MultiSelectProps>) {
+  const translate = useTranslations();
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
@@ -88,7 +90,7 @@ export function SSHUsernameSelector({
               {values?.length === 0 && (
                 <Badge variant={"gray"} className={"font-normal py-1"}>
                   <CircleUserIcon size={12} className={"shrink-0"} />
-                  All Local Users
+                  {translate("accessControl.sshAllLocalUsers")}
                 </Badge>
               )}
 
@@ -147,7 +149,7 @@ export function SSHUsernameSelector({
                   ref={searchRef}
                   value={search}
                   onValueChange={setSearch}
-                  placeholder={"E.g., root, ec2-user, ubuntu"}
+                  placeholder={translate("accessControl.sshUsernamePlaceholder")}
                 />
                 <div
                   className={

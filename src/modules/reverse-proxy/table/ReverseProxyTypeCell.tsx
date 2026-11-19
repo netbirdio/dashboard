@@ -1,11 +1,10 @@
-import * as React from "react";
-import { useMemo } from "react";
-import { ReverseProxy, ServiceMode } from "@/interfaces/ReverseProxy";
-import { trim } from "lodash";
-import { SERVICE_MODES } from "@/modules/reverse-proxy/ReverseProxyServiceModeSelector";
 import Badge from "@components/Badge";
 import { cn } from "@utils/helpers";
 import { ArrowRightFromLineIcon, GlobeIcon, LockKeyhole } from "lucide-react";
+import * as React from "react";
+import { useMemo } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import { ReverseProxy, ServiceMode } from "@/interfaces/ReverseProxy";
 
 type Props = {
   reverseProxy?: ReverseProxy;
@@ -13,12 +12,13 @@ type Props = {
 };
 
 export const ReverseProxyTypeCell = ({ reverseProxy, compact }: Props) => {
+  const t = useTranslations();
   const serviceModeLabel = useMemo(() => {
     if (!reverseProxy?.mode) return "HTTPS";
-    const mode = SERVICE_MODES[reverseProxy.mode];
-    if (!mode) return "HTTPS";
-    return trim(mode.label.replace("Service", ""));
-  }, [reverseProxy]);
+    return reverseProxy.mode === ServiceMode.TLS
+      ? t("reverseProxy.tLSPassthrough")
+      : reverseProxy.mode.toUpperCase();
+  }, [reverseProxy, t]);
 
   if (compact) {
     return <span className={"truncate"}>{serviceModeLabel}</span>;

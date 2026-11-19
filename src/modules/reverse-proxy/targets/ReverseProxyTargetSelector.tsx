@@ -1,21 +1,25 @@
 "use client";
 
 import HelpText from "@components/HelpText";
+import { HelpTooltip } from "@components/HelpTooltip";
+import InlineLink, { InlineButtonLink } from "@components/InlineLink";
 import { Label } from "@components/Label";
 import { Modal } from "@components/modal/Modal";
-import { ClusterOption, PeerGroupSelector } from "@components/PeerGroupSelector";
+import {
+  ClusterOption,
+  PeerGroupSelector,
+} from "@components/PeerGroupSelector";
 import React, { useMemo, useState } from "react";
+import {
+  isResourceTargetType,
+  useReverseProxies,
+} from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network } from "@/interfaces/Network";
 import {
   ReverseProxyDomainType,
   ReverseProxyTargetType,
 } from "@/interfaces/ReverseProxy";
-import {
-  isResourceTargetType,
-  useReverseProxies,
-} from "@/contexts/ReverseProxiesProvider";
-import { HelpTooltip } from "@components/HelpTooltip";
-import InlineLink, { InlineButtonLink } from "@components/InlineLink";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 
 export type Target = {
@@ -47,6 +51,7 @@ export default function ReverseProxyTargetSelector({
   serviceCluster,
   onClusterPick,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   const { resources, peers, domains } = useReverseProxies();
   const [installModal, setInstallModal] = useState(false);
 
@@ -57,15 +62,12 @@ export default function ReverseProxyTargetSelector({
     if (initialNetwork) return [];
     const privateCapable = (domains ?? []).filter(
       (d) =>
-        d.supports_private === true &&
-        d.type === ReverseProxyDomainType.FREE,
+        d.supports_private === true && d.type === ReverseProxyDomainType.FREE,
     );
     if (privateCapable.length === 0) return [];
     if (serviceCluster) {
       const match = privateCapable.find((d) => d.domain === serviceCluster);
-      return match
-        ? [{ domain: match.domain }]
-        : [{ domain: serviceCluster }];
+      return match ? [{ domain: match.domain }] : [{ domain: serviceCluster }];
     }
     return privateCapable.map((d) => ({ domain: d.domain }));
   }, [domains, initialNetwork, serviceCluster]);
@@ -83,68 +85,75 @@ export default function ReverseProxyTargetSelector({
     <div>
       <Label className={"gap-0 inline"}>
         {initialNetwork ? (
-          "Select Resource"
+          translate("reverseProxy.selectResource")
         ) : (
           <>
-            Select{" "}
+            {translate("common.select")}{" "}
             <HelpTooltip
               className={"max-w-sm"}
               content={
                 <>
-                  A <span className={"text-nb-gray-100 dark:text-white font-medium"}>peer</span> is a
-                  machine (e.g., laptop, server, container) running NetBird.
-                  Select a peer if your service runs directly on it.
-                  <span className={"mt-1 block"}>
-                    If you don&apos;t have a peer yet, you can{" "}
-                    <InlineButtonLink onClick={() => setInstallModal(true)}>
-                      Install NetBird
-                    </InlineButtonLink>
-                    .
-                  </span>
+                  {translate.rich("reverseProxy.targetPeerHelp", {
+                    peer: (chunks) => (
+                      <span className="text-nb-gray-100 dark:text-white font-medium">{chunks}</span>
+                    ),
+                    hint: (chunks) => (
+                      <span className="mt-1 block">{chunks}</span>
+                    ),
+                    install: (chunks) => (
+                      <InlineButtonLink onClick={() => setInstallModal(true)}>
+                        {chunks}
+                      </InlineButtonLink>
+                    ),
+                  })}
                 </>
               }
               interactive={true}
             >
-              Peer
+              {translate("reverseProxy.peer")}
             </HelpTooltip>
             ,{" "}
             <HelpTooltip
               className={"max-w-sm"}
               content={
                 <>
-                  A <span className={"text-nb-gray-100 dark:text-white font-medium"}>resource</span>{" "}
-                  is a destination (IP, subnet, or domain) that can&apos;t run
-                  NetBird directly. Resources are part of a network and are
-                  reached through a routing peer that forwards traffic to them.
-                  <span className={"mt-1 block"}>
-                    If you don&apos;t have resources yet, go to{" "}
-                    <InlineLink href={"/networks"}>Networks</InlineLink> to
-                    create some.
-                  </span>
+                  {translate.rich("reverseProxy.targetResourceHelp", {
+                    resource: (chunks) => (
+                      <span className="text-nb-gray-100 dark:text-white font-medium">{chunks}</span>
+                    ),
+                    hint: (chunks) => (
+                      <span className="mt-1 block">{chunks}</span>
+                    ),
+                    networks: (chunks) => (
+                      <InlineLink href="/networks">{chunks}</InlineLink>
+                    ),
+                  })}
                 </>
               }
               interactive={true}
             >
-              Resource
+              {translate("common.resource")}
             </HelpTooltip>
             {showClusters && (
               <>
-                {" "}or{" "}
+                {" "}
+                {translate("reverseProxy.orWord")}{" "}
                 <HelpTooltip
                   className={"max-w-sm"}
                   content={
                     <>
-                      A <span className={"text-nb-gray-100 dark:text-white font-medium"}>
-                        proxy cluster
-                      </span>{" "}
-                      forwards inbound traffic to an upstream the proxy reaches
-                        without WireGuard. Useful for external APIs and services
-                        co-located with the proxy.
+                      {translate.rich("reverseProxy.targetClusterHelp", {
+                        cluster: (chunks) => (
+                          <span className="text-nb-gray-100 dark:text-white font-medium">
+                            {chunks}
+                          </span>
+                        ),
+                      })}
                     </>
                   }
                   interactive={true}
                 >
-                  Proxy Cluster
+                  {translate("reverseProxy.proxyCluster")}
                 </HelpTooltip>
               </>
             )}
@@ -153,18 +162,22 @@ export default function ReverseProxyTargetSelector({
       </Label>
       <HelpText>
         {initialNetwork
-          ? "Select the resource from your network you want to expose."
-          : "Choose where the proxy should forward incoming requests."}
+          ? translate(
+              "reverseProxy.selectTheResourceFromYourNetworkYouWantToExpose",
+            )
+          : translate(
+              "reverseProxy.chooseWhereTheProxyShouldForwardIncomingRequests",
+            )}
       </HelpText>
       <PeerGroupSelector
         values={[]}
         onChange={() => {}}
         placeholder={
           initialNetwork
-            ? "Select a resource..."
+            ? translate("reverseProxy.selectAResource")
             : showClusters
-            ? "Select a peer, resource, or proxy cluster..."
-            : "Select a peer or resource..."
+            ? translate("reverseProxy.selectAPeerResourceOrProxyCluster")
+            : translate("reverseProxy.selectAPeerOrResource")
         }
         showPeers={!initialNetwork}
         showResources={true}

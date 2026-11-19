@@ -3,6 +3,7 @@ import FullTooltip from "@components/FullTooltip";
 import { ScrollArea } from "@components/ScrollArea";
 import { NetworkIcon } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PeerNetworkRangeCheck } from "@/interfaces/PostureCheck";
 
 type Props = {
@@ -10,6 +11,7 @@ type Props = {
   children?: React.ReactNode;
 };
 export const PeerNetworkRangeTooltip = ({ check, children }: Props) => {
+  const t = useTranslations();
   return check ? (
     <FullTooltip
       className={"w-full"}
@@ -29,7 +31,7 @@ export const PeerNetworkRangeTooltip = ({ check, children }: Props) => {
               </span>
             ) : (
               <span>
-                <span className={"text-red-500 font-semibold"}>Block</span> the
+                <span className={"text-red-500 font-semibold"}>{t("postureChecks.block")}</span> the
                 following peer network ranges
               </span>
             )}

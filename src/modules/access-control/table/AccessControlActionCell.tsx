@@ -13,6 +13,7 @@ import { mutate } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { usePolicies } from "@/contexts/PoliciesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Policy } from "@/interfaces/Policy";
 
 type Props = {
@@ -20,6 +21,7 @@ type Props = {
 };
 
 export default function AccessControlActionCell({ policy }: Readonly<Props>) {
+  const t = useTranslations();
   const { confirm } = useDialog();
   const { permission } = usePermissions();
   const { deletePolicy, updatePolicy, serializeRules, openDuplicatePolicyModal } =
@@ -39,18 +41,18 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
         mutate("/policies");
       },
       nextEnabled
-        ? "The rule was successfully enabled"
-        : "The rule was successfully disabled",
+        ? t("accessControl.ruleEnabled")
+        : t("accessControl.ruleDisabled"),
     );
   };
 
   const handleDelete = async () => {
     const choice = await confirm({
-      title: `Delete '${policy.name}'?`,
+      title: t("accessControl.deleteNamedTitle", { name: policy.name }),
       description:
-        "Are you sure you want to delete this access control policy? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+        t("accessControl.confirmDeleteDescription"),
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
@@ -70,7 +72,7 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
           <Button
             variant={"secondary"}
             className={"!px-3"}
-            aria-label={"Policy actions"}
+            aria-label={t("accessControl.policyActions")}
             data-testid={"policy-actions"}
           >
             <MoreVertical size={16} className={"shrink-0"} />
@@ -99,7 +101,7 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
           >
             <div className={"flex gap-3 items-center"}>
               <PowerIcon size={14} className={"shrink-0"} />
-              {policy.enabled ? "Disable" : "Enable"}
+              {policy.enabled ? t("common.disable") : t("common.enable")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -111,7 +113,7 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {t("common.delete")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

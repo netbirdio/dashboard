@@ -34,6 +34,7 @@ import integrationImage from "@/assets/integrations/intune.png";
 import FullTooltip from "@/components/FullTooltip";
 import HelpText from "@/components/HelpText";
 import { PeerGroupSelector } from "@/components/PeerGroupSelector";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import { IntuneIntegration } from "@/interfaces/EDR";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -77,6 +78,7 @@ type ModalProps = {
 };
 
 export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const intuneRequest = useApiCall<IntuneIntegration>(
     "/integrations/edr/intune",
@@ -129,8 +131,10 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
     const savedGroups = await saveGroups();
 
     notify({
-      title: "Intune Integration",
-      description: `Intune was successfully connected to NetBird.`,
+      title: translate("integrations.edrIntegrationTitle", { name: "Intune" }),
+      description: translate("integrations.edrConnectedDescription", {
+        name: "Intune",
+      }),
       promise: intuneRequest
         .post({
           secret: clientSecret,
@@ -145,7 +149,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
           mutate("/integrations/edr/intune");
           onSuccess();
         }),
-      loadingMessage: "Setting up integration...",
+      loadingMessage: translate("integrations.edrSettingUpLoading"),
     });
   };
 
@@ -176,10 +180,8 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
 
       <IntegrationModalHeader
         image={integrationImage}
-        title={"Connect NetBird with Intune"}
-        description={
-          "Restrict network access to IT-managed devices marked Compliant in Intune. Follow the steps below to get started."
-        }
+        title={translate("integrations.edrConnectTitle", { name: "Intune" })}
+        description={translate("integrations.edrIntuneConnectDescription")}
       />
 
       {step == 0 && (
@@ -194,21 +196,14 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             }
           >
             <Shield size={16} />
-            Required Permissions
+            {translate("common.requiredPermissions")}
           </div>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
-            Ensure that you have an{" "}
-            <span className={"text-nb-gray-100 font-semibold"}>
-              Azure AD user account
-            </span>{" "}
-            with the following{" "}
-            <span className={"text-nb-gray-100 font-semibold"}>
-              permissions
-            </span>
-            .{" "}
-            {
-              "If you don't have the required permissions, ask your Azure AD administrator to grant them to you."
-            }
+            {translate.rich("integrations.edrPermissionsIntro", {
+              account: translate("integrations.edrAzureUserAccount"),
+              requirement: translate("integrations.edrPermissionsWord"),
+              followup: translate("integrations.edrPermissionsMissingAzure"),
+            })}
           </p>
           <div
             className={
@@ -221,7 +216,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
               }
             >
               <PlusCircle size={14} className={"text-sky-500"} />
-              Create Azure AD applications
+              {translate("integrations.edrCreateAzureApps")}
             </div>
             <div
               className={
@@ -229,7 +224,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
               }
             >
               <Settings2 size={14} className={"text-sky-500"} />
-              Manage Azure AD applications
+              {translate("integrations.edrManageAzureApps")}
             </div>
           </div>
         </div>
@@ -239,34 +234,39 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <Box size={20} />
-            Create and configure Azure AD application
+            {translate("integrations.edrCreateAzureApp")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p>
-                Navigate to{"  "}
-                <InlineLink
-                  className={"inline"}
-                  target={"_blank"}
-                  href={
-                    "https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/Overview"
-                  }
-                >
-                  Azure Active Directory
-                </InlineLink>
+                {translate.rich("integrations.edrNavigateTo", {
+                  label: translate("integrations.edrAzureActiveDirectory"),
+                  link: (chunks) => (
+                    <InlineLink
+                      className={"inline"}
+                      target={"_blank"}
+                      href={
+                        "https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/Overview"
+                      }
+                    >
+                      {chunks}
+                    </InlineLink>
+                  ),
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Click <Mark>App Registrations</Mark> in the left menu then click
-                on the <Mark>+ New registration</Mark> button to create a new
-                application.
+                {translate.rich("integrations.edrClickAppRegistrations", {
+                  mark: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                Fill in the form with the following values and click{" "}
-                <Mark>Register</Mark>
+                {translate.rich("integrations.edrFillFormAndRegister", {
+                  mark: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -274,13 +274,12 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
           <MinimalList
             data={[
               {
-                label: "Name",
+                label: translate("integrations.edrNameLabel"),
                 value: "NetBird",
               },
               {
-                label: "Account Types",
-                value:
-                  "Accounts in this organizational directory only (Default Directory only - Single tenant)",
+                label: translate("integrations.edrAccountTypesLabel"),
+                value: translate("integrations.edrAzureAccountTypes"),
               },
             ]}
           />
@@ -291,32 +290,36 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <Shield size={20} />
-            Add API permissions
+            {translate("integrations.edrAddApiPermissions")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                Click <Mark>API permissions</Mark> on the left side menu
+                {translate.rich("integrations.edrClickApiPermissions", {
+                  mark: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Click <Mark>Add a permission</Mark> then{" "}
-                <Mark>Microsoft Graph</Mark> and then on the{" "}
-                <Mark>Application permissions</Mark> tab.
+                {translate.rich("integrations.edrClickAddPermission", {
+                  mark: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={3}>
               <p className={"font-normal"}>
-                In <Mark>Select permissions</Mark> select{" "}
-                <Mark>DeviceManagementManagedDevices.Read.All</Mark> and click{" "}
-                <Mark>Add permissions</Mark>
+                {translate.rich("integrations.edrSelectDevicePermission", {
+                  mark: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={4} line={false}>
               <p className={"font-normal"}>
-                Click <Mark>Grant admin consent for Default Directory</Mark> and
-                click <Mark>Yes</Mark>
+                {translate.rich("integrations.edrGrantAdminConsent", {
+                  yes: translate("common.yes"),
+                  mark: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
               <Lightbox image={azureGrantAdmin} />
             </Steps.Step>
@@ -328,29 +331,37 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <KeyRound size={20} />
-            Generate client secret
+            {translate("integrations.edrGenerateClientSecret")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                Navigate to <Mark>Certificates & secrets</Mark> on left side
-                menu
+                {translate.rich("integrations.edrNavigateCertificates", {
+                  mark: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Click on <Mark>+ New client secret</Mark>
+                {translate.rich("integrations.edrClickNewClientSecret", {
+                  mark: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={3}>
               <p className={"font-normal"}>
-                Add <Mark copy>NetBird</Mark> as the description and click{" "}
-                <Mark>Add</Mark>
+                {translate.rich("integrations.edrAddNetBirdDescription", {
+                  add: translate("common.add"),
+                  mark: (chunks) => <Mark copy>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={4} line={false}>
               <p className={"font-normal"}>
-                Copy the <Mark>Value</Mark> and paste it here
+                {translate.rich("integrations.edrCopyValuePaste", {
+                  value: translate("integrations.headerValue"),
+                  mark: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -375,7 +386,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <Box size={20} />
-            Enter Application ID and Directory ID
+            {translate("integrations.edrEnterAppAndDirectoryId")}
           </p>
           <Steps>
             <Steps.Step step={1}>
@@ -388,15 +399,16 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
                     "https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps"
                   }
                 >
-                  All applications
+                  {translate("integrations.edrAllApplications")}
                 </InlineLink>
               </p>
             </Steps.Step>
             <Steps.Step step={2} line={false}>
               <p className={"font-normal"}>
-                Select <Mark>NetBird</Mark> application in overview page and
-                enter your <Mark>Application (client) ID</Mark> and{" "}
-                <Mark>Directory (tenant) ID</Mark>
+                {translate.rich("integrations.edrSelectNetBirdApp", {
+                  select: translate("common.select"),
+                  mark: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -407,7 +419,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
               customPrefix={
                 <div className={"min-w-[165px] flex gap-2 items-center"}>
                   <Box size={16} />
-                  Application (client) ID
+                  {translate("integrations.edrApplicationClientId")}
                 </div>
               }
               placeholder={"62d3a656-c87d-4f30-a242-5b6347e29e9f"}
@@ -420,7 +432,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
               customPrefix={
                 <div className={"min-w-[165px] flex gap-2 items-center"}>
                   <Folder size={16} />
-                  Directory (tenant) ID
+                  {translate("integrations.edrDirectoryTenantId")}
                 </div>
               }
               placeholder={"5d60468a-65b7-45eb-a61a-53ecfbcd1ea3"}
@@ -435,11 +447,11 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4 mb-3"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <FolderGit2 size={16} />
-            Peer Approval
+            {translate("common.peerApproval")}
           </p>
 
           <HelpText className={"max-w-lg mt-2"}>
-            Select groups you want to apply the Intune integration to
+            {translate("integrations.edrSelectGroupsFor", { name: "Intune" })}
           </HelpText>
 
           <PeerGroupSelector values={groups} onChange={setGroups} />
@@ -450,23 +462,21 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4 mb-3"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <RefreshCcw size={16} />
-            Intune Sync Window
+            {translate("integrations.edrSyncWindowTitle", { name: "Intune" })}
           </p>
           <div className={"mt-2 flex flex-row gap-3"}>
             <FullTooltip
               interactive={false}
               content={
                 <div className={"max-w-xs text-xs"}>
-                  Example: This property is set to 24 hours. Jane&apos;s laptop
-                  hasn&apos;t synced with Intune for 27 hours. Even though
-                  it&apos;s marked as Compliant in Intune, it will still be
-                  blocked from network access
+                  {translate("integrations.edrSyncWindowExample", {
+                    name: "Intune",
+                  })}
                 </div>
               }
             >
               <HelpText className={"max-w-lg"}>
-                Devices not synced with Intune in this time won&apos;t have
-                network access.
+                {translate("integrations.edrSyncWindowHelp", { name: "Intune" })}
                 <IconInfoCircle
                   size={14}
                   className={"relative inline ml-1 -top-[1px]"}
@@ -481,7 +491,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
               value={lastSyncedInterval}
               type={"number"}
               onChange={(e) => setLastSyncedInterval(e.target.value)}
-              customSuffix={"Hours"}
+              customSuffix={translate("integrations.edrHours")}
             />
           </div>
           <EDRSyncIntervalInput
@@ -501,7 +511,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             onClick={() => setStep(step - 1)}
           >
             <IconArrowLeft size={16} />
-            Back
+            {translate("common.back")}
           </Button>
         )}
         {step >= 0 && step < maxSteps && (
@@ -511,7 +521,9 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             disabled={isDisabled}
             onClick={() => setStep(step + 1)}
           >
-            {step == 0 ? "Get Started" : "Continue"}
+            {step == 0
+              ? translate("integrations.edrGetStarted")
+              : translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -523,7 +535,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             onClick={connect}
           >
             <Repeat size={16} />
-            Connect
+            {translate("integrations.connect")}
           </Button>
         )}
       </ModalFooter>
@@ -535,8 +547,13 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         >
           <Clock4 size={12} />
           <div>
-            Estimated setup time:
-            <span className={"font-medium"}> 10-20 Minutes</span>
+            {translate("integrations.edrEstimatedSetupTime")}
+            <span className={"font-medium"}>
+              {" "}
+              {translate("integrations.edrSetupDuration", {
+                duration: "10-20",
+              })}
+            </span>
           </div>
         </div>
       )}

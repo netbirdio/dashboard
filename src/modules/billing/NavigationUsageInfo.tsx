@@ -11,6 +11,7 @@ import { useAnalytics } from "@/contexts/AnalyticsProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { useBilling } from "@/contexts/BillingProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PlanIcon } from "@/modules/billing/PlanIcon";
 import { TrialNavigationInfoCard } from "@/modules/billing/trial/TrialNavigationInfoCard";
 
@@ -39,6 +40,7 @@ export const NavigationUsageInfo = () => {
 };
 
 const NavigationUsageInfoContent = () => {
+  const t = useTranslations();
   const {
     currentPlan: plan,
     stats,
@@ -95,13 +97,15 @@ const NavigationUsageInfoContent = () => {
                   {stats?.active_users}
                 </span>
                 {isFreePlan ? (
-                  <span className={"text-nb-gray-300"}> of 5 Users</span>
+                  <span className={"text-nb-gray-300"}>
+                    {t("billing.of5Users")}
+                  </span>
                 ) : (
                   <span className={"text-nb-gray-300"}>
                     {" "}
                     {stats?.active_peers && stats.active_peers > 1
-                      ? "Users"
-                      : "User"}
+                      ? t("common.users")
+                      : t("billing.user")}
                   </span>
                 )}
               </div>
@@ -113,7 +117,12 @@ const NavigationUsageInfoContent = () => {
                 <span className={"font-medium text-neutral-900 dark:text-white"}>
                   {stats?.active_peers}
                 </span>
-                <span className={"text-nb-gray-300"}> of {maxPeers} Peers</span>
+                <span className={"text-nb-gray-300"}>
+                  {t.rich("billing.of", {
+                    part0: () => maxPeers,
+                    part1: () => " " + t("common.peers"),
+                  })}
+                </span>
               </div>
             </div>
           </div>
@@ -146,8 +155,8 @@ const NavigationUsageInfoContent = () => {
               >
                 <IconInfoCircle size={12} className={"font-medium"} />
                 {usagePercentage >= 100
-                  ? "Usage limit reached"
-                  : "Approaching usage limit"}
+                  ? t("billing.usageLimitReached")
+                  : t("billing.approachingUsageLimit")}
               </div>
             )}
           </div>
@@ -168,7 +177,9 @@ const NavigationUsageInfoContent = () => {
                   router.push("/settings?tab=plans-and-billing");
                 }}
               >
-                {isFreePlan ? "Upgrade Plan" : "Plans & Billing"}
+                {isFreePlan
+                  ? t("common.upgradePlan")
+                  : t("common.plansAndBilling")}
               </Button>
             </div>
           )}

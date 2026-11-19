@@ -4,6 +4,8 @@ import { buttonVariants } from "@components/ui/CalendarButton";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
 import { DayPicker } from "react-day-picker";
+import { useDashboardLocale } from "@/i18n/LocaleProvider";
+import { locales } from "@/i18n/locales";
 import { cn } from "@/utils/helpers";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
@@ -14,9 +16,11 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
+  const { locale } = useDashboardLocale();
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      locale={locales[locale].calendarLocale}
       className={cn("p-3", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-y-0 relative",

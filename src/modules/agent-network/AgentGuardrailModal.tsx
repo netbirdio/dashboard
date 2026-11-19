@@ -26,6 +26,8 @@ import {
   Text,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import {
@@ -54,6 +56,8 @@ export default function AgentGuardrailModal({
   onSuccess,
   providerIds,
 }: Readonly<Props>) {
+  const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const { addGuardrail, updateGuardrail } = useAIProviders();
 
   const [tab, setTab] = useState("checks");
@@ -93,10 +97,12 @@ export default function AgentGuardrailModal({
       >
         <ModalHeader
           icon={<ShieldHalf size={19} />}
-          title={guardrail ? "Update Guardrail" : "Create Guardrail"}
-          description={
-            "Define a reusable set of LLM guardrails to attach to one or more policies."
+          title={
+            guardrail
+              ? tr("agentNetwork.updateGuardrail")
+              : tr("agentNetwork.createGuardrail")
           }
+          description={tr("agentNetwork.guardrailDescription")}
           color={"netbird"}
         />
 
@@ -104,7 +110,7 @@ export default function AgentGuardrailModal({
           <TabsList justify={"start"} className={"px-8"}>
             <TabsTrigger value={"checks"}>
               <LayoutList size={16} />
-              Checks
+              {t("agentNetwork.checks")}
             </TabsTrigger>
             <TabsTrigger value={"general"} disabled={!atLeastOneEnabled}>
               <Text
@@ -113,7 +119,7 @@ export default function AgentGuardrailModal({
                   "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
                 }
               />
-              Name & Description
+              {t("agentNetwork.tabNameDescription")}
             </TabsTrigger>
           </TabsList>
 
@@ -150,29 +156,22 @@ export default function AgentGuardrailModal({
           <TabsContent value={"general"} className={"pb-8 px-8"}>
             <div className={"flex flex-col gap-6"}>
               <div>
-                <Label>Name of the Guardrail</Label>
-                <HelpText>
-                  Set an easily identifiable name for this guardrail set.
-                </HelpText>
+                <Label>{tr("agentNetwork.guardrailName")}</Label>
+                <HelpText>{tr("agentNetwork.guardrailNameHelp")}</HelpText>
                 <Input
                   autoFocus={true}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder={"e.g., Strict — Production"}
+                  placeholder={tr("agentNetwork.guardrailNamePlaceholder")}
                 />
               </div>
               <div>
-                <Label>Description (optional)</Label>
-                <HelpText>
-                  Write a short description to add more context to this
-                  guardrail.
-                </HelpText>
+                <Label>{t("agentNetwork.policyDescriptionLabel")}</Label>
+                <HelpText>{tr("agentNetwork.guardrailDescriptionHelp")}</HelpText>
                 <Textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder={
-                    "e.g., Tight model allowlist, PII redaction, hard monthly budget."
-                  }
+                  placeholder={tr("agentNetwork.guardrailDescriptionPlaceholder")}
                   rows={3}
                 />
               </div>
@@ -183,12 +182,12 @@ export default function AgentGuardrailModal({
         <ModalFooter className={"items-center"}>
           <div className={"w-full"}>
             <Paragraph className={"text-sm mt-auto"}>
-              Learn more about
+              {t("common.learnMore")}
               <InlineLink
                 href={"https://docs.netbird.io/agent-network"}
                 target={"_blank"}
               >
-                Agent Network
+                {t("common.agentNetwork")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
@@ -196,12 +195,12 @@ export default function AgentGuardrailModal({
           <div className={"flex gap-3 w-full justify-end"}>
             {tab === "checks" && (
               <Button variant={"secondary"} onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             )}
             {tab === "general" && (
               <Button variant={"secondary"} onClick={() => setTab("checks")}>
-                Back
+                {t("common.back")}
               </Button>
             )}
             {!guardrail && tab === "checks" && (
@@ -210,7 +209,7 @@ export default function AgentGuardrailModal({
                 onClick={() => setTab("general")}
                 disabled={!atLeastOneEnabled}
               >
-                Continue
+                {t("common.continue")}
               </Button>
             )}
             {((!guardrail && tab === "general") || guardrail) && (
@@ -219,7 +218,9 @@ export default function AgentGuardrailModal({
                 onClick={handleSubmit}
                 disabled={!canSubmit}
               >
-                {guardrail ? "Save Changes" : "Create Guardrail"}
+                {guardrail
+                  ? t("common.saveChanges")
+                  : tr("agentNetwork.createGuardrail")}
               </Button>
             )}
           </div>
@@ -238,6 +239,7 @@ function ModelAllowlistCheck({
   onChange: (value: string[] | undefined) => void;
   providerIds?: string[];
 }) {
+  const { tr } = useAgentNetworkText();
   const [open, setOpen] = useState(false);
   return (
     <PostureCheckCard
@@ -245,8 +247,8 @@ function ModelAllowlistCheck({
       setOpen={setOpen}
       key={open ? 1 : 0}
       active={Boolean(value && value.length > 0)}
-      title={"Model Allowlist"}
-      description={"Block requests for models not on the allowlist."}
+      title={tr("agentNetwork.modelAllowlist")}
+      description={tr("agentNetwork.modelAllowlistDesc")}
       // The tile is a cream gradient, so the mark on it has to be dark.
       icon={<Boxes size={16} className={"text-netbird-950"} />}
       iconClass={"bg-gradient-to-tr from-netbird-200 to-netbird-100"}
@@ -274,6 +276,8 @@ function ModelAllowlistContent({
   onChange: (value: string[] | undefined) => void;
   providerIds?: string[];
 }) {
+  const translate = useTranslations();
+  const { tr } = useAgentNetworkText();
   const [draft, setDraft] = useState<string[]>(value ?? []);
   const { providers } = useAIProviders();
   // When opened from a policy with destination providers selected,
@@ -334,8 +338,8 @@ function ModelAllowlistContent({
         {providerModels.length === 0 ? (
           <Paragraph className={"!text-xs"}>
             {providerIds && providerIds.length > 0
-              ? "The selected providers don't expose any models yet. Add models to a destination provider first — the allowlist is restricted to what those providers expose."
-              : "No models configured on any provider yet. Add models to a provider first — the allowlist is restricted to what the providers actually expose."}
+              ? tr("agentNetwork.selectedProvidersNoModels")
+              : tr("agentNetwork.noModelsConfigured")}
           </Paragraph>
         ) : (
           // Same table the network resource modal gives its policies.
@@ -356,7 +360,7 @@ function ModelAllowlistContent({
                           ? "indeterminate"
                           : false
                       }
-                      aria-label={"Select all models"}
+                      aria-label={tr("agentNetwork.selectAllModels")}
                       onCheckedChange={() =>
                         setDraft((prev) =>
                           allChecked
@@ -371,14 +375,14 @@ function ModelAllowlistContent({
                       "py-2 px-4 text-left text-[11px] uppercase tracking-wider text-nb-gray-400 font-medium"
                     }
                   >
-                    Model
+                    {translate("common.model")}
                   </th>
                   <th
                     className={
                       "py-2 px-4 text-left text-[11px] uppercase tracking-wider text-nb-gray-400 font-medium"
                     }
                   >
-                    Provider
+                    {translate("common.provider")}
                   </th>
                 </tr>
               </thead>
@@ -426,21 +430,21 @@ function ModelAllowlistContent({
               }
               target={"_blank"}
             >
-              Model Allowlist
+              {tr("agentNetwork.modelAllowlist")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{translate("common.cancel")}</Button>
           </ModalClose>
           <Button
             variant={"primary"}
             disabled={draft.length === 0}
             onClick={() => onChange(draft.length === 0 ? undefined : draft)}
           >
-            Save
+            {translate("common.save")}
           </Button>
         </div>
       </ModalFooter>
@@ -455,6 +459,7 @@ function PromptCaptureCheck({
   value: boolean;
   onChange: (enabled: boolean) => void;
 }) {
+  const { tr } = useAgentNetworkText();
   const [open, setOpen] = useState(false);
   return (
     <PostureCheckCard
@@ -462,8 +467,8 @@ function PromptCaptureCheck({
       setOpen={setOpen}
       key={open ? 1 : 0}
       active={value}
-      title={"Prompt Capture"}
-      description={"Redact PII before storing the prompt body."}
+      title={tr("agentNetwork.promptCapture")}
+      description={tr("agentNetwork.promptCaptureDesc")}
       icon={<ShieldCheckIcon size={16} />}
       iconClass={"bg-gradient-to-tr from-blue-500 to-blue-400"}
       modalWidthClass={"max-w-lg"}
@@ -480,13 +485,13 @@ function PromptCaptureCheck({
 }
 
 function PromptCaptureContent({ onConfirm }: { onConfirm: () => void }) {
+  const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   return (
     <>
       <div className={"flex flex-col px-8 gap-3 pb-6"}>
         <div className={"text-sm text-nb-gray-300"}>
-          NetBird redacts emails, SSN-shaped, phone-shaped, and credit-card
-          patterns before storing the prompt body. Enabling this guardrail adds
-          strict redaction on top of the proxy&apos;s built-in token redaction.
+          {tr("agentNetwork.promptCaptureBody")}
         </div>
       </div>
       <ModalFooter className={"items-center"}>
@@ -499,17 +504,17 @@ function PromptCaptureContent({ onConfirm }: { onConfirm: () => void }) {
               }
               target={"_blank"}
             >
-              Prompt Capture
+              {tr("agentNetwork.promptCapture")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("common.cancel")}</Button>
           </ModalClose>
           <Button variant={"primary"} onClick={onConfirm}>
-            Save
+            {t("common.save")}
           </Button>
         </div>
       </ModalFooter>

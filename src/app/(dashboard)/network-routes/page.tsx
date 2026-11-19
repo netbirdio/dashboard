@@ -11,6 +11,7 @@ import React, { lazy, Suspense } from "react";
 import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Route } from "@/interfaces/Route";
 import PageContainer from "@/layouts/PageContainer";
 import useGroupedRoutes from "@/modules/route-group/useGroupedRoutes";
@@ -21,6 +22,7 @@ const NetworkRoutesTable = lazy(
 );
 
 export default function NetworkRoutes() {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { data: routes, isLoading } = useFetchApi<Route[]>("/routes");
   const groupedRoutes = useGroupedRoutes({ routes });
@@ -33,30 +35,26 @@ export default function NetworkRoutes() {
       <RoutesProvider>
         <PeersProvider>
           <div className={"p-default py-6"}>
-            <h1 ref={headingRef}>Routes</h1>
+            <h1 ref={headingRef}>{t("common.routes")}</h1>
             <Paragraph>
-              Access other networks like LANs and VPCs without installing
-              NetBird on every resource.{" "}
+              {t("networkRoutes.routesDescription")}{" "}
               <InlineLink
                 href={
                   "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
                 }
                 target={"_blank"}
-                aria-label={
-                  "Learn more about routing traffic to private networks"
-                }
+                aria-label={t("networkRoutes.learnMoreAria")}
               >
-                Learn more
+                {t("common.learnMore")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
 
             <Callout className={"max-w-xl mt-5"} variant={"warning"}>
               <span>
-                We recommend using the new Networks concept to easier visualise
-                and manage access to your resources.{" "}
+                {t("networkRoutes.newNetworksRecommendation")}{" "}
                 <InlineLink href={"/networks"}>
-                  Go to Networks
+                  {t("networkRoutes.goToNetworks")}
                   <ArrowUpRightIcon size={14} />
                 </InlineLink>
               </span>

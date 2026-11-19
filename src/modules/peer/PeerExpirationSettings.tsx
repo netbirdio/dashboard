@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PeerExpirationToggle } from "@/modules/peer/PeerExpirationToggle";
 import { usePeer } from "@/contexts/PeerProvider";
 import { TimerResetIcon } from "lucide-react";
@@ -10,6 +11,7 @@ import { cn } from "@utils/helpers";
 import { useAccount } from "@/modules/account/useAccount";
 
 export const PeerExpirationSettings = () => {
+  const translate = useTranslations();
   const { peer, update } = usePeer();
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
@@ -40,9 +42,9 @@ export const PeerExpirationSettings = () => {
 
     notify({
       title: peer.name,
-      description: "Expiration was successfully updated",
+      description: translate("peer.expirationUpdateSuccess"),
       promise,
-      loadingMessage: "Updating setting...",
+      loadingMessage: translate("peer.expirationUpdating"),
     });
 
     return promise;
@@ -90,10 +92,8 @@ export const PeerExpirationSettings = () => {
                 inactivityExpiration: state,
               });
             }}
-            title={"Require login after disconnect"}
-            description={
-              "Enable to require authentication after users disconnect from management for 10 minutes."
-            }
+            title={translate("peer.requireLoginAfterDisconnect")}
+            description={translate("peer.inactivityExpirationDescription")}
             className={
               !peerLoginExpiration ? "opacity-40 pointer-events-none" : ""
             }

@@ -14,7 +14,7 @@ import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import useRedirect from "@hooks/useRedirect";
 import useFetchApi from "@utils/api";
-import { cn, singularize } from "@utils/helpers";
+import { cn } from "@utils/helpers";
 import {
   ArrowUpRightIcon,
   HelpCircle,
@@ -31,6 +31,7 @@ import React, { useMemo } from "react";
 import useUrlTab from "@/hooks/useUrlTab";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network, NetworkResource, NetworkRouter } from "@/interfaces/Network";
 import PageContainer from "@/layouts/PageContainer";
 import { NetworkInformationSquare } from "@/modules/networks/misc/NetworkInformationSquare";
@@ -71,6 +72,7 @@ export default function NetworkDetailPage() {
 }
 
 function NetworkOverview({ network }: Readonly<{ network: Network }>) {
+  const t = useTranslations();
   const { permission } = usePermissions();
 
   const { data: resources, isLoading: isResourcesLoading } = useFetchApi<
@@ -103,7 +105,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
             <Breadcrumbs>
               <Breadcrumbs.Item
                 href={"/networks"}
-                label={"Networks"}
+                label={t("common.networks")}
                 disabled={!permission.networks.read}
                 icon={<NetworkRoutesIcon size={13} />}
               />
@@ -149,7 +151,9 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
             <TabsList justify={"start"} className={"px-8"}>
               <TabsTrigger value={"resources"} data-testid="network-tab-resources">
                 <Layers3Icon size={14} />
-                {singularize("Resources", network?.resources?.length)}
+                {t("network.tabResources", {
+                  count: network?.resources?.length ?? 0,
+                })}
               </TabsTrigger>
               <TabsTrigger
                 value={"routing-peers"}
@@ -161,7 +165,9 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
                     "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
                   }
                 />
-                {singularize("Routing Peers", network?.routing_peers_count)}
+                {t("network.tabRoutingPeers", {
+                  count: network?.routing_peers_count ?? 0,
+                })}
               </TabsTrigger>
               <TabsTrigger value={"services"} data-testid="network-tab-services">
                 <ReverseProxyIcon
@@ -170,7 +176,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
                     "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
                   }
                 />
-                {singularize("Services", services.length)}
+                {t("network.tabServices", { count: services.length })}
               </TabsTrigger>
             </TabsList>
 
@@ -202,6 +208,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
 }
 
 function NetworkActions() {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { deleteNetwork, openEditNetworkModal, network } = useNetworksContext();
   const router = useRouter();
@@ -229,7 +236,7 @@ function NetworkActions() {
         >
           <div className={"flex gap-3 items-center"}>
             <PencilLineIcon size={14} className={"shrink-0"} />
-            Rename
+            {t("network.rename")}
           </div>
         </DropdownMenuItem>
 
@@ -244,7 +251,7 @@ function NetworkActions() {
         >
           <div className={"flex gap-3 items-center"}>
             <Trash2 size={14} className={"shrink-0"} />
-            Delete
+            {t("common.delete")}
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -253,30 +260,29 @@ function NetworkActions() {
 }
 
 function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
+  const t = useTranslations();
   const isHighlyAvailable = !!(
     network?.routing_peers_count && network?.routing_peers_count >= 2
   );
 
   const disabledText = useMemo(
-    () => (
-      <>
-        High availability is currently{" "}
-        <span className={"text-yellow-400 font-medium"}>inactive</span> for this
-        network.
-      </>
-    ),
-    [],
+    () =>
+      t.rich("network.highAvailabilityInactive", {
+        state: (chunks) => (
+          <span className={"text-yellow-400 font-medium"}>{chunks}</span>
+        ),
+      }),
+    [t],
   );
 
   const enabledText = useMemo(
-    () => (
-      <>
-        High availability is{" "}
-        <span className={"text-green-500 font-medium"}>active</span> for this
-        network.
-      </>
-    ),
-    [],
+    () =>
+      t.rich("network.highAvailabilityActive", {
+        state: (chunks) => (
+          <span className={"text-green-500 font-medium"}>{chunks}</span>
+        ),
+      }),
+    [t],
   );
 
   const policyCount = network.policies?.length ?? 0;
@@ -289,7 +295,7 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
           label={
             <>
               <ServerIcon size={16} />
-              High Availability
+              {t("network.highAvailability")}
             </>
           }
           value={
@@ -300,13 +306,11 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
                   {isHighlyAvailable ? enabledText : disabledText}
                   {isHighlyAvailable ? (
                     <div className={"inline-flex mt-2"}>
-                      You can add more routing peers to increase the
-                      availability of this network.
+                      {t("network.highAvailabilityHelpActive")}
                     </div>
                   ) : (
                     <div className={"inline-flex mt-2"}>
-                      Go ahead and add more routing peers or groups with routing
-                      peers to enable high availability for this network.
+                      {t("network.highAvailabilityHelpInactive")}
                     </div>
                   )}
                 </div>
@@ -323,7 +327,7 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
                     !isHighlyAvailable ? "bg-yellow-400" : "bg-green-500",
                   )}
                 ></span>
-                {isHighlyAvailable ? "Active" : "Inactive"}
+                {isHighlyAvailable ? t("common.active") : t("common.inactive")}
                 <HelpCircle size={12} />
               </div>
             </FullTooltip>
@@ -335,20 +339,19 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
             policyCount > 0 ? (
               <>
                 <ShieldCheckIcon size={16} className={"text-green-500"} />
-                {policyCount}{" "}
-                {policyCount === 1 ? "Active Policy" : "Active Policies"}
+                {t("network.activePolicies", { count: policyCount })}
               </>
             ) : (
               <>
                 <ShieldXIcon size={16} className={"text-red-500"} />
-                No Active Policies
+                {t("network.noActivePolicies")}
               </>
             )
           }
           value={
             policyCount > 0 ? (
               <InlineLink href={"/access-control"}>
-                Go to Policies
+                {t("network.goToPolicies")}
                 <ArrowUpRightIcon size={14} />
               </InlineLink>
             ) : null

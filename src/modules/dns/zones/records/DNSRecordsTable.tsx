@@ -2,6 +2,7 @@ import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import React, { createContext, useContext, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DNSRecord, DNSZone } from "@/interfaces/DNS";
 import { DNSRecordActionCell } from "@/modules/dns/zones/records/DNSRecordActionCell";
 import { DNSRecordContentCell } from "@/modules/dns/zones/records/DNSRecordContentCell";
@@ -17,21 +18,21 @@ export const DNSRecordsTableColumns: ColumnDef<DNSRecord>[] = [
   {
     accessorKey: "type",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Type</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.type" />;
     },
     cell: ({ row }) => <DNSRecordTypeCell record={row.original} />,
   },
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Hostname</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.hostname" />;
     },
     cell: ({ row }) => <DNSRecordNameCell record={row.original} />,
   },
   {
     accessorKey: "content",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Content</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="dns.recordContent" />;
     },
     cell: ({ row }) => <DNSRecordContentCell record={row.original} />,
   },
@@ -52,6 +53,7 @@ export const DNSRecordsTableColumns: ColumnDef<DNSRecord>[] = [
 const ZoneContext = createContext({} as DNSZone);
 
 export default function DNSRecordsTable({ zone }: Props) {
+  const t = useTranslations();
   const [sorting, setSorting] = useState<SortingState>([]);
 
   return (
@@ -65,7 +67,7 @@ export default function DNSRecordsTable({ zone }: Props) {
         rowClassName={"last:pb-10"}
         className={"bg-nb-gray-960 py-2"}
         inset={true}
-        text={"DNS Records"}
+        text={t("dns.dnsRecords")}
         initialPageSize={zone?.records?.length}
         manualPagination={true}
         sorting={sorting}

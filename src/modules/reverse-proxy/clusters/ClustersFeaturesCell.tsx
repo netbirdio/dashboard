@@ -1,6 +1,7 @@
 import Badge from "@components/Badge";
 import FullTooltip from "@components/FullTooltip";
-import { Lock, ShieldAlert, SlidersHorizontal, Globe } from "lucide-react";
+import { Globe,Lock, ShieldAlert, SlidersHorizontal } from "lucide-react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { ReverseProxyCluster } from "@/interfaces/ReverseProxy";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 
@@ -20,21 +21,25 @@ type Feature = {
 // backend distinguishes "unsupported" from "not yet reported" via
 // nullable booleans, but visually both mean "not available here").
 export default function ClustersFeaturesCell({ cluster }: Readonly<Props>) {
+  const t = useTranslations();
   const features: Feature[] = [];
   if (cluster.supports_custom_ports) {
     features.push({
       key: "custom-ports",
-      label: "Custom Ports",
-      description: "Cluster can bind arbitrary TCP/UDP ports for services.",
+      label: t("reverseProxy.customPorts"),
+      description: t(
+        "reverseProxy.clusterCanBindArbitraryTCPUDPPortsForServices",
+      ),
       icon: <SlidersHorizontal size={14} className={"text-netbird"} />,
     });
   }
   if (cluster.require_subdomain) {
     features.push({
       key: "subdomain",
-      label: "Subdomain Required",
-      description:
-        "Services on this cluster must use a subdomain — the bare cluster domain is not addressable.",
+      label: t("reverseProxy.subdomainRequired"),
+      description: t(
+        "reverseProxy.servicesOnThisClusterMustUseASubdomainTheBareClusterDomain",
+      ),
       icon: <Globe size={14} className={"text-nb-gray-300"} />,
     });
   }
@@ -42,23 +47,26 @@ export default function ClustersFeaturesCell({ cluster }: Readonly<Props>) {
     features.push({
       key: "crowdsec",
       label: "CrowdSec",
-      description:
-        "Cluster has CrowdSec IP reputation configured across all active proxies.",
+      description: t(
+        "reverseProxy.clusterHasCrowdSecIPReputationConfiguredAcrossAllActiveProxies",
+      ),
       icon: <ShieldAlert size={14} className={"text-green-500"} />,
     });
   }
   if (cluster.private) {
     features.push({
       key: "private",
-      label: "Private",
+      label: t("reverseProxy.private"),
       description: (
         <>
-          Lets you publish services that are only reachable from peers in your
-          NetBird network. Required for{" "}
-          <span className={"font-medium text-nb-gray-100 dark:text-white"}>NetBird-Only Access</span>{" "}
-          and{" "}
-          <span className={"font-medium text-nb-gray-100 dark:text-white"}>Proxy Cluster</span>{" "}
-          target types.
+          {t.rich("reverseProxy.clusterPrivateHelp", {
+            private: (chunks) => (
+              <span className="font-medium text-nb-gray-100 dark:text-white">{chunks}</span>
+            ),
+            cluster: (chunks) => (
+              <span className="font-medium text-nb-gray-100 dark:text-white">{chunks}</span>
+            ),
+          })}
         </>
       ),
       icon: <Lock size={14} className={"text-netbird"} />,

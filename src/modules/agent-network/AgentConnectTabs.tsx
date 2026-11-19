@@ -16,6 +16,7 @@ import OpenCodeIcon from "@/assets/icons/OpenCodeIcon";
 import PiIcon from "@/assets/icons/PiIcon";
 import ShellIcon from "@/assets/icons/ShellIcon";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import {
   AIProvider,
   AIProviderId,
@@ -49,9 +50,10 @@ function ModeSwitch({
   value: ClaudeMode;
   onChange: (mode: ClaudeMode) => void;
 }) {
+  const { tr } = useAgentNetworkText();
   const options: { value: ClaudeMode; label: string }[] = [
     { value: "config", label: "JSON" },
-    { value: "shell", label: "Shell" },
+    { value: "shell", label: tr("agentNetwork.shell") },
   ];
 
   return (
@@ -98,12 +100,13 @@ function Snippet({
   lines: string[];
   copyText?: string;
 }) {
+  const { tr } = useAgentNetworkText();
   const [, copy, copied] = useCopyToClipboard(copyText ?? lines.join("\n"));
 
   const code = (
     <Code
       codeToCopy={copyText ?? lines.join("\n")}
-      message={"Copied to clipboard"}
+      message={tr("common.copyToClipboard")}
       showCopyIcon={!title}
       className={title ? "rounded-none border-0" : undefined}
     >
@@ -133,8 +136,8 @@ function Snippet({
           {action}
           <button
             type={"button"}
-            onClick={() => copy("Copied to clipboard")}
-            aria-label={"Copy snippet"}
+            onClick={() => copy(tr("common.copyToClipboard"))}
+            aria-label={tr("agentNetwork.copySnippet")}
             className={
               "self-center text-nb-gray-400 hover:text-nb-gray-100 transition-colors cursor-pointer"
             }
@@ -368,6 +371,7 @@ export function AgentConnectTabs({
   const picked: ConnectExample = { api, model };
   const baseUrl = `https://${endpoint}`;
   const openaiBase = `${baseUrl}/v1`;
+  const { tr, rich } = useAgentNetworkText();
   const [claudeMode, setClaudeMode] = React.useState<ClaudeMode>("config");
   // Which backend the Claude Code config targets follows the picked
   // provider — Anthropic API direct, via Vertex AI / Bedrock, or Kimi
@@ -386,8 +390,7 @@ export function AgentConnectTabs({
   // Vertex don't have.
   const pathNote = (
     <SmallParagraph>
-      {provider?.name} routes requests by URL path, which only Claude Code
-      supports. Pick another provider above to configure this tool.
+      {tr("agentNetwork.pathRoutedNote", { provider: provider?.name ?? "" })}
     </SmallParagraph>
   );
 
@@ -419,7 +422,7 @@ export function AgentConnectTabs({
             />
           ) : (
             <Input
-              aria-label={"Model"}
+              aria-label={tr("common.model")}
               placeholder={DEFAULT_MODEL[api]}
               value={pick.model ?? ""}
               onChange={(e) => setPick({ ...pick, model: e.target.value })}
@@ -433,11 +436,11 @@ export function AgentConnectTabs({
         <TabsList justify={"start"} className={listClassName}>
           <TabsTrigger value={"claude-code"}>
             <ClaudeIcon className={TAB_ICON} size={14} />
-            Claude Code
+            {tr("agentNetwork.claudeCode")}
           </TabsTrigger>
           <TabsTrigger value={"codex"}>
             <OpenAIIcon className={TAB_ICON} size={14} />
-            Codex
+            {tr("agentNetwork.codex")}
           </TabsTrigger>
           <TabsTrigger value={"opencode"}>
             <OpenCodeIcon className={TAB_ICON} size={14} />
@@ -450,19 +453,19 @@ export function AgentConnectTabs({
           {hasKimi && (
             <TabsTrigger value={"kimi-cli"}>
               <KimiIcon className={TAB_ICON} size={14} />
-              Kimi CLI
+              {tr("agentNetwork.kimiCli")}
             </TabsTrigger>
           )}
           <TabsTrigger value={"sdk"}>
             {picked.api === "anthropic" ? (
               <>
                 <ClaudeIcon className={TAB_ICON} size={14} />
-                Anthropic SDK
+                {tr("agentNetwork.anthropicSdk")}
               </>
             ) : (
               <>
                 <OpenAIIcon className={TAB_ICON} size={14} />
-                OpenAI SDK
+                {tr("agentNetwork.openaiSdk")}
               </>
             )}
           </TabsTrigger>
@@ -476,9 +479,9 @@ export function AgentConnectTabs({
           <div className={contentClassName}>
             {!claudeProvider && (
               <SmallParagraph>
-                Claude Code speaks the Anthropic Messages API, which{" "}
-                {provider?.name} doesn&apos;t. Pick an Anthropic, Vertex AI,
-                Bedrock or Kimi provider above.
+                {tr("agentNetwork.claudeCodeUnsupported", {
+                  provider: provider?.name ?? "",
+                })}
               </SmallParagraph>
             )}
 
@@ -486,13 +489,13 @@ export function AgentConnectTabs({
               <>
                 <Snippet
                   title={
-                    claudeMode === "config" ? (
-                      <>
-                        Add to <ConfigPath path={"~/.claude/settings.json"} />
-                      </>
-                    ) : (
-                      "Run in your shell"
-                    )
+                    claudeMode === "config"
+                      ? rich("agentNetwork.addToConfig", {
+                          path: () => (
+                            <ConfigPath path={"~/.claude/settings.json"} />
+                          ),
+                        })
+                      : tr("agentNetwork.runInShell")
                   }
                   action={
                     <ModeSwitch value={claudeMode} onChange={setClaudeMode} />
@@ -526,9 +529,11 @@ export function AgentConnectTabs({
             {claudeProvider === "vertex" && (
               <Snippet
                 title={
-                  <>
-                    Add to <ConfigPath path={"~/.claude/settings.json"} />
-                  </>
+                  rich("agentNetwork.addToConfig", {
+                    path: () => (
+                      <ConfigPath path={"~/.claude/settings.json"} />
+                    ),
+                  })
                 }
                 lines={[
                   `{`,
@@ -550,9 +555,11 @@ export function AgentConnectTabs({
             {claudeProvider === "bedrock" && (
               <Snippet
                 title={
-                  <>
-                    Add to <ConfigPath path={"~/.claude/settings.json"} />
-                  </>
+                  rich("agentNetwork.addToConfig", {
+                    path: () => (
+                      <ConfigPath path={"~/.claude/settings.json"} />
+                    ),
+                  })
                 }
                 lines={[
                   `{`,
@@ -573,13 +580,13 @@ export function AgentConnectTabs({
               <>
                 <Snippet
                   title={
-                    claudeMode === "config" ? (
-                      <>
-                        Add to <ConfigPath path={"~/.claude/settings.json"} />
-                      </>
-                    ) : (
-                      "Run in your shell"
-                    )
+                    claudeMode === "config"
+                      ? rich("agentNetwork.addToConfig", {
+                          path: () => (
+                            <ConfigPath path={"~/.claude/settings.json"} />
+                          ),
+                        })
+                      : tr("agentNetwork.runInShell")
                   }
                   action={
                     <ModeSwitch value={claudeMode} onChange={setClaudeMode} />
@@ -624,11 +631,16 @@ export function AgentConnectTabs({
                   }
                 />
                 <SmallParagraph className={"mt-3"}>
-                  Pairs with a Kimi provider keeping the default upstream URL{" "}
-                  <code className={"font-mono"}>https://api.moonshot.ai</code>.
-                  The <code className={"font-mono"}>/anthropic</code> suffix in
-                  the base URL rides through the endpoint to Moonshot, which
-                  serves the Anthropic Messages API under that path.
+                  {rich("agentNetwork.kimiClaudeCodeNote", {
+                    upstream: () => (
+                      <code className={"font-mono"}>
+                        https://api.moonshot.ai
+                      </code>
+                    ),
+                    suffix: () => (
+                      <code className={"font-mono"}>/anthropic</code>
+                    ),
+                  })}
                 </SmallParagraph>
               </>
             )}
@@ -643,9 +655,9 @@ export function AgentConnectTabs({
               <>
                 <Snippet
                   title={
-                    <>
-                      Add to <ConfigPath path={"~/.codex/config.toml"} />
-                    </>
+                    rich("agentNetwork.addToConfig", {
+                      path: () => <ConfigPath path={"~/.codex/config.toml"} />,
+                    })
                   }
                   lines={[
                     ...(codexModel ? [`model = "${codexModel}"`] : []),
@@ -670,10 +682,13 @@ export function AgentConnectTabs({
               <>
                 <Snippet
                   title={
-                    <>
-                      Add to{" "}
-                      <ConfigPath path={"~/.config/opencode/opencode.json"} />
-                    </>
+                    rich("agentNetwork.addToConfig", {
+                      path: () => (
+                        <ConfigPath
+                          path={"~/.config/opencode/opencode.json"}
+                        />
+                      ),
+                    })
                   }
                   lines={openCodeLines(picked, baseUrl)}
                 />
@@ -690,17 +705,21 @@ export function AgentConnectTabs({
               <>
                 <Snippet
                   title={
-                    <>
-                      Add to <ConfigPath path={"~/.pi/agent/models.json"} />
-                    </>
+                    rich("agentNetwork.addToConfig", {
+                      path: () => (
+                        <ConfigPath path={"~/.pi/agent/models.json"} />
+                      ),
+                    })
                   }
                   lines={piModelsLines(picked, baseUrl)}
                 />
                 <Snippet
                   title={
-                    <>
-                      Add to <ConfigPath path={"~/.pi/agent/settings.json"} />
-                    </>
+                    rich("agentNetwork.addToConfig", {
+                      path: () => (
+                        <ConfigPath path={"~/.pi/agent/settings.json"} />
+                      ),
+                    })
                   }
                   lines={json({
                     defaultProvider: "netbird",
@@ -720,9 +739,9 @@ export function AgentConnectTabs({
               // endpoint — no /anthropic prefix in base_url; api_key is a
               // placeholder since NetBird injects the real key server-side.
               title={
-                <>
-                  Add to <ConfigPath path={"~/.kimi/config.toml"} />
-                </>
+                rich("agentNetwork.addToConfig", {
+                  path: () => <ConfigPath path={"~/.kimi/config.toml"} />,
+                })
               }
               lines={[
                 `default_model = "${kimiModel}"`,
@@ -739,17 +758,17 @@ export function AgentConnectTabs({
               ]}
             />
             <SmallParagraph className={"mt-3"}>
-              Pairs with a Kimi provider keeping the default upstream URL{" "}
-              <code className={"font-mono"}>https://api.moonshot.ai</code>. For
-              the OpenAI shape instead, use{" "}
-              <code className={"font-mono"}>
-                type = &quot;openai_legacy&quot;
-              </code>{" "}
-              with{" "}
-              <code className={"font-mono"}>
-                base_url = &quot;{openaiBase}&quot;
-              </code>
-              .
+              {rich("agentNetwork.kimiCliNote", {
+                upstream: () => (
+                  <code className={"font-mono"}>https://api.moonshot.ai</code>
+                ),
+                type: () => (
+                  <code className={"font-mono"}>type = "openai_legacy"</code>
+                ),
+                base: () => (
+                  <code className={"font-mono"}>base_url = "{openaiBase}"</code>
+                ),
+              })}
             </SmallParagraph>
           </div>
         </TabsContent>

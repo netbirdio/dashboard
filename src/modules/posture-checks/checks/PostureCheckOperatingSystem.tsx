@@ -30,6 +30,7 @@ import AppleIcon from "@/assets/icons/AppleIcon";
 import IOSIcon from "@/assets/icons/IOSIcon";
 import { LinuxIcon } from "@/assets/icons/LinuxIcon";
 import WindowsIcon from "@/assets/icons/WindowsIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
   androidVersions,
@@ -51,6 +52,7 @@ export const PostureCheckOperatingSystem = ({
   onChange,
   disabled,
 }: Props) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
 
   return (
@@ -59,11 +61,9 @@ export const PostureCheckOperatingSystem = ({
       setOpen={setOpen}
       key={open ? 1 : 0}
       icon={<Disc3Icon size={16} />}
-      title={"Operating System"}
+      title={t("postureChecks.operatingSystem")}
       modalWidthClass={"max-w-xl"}
-      description={
-        "Restrict access in your network based on the operating system."
-      }
+      description={t("postureChecks.operatingSystemHelp")}
       iconClass={"bg-gradient-to-tr from-[#616E79] to-[#7C8994] dark:to-[#A3ADB5]"}
       active={value !== undefined}
       onReset={() => onChange(undefined)}
@@ -81,6 +81,7 @@ export const PostureCheckOperatingSystem = ({
 };
 
 const CheckContent = ({ value, onChange, disabled }: Props) => {
+  const t = useTranslations();
   const [tab] = useState(String(OperatingSystem.LINUX));
 
   const firstTimeCheck = value === undefined;
@@ -237,14 +238,14 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
               }
               target={"_blank"}
             >
-              Operating System Check
+              {t("postureChecks.operatingSystemCheck")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("common.cancel")}</Button>
           </ModalClose>
           <Button
             disabled={!!versionError}
@@ -275,7 +276,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
               }
             }}
           >
-            Save
+            {t("common.save")}
           </Button>
         </div>
       </ModalFooter>
@@ -292,18 +293,19 @@ type OperatingSystemTabProps = {
   disabled?: boolean;
 };
 
-const allOrMinOptions = [
-  {
-    label: "All versions",
-    value: "all",
-    icon: GalleryHorizontalEnd,
-  },
-  {
-    label: "Equal or greater than",
-    value: "min",
-    icon: IconMathEqualGreater,
-  },
-] as SelectOption[];
+const allOrMinOptions = (t: ReturnType<typeof useTranslations>) =>
+  [
+    {
+      label: t("postureChecks.allVersions"),
+      value: "all",
+      icon: GalleryHorizontalEnd,
+    },
+    {
+      label: t("postureChecks.equalOrGreater"),
+      value: "min",
+      icon: IconMathEqualGreater,
+    },
+  ] as SelectOption[];
 
 export const OperatingSystemTab = ({
   value,
@@ -313,6 +315,7 @@ export const OperatingSystemTab = ({
   onError,
   disabled,
 }: OperatingSystemTabProps) => {
+  const t = useTranslations();
   const [allow, setAllow] = useState(value == "-" ? "block" : "allow");
   const [allOrMin, setAllOrMin] = useState(
     value == "" || value == "-" || value == "0" ? "all" : "min",
@@ -352,17 +355,17 @@ export const OperatingSystemTab = ({
 
   const prefix =
     os === OperatingSystem.LINUX || os === OperatingSystem.WINDOWS
-      ? "Kernel Version"
-      : "Version";
+      ? t("postureChecks.kernelVersion")
+      : t("common.version");
 
   const versionError = useMemo(() => {
-    const msg = "Please enter a valid version, e.g., 0.2, 0.2.0, 0.2.0-alpha.1";
+    const msg = t("postureChecks.invalidVersion");
     if (value == "") return "";
     if (value == "-") return "";
     const validSemver = validator.isValidVersion(value);
     if (!validSemver) return msg;
     return "";
-  }, [value]);
+  }, [value, t]);
 
   useEffect(() => {
     onError(versionError);
@@ -372,19 +375,19 @@ export const OperatingSystemTab = ({
     <div className={""}>
       <div className={"flex justify-between items-start gap-10 "}>
         <div>
-          <Label>Allow or Block</Label>
+          <Label>{t("postureChecks.allowOrBlock")}</Label>
           <HelpText>
-            Choose whether you want to allow or block the operating system.
+            {t("postureChecks.allowOrBlockOSHelp")}
           </HelpText>
         </div>
         <RadioGroup value={allow} onChange={changeAllow}>
           <RadioGroupItem value={"allow"} variant={"green"}>
             <ShieldCheck size={14} />
-            Allow
+            {t("common.allow")}
           </RadioGroupItem>
           <RadioGroupItem value={"block"} variant={"red"}>
             <ShieldXIcon size={14} />
-            Block
+            {t("postureChecks.block")}
           </RadioGroupItem>
         </RadioGroup>
       </div>
@@ -392,14 +395,14 @@ export const OperatingSystemTab = ({
         <SelectDropdown
           value={allOrMin}
           onChange={changeAllOrMin}
-          options={allOrMinOptions}
+          options={allOrMinOptions(t)}
           disabled={allow === "block" || disabled}
         />
         {versionList && !useCustomVersion ? (
           <SelectDropdown
             value={value || "0"}
             showSearch={true}
-            placeholder={"Select version..."}
+            placeholder={t("postureChecks.selectVersion")}
             onChange={onChange}
             options={versionList}
             disabled={allOrMin === "all" || allow === "block" || disabled}
@@ -427,10 +430,10 @@ export const OperatingSystemTab = ({
             label={
               <>
                 <FileCog size={14} />
-                Use custom version number
+                {t("postureChecks.useCustomVersion")}
               </>
             }
-            helpText={"Use a custom version number if you need more control."}
+            helpText={t("postureChecks.customVersionHelp")}
           />
         </div>
       )}

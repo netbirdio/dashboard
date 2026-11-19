@@ -6,6 +6,7 @@ import { Settings } from "lucide-react";
 import { StaticImport } from "next/dist/shared/lib/get-img-props";
 import * as React from "react";
 import { useMemo, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DomainValidationStatus } from "@/interfaces/Account";
 import { EnterpriseConnection } from "@/interfaces/IdentityProvider";
 import { IntegrationCard } from "@/modules/integrations/IntegrationCard";
@@ -30,6 +31,7 @@ export const OidcIntegrationCard = ({
   logo,
   discoveryPlaceholder,
 }: Props) => {
+  const t = useTranslations();
   const [setupModal, setSetupModal] = useState(false);
   const { oktaConnection, isDataLoading, toggleConnection, mutate, error } =
     useEnterpriseConnections();
@@ -37,14 +39,17 @@ export const OidcIntegrationCard = ({
   const handleToggleConnection = () => {
     if (!oktaConnection) return;
     notify({
-      title: "OIDC Integration",
-      description: `Okta was successfully ${
-        oktaConnection?.enabled ? "disabled" : "enabled"
-      }`,
+      title: t("integrations.ssoOidcTitle"),
+      description: t("integrations.idpStateDescription", {
+        name: t("integrations.idpOkta"),
+        state: oktaConnection?.enabled
+          ? t("common.disabled")
+          : t("common.enabled"),
+      }),
       promise: toggleConnection(oktaConnection.id).then(() => {
         mutate();
       }),
-      loadingMessage: "Updating integration...",
+      loadingMessage: t("integrations.idpUpdatingLoading"),
     });
   };
 
@@ -88,6 +93,7 @@ type ConfigurationProps = {
 };
 
 const ConfigurationContent = ({ connection }: ConfigurationProps) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
 
   const hasSomePendingDomains = useMemo(() => {
@@ -130,12 +136,12 @@ const ConfigurationContent = ({ connection }: ConfigurationProps) => {
             )}
           ></span>
           {hasSomeVerifiedDomains
-            ? "Active"
+            ? t("integrations.ssoActive")
             : hasSomePendingDomains
-            ? "Pending Verification"
+            ? t("integrations.ssoPendingVerification")
             : hasSomeFailedDomains
-            ? "Failed Verification"
-            : "Inactive"}
+            ? t("integrations.ssoFailedVerification")
+            : t("common.inactive")}
         </div>
       ) : (
         <div
@@ -144,7 +150,7 @@ const ConfigurationContent = ({ connection }: ConfigurationProps) => {
           }
         >
           <span className={cn("h-2 w-2 rounded-full bg-nb-gray-600")}></span>
-          Inactive
+          {t("common.inactive")}
         </div>
       )}
       <Button
@@ -154,7 +160,7 @@ const ConfigurationContent = ({ connection }: ConfigurationProps) => {
         onClick={() => setOpen(true)}
       >
         <Settings size={14} />
-        Settings
+        {t("common.settings")}
       </Button>
       {open && (
         <OktaSsoSettings

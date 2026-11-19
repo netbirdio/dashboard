@@ -3,6 +3,7 @@ import Button from "@components/Button";
 import { Input } from "@components/Input";
 import { uniqueId } from "lodash";
 import { MinusCircleIcon } from "lucide-react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 export interface ConfigHeader {
   key: string;
@@ -67,6 +68,7 @@ export function HeadersInput({
   onError?: (error: boolean) => void;
   disabled?: boolean;
 }>) {
+  const t = useTranslations();
   const [key, setKey] = useState(value.key);
   const [headerValue, setHeaderValue] = useState(value.value);
 
@@ -114,7 +116,7 @@ export function HeadersInput({
         <div className={"w-full"}>
           <Input
             customPrefix={"Name"}
-            placeholder={"e.g., Authorization"}
+            placeholder={t("webhooks.headerNamePlaceholder")}
             maxWidthClass={"w-full"}
             value={key}
             error={value.error}
@@ -128,9 +130,7 @@ export function HeadersInput({
         <div className={"w-full"}>
           <Input
             customPrefix={"Value"}
-            placeholder={
-              "e.g., Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InVURWw0SmJieUU4S00zY3NwcmdUSSJ9"
-            }
+            placeholder={t("webhooks.headerValuePlaceholder")}
             maxWidthClass={"w-full"}
             value={headerValue}
             onChange={handleValueChange}

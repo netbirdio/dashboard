@@ -1,6 +1,12 @@
-import React, { useMemo, useState } from "react";
-import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { AccordionContent, AccordionItem } from "@components/Accordion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@components/DropdownMenu";
+import { notify } from "@components/Notification";
+import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { cn } from "@utils/helpers";
 import {
   CheckIcon,
@@ -10,28 +16,9 @@ import {
   MoreVerticalIcon,
   Trash2Icon,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@components/DropdownMenu";
-import { notify } from "@components/Notification";
+import React, { useMemo, useState } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
-import {
-  DraftChange,
-  getChangeApiCall,
-  getChangeIssue,
-  getChangeKind,
-} from "@/modules/control-center/draft/DraftChangesetContext";
-import {
-  buildChangeRequest,
-  changeDiffLines,
-  LiveData,
-  toCurl,
-} from "@/modules/control-center/utils/changeset-request";
-import { CascadePreview } from "@/modules/control-center/utils/change-cascade";
-import { diffStat } from "@/modules/control-center/utils/json-line-diff";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   changeIcon,
   DiffStat,
@@ -40,7 +27,21 @@ import {
   KindBadge,
 } from "@/modules/control-center/draft/changeset/change-presentation";
 import { ChangeCodeView } from "@/modules/control-center/draft/changeset/ChangeCodeView";
+import {
+  DraftChange,
+  getChangeApiCall,
+  getChangeIssue,
+  getChangeKind,
+} from "@/modules/control-center/draft/DraftChangesetContext";
 import { DeployStatus } from "@/modules/control-center/hooks/useDeployChangeset";
+import { CascadePreview } from "@/modules/control-center/utils/change-cascade";
+import {
+  buildChangeRequest,
+  changeDiffLines,
+  LiveData,
+  toCurl,
+} from "@/modules/control-center/utils/changeset-request";
+import { diffStat } from "@/modules/control-center/utils/json-line-diff";
 
 type Props = {
   change: DraftChange;
@@ -64,6 +65,7 @@ export const ChangeAccordionItem = ({
   disabled,
   status,
 }: Props) => {
+  const translate = useTranslations();
   const apiCall = getChangeApiCall(change);
   const request = useMemo(
     () => buildChangeRequest(change, live),
@@ -74,7 +76,10 @@ export const ChangeAccordionItem = ({
   const doCopy = async (showInlineCheck: boolean) => {
     try {
       await navigator.clipboard.writeText(copyText);
-      notify({ title: "Copied as cURL request", description: apiCall });
+      notify({
+        title: translate("controlCenter.copiedAsCURLRequest"),
+        description: apiCall,
+      });
       if (showInlineCheck) {
         setCopied(true);
         window.setTimeout(() => setCopied(false), 1200);
@@ -89,7 +94,7 @@ export const ChangeAccordionItem = ({
     [change, live],
   );
   const showStat = stat.additions + stat.deletions > 0;
-  const issue = getChangeIssue(change, changes);
+  const issue = getChangeIssue(change, changes, translate);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const { confirm } = useDialog();
@@ -98,8 +103,7 @@ export const ChangeAccordionItem = ({
     const preview = previewRemove(change);
     const ok = await confirm({
       title: preview.summary,
-      description:
-        "This reverts it on the canvas and drops it from the changeset. It won't be deployed.",
+      description: translate("controlCenter.thisRevertsItOnTheCanvasAndDrops"),
       children: preview.effects.length ? (
         <ul className={"list-disc pl-5 text-sm text-nb-gray-300 space-y-1"}>
           {preview.effects.map((e) => (
@@ -107,8 +111,8 @@ export const ChangeAccordionItem = ({
           ))}
         </ul>
       ) : undefined,
-      confirmText: "Remove",
-      cancelText: "Cancel",
+      confirmText: translate("common.remove"),
+      cancelText: translate("common.cancel"),
       type: "danger",
       dismissOnOutsideClick: true,
     });
@@ -174,7 +178,7 @@ export const ChangeAccordionItem = ({
                 doCopy(true);
               }
             }}
-            aria-label={"Copy URL"}
+            aria-label={translate("controlCenter.copyURL")}
             className={
               "group/copy relative top-[1px] flex items-center gap-1.5 font-mono text-[0.7rem] text-nb-gray-400 min-w-0 max-w-[18rem] cursor-pointer hover:text-nb-gray-200 transition-colors"
             }
@@ -221,14 +225,14 @@ export const ChangeAccordionItem = ({
         {status === "deploying" ? (
           <div
             className={"self-center shrink-0 p-1.5 text-white"}
-            aria-label={"Deploying"}
+            aria-label={translate("controlCenter.deploying")}
           >
             <Loader2 size={16} className={"animate-spin"} />
           </div>
         ) : status === "done" ? (
           <div
             className={"self-center shrink-0 p-1.5 text-green-500"}
-            aria-label={"Deployed"}
+            aria-label={translate("controlCenter.deployed")}
           >
             <CheckIcon size={16} />
           </div>
@@ -243,7 +247,7 @@ export const ChangeAccordionItem = ({
                 className={
                   "self-center shrink-0 p-1.5 rounded text-nb-gray-400 hover:text-nb-gray-100 hover:bg-nb-gray-800 data-[state=open]:bg-nb-gray-800 data-[state=open]:text-nb-gray-100 transition-colors disabled:opacity-50 outline-none"
                 }
-                aria-label={"More actions"}
+                aria-label={translate("controlCenter.moreActions")}
               >
                 <MoreVerticalIcon size={16} />
               </button>
@@ -257,7 +261,7 @@ export const ChangeAccordionItem = ({
                 }}
               >
                 <CopyIcon size={14} />
-                Copy cURL
+                {translate("controlCenter.copyCURL")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 variant={"danger"}
@@ -266,7 +270,7 @@ export const ChangeAccordionItem = ({
                 onClick={handleRemove}
               >
                 <Trash2Icon size={14} />
-                Remove
+                {translate("common.remove")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

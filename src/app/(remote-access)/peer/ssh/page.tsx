@@ -4,6 +4,7 @@ import { PageNotFound } from "@components/ui/PageNotFound";
 import useFetchApi, { ErrorResponse } from "@utils/api";
 import { CircleXIcon, InfoIcon, Loader2Icon } from "lucide-react";
 import React, { useEffect, useRef } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import type { Peer } from "@/interfaces/Peer";
 import { Terminal } from "@/modules/remote-access/ssh/Terminal";
 import { SSHStatus, useSSH } from "@/modules/remote-access/ssh/useSSH";
@@ -18,6 +19,7 @@ import {
 } from "@utils/version";
 
 export default function SSHPage() {
+  const t = useTranslations();
   const { peerId, username, port, ipVersion } = useSSHQueryParams();
 
   const {
@@ -31,8 +33,7 @@ export default function SSHPage() {
       <div className={"w-screen h-screen overflow-hidden"}>
         <ErrorMessage
           error={{
-            message:
-              "This peer may have been deleted, or you may not have permission to view it.",
+            message: t("remoteAccess.peerUnavailable"),
             code: error.code,
           }}
         />
@@ -51,7 +52,7 @@ export default function SSHPage() {
           ipVersion={ipVersion}
         />
       ) : (
-        <LoadingMessage message={"Starting ssh session..."} />
+        <LoadingMessage message={t("remoteAccess.startingSshSession")} />
       )}
     </div>
   );
@@ -65,6 +66,7 @@ type Props = {
 };
 
 function SSHTerminal({ username, port, peer, ipVersion }: Props) {
+  const t = useTranslations();
   const client = useNetBirdClient();
   const connected = useRef(false);
   const sshConnectedOnce = useRef(false);
@@ -230,6 +232,7 @@ const DisconnectedMessage = ({
   peerIp,
   onReconnect,
 }: DisconnectedMessageProps) => {
+  const t = useTranslations();
   return (
     <div
       className={
@@ -238,14 +241,17 @@ const DisconnectedMessage = ({
     >
       <div className="text-nb-gray-200 font-normal text-base flex gap-2 items-center justify-center">
         <InfoIcon size={16} className={"shrink-0 text-nb-gray-200"} />
-        Disconnected from {username}@{peerIp}
+        {t("remoteAccess.disconnectedFrom", {
+          username,
+          host: peerIp,
+        })}
         <button
           className={
             "underline-offset-4 items-center transition-all duration-200 inline-flex texts-inherit gap-1 text-netbird hover:underline font-normal"
           }
           onClick={onReconnect}
         >
-          Reconnect
+          {t("remoteAccess.reconnect")}
         </button>
       </div>
     </div>

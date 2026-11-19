@@ -4,6 +4,7 @@ import * as React from "react";
 import { useTenantPlan } from "@/cloud/msp/hooks/useTenantPlan";
 import { Tenant, TenantStatus } from "@/cloud/msp/interfaces/Tenant";
 import { PlanCard, PlanLoadingSkeleton } from "@/modules/billing/PlanCard";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   tenant: Tenant;
@@ -52,6 +53,8 @@ export const MSPTenantPlanTab = ({ tenant }: Props) => {
 };
 
 export const MSPTenantPlanTabTrigger = ({ tenant }: Props) => {
+  const t = useTranslations();
+
   if (!tenant) return null;
 
   const isActive = tenant.status === TenantStatus.Active;
@@ -65,7 +68,7 @@ export const MSPTenantPlanTabTrigger = ({ tenant }: Props) => {
           "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
         }
       />
-      Plan
+      {t("distributor.plan")}
     </TabsTrigger>
   );
 };

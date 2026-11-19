@@ -12,6 +12,7 @@ import Steps from "@components/Steps";
 import TabsContentPadding, { TabsContent } from "@components/Tabs";
 import { PackageIcon, TerminalSquareIcon } from "lucide-react";
 import React, { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
   NetBirdUpCommand,
@@ -126,6 +127,7 @@ export default function LinuxTab({
   showSetupKeyInfo = false,
   hostname,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const [distroValue, setDistroValue] = useState(DISTROS[0].value);
   const distro =
     DISTROS.find((option) => option.value === distroValue) ?? DISTROS[0];
@@ -145,7 +147,7 @@ export default function LinuxTab({
       <TabsContentPadding>
         <p className={"font-medium flex gap-3 items-center text-base"}>
           <TerminalSquareIcon size={16} />
-          Install with Command-line
+          {t("setupNetbirdModal.installWithCli")}
         </p>
         <Steps>
           <Steps.Step step={1}>
@@ -156,7 +158,7 @@ export default function LinuxTab({
           )}
           <Steps.Step step={runStep} line={false}>
             <p>
-              Run NetBird {!usingSetupKey && "and log in the browser"}
+              {t("setupNetbirdModal.runNetBird") + " "}{!usingSetupKey && "and log in the browser"}
               {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
             </p>
             <NetBirdUpCommand
@@ -173,7 +175,7 @@ export default function LinuxTab({
           <AccordionItem value="item-1">
             <AccordionTrigger>
               <PackageIcon size={16} />
-              Install manually with a package manager
+              {t("setupNetbirdModal.installWithPackageManager")}
             </AccordionTrigger>
             <AccordionContent>
               <div className={"mt-1"}>
@@ -191,7 +193,7 @@ export default function LinuxTab({
               </div>
               <Steps>
                 <Steps.Step step={1}>
-                  <p>Add our repository</p>
+                  <p>{t("setupNetbirdModal.addRepository")}</p>
                   <Code codeToCopy={distro.repository.join("\n")}>
                     {distro.repository.map((line) => (
                       <Code.Line key={line}>{line}</Code.Line>
@@ -199,7 +201,7 @@ export default function LinuxTab({
                   </Code>
                 </Steps.Step>
                 <Steps.Step step={2}>
-                  <p>Install NetBird</p>
+                  <p>{t("setupNetbirdModal.installNetBird")}</p>
                   <Code codeToCopy={installLines.join("\n")}>
                     {distro.beforeInstall?.map((line) => (
                       <Code.Line key={line}>{line}</Code.Line>
@@ -225,7 +227,7 @@ export default function LinuxTab({
                 </Steps.Step>
                 <Steps.Step step={3} line={false}>
                   <p>
-                    Run NetBird {!usingSetupKey && "and log in the browser"}
+                    {t("setupNetbirdModal.runNetBird") + " "}{!usingSetupKey && "and log in the browser"}
                     {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
                   </p>
                   <NetBirdUpCommand

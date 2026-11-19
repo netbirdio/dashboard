@@ -29,6 +29,7 @@ import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/google-workspace.png";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { GoogleWorkspaceIntegration } from "@/interfaces/IdentityProvider";
 import { EmbeddedIdentityProviderSelect } from "@/modules/integrations/idp-sync/EmbeddedIdentityProviderSelect";
 import { GroupPrefixHelpText } from "@/modules/integrations/idp-sync/GroupPrefixHelpText";
@@ -72,6 +73,7 @@ type ModalProps = {
 };
 
 export function ConfigurationContent({ onSuccess, config }: ModalProps) {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
 
@@ -99,30 +101,38 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
 
   const deleteIntegration = async () => {
     const choice = await confirm({
-      title: `Delete integration?`,
-      description: "Are you sure you want to delete this integration?",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      title: t("integrations.idpDeleteIntegrationTitle"),
+      description: t("integrations.idpConfirmDeleteDesc"),
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
 
     if (!choice) return;
 
     notify({
-      title: "Google Workspace Integration",
-      description: `Google Workspace was successfully deleted`,
+      title: t("integrations.idpIntegrationTitle", {
+        name: t("integrations.idpGoogleWorkspace"),
+      }),
+      description: t("integrations.idpDeletedDescription", {
+        name: t("integrations.idpGoogleWorkspace"),
+      }),
       promise: googleRequest.del({}, `/${config.id}`).then(() => {
         mutate("/integrations/google-idp");
         onSuccess();
       }),
-      loadingMessage: "Deleting integration...",
+      loadingMessage: t("integrations.idpDeletingLoading"),
     });
   };
 
   const updateIntegration = async () => {
     notify({
-      title: "Google Workspace Integration",
-      description: `Google Workspace was successfully updated`,
+      title: t("integrations.idpIntegrationTitle", {
+        name: t("integrations.idpGoogleWorkspace"),
+      }),
+      description: t("integrations.idpUpdatedDescription", {
+        name: t("integrations.idpGoogleWorkspace"),
+      }),
       promise: googleRequest
         .put(
           {
@@ -146,7 +156,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
           mutate("/integrations/google-idp");
           onSuccess();
         }),
-      loadingMessage: "Updating integration...",
+      loadingMessage: t("integrations.idpUpdatingLoading"),
     });
   };
 
@@ -170,8 +180,10 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
 
       <IntegrationModalHeader
         image={integrationImage}
-        title={"Google Workspace Configuration"}
-        description={"Sync your users and groups from Google Workspace."}
+        title={t("integrations.idpConfigurationTitle", {
+          name: t("integrations.idpGoogleWorkspace"),
+        })}
+        description={t("integrations.idpGoogleConfigDescription")}
       />
 
       <Tabs
@@ -187,7 +199,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Settings
+            {t("common.settings")}
           </TabsTrigger>
           <TabsTrigger value={"group-sync"}>
             <FolderGit2
@@ -196,7 +208,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Group Sync
+            {t("common.groupSync")}
           </TabsTrigger>
           <TabsTrigger value={"user-sync"}>
             <UserCircle
@@ -205,7 +217,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            User Sync
+            {t("common.userSync")}
           </TabsTrigger>
           <TabsTrigger value={"danger"}>
             <AlertOctagon
@@ -214,7 +226,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Danger Zone
+            {t("common.dangerZoneTitle")}
           </TabsTrigger>
         </TabsList>
         <TabsContent value={"settings"} className={"px-8 text-sm"}>
@@ -227,7 +239,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
               customPrefix={
                 <div className={"min-w-[165px] flex gap-2 items-center"}>
                   <Box size={16} />
-                  Customer ID
+                  {t("integrations.idpCustomerId")}
                 </div>
               }
               placeholder={"62d3a656-c87d-4f30-a242-5b6347e29e9f"}
@@ -242,7 +254,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
               customPrefix={
                 <div className={"min-w-[165px] flex gap-2 items-center"}>
                   <KeyRound size={16} />
-                  Service Account Key
+                  {t("integrations.idpServiceAccountKey")}
                 </div>
               }
               placeholder={"YdV7Q~JJ62Xl.LvYoBanxZR2sJA2va_3UbqvncY8"}
@@ -257,10 +269,9 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
 
             <div className={"flex justify-between mt-4"}>
               <div>
-                <Label>Sync Interval</Label>
+                <Label>{t("integrations.idpSyncInterval")}</Label>
                 <HelpText className={"max-w-[300px]"}>
-                  The interval in seconds when the synchronization should
-                  happen.
+                  {t("integrations.idpSyncIntervalHelp")}
                 </HelpText>
               </div>
               <Input
@@ -274,7 +285,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
                 customPrefix={
                   <RefreshCw size={16} className={"text-nb-gray-300"} />
                 }
-                customSuffix={"Seconds"}
+                customSuffix={t("integrations.idpSyncIntervalUnit")}
               />
             </div>
             <EmbeddedIdentityProviderSelect
@@ -290,7 +301,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
             <Label>
               <div className={"flex gap-2 items-center"}>
                 <FolderGit2 size={16} />
-                Synchronize Groups
+                {t("common.syncGroups")}
               </div>
             </Label>
             <GroupPrefixHelpText />
@@ -303,14 +314,14 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
             <Label>
               <div className={"flex gap-2 items-center"}>
                 <UserCircle size={16} />
-                Synchronize Users
+                {t("common.syncUsers")}
               </div>
             </Label>
             <GroupPrefixHelpText type={"user-groups"} />
           </div>
           <GroupPrefixInput
-            addText={"Add user group filter"}
-            text={"User group starts with..."}
+            addText={t("integrations.idpAddUserGroupFilter")}
+            text={t("integrations.idpUserGroupStartsWith")}
             value={userGroupPrefixes}
             onChange={setUserGroupPrefixes}
           />
@@ -321,14 +332,11 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
             <Label>
               <div className={"flex gap-2 items-center"}>
                 <AlertOctagon size={16} />
-                Delete Integration
+                {t("common.deleteIntegration")}
               </div>
             </Label>
             <HelpText className={"max-w-lg mt-2"}>
-              Deleting this integration will remove the ability to sync users
-              and groups from your IdP to NetBird. If you delete the integration
-              you will need to reconfigure it again to enable the
-              synchronization.
+              {t("integrations.idpDeleteWarning")}
             </HelpText>
           </div>
           <Button
@@ -337,7 +345,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
             className={"mt-3"}
             onClick={deleteIntegration}
           >
-            Delete Integration
+            {t("common.deleteIntegration")}
           </Button>
         </TabsContent>
       </Tabs>
@@ -346,7 +354,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
       <ModalFooter className={"items-center gap-4"}>
         <ModalClose asChild={true}>
           <Button variant={"secondary"} className={"w-full"}>
-            Cancel
+            {t("common.cancel")}
           </Button>
         </ModalClose>
 
@@ -356,7 +364,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
           disabled={!hasChanges}
           onClick={updateIntegration}
         >
-          Save
+          {t("common.save")}
         </Button>
       </ModalFooter>
     </ModalContent>

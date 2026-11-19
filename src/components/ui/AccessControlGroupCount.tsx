@@ -5,12 +5,14 @@ import { RouteIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import Skeleton from "react-loading-skeleton";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Route } from "@/interfaces/Route";
 
 type Props = {
   group_id: string;
 };
 export const AccessControlGroupCount = ({ group_id }: Props) => {
+  const t = useTranslations();
   const { data, isLoading } = useFetchApi<Route[]>("/routes");
 
   const routes = useMemo(() => {
@@ -60,7 +62,7 @@ export const AccessControlGroupCount = ({ group_id }: Props) => {
         }
       >
         <RouteIcon size={14} className={"shrink-0"} />
-        {routes.length} Route(s)
+        {t("components.routeCounter", { count: routes.length })}
       </div>
     </FullTooltip>
   ) : null;

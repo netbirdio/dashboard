@@ -1,14 +1,15 @@
 "use client";
 
-import { DropdownInput } from "@components/DropdownInput";
 import { DropdownInfoText } from "@components/DropdownInfoText";
-import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
+import { DropdownInput } from "@components/DropdownInput";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
+import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import { useSearch } from "@hooks/useSearch";
 import { sortBy, uniqBy } from "lodash";
 import { UserCircle2 } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
 // UsersPicker — single-select search list mirroring the Activity ›
@@ -40,11 +41,12 @@ const searchPredicate = (item: UserOption, query: string) => {
 };
 
 export function UsersPicker({ value, onChange, close, options }: Props) {
+  const t = useTranslations();
   const [filteredItems, search, setSearch] = useSearch(
     options.concat({
       id: ALL_USERS_ID,
-      name: "All Users",
-      email: "Include all users",
+      name: t("activity.allUsers"),
+      email: t("activity.includeAllUsers"),
     }),
     searchPredicate,
     { filter: true, debounce: 150 },
@@ -68,23 +70,21 @@ export function UsersPicker({ value, onChange, close, options }: Props) {
       <DropdownInput
         value={search}
         onChange={setSearch}
-        placeholder={"Search user..."}
+        placeholder={t("tables.searchUser")}
         hideEnterIcon={true}
       />
 
       {options.length === 0 && !search && (
         <div className={"max-w-xs mx-auto"}>
           <DropdownInfoText>
-            {"No users available to select."}
+            {t("components.noUsersAvailable")}
           </DropdownInfoText>
         </div>
       )}
 
       {filteredItems.length === 0 && search !== "" && (
         <div className={"px-10"}>
-          <DropdownInfoText>
-            There are no users matching your search.
-          </DropdownInfoText>
+          <DropdownInfoText>{t("tables.noMatchingUsers")}</DropdownInfoText>
         </div>
       )}
 
@@ -105,8 +105,7 @@ export function UsersPicker({ value, onChange, close, options }: Props) {
           renderItem={(user) => {
             const isSystemUser = user.email === "NetBird";
             const isSelected =
-              value === user.email ||
-              (user.id === ALL_USERS_ID && !value);
+              value === user.email || (user.id === ALL_USERS_ID && !value);
             return (
               <div
                 className={"flex items-center gap-2 w-full"}
@@ -129,9 +128,15 @@ export function UsersPicker({ value, onChange, close, options }: Props) {
                 )}
 
                 <div className={"flex flex-col text-xs w-full min-w-0"}>
-                  <span className={"text-nb-gray-200 flex items-center gap-1.5"}>
+                  <span
+                    className={"text-nb-gray-200 flex items-center gap-1.5"}
+                  >
                     <TextWithTooltip
-                      text={isSystemUser ? "System" : user?.name || user?.id}
+                      text={
+                        isSystemUser
+                          ? t("tables.systemUser")
+                          : user?.name || user?.id
+                      }
                       maxChars={22}
                     />
                   </span>

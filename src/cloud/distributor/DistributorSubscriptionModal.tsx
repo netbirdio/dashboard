@@ -6,6 +6,7 @@ import { CreditCardIcon } from "lucide-react";
 import * as React from "react";
 import { useCustomerPlan } from "@/cloud/distributor/hooks/useCustomerPlan";
 import { PlanCard, PlanLoadingSkeleton } from "@/modules/billing/PlanCard";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   open: boolean;
@@ -42,6 +43,8 @@ const DistributorSubscriptionModalContent = ({
   accountId,
   setOpen,
 }: ContentProps) => {
+  const t = useTranslations();
+
   const {
     plans,
     isLoading,
@@ -63,13 +66,13 @@ const DistributorSubscriptionModalContent = ({
       <ModalHeader
         icon={<CreditCardIcon size={18} />}
         title={`NetBird Plan for ${name}`}
-        description={`Select the plan that best fits your customer's needs.`}
+        description={t(
+          "distributor.selectThePlanThatBestFitsYourCustomerSNeeds",
+        )}
         color={"netbird"}
       />
       <div className={"px-8 pb-1"}>
-        <div
-          className={"grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 gap-4"}
-        >
+        <div className={"grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 gap-4"}>
           {(!plans || isLoading) && (
             <>
               <PlanLoadingSkeleton height={378} />
@@ -87,18 +90,18 @@ const DistributorSubscriptionModalContent = ({
                 onClick={() => subscribe(plan).finally(() => setOpen(false))}
                 key={plan.name}
                 buttonText={{
-                  upgrade: "Continue with",
-                  downgrade: "Downgrade to",
+                  upgrade: t("msp.continueWith"),
+                  downgrade: t("billing.downgradeTo"),
                 }}
               />
             ))}
         </div>
         <div className={"pt-6 flex items-center justify-center"}>
           <Paragraph className={"inline text-sm"}>
-            Haven&apos;t decided for a plan yet?{" "}
+            {t("distributor.havenTDecidedForAPlanYet")}{" "}
             <ModalClose asChild={true}>
               <InlineButtonLink variant={"white"}>
-                Continue with Trial
+                {t("msp.continueWithTrial")}
               </InlineButtonLink>
             </ModalClose>
           </Paragraph>

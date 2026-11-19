@@ -3,6 +3,7 @@ import { ArrowRightIcon, CheckCircle2Icon, PlusIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useRef } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import AIProviderModal from "@/modules/agent-network/AIProviderModal";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import { EMPTY_POLICY_LIMITS } from "@/modules/agent-network/data/mockData";
@@ -22,6 +23,7 @@ export const OnboardingAgentProvider = ({
   onBack,
   onNext,
 }: Props) => {
+  const t = useTranslations();
   const { settings, providers, openWizard, closeWizard, isWizardOpen } =
     useAIProviders();
   const connected = !!settings && providers.length > 0;
@@ -30,16 +32,15 @@ export const OnboardingAgentProvider = ({
   return (
     <div className={"relative flex flex-col h-full gap-4"}>
       <div>
-        <h1 className={"text-xl text-center"}>Connect a provider</h1>
+        <h1 className={"text-xl text-center"}>
+          {t("onboarding.connectAProvider")}
+        </h1>
         <div
           className={
             "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
           }
         >
-          {`A provider is an upstream LLM service NetBird routes to, such as
-          OpenAI, Anthropic, Vertex AI, Bedrock, an AI gateway, or a
-          self-hosted model server like vLLM. NetBird stores the API key
-          securely, so your agents never hold it.`}
+          {t("onboarding.aProviderIsAnUpstreamLLMServiceNetBirdRoutesTo")}
         </div>
       </div>
 
@@ -48,25 +49,27 @@ export const OnboardingAgentProvider = ({
           <CheckCircle2Icon size={16} className={"text-green-500"} />
           <span>
             {providers.length > 1
-              ? `${providers.length} providers connected.`
-              : "Provider connected."}
+              ? t("onboarding.lengthProvidersConnected", {
+                  length: providers.length,
+                })
+              : t("onboarding.providerConnected")}
           </span>
         </div>
       ) : (
         <div className={"mt-4 flex items-center justify-center"}>
           <Button variant={"primary"} onClick={openWizard}>
             <PlusIcon size={16} />
-            Connect Provider
+            {t("onboarding.connectProvider")}
           </Button>
         </div>
       )}
 
       <div className={"flex items-center justify-center mt-4 gap-3"}>
         <Button variant={"secondary"} onClick={onBack}>
-          Go Back
+          {t("onboarding.goBack")}
         </Button>
         <Button variant={"primary"} disabled={!connected} onClick={onNext}>
-          Continue
+          {t("common.continue")}
           <ArrowRightIcon size={16} />
         </Button>
       </div>

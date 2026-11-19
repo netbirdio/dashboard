@@ -20,6 +20,7 @@ import { useState } from "react";
 import sshImage from "@/assets/ssh/ssh-client.png";
 import { SegmentedTabs } from "@components/SegmentedTabs";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import { PeerSSHPolicyModal } from "@/modules/peer/PeerSSHPolicyModal";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
@@ -38,6 +39,7 @@ export const PeerSSHInstructions = ({
   onSuccess,
   peer,
 }: Props) => {
+  const t = useTranslations();
   const [client, setClient] = useState("cli");
   const [policyModal, setPolicyModal] = useState(false);
 
@@ -55,10 +57,8 @@ export const PeerSSHInstructions = ({
       >
         <ModalHeader
           icon={<TerminalSquare size={16} />}
-          title={"Enable SSH Access"}
-          description={
-            "Allow remote SSH access from other connected network participants."
-          }
+          title={t("peer.enableSSH")}
+          description={t("peer.allowRemoteSshDescription")}
           color={"netbird"}
         />
 
@@ -69,11 +69,11 @@ export const PeerSSHInstructions = ({
             <SegmentedTabs.List className={"rounded-lg border"}>
               <SegmentedTabs.Trigger value={"cli"}>
                 <TerminalSquare size={16} />
-                CLI
+                {t("peer.cli")}
               </SegmentedTabs.Trigger>
               <SegmentedTabs.Trigger value={"gui"}>
                 <NetBirdIcon size={16} />
-                Desktop Client
+                {t("peer.desktopClient")}
               </SegmentedTabs.Trigger>
             </SegmentedTabs.List>
           </SegmentedTabs>
@@ -82,14 +82,11 @@ export const PeerSSHInstructions = ({
             {client === "cli" ? (
               <Steps.Step step={1}>
                 <p className={"font-normal"}>
-                  If you are using NetBird via CLI, you can enable SSH by
-                  running{" "}
-                  {isWindows
-                    ? "these commands in an elevated prompt"
-                    : "these commands as root"}
-                  . Run the first one only if NetBird is already running. On a
-                  machine where you do not have those rights, an administrator
-                  has to run them.
+                  {t("peer.cliSshInstructions", {
+                    privilege: isWindows
+                      ? t("peer.elevatedPrompt")
+                      : t("peer.commandsAsRoot"),
+                  })}
                 </p>
                 <Code codeToCopy={`${prefix}netbird down`}>
                   <Code.Line>{`${prefix}netbird down`}</Code.Line>
@@ -101,35 +98,36 @@ export const PeerSSHInstructions = ({
             ) : (
               <Steps.Step step={1}>
                 <p className={"font-normal"}>
-                  If you are using NetBird via the Desktop Client, click on the
-                  NetBird tray icon, go to <Mark>Settings</Mark> and click{" "}
-                  <Mark>Allow SSH</Mark>. If you want to enable Root Login go to{" "}
-                  <Mark>Settings &gt; Advanced Settings</Mark> and enable SSH
-                  Root Login under the SSH tab.
+                  {t.rich("peer.desktopSshInstructions", {
+                    settings: () => <Mark>{t("common.settings")}</Mark>,
+                    allow: () => <Mark>{t("peer.allowSSH")}</Mark>,
+                    advanced: () => (
+                      <Mark>{t("peer.advancedSettingsPath")}</Mark>
+                    ),
+                  })}
                 </p>
                 <Lightbox image={sshImage} />
               </Steps.Step>
             )}
 
             <Steps.Step step={2}>
-              <p className={"font-normal"}>
-                Starting from NetBird v0.61.0, SSH requires an explicit access
-                control policy to allow SSH connections to this machine.
-              </p>
+              <p className={"font-normal"}>{t("peer.sshRequiresPolicy")}</p>
               <div className={"mt-2"}>
                 <Button
                   variant={"secondary"}
                   onClick={() => setPolicyModal(true)}
                 >
                   <PlusCircle size={16} />
-                  Create SSH Policy
+                  {t("peer.createSSHPolicy")}
                 </Button>
               </div>
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                Once the NetBird SSH server is allowed on the client, <br />
-                click <Mark>Confirm & Enable</Mark> below to finish the setup.
+                {t("peer.sshServerAllowedPrefix")} <br />
+                {t.rich("peer.confirmAndEnableBelow", {
+                  action: () => <Mark>{t("peer.confirmAndEnable")}</Mark>,
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -138,23 +136,26 @@ export const PeerSSHInstructions = ({
         <ModalFooter className={"items-center"}>
           <div className={"w-full"}>
             <Paragraph className={"text-sm mt-auto"}>
-              Learn more about
-              <InlineLink
-                href={"https://docs.netbird.io/how-to/ssh"}
-                target={"_blank"}
-              >
-                SSH
-                <ExternalLinkIcon size={12} />
-              </InlineLink>
+              {t.rich("peer.learnMoreAboutSsh", {
+                link: (chunks) => (
+                  <InlineLink
+                    href={"https://docs.netbird.io/how-to/ssh"}
+                    target={"_blank"}
+                  >
+                    {chunks}
+                    <ExternalLinkIcon size={12} />
+                  </InlineLink>
+                ),
+              })}
             </Paragraph>
           </div>
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>{t("common.cancel")}</Button>
             </ModalClose>
 
             <Button variant={"primary"} onClick={onSuccess}>
-              Finish Setup
+              {t("common.finishSetup")}
             </Button>
           </div>
         </ModalFooter>

@@ -11,6 +11,7 @@ import { useApiCall } from "@utils/api";
 import { useReactFlow } from "@xyflow/react";
 import { CheckCircle2Icon } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { SetupKey } from "@/interfaces/SetupKey";
@@ -32,6 +33,7 @@ import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 // Server/Agent installs arrive without a setup key: it is generated on demand
 // and written back onto the placeholder node so reopening Install reuses it.
 export const DraftInstallPeerModal = () => {
+  const t = useTranslations();
   const { installModal, setInstallModal } = useDraftMode();
   const { oidcUser: user } = useOidcUser();
   const reactFlow = useReactFlow();
@@ -203,7 +205,8 @@ export const DraftInstallPeerModal = () => {
         const entry = held?.find((p) => p.id === draftId);
         if (entry) {
           return {
-            placeholderKind: (entry.os ?? "").replace("draft-", "") || undefined,
+            placeholderKind:
+              (entry.os ?? "").replace("draft-", "") || undefined,
             placeholderName: entry.name,
             boundGroupId: entry.boundGroupId,
             setupKeyId: entry.setupKeyId,
@@ -239,7 +242,10 @@ export const DraftInstallPeerModal = () => {
       // Absent counts as dead too: teardown may already have deleted it.
       if (key && !key.revoked) return;
       setKeyRevoked(true);
-      writeToPlaceholder(draftId, { setupKey: undefined, setupKeyId: undefined });
+      writeToPlaceholder(draftId, {
+        setupKey: undefined,
+        setupKeyId: undefined,
+      });
       clearInstallPeerKey(draftId);
     })();
     return () => {
@@ -298,13 +304,16 @@ export const DraftInstallPeerModal = () => {
           <ModalHeader
             icon={<CheckCircle2Icon size={20} />}
             color={"green"}
-            title={"Peer installed"}
-            description={`“${installedChange.name}” registered and took the placeholder's place in your draft.`}
+            title={t("controlCenter.peerInstalledTitle")}
+            description={t(
+              "controlCenter.registeredAndTookThePlaceholderSPlaceIn",
+              { installedChange: installedChange.name },
+            )}
           />
           <ModalFooter>
             <ModalClose asChild={true}>
               <Button variant={"primary"} className={"w-full"}>
-                Continue
+                {t("common.continue")}
               </Button>
             </ModalClose>
           </ModalFooter>
@@ -318,9 +327,7 @@ export const DraftInstallPeerModal = () => {
           hostname={hostname}
           autoGroups={autoGroups}
           resolveAutoGroups={resolveAutoGroups}
-          keyName={
-            placeholderName ? `Draft ${placeholderName}` : undefined
-          }
+          keyName={placeholderName ? `Draft ${placeholderName}` : undefined}
           onSetupKeyGenerated={(key) => {
             const nodeId = installModal.nodeId;
             if (!nodeId || !key?.key) return;

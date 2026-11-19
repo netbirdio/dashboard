@@ -3,6 +3,8 @@
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import PageContainer from "@/layouts/PageContainer";
 import {
   AgentConnectTabs,
@@ -21,6 +23,8 @@ import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetwor
 // still gets it, with an empty provider list carrying the explanation. The caller's own usage lives on the regular Usage & Logs page,
 // which the server scopes to them.
 export default function ConnectAgentPage() {
+  const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const { setup, isLoading } = useMyAgentNetworkSetup();
   const providers = setup?.providers ?? [];
   // EndpointBadge builds https:// URLs from a bare host.
@@ -35,14 +39,12 @@ export default function ConnectAgentPage() {
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
-        <h1>Connect Your Agent</h1>
+        <h1>{tr("agentNetwork.connectYourAgent")}</h1>
         {/* block, so the <br /> lands: Paragraph is a flex container by
             default and a break element does nothing between flex items. */}
         <Paragraph className={"block"}>
-          Point your agent at the NetBird endpoint as its base URL. No provider
-          API key is required on the client. <br />
-          NetBird authenticates you through your identity provider and
-          authorizes each request against your access policies.
+          {tr("agentNetwork.connectYourAgentIntro")} <br />
+          {tr("agentNetwork.connectYourAgentAuth")}
         </Paragraph>
 
         {/* The server hands the endpoint to every member of an account that
@@ -81,7 +83,9 @@ export default function ConnectAgentPage() {
           {/* Same box as the tab content above — gutter and max-width on one
               element — so the table lines up with the snippets. */}
           <div className={"p-default pt-8 pb-10 max-w-3xl"}>
-            <h2 className={"text-base mb-0"}>Your Providers &amp; Models</h2>
+            <h2 className={"text-base mb-0"}>
+              {tr("agentNetwork.yourProvidersAndModels")}
+            </h2>
             <ConnectProvidersTable providers={providers} />
           </div>
         </>

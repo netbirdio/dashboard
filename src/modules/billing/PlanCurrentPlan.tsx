@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import * as React from "react";
 import { useBilling } from "@/contexts/BillingProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { AccountUsageStats } from "@/interfaces/AccountUsageStats";
 import { Currency, Plan, Price } from "@/interfaces/Plan";
 import { PlanIcon } from "@/modules/billing/PlanIcon";
@@ -40,6 +41,7 @@ export const PlanCurrentPlan = ({
   currentPlanPrice,
   aws = false,
 }: Props) => {
+  const translate = useTranslations();
   const { visitCustomerPortal } = useBilling();
 
   return (
@@ -58,13 +60,15 @@ export const PlanCurrentPlan = ({
 
           <div className={"flex-col flex min-w-0"}>
             <div className={"font-medium"}>
-              {isTrial ? "Free Trial" : currentPlan.name}
+              {isTrial ? translate("billing.freeTrial") : currentPlan.name}
             </div>
             <FullTooltip
               content={
                 <div className={"text-xs max-w-xs"}>
                   {isTrial
-                    ? `Trial ends in ${trialDaysRemaining} days`
+                    ? translate("billing.trialEndsInTrialDaysRemainingDays", {
+                        trialDaysRemaining: trialDaysRemaining,
+                      })
                     : currentPlan.description}
                 </div>
               }
@@ -79,7 +83,9 @@ export const PlanCurrentPlan = ({
                 )}
               >
                 {isTrial
-                  ? `Trial ends in ${trialDaysRemaining} days`
+                  ? translate("billing.trialEndsInTrialDaysRemainingDays", {
+                      trialDaysRemaining: trialDaysRemaining,
+                    })
                   : currentPlan.description}
               </div>
             </FullTooltip>
@@ -96,7 +102,7 @@ export const PlanCurrentPlan = ({
                   target={"_blank"}
                 >
                   <Button variant={"secondary"} size={"xs"}>
-                    Visit AWS Marketplace
+                    {translate("billing.visitAWSMarketplace")}
                     <ExternalLinkIcon size={12} />
                   </Button>
                 </Link>
@@ -111,7 +117,7 @@ export const PlanCurrentPlan = ({
                   onClick={visitCustomerPortal}
                 >
                   <EditIcon size={12} />
-                  Manage Plan
+                  {translate("billing.managePlan")}
                 </Button>
               </div>
             )}
@@ -123,10 +129,12 @@ export const PlanCurrentPlan = ({
           <div
             className={"flex gap-2 items-center text-sm text-nb-gray-300 mb-4"}
           >
-            {`You currently have access to NetBird's full set of features & integrations. `}
-            {currentPlan.name == "Team" &&
-              `Your Team plan remains active during this trial. `}
-            {`After the trial, you will return to your ${currentPlan.name} plan unless you choose to upgrade.`}
+            {translate("billing.youCurrentlyHaveAccessToNetBirdSFullSetOf")}
+            {currentPlan.name == translate("billing.team") &&
+              translate("billing.yourTeamPlanRemainsActiveDuringThisTrial")}
+            {translate("billing.afterTheTrialYouWillReturnToYourNamePlan", {
+              name: currentPlan.name,
+            })}
           </div>
         )}
         <div className={"flex w-full gap-10 "}>
@@ -137,11 +145,15 @@ export const PlanCurrentPlan = ({
                 {stats?.active_users}
               </span>
               {isFreePlan && !isTrial ? (
-                <span className={"text-nb-gray-300"}> of 5 Users</span>
+                <span className={"text-nb-gray-300"}>
+                  {translate("billing.of5Users")}
+                </span>
               ) : (
                 <span className={"text-nb-gray-300"}>
                   {" "}
-                  {stats?.active_users == 1 ? "User" : "Users"}
+                  {stats?.active_users == 1
+                    ? translate("billing.user")
+                    : translate("common.users")}
                 </span>
               )}
             </div>
@@ -156,11 +168,15 @@ export const PlanCurrentPlan = ({
 
               {isTrial ? (
                 <span className={"text-nb-gray-300"}>
-                  {stats?.active_peers == 1 ? ` Peer` : ` Peers`}
+                  {stats?.active_peers == 1
+                    ? " " + translate("billing.peer")
+                    : " " + translate("common.peers")}
                 </span>
               ) : (
                 <span className={"text-nb-gray-300"}>
-                  {` of ${maxPeersOfPlan} Peers`}
+                  {translate("billing.ofMaxPeersOfPlanPeers", {
+                    maxPeersOfPlan: maxPeersOfPlan,
+                  })}
                 </span>
               )}
             </div>
@@ -175,13 +191,16 @@ export const PlanCurrentPlan = ({
                   {estimatedPrice}
                   {currentPlanPrice?.currency == Currency.EUR && "€"}
                 </span>
-                <span className={"text-nb-gray-300"}> per month</span>
+                <span className={"text-nb-gray-300"}>
+                  {translate("billing.perMonth")}
+                </span>
               </div>
               <FullTooltip
                 content={
                   <div className={"text-xs max-w-sm"}>
-                    The estimated price is calculated based on the number of
-                    active users and active peers.
+                    {translate(
+                      "msp.theEstimatedPriceIsCalculatedBasedOnTheNumberOf",
+                    )}
                   </div>
                 }
                 interactive={false}

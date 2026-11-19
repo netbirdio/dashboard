@@ -13,6 +13,7 @@ import { PlusCircle } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useSignInDomains } from "@/cloud/sign-in-domains/useSignInDomains";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DomainValidationStatus, SignInDomain } from "@/interfaces/Account";
 import { DomainVerificationModal } from "@/modules/integrations/sso/DomainVerificationModal";
 
@@ -22,6 +23,7 @@ type Props = {
 };
 
 export const AddSignInDomainModal = ({ open, onOpenChange }: Props) => {
+  const t = useTranslations();
   const { addDomain, verifyDomain, mutate } = useSignInDomains();
   const [name, setName] = useState("");
   const [verifyModal, setVerifyModal] = useState(false);
@@ -35,9 +37,9 @@ export const AddSignInDomainModal = ({ open, onOpenChange }: Props) => {
       allowOnlyTld: false,
       preventLeadingAndTrailingDots: true,
     });
-    if (!valid) return "Please enter a valid domain, e.g. company.com";
+    if (!valid) return t("signInDomains.pleaseEnterAValidDomainEGCompanyCom");
     return "";
-  }, [name]);
+  }, [name, t]);
 
   const setOpen = (next: boolean) => {
     if (!next) setName("");
@@ -51,8 +53,8 @@ export const AddSignInDomainModal = ({ open, onOpenChange }: Props) => {
     setOpen(false);
 
     notify({
-      title: "Sign-in Domains",
-      description: `${domain} has been added`,
+      title: t("signInDomains.signInDomains"),
+      description: t("signInDomains.domainHasBeenAdded", { domain: domain }),
       promise: addDomain(domain).then((added) => {
         if (
           added &&
@@ -64,7 +66,7 @@ export const AddSignInDomainModal = ({ open, onOpenChange }: Props) => {
         mutate().catch(() => {});
         return added;
       }),
-      loadingMessage: "Adding domain...",
+      loadingMessage: t("signInDomains.addingDomain"),
     });
   };
 
@@ -89,8 +91,10 @@ export const AddSignInDomainModal = ({ open, onOpenChange }: Props) => {
         <ModalContent maxWidthClass={"max-w-md"}>
           <ModalHeader
             className={"pb-4 px-8"}
-            title={"Add Sign-in Domain"}
-            description={"Users on this domain are matched to your account."}
+            title={t("signInDomains.addSignInDomain")}
+            description={t(
+              "signInDomains.usersOnThisDomainAreMatchedToYourAccount",
+            )}
           />
 
           <form
@@ -104,7 +108,7 @@ export const AddSignInDomainModal = ({ open, onOpenChange }: Props) => {
                 <Input
                   autoFocus
                   data-testid={"add-domain-input"}
-                  placeholder={"e.g. company.com"}
+                  placeholder={t("signInDomains.eGCompanyCom")}
                   value={name}
                   error={validationError}
                   onChange={(event) => setName(event.target.value)}
@@ -116,7 +120,7 @@ export const AddSignInDomainModal = ({ open, onOpenChange }: Props) => {
               <div className={"flex gap-3 w-full justify-end"}>
                 <ModalClose asChild={true}>
                   <Button variant={"secondary"} className={"w-full"}>
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                 </ModalClose>
 
@@ -128,7 +132,7 @@ export const AddSignInDomainModal = ({ open, onOpenChange }: Props) => {
                   data-testid={"add-domain-submit"}
                 >
                   <PlusCircle size={16} />
-                  Add
+                  {t("common.add")}
                 </Button>
               </div>
             </ModalFooter>

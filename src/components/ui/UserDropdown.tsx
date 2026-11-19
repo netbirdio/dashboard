@@ -24,9 +24,11 @@ import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { ChangePasswordModalContent } from "@/modules/users/ChangePasswordModal";
 
 export default function UserDropdown() {
+  const t = useTranslations();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [changePasswordModal, setChangePasswordModal] = useState(false);
   const { user } = useApplicationContext();
@@ -55,10 +57,10 @@ export default function UserDropdown() {
       >
         <DropdownMenuTrigger
           data-testid="user-dropdown"
-          aria-label={"New: Light Mode - profile and theme settings"}
+          aria-label={t("components.profileAndThemeSettingsAria")}
           className={"flex cursor-pointer items-center gap-2"}
         >
-          <Badge variant={"blueDark"}>New: Light Mode</Badge>
+          <Badge variant={"blueDark"}>{t("components.newLightMode")}</Badge>
           <UserAvatar size={"medium"} />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -112,7 +114,7 @@ export default function UserDropdown() {
             >
               <div className={"flex gap-3 items-center"}>
                 <KeyRound size={14} />
-                Change Password
+                {t("common.changePassword")}
               </div>
             </DropdownMenuItem>
           )}
@@ -120,7 +122,7 @@ export default function UserDropdown() {
           <DropdownMenuItem onClick={logout}>
             <div className={"flex gap-3 items-center"}>
               <LogOutIcon size={14} />
-              Log out
+              {t("common.logOut")}
             </div>
             <DropdownMenuShortcut className={"opacity-75"}>
               {isMac ? (
@@ -143,6 +145,7 @@ export default function UserDropdown() {
 }
 
 const ProfileSettingsDropdownItem = ({ onClick }: { onClick: () => void }) => {
+  const t = useTranslations();
   const { isMSPInTenantContext } = useMSP();
   const { permission } = usePermissions();
 
@@ -153,13 +156,14 @@ const ProfileSettingsDropdownItem = ({ onClick }: { onClick: () => void }) => {
     <DropdownMenuItem onClick={onClick}>
       <div className={"flex gap-3 items-center"}>
         <User2 size={14} />
-        Profile Settings
+        {t("common.profileSettings")}
       </div>
     </DropdownMenuItem>
   );
 };
 
 const PlansAndBillingDropdownItem = ({ onClick }: { onClick: () => void }) => {
+  const t = useTranslations();
   const { permission } = usePermissions();
 
   const { isAccountWithMSPParent } = useMSP();
@@ -170,7 +174,7 @@ const PlansAndBillingDropdownItem = ({ onClick }: { onClick: () => void }) => {
       <DropdownMenuItem onClick={onClick}>
         <div className={"flex gap-3 items-center"}>
           <CreditCardIcon size={14} />
-          Plans & Billing
+          {t("common.plansAndBilling")}
         </div>
       </DropdownMenuItem>
     )

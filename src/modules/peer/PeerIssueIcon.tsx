@@ -3,6 +3,7 @@ import { AlertTriangle } from "lucide-react";
 import * as React from "react";
 import { PeerDisapprovalReason } from "@/cloud/edr/PeerDisapprovalReason";
 import { useBypassedPeers } from "@/cloud/edr/useBypass";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
 
@@ -19,6 +20,7 @@ import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
 //
 // Priority: bypassed → login_expired → non-compliant → approval_required.
 export const usePeerIssueIcon = (peer: Peer): React.ReactNode | null => {
+  const t = useTranslations();
   const { isAnyIntegrationEnabled, activeIntegrationName } = useIntegrations();
   const { isBypassed: checkBypassed } = useBypassedPeers();
   const isBypassed = peer.id ? checkBypassed(peer.id) : false;
@@ -31,8 +33,7 @@ export const usePeerIssueIcon = (peer: Peer): React.ReactNode | null => {
         interactive={false}
         content={
           <div className={"text-xs max-w-xs"}>
-            This peer has compliance bypassed by an administrator. The bypass
-            will be automatically removed when the device becomes compliant.
+            {t("peer.bypassedIssue")}
           </div>
         }
       >
@@ -50,8 +51,7 @@ export const usePeerIssueIcon = (peer: Peer): React.ReactNode | null => {
         interactive={false}
         content={
           <div className={"text-xs max-w-xs"}>
-            This peer&apos;s login has expired. Re-authenticate from the
-            NetBird client on the device to bring it back online.
+            {t("peer.loginExpiredIssue")}
           </div>
         }
       >
@@ -71,8 +71,9 @@ export const usePeerIssueIcon = (peer: Peer): React.ReactNode | null => {
           content={
             <div className={"max-w-xs text-xs"}>
               <div>
-                This peer is not compliant with {activeIntegrationName} and
-                cannot connect until compliance is restored or bypassed.
+                {t("peer.notCompliantIssue", {
+                  integration: activeIntegrationName,
+                })}
               </div>
               <PeerDisapprovalReason peer={peer} />
             </div>
@@ -90,8 +91,7 @@ export const usePeerIssueIcon = (peer: Peer): React.ReactNode | null => {
         interactive={false}
         content={
           <div className={"text-xs max-w-xs"}>
-            This peer needs admin approval before it can connect. Approve it
-            from the row&apos;s actions menu.
+            {t("peer.approvalRequiredIssue")}
           </div>
         }
       >

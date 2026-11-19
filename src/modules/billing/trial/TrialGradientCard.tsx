@@ -5,8 +5,11 @@ import * as React from "react";
 import { useBilling } from "@/contexts/BillingProvider";
 import { PlanTier } from "@/interfaces/Subscription";
 import { TrialOrUpgradeButton } from "@/modules/billing/trial/TrialOrUpgradeButton";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 export const TrialGradientCard = () => {
+  const t = useTranslations();
+
   const { currentPlan, canUpgrade, isTrialAvailable } = useBilling();
   let planName = currentPlan?.name || "Free";
   if (!isTrialAvailable) return null;
@@ -31,10 +34,12 @@ export const TrialGradientCard = () => {
               )}
             >
               <Sparkles size={16} className={cn("relative", "-top-[0px]")} />
-              {`Try all of NetBird's features for free`}
+              {t("billing.tryAllOfNetBirdSFeaturesForFree")}
             </div>
             <div className={cn("font-light")}>
-              {`Activate your 14-day trial to access NetBird's full set of features & integrations. After the trial, you will return to your ${planName} plan unless you choose to upgrade.`}
+              {t("billing.activateYour14DayTrialToAccessNetBirdSFull", {
+                planName: planName,
+              })}
             </div>
           </div>
           <TrialOrUpgradeButton plan={PlanTier.BUSINESS} variant={"white"} />
@@ -48,8 +53,7 @@ export const TrialGradientCard = () => {
             size={13}
             className={cn("relative -top-[1px] mr-1 inline")}
           />
-          Your plan was recently updated. Please wait for 48 hours from the last
-          update to change your plan again.
+          {t("billing.yourPlanWasRecentlyUpdatedPleaseWaitFor48Hours")}
         </div>
       )}
     </div>

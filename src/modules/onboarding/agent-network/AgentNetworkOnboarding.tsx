@@ -34,6 +34,7 @@ import { OnboardingAgentGateway } from "@/modules/onboarding/agent-network/Onboa
 import { OnboardingAgentPolicy } from "@/modules/onboarding/agent-network/OnboardingAgentPolicy";
 import { OnboardingAgentProvider } from "@/modules/onboarding/agent-network/OnboardingAgentProvider";
 import { useAgentNetworkFirstRunSetup } from "@/modules/onboarding/agent-network/useAgentNetworkFirstRunSetup";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 // The flow is a flat sequence (no intent branching like the regular
 // onboarding) that mirrors the agent-network quickstart guide.
@@ -76,6 +77,8 @@ export const AgentNetworkOnboarding = ({
   onSkip,
   onFinish,
 }: Props) => {
+  const t = useTranslations();
+
   const steps = agentSteps(gatewayStep, existingAccount);
   const policyStep = steps.includes(AGENT_STEP.POLICY);
   const firstStep = stepAfterSignup(steps);
@@ -150,7 +153,9 @@ export const AgentNetworkOnboarding = ({
         >
           <div data-testid={"agent-network-onboarding"}>
             <VisuallyHidden asChild>
-              <DialogTitle>Agent Network Onboarding</DialogTitle>
+              <DialogTitle>
+                {t("onboarding.agentNetworkOnboarding")}
+              </DialogTitle>
             </VisuallyHidden>
             <div
               className={
@@ -229,14 +234,20 @@ export const AgentNetworkOnboarding = ({
                       "text-sm text-nb-gray-400 font-light pt-10 text-center px-4"
                     }
                   >
-                    Already know how Agent Network works?
-                    <InlineLink
-                      href={"#"}
-                      className={"!text-nb-gray-200 ml-1"}
-                      onClick={() => onSkip(position + 1)}
-                    >
-                      Skip to Dashboard
-                    </InlineLink>
+                    {t.rich(
+                      "onboarding.alreadyKnowHowAgentNetworkWorksSkipToDashboard",
+                      {
+                        part0: (chunks) => (
+                          <InlineLink
+                            href={"#"}
+                            className={"!text-nb-gray-200 ml-1"}
+                            onClick={() => onSkip(position + 1)}
+                          >
+                            {chunks}
+                          </InlineLink>
+                        ),
+                      },
+                    )}
                   </span>
                 )}
               </div>

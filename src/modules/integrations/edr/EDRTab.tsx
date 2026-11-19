@@ -3,6 +3,7 @@ import Paragraph from "@components/Paragraph";
 import * as Tabs from "@radix-ui/react-tabs";
 import { ExternalLinkIcon } from "lucide-react";
 import React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import { LockedFeatureInfoCard } from "@/modules/billing/locked-feature/LockedFeatureInfoCard";
 import { LockedFeatureOverlay } from "@/modules/billing/locked-feature/LockedFeatureOverlay";
@@ -17,16 +18,15 @@ type Props = {
   account: Account;
 };
 export default function EDRTab({ account }: Props) {
+  const t = useTranslations();
   useIntegrations();
 
   return (
     <Tabs.Content value={"edr"}>
       <div className={"p-default py-6"}>
-        <h1>MDM & EDR</h1>
+        <h1>{t("integrations.edrTabTitle")}</h1>
         <Paragraph className={"max-w-3xl"}>
-          Endpoint Detection and Response (EDR) and Mobile Device Management
-          (MDM) integrations allow you to restrict network access only to
-          devices managed by the IT department.
+          {t("integrations.edrTabDescription")}
         </Paragraph>
         <Paragraph>
           <InlineLink
@@ -35,12 +35,12 @@ export default function EDRTab({ account }: Props) {
             }
             target={"_blank"}
           >
-            Learn more
+            {t("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
 
-        <LockedFeatureInfoCard feature={"EDR"} featureText={"MDM & EDR"} />
+        <LockedFeatureInfoCard feature={"EDR"} featureText={t("integrations.edrTabTitle")} />
         <LockedFeatureOverlay feature={"EDR"} opacity={100}>
           <div
             className={

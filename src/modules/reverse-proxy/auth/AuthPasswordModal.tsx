@@ -2,8 +2,9 @@ import Button from "@components/Button";
 import { Input } from "@components/Input";
 import { Modal, ModalClose, ModalContent } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
-import React, { useState } from "react";
 import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
+import React, { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   open: boolean;
@@ -22,6 +23,7 @@ export default function AuthPasswordModal({
   onSave,
   onRemove,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const [password, setPassword] = useState(currentPassword);
   const [isMasked, setIsMasked] = useState(isEnabled && currentPassword === "");
   const isEditing = isEnabled;
@@ -43,8 +45,8 @@ export default function AuthPasswordModal({
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent maxWidthClass="max-w-md">
         <ModalHeader
-          title="Password"
-          description="Require a password to access this service."
+          title={t("common.password")}
+          description={t("reverseProxy.passwordDescription")}
         />
 
         <GradientFadedBackground />
@@ -64,7 +66,7 @@ export default function AuthPasswordModal({
                 setPassword(e.target.value);
               }
             }}
-            placeholder="Enter password..."
+            placeholder={t("reverseProxy.enterPassword")}
             autoComplete="off"
             data-1p-ignore
             data-lpignore="true"
@@ -78,19 +80,23 @@ export default function AuthPasswordModal({
           <div className="flex gap-3 w-full justify-between mt-6">
             {isEditing ? (
               <>
-                <Button variant="danger-text" data-testid="remove-password" onClick={handleRemove}>
-                  Remove
+                <Button
+                  variant="danger-text"
+                  data-testid="remove-password"
+                  onClick={handleRemove}
+                >
+                  {t("common.remove")}
                 </Button>
                 <div className="flex gap-3">
                   <ModalClose asChild>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{t("common.cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant="primary"
                     onClick={handleSave}
                     disabled={!password.trim()}
                   >
-                    Save
+                    {t("common.save")}
                   </Button>
                 </div>
               </>
@@ -99,7 +105,7 @@ export default function AuthPasswordModal({
                 <div />
                 <div className="flex gap-3">
                   <ModalClose asChild>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{t("common.cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant="primary"
@@ -107,7 +113,7 @@ export default function AuthPasswordModal({
                     disabled={!password.trim()}
                     data-testid="submit-password"
                   >
-                    Add Password
+                    {t("reverseProxy.addPassword")}
                   </Button>
                 </div>
               </>

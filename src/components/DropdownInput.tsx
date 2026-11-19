@@ -3,6 +3,7 @@ import { cn } from "@utils/helpers";
 import { SearchIcon } from "lucide-react";
 import * as React from "react";
 import { forwardRef } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   value: string;
@@ -17,13 +18,16 @@ export const DropdownInput = forwardRef<HTMLInputElement, Props>(
     {
       value,
       onChange,
-      placeholder = "Search...",
+      placeholder: placeholderProp,
       className,
       hideEnterIcon = false,
       ...props
     },
     ref,
   ) => {
+    const t = useTranslations();
+    const placeholder = placeholderProp ?? t("common.searchInput");
+
     return (
       <div className={"relative w-full"}>
         <input

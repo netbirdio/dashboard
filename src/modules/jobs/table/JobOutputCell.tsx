@@ -3,6 +3,7 @@ import CopyToClipboardText from "@components/CopyToClipboardText";
 import FullTooltip from "@components/FullTooltip";
 import { Input } from "@components/Input";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Job } from "@/interfaces/Job";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export const JobOutputCell = ({ job }: Props) => {
+  const t = useTranslations();
   if (job.status === "succeeded" && job.workload.result) {
     return (
       <div className="flex flex-col gap-1 items-start justify-center pb-1">
@@ -22,14 +24,14 @@ export const JobOutputCell = ({ job }: Props) => {
             <br />
             <span className="text-nb-gray-200 truncate">
               <CopyToClipboardText
-                message={"Upload key has been copied to your clipboard"}
+                message={t("jobs.uploadKeyCopied")}
                 alwaysShowIcon={true}
               >
                 <span className={"font-mono truncate"}>
                   {typeof value === "boolean"
                     ? value
-                      ? "Yes"
-                      : "No"
+                      ? t("common.yes")
+                      : t("common.no")
                     : String(value)}
                 </span>
               </CopyToClipboardText>

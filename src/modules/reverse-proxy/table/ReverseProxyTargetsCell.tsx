@@ -12,6 +12,7 @@ import { PlusCircle, Server } from "lucide-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { isL4Mode, ReverseProxy } from "@/interfaces/ReverseProxy";
 import { ReverseProxyTargetDevice } from "@/modules/reverse-proxy/targets/ReverseProxyTargetDevice";
 
@@ -22,6 +23,7 @@ type Props = {
 export default function ReverseProxyTargetsCell({
   reverseProxy,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { openTargetModal } = useReverseProxies();
 
@@ -41,7 +43,7 @@ export default function ReverseProxyTargetsCell({
       disabled={isL4 || !permission?.services?.create}
     >
       <PlusCircle size={12} />
-      Add
+      {t("common.add")}
     </Button>
   );
 
@@ -51,11 +53,7 @@ export default function ReverseProxyTargetsCell({
         <TooltipProvider>
           <Tooltip delayDuration={1}>
             <TooltipTrigger asChild={true}>
-              <Badge
-                variant={"gray"}
-                useHover={true}
-                className={"cursor-help"}
-              >
+              <Badge variant={"gray"} useHover={true} className={"cursor-help"}>
                 <Server size={14} />
                 <div>
                   <span className={"font-medium text-xs"}>{targetsCount}</span>
@@ -90,7 +88,7 @@ export default function ReverseProxyTargetsCell({
           interactive={false}
           content={
             <span className={"text-xs text-nb-gray-100 max-w-[200px]"}>
-              L4 services (TCP / UDP / TLS) only support a single target.
+              {t("reverseProxy.l4ServicesTCPUDPTLSOnlySupportASingleTarget")}
             </span>
           }
         >

@@ -7,6 +7,7 @@ import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
@@ -16,6 +17,7 @@ type Props = {
   resource?: NetworkResource;
 };
 export const ResourcePolicyCell = ({ resource }: Props) => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const {
     openResourceModal,
@@ -154,7 +156,7 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
             e.stopPropagation();
             openResourceModal(network, resource, "access-control");
           }}
-          aria-label="Configure policies"
+          aria-label={t("networks.configurePolicies")}
         >
           <Settings size={12} />
         </Button>

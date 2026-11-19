@@ -32,6 +32,7 @@ import React, { useState } from "react";
 import { useEmbeddedIdentityProviders } from "@/hooks/useEmbeddedIdentityProviders";
 import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/google-workspace.png";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { GoogleWorkspaceIntegration } from "@/interfaces/IdentityProvider";
 import googleAssignServiceAccount from "@/modules/integrations/idp-sync/google-workspace/images/google-assign-service-account.png";
 import googleEditServiceAccount from "@/modules/integrations/idp-sync/google-workspace/images/google-edit-service-account.png";
@@ -71,6 +72,7 @@ type ModalProps = {
 };
 
 export function SetupContent({ onSuccess }: ModalProps) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const googleRequest = useApiCall<GoogleWorkspaceIntegration>(
     "/integrations/google-idp",
@@ -102,8 +104,12 @@ export function SetupContent({ onSuccess }: ModalProps) {
 
   const connect = async () => {
     notify({
-      title: "Google Workspace Integration",
-      description: `Google Workspace was successfully connected to NetBird.`,
+      title: translate("integrations.idpIntegrationTitle", {
+        name: translate("integrations.idpGoogleWorkspace"),
+      }),
+      description: translate("integrations.idpConnectedDescription", {
+        name: translate("integrations.idpGoogleWorkspace"),
+      }),
       promise: googleRequest
         .post({
           service_account_key: btoa(serviceAccountKey), // Encode client secret to base64
@@ -120,7 +126,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
           mutate("/integrations/google-idp");
           onSuccess();
         }),
-      loadingMessage: "Setting up integration...",
+      loadingMessage: translate("integrations.idpSettingUpLoading"),
     });
   };
 
@@ -155,10 +161,12 @@ export function SetupContent({ onSuccess }: ModalProps) {
 
       <IntegrationModalHeader
         image={integrationImage}
-        title={"Connect NetBird with Google Workspace"}
-        description={
-          "Start syncing your users and groups from Google Workspace to NetBird. Follow the steps below to get started."
-        }
+        title={translate("integrations.idpConnectTitle", {
+          name: translate("integrations.idpGoogleWorkspace"),
+        })}
+        description={translate("integrations.idpConnectDescription", {
+          name: translate("integrations.idpGoogleWorkspace"),
+        })}
       />
 
       {step === -1 && (
@@ -182,21 +190,22 @@ export function SetupContent({ onSuccess }: ModalProps) {
             }
           >
             <Shield size={16} />
-            Required Permissions
+            {translate("common.requiredPermissions")}
           </div>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
-            Ensure that you have an{" "}
-            <span className={"text-nb-gray-100 font-semibold"}>
-              Google Workspace user account
-            </span>{" "}
-            with the following{" "}
-            <span className={"text-nb-gray-100 font-semibold"}>
-              permissions
-            </span>
-            .{" "}
-            {
-              "If you don't have the required permissions, ask your workspace administrator to grant them to you."
-            }
+            {translate.rich("integrations.idpPermissionsIntro", {
+              account: () => (
+                <span className={"text-nb-gray-100 font-semibold"}>
+                  {translate("integrations.idpGoogleUserAccount")}
+                </span>
+              ),
+              requirement: () => (
+                <span className={"text-nb-gray-100 font-semibold"}>
+                  {translate("integrations.idpPermissionsWord")}
+                </span>
+              ),
+              followup: translate("integrations.idpWorkspaceAdminMissing"),
+            })}
           </p>
           <div
             className={
@@ -209,7 +218,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
               }
             >
               <PlusCircle size={14} className={"text-sky-500"} />
-              Create Google Workspace applications
+              {translate("integrations.idpGoogleCreateApps")}
             </div>
             <div
               className={
@@ -217,7 +226,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
               }
             >
               <Settings2 size={14} className={"text-sky-500"} />
-              Manage Google Workspace applications
+              {translate("integrations.idpGoogleManageApps")}
             </div>
           </div>
         </div>
@@ -227,35 +236,41 @@ export function SetupContent({ onSuccess }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <Folder size={20} />
-            Create NetBird project
+            {translate("integrations.idpGoogleCreateProject")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p>
-                Create a new <Mark copy>NetBird</Mark> project in the{" "}
-                <InlineLink
-                  className={"inline"}
-                  target={"_blank"}
-                  href={"https://console.cloud.google.com/"}
-                >
-                  Google Cloud Console
-                </InlineLink>
+                {translate.rich("integrations.idpGoogleCreateProjectHelp", {
+                  name: () => <Mark copy>NetBird</Mark>,
+                  console: (chunks) => (
+                    <InlineLink
+                      className={"inline"}
+                      target={"_blank"}
+                      href={"https://console.cloud.google.com/"}
+                    >
+                      {chunks}
+                    </InlineLink>
+                  ),
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2} line={false}>
               <p className={"font-normal"}>
-                Enable the{" "}
-                <InlineLink
-                  className={"inline"}
-                  target={"_blank"}
-                  href={
-                    "https://console.cloud.google.com/apis/library/admin.googleapis.com"
-                  }
-                >
-                  Admin SDK API
-                </InlineLink>{" "}
-                for the
-                <Mark>NetBird</Mark> project
+                {translate.rich("integrations.idpGoogleEnableAdminSdk", {
+                  api: (chunks) => (
+                    <InlineLink
+                      className={"inline"}
+                      target={"_blank"}
+                      href={
+                        "https://console.cloud.google.com/apis/library/admin.googleapis.com"
+                      }
+                    >
+                      {chunks}
+                    </InlineLink>
+                  ),
+                  project: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -266,31 +281,37 @@ export function SetupContent({ onSuccess }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <UserCircle size={20} />
-            Create a service account
+            {translate("integrations.idpGoogleCreateServiceAccount")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p>
-                Navigate to{"  "}
-                <InlineLink
-                  className={"inline"}
-                  target={"_blank"}
-                  href={"https://console.cloud.google.com/apis/credentials"}
-                >
-                  API Credentials
-                </InlineLink>
+                {translate.rich("integrations.idpGoogleOpenCredentials", {
+                  link: (chunks) => (
+                    <InlineLink
+                      className={"inline"}
+                      target={"_blank"}
+                      href={"https://console.cloud.google.com/apis/credentials"}
+                    >
+                      {chunks}
+                    </InlineLink>
+                  ),
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Click <Mark>CREATE CREDENTIALS</Mark> at the top and select{" "}
-                <Mark>Service account</Mark>
+                {translate.rich("integrations.idpGoogleCreateCredentials", {
+                  create: (chunks) => <Mark>{chunks}</Mark>,
+                  account: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                Fill in the form with the following values and click{" "}
-                <Mark>DONE</Mark>
+                {translate.rich("integrations.idpGoogleFillAndDone", {
+                  done: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -298,11 +319,11 @@ export function SetupContent({ onSuccess }: ModalProps) {
           <MinimalList
             data={[
               {
-                label: "Service account name",
+                label: translate("integrations.idpServiceAccountName"),
                 value: "NetBird",
               },
               {
-                label: "Service account ID",
+                label: translate("integrations.idpServiceAccountId"),
                 value: "netbird",
               },
             ]}
@@ -314,33 +335,37 @@ export function SetupContent({ onSuccess }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <Mail size={20} />
-            Get your service account email
+            {translate("integrations.idpGoogleServiceAccountEmail")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p>
-                Navigate to{"  "}
-                <InlineLink
-                  className={"inline"}
-                  target={"_blank"}
-                  href={
-                    "https://console.cloud.google.com/iam-admin/serviceaccounts"
-                  }
-                >
-                  Service Accounts
-                </InlineLink>
+                {translate.rich("integrations.idpGoogleOpenServiceAccounts", {
+                  link: (chunks) => (
+                    <InlineLink
+                      className={"inline"}
+                      target={"_blank"}
+                      href={
+                        "https://console.cloud.google.com/iam-admin/serviceaccounts"
+                      }
+                    >
+                      {chunks}
+                    </InlineLink>
+                  ),
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                Click <Mark>NetBird</Mark> to edit the service account. Copy the
-                service account email address.
+                {translate.rich("integrations.idpGoogleCopyServiceEmail", {
+                  name: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
               <Lightbox image={googleEditServiceAccount} />
             </Steps.Step>
             <Steps.Step step={2} line={false}>
               <p className={"font-normal"}>
-                Enter your service account email address
+                {translate("integrations.idpGoogleEnterEmail")}
               </p>
             </Steps.Step>
           </Steps>
@@ -365,36 +390,41 @@ export function SetupContent({ onSuccess }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <KeyRound size={20} />
-            Create service account key
+            {translate("integrations.idpGoogleServiceAccountKey")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                On the same page, now click the <Mark>Keys</Mark> tab, open the{" "}
-                <Mark>Add key</Mark> dropdown and select{" "}
-                <Mark>Create new key</Mark>
+                {translate.rich("integrations.idpGoogleCreateKeyHelp", {
+                  keys: (chunks) => <Mark>{chunks}</Mark>,
+                  add: (chunks) => <Mark>{chunks}</Mark>,
+                  create: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={3}>
               <p className={"font-normal"}>
-                Select <Mark>JSON</Mark> as the key type and click{" "}
-                <Mark>Create</Mark>
+                {translate.rich("integrations.idpGoogleSelectJson", {
+                  select: () => <>{translate("common.select") + " "}</>,
+                  json: (chunks) => <Mark>{chunks}</Mark>,
+                  create: () => <Mark>{translate("common.create")}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={4} line={false}>
               <p className={"font-normal"}>
-                Most browsers immediately download the new key and save it in a
-                download folder on your computer. Read how to manage and secure
-                your service keys{" "}
-                <InlineLink
-                  href={
-                    "https://cloud.google.com/iam/docs/best-practices-for-managing-service-account-keys#temp-locations"
-                  }
-                  target={"_blank"}
-                >
-                  here
-                </InlineLink>
-                .
+                {translate.rich("integrations.idpGoogleKeyHelp", {
+                  here: (chunks) => (
+                    <InlineLink
+                      href={
+                        "https://cloud.google.com/iam/docs/best-practices-for-managing-service-account-keys#temp-locations"
+                      }
+                      target={"_blank"}
+                    >
+                      {chunks}
+                    </InlineLink>
+                  ),
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -427,43 +457,50 @@ export function SetupContent({ onSuccess }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <FolderCog2 size={20} />
-            Create admin role
+            {translate("integrations.idpGoogleCreateAdminRole")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p>
-                Navigate to{"  "}
-                <InlineLink
-                  className={"inline"}
-                  target={"_blank"}
-                  href={"https://admin.google.com/ac/home"}
-                >
-                  Admin Console
-                </InlineLink>
+                {translate.rich("integrations.idpGoogleOpenAdminConsole", {
+                  link: (chunks) => (
+                    <InlineLink
+                      className={"inline"}
+                      target={"_blank"}
+                      href={"https://admin.google.com/ac/home"}
+                    >
+                      {chunks}
+                    </InlineLink>
+                  ),
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Select <Mark>Account</Mark> on the left menu and then click{" "}
-                <Mark>Admin Roles</Mark>
+                {translate.rich("integrations.idpGoogleOpenAdminRoles", {
+                  select: () => <>{translate("common.select") + " "}</>,
+                  account: () => <Mark>{translate("common.account")}</Mark>,
+                  roles: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                Click <Mark>Create new role</Mark> and fill in the form with the
-                following values
+                {translate.rich("integrations.idpGoogleCreateRole", {
+                  create: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
           </Steps>
           <MinimalList
             data={[
               {
-                label: "Name",
-                value: "User and Group Management ReadOnly",
+                label: translate("common.name"),
+                value: translate("integrations.idpGoogleReadOnlyRole"),
               },
               {
-                label: "Description",
-                value: "User and Group Management ReadOnly",
+                label: translate("integrations.idpDescription"),
+                value: translate("integrations.idpGoogleReadOnlyRole"),
               },
             ]}
           />
@@ -474,33 +511,34 @@ export function SetupContent({ onSuccess }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <Shield size={20} />
-            Add role privileges
+            {translate("integrations.idpGooglePrivileges")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                Scroll down to <Mark>Admin API privileges</Mark> and add the
-                following privileges to the role
+                {translate.rich("integrations.idpGoogleScrollPrivileges", {
+                  privileges: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
               <MinimalList
                 className={"mt-2 mb-0"}
                 data={[
                   {
-                    label: "Users",
-                    value: "Read",
+                    label: translate("integrations.idpGoogleUsersLabel"),
+                    value: translate("integrations.idpGoogleRead"),
                   },
                   {
-                    label: "Groups",
-                    value: "Read",
+                    label: translate("integrations.idpGoogleGroupsLabel"),
+                    value: translate("integrations.idpGoogleRead"),
                   },
                 ]}
               />
             </Steps.Step>
             <Steps.Step step={2} line={false}>
               <p className={"font-normal"}>
-                Verify preview of assigned Admin API privileges to ensure that
-                everything is properly configured, and then click{" "}
-                <Mark>CREATE ROLE</Mark>
+                {translate.rich("integrations.idpGoogleRolePreview", {
+                  role: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
               <Lightbox image={googlePrivilegesReview} />
             </Steps.Step>
@@ -512,23 +550,28 @@ export function SetupContent({ onSuccess }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <MailPlus size={20} />
-            Assign service account
+            {translate("integrations.idpAssignServiceAccount")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                Click <Mark>Assign service accounts</Mark>
+                {translate.rich("integrations.idpGoogleAssignAccounts", {
+                  assign: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Enter your <Mark>E-Mail</Mark> and then click <Mark>ADD</Mark>
+                {translate.rich("integrations.idpGoogleEnterMail", {
+                  email: (chunks) => <Mark>{chunks}</Mark>,
+                  add: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
               <MinimalList
                 className={"mt-2 mb-0"}
                 data={[
                   {
-                    label: "E-Mail",
+                    label: translate("integrations.idpGoogleEmailLabel"),
                     value: serviceAccountMail,
                   },
                 ]}
@@ -536,7 +579,9 @@ export function SetupContent({ onSuccess }: ModalProps) {
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                Click <Mark>ASSIGN ROLE</Mark>
+                {translate.rich("integrations.idpGoogleAssignRole", {
+                  assign: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
               <Lightbox image={googleAssignServiceAccount} />
             </Steps.Step>
@@ -548,26 +593,31 @@ export function SetupContent({ onSuccess }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <Box size={20} />
-            Enter Customer ID
+            {translate("integrations.idpGoogleEnterCustomerId")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                Navigate to{" "}
-                <InlineLink
-                  target={"_blank"}
-                  className={"inline"}
-                  href={
-                    "https://admin.google.com/ac/accountsettings/profile?hl=en_US"
-                  }
-                >
-                  Account Settings
-                </InlineLink>
+                {translate.rich("integrations.idpGoogleOpenAccountSettings", {
+                  link: (chunks) => (
+                    <InlineLink
+                      target={"_blank"}
+                      className={"inline"}
+                      href={
+                        "https://admin.google.com/ac/accountsettings/profile?hl=en_US"
+                      }
+                    >
+                      {chunks}
+                    </InlineLink>
+                  ),
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2} line={false}>
               <p className={"font-normal"}>
-                Take note of the <Mark>Customer ID</Mark> and enter it below
+                {translate.rich("integrations.idpGoogleNoteCustomerId", {
+                  customer: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -578,7 +628,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
               customPrefix={
                 <div className={"min-w-[165px] flex gap-2 items-center"}>
                   <Box size={16} />
-                  Customer ID
+                  {translate("integrations.idpCustomerId")}
                 </div>
               }
               placeholder={"C03f4c3po"}
@@ -593,7 +643,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <FolderGit2 size={20} />
-            Groups to be synchronized
+            {translate("common.groupsToSync")}
           </p>
 
           <div className={"mb-4 flex flex-col gap-1"}>
@@ -612,7 +662,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <UserCircle size={18} />
-            Users to be synchronized
+            {translate("common.usersToSync")}
           </p>
 
           <div className={"mb-4 flex flex-col gap-1"}>
@@ -621,8 +671,8 @@ export function SetupContent({ onSuccess }: ModalProps) {
             </div>
 
             <GroupPrefixInput
-              addText={"Add user group filter"}
-              text={"User group starts with..."}
+              addText={translate("integrations.idpAddUserGroupFilter")}
+              text={translate("integrations.idpUserGroupStartsWith")}
               value={userGroupPrefixes}
               onChange={setUserGroupPrefixes}
             />
@@ -638,7 +688,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
             onClick={() => setStep(step + 1)}
             disabled={!connectorId || connectorId === ""}
           >
-            Continue
+            {translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -649,7 +699,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
             onClick={() => setStep(step - 1)}
           >
             <IconArrowLeft size={16} />
-            Back
+            {translate("common.back")}
           </Button>
         )}
         {step >= 0 && step < maxSteps && (
@@ -659,7 +709,9 @@ export function SetupContent({ onSuccess }: ModalProps) {
             disabled={isDisabled}
             onClick={() => setStep(step + 1)}
           >
-            {step == 0 ? "Get Started" : "Continue"}
+            {step == 0
+              ? translate("integrations.idpGetStarted")
+              : translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -671,7 +723,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
             onClick={connect}
           >
             <Repeat size={16} />
-            Connect
+            {translate("integrations.connect")}
           </Button>
         )}
       </ModalFooter>
@@ -683,8 +735,14 @@ export function SetupContent({ onSuccess }: ModalProps) {
         >
           <Clock4 size={12} />
           <div>
-            Estimated setup time:
-            <span className={"font-medium"}> 10-20 Minutes</span>
+            {translate.rich("integrations.idpEstimatedSetupTime", {
+              duration: () => (
+                <span className={"font-medium"}>
+                  {" "}
+                  {translate("integrations.idpSetupDurationLong")}
+                </span>
+              ),
+            })}
           </div>
         </div>
       )}

@@ -7,6 +7,7 @@ import { PlanFeatureAvailability } from "@/cloud/cloud-hooks/useIsFeatureLocked"
 import { useTrial } from "@/cloud/cloud-hooks/useTrial";
 import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PlanTier } from "@/interfaces/Subscription";
 import { LockedFeatureInfoCardProps } from "@/modules/billing/locked-feature/LockedFeatureInfoCard";
 import { TrialOrUpgradeButton } from "@/modules/billing/trial/TrialOrUpgradeButton";
@@ -24,6 +25,8 @@ export const LockedFeatureContent = ({
   isCard = false,
   offerTrial = true,
 }: LockedFeatureInfoCardProps) => {
+  const t = useTranslations();
+
   const { isMSPInTenantContext, isAccountWithMSPParent } = useMSP();
   const { isOwnerOrAdmin } = useLoggedInUser();
   const plan = PlanFeatureAvailability[feature];
@@ -41,7 +44,11 @@ export const LockedFeatureContent = ({
             size={isTooltip ? 12 : 14}
             className={cn("relative", isTooltip && "-top-[1px]")}
           />
-            { isNetBirdCloud()? (plan == "team" ? PLAN_TEXT.TEAM : PLAN_TEXT.BUSINESS) : PLAN_TEXT.ENTERPRISE }
+          {isNetBirdCloud()
+            ? plan == PlanTier.TEAM
+              ? PLAN_TEXT.TEAM
+              : PLAN_TEXT.BUSINESS
+            : PLAN_TEXT.ENTERPRISE}
         </div>
         <div
           className={cn(
@@ -79,20 +86,33 @@ const AvailableOnPlanText = ({
   featureText: string;
   plan: PlanTier;
 }) => {
+  const t = useTranslations();
+
   const isOrAre = featureText.includes("Posture Checks") ? "are" : "is";
   const teamOrBusiness =
     plan == "team" ? "Team plan or higher. " : "Business plan. ";
   if (!isNetBirdCloud()) {
-      return (
+    return (
       <>
-        {featureText} {isOrAre} available with a NetBird Enterprise commercial license, or on NetBird Cloud with the {teamOrBusiness}
+        {t.rich(
+          "billing.availableWithANetBirdEnterpriseCommercialLicenseOrOnNetBird",
+          {
+            part0: () => featureText,
+            part1: () => isOrAre,
+            part2: () => teamOrBusiness,
+          },
+        )}
       </>
-      )
+    );
   }
 
   return (
     <>
-      {featureText} {isOrAre} available on the {teamOrBusiness}
+      {t.rich("billing.availableOnThe", {
+        part0: () => featureText,
+        part1: () => isOrAre,
+        part2: () => teamOrBusiness,
+      })}
     </>
   );
 };
@@ -102,6 +122,8 @@ const UpgradeOrTrialText = ({
 }: {
   offerTrial?: boolean;
 }) => {
+  const t = useTranslations();
+
   const {
     isMSPInTenantContext,
     isAccountWithMSPParent,
@@ -112,31 +134,31 @@ const UpgradeOrTrialText = ({
   const { isOwnerOrAdmin } = useLoggedInUser();
 
   if (!isNetBirdCloud()) {
-    return (
-      <>
-      </>
-    );
+    return <></>;
   }
 
   if (hasReseller) {
-    return <>Contact your account administrator to upgrade the plan.</>;
+    return <>{t("billing.contactYourAccountAdministratorToUpgradeThePlan")}</>;
   }
 
   if (isAccountWithMSPParent && !isMSPInTenantContext) {
     return (
       <>
-        Contact your account administrator{" "}
-        <span className={"text-nb-gray-200 font-medium"}>{mspContact}</span> to
-        upgrade the plan.
+        {t.rich("billing.contactYourAccountAdministratorToUpgradeThePlan2", {
+          part0: (chunks) => (
+            <span className={"text-nb-gray-200 font-medium"}>{chunks}</span>
+          ),
+          part1: () => mspContact,
+        })}
       </>
     );
   }
 
   if (!isOwnerOrAdmin)
-    return "Only the owner or an admin can upgrade the plan.";
+    return t("billing.onlyTheOwnerOrAnAdminCanUpgradeThePlan");
 
   if (isTrialAvailable && offerTrial)
-    return "Upgrade or start a 14-day free trial to access this feature.";
+    return t("billing.upgradeOrStartA14DayFreeTrialToAccess");
 
   return `Upgrade your ${
     isMSPInTenantContext ? "tenants" : "current"
@@ -144,6 +166,7 @@ const UpgradeOrTrialText = ({
 };
 
 const GetMSPSupportButton = () => {
+  const t = useTranslations();
   const { mspInfo, hasReseller } = useMSP();
   const mailToEmail = mspInfo?.parent_owner_email || "support@netbird.io";
   if (hasReseller) return;
@@ -160,7 +183,7 @@ const GetMSPSupportButton = () => {
           className={cn("w-full h-[34px]")}
         >
           <MailIcon size={15} className={"shrink-0"} />
-          Get Support
+          {t("billing.getSupport")}
         </Button>
       </a>
     </div>

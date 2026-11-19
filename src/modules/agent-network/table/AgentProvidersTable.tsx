@@ -16,6 +16,8 @@ import React from "react";
 import AIAccessIcon from "@/assets/icons/AgentNetworkIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import AIProviderModal from "@/modules/agent-network/AIProviderModal";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
@@ -72,6 +74,7 @@ function NameCell({ provider }: { provider: AIProvider }) {
 // An empty allow-list means the provider is unrestricted, so the count is
 // replaced by what it actually means rather than showing a zero.
 function ModelsCell({ provider }: { provider: AIProvider }) {
+  const { tr } = useAgentNetworkText();
   const count = provider.models.length;
   return (
     <div className={"flex"}>
@@ -82,20 +85,22 @@ function ModelsCell({ provider }: { provider: AIProvider }) {
       >
         <Boxes size={11} />
         <span className={"font-medium text-xs"}>
-          {count === 0 ? "All Models" : count}
+          {count === 0 ? tr("agentNetwork.allModels") : count}
         </span>
       </Badge>
     </div>
   );
 }
 
-const columns: ColumnDef<AIProvider>[] = [
+function useProviderColumns(): ColumnDef<AIProvider>[] {
+  const translate = useTranslations();
+  return [
   {
     id: "name",
     accessorKey: "name",
     sortingFn: "text",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Name</DataTableHeader>
+      <DataTableHeader column={column}>{translate("common.name")}</DataTableHeader>
     ),
     cell: ({ row }) => <NameCell provider={row.original} />,
   },
@@ -104,7 +109,7 @@ const columns: ColumnDef<AIProvider>[] = [
     accessorFn: (p) => p.models.length,
     sortingFn: "basic",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Models</DataTableHeader>
+      <DataTableHeader column={column}>{translate("common.models")}</DataTableHeader>
     ),
     cell: ({ row }) => <ModelsCell provider={row.original} />,
   },
@@ -114,7 +119,8 @@ const columns: ColumnDef<AIProvider>[] = [
     header: "",
     cell: ({ row }) => <AgentProviderActionCell provider={row.original} />,
   },
-];
+  ];
+}
 
 type Props = {
   headingTarget?: HTMLHeadingElement | null;
@@ -123,6 +129,9 @@ type Props = {
 export default function AgentProvidersTable({
   headingTarget,
 }: Readonly<Props>) {
+  const translate = useTranslations();
+  const { tr } = useAgentNetworkText();
+  const columns = useProviderColumns();
   const path = usePathname();
   const {
     providers,
@@ -156,12 +165,12 @@ export default function AgentProvidersTable({
       <DataTable
         headingTarget={headingTarget}
         isLoading={isLoading}
-        text={"Providers"}
+        text={translate("common.providers")}
         sorting={sorting}
         setSorting={setSorting}
         columns={columns}
         data={providers}
-        searchPlaceholder={"Search by name..."}
+        searchPlaceholder={tr("agentNetwork.searchByName")}
         onRowClick={
           canUpdate ? (row) => openProviderEdit(row.original) : undefined
         }
@@ -174,10 +183,8 @@ export default function AgentProvidersTable({
                 size={"large"}
               />
             }
-            title={"Connect a provider"}
-            description={
-              "Route OpenAI, Anthropic, and other LLM APIs through NetBird to enforce access control, track token spend, and capture prompts."
-            }
+            title={tr("agentNetwork.connectAProvider")}
+            description={tr("agentNetwork.connectAProviderDesc")}
             button={
               <div className={"gap-x-4 flex items-center justify-center"}>
                 <AddProviderButton />
@@ -185,12 +192,12 @@ export default function AgentProvidersTable({
             }
             learnMore={
               <>
-                Learn more about
+                {translate("common.learnMore")}
                 <InlineLink
                   href={"https://docs.netbird.io/agent-network/providers"}
                   target={"_blank"}
                 >
-                  Agent Network Providers
+                  {tr("agentNetwork.agentNetworkProviders")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </>
@@ -211,6 +218,7 @@ export default function AgentProvidersTable({
 }
 
 const AddProviderButton = () => {
+  const { tr } = useAgentNetworkText();
   const { openWizard } = useAIProviders();
   const { permission } = usePermissions();
   // Connecting a provider needs the create grant; read-only viewers get no
@@ -223,7 +231,7 @@ const AddProviderButton = () => {
       data-testid={"connect-agent-network-provider"}
     >
       <PlusCircle size={16} />
-      Connect Provider
+      {tr("agentNetwork.connectProvider")}
     </Button>
   );
 };

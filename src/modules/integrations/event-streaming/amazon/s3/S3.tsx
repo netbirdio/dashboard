@@ -8,11 +8,13 @@ import integrationImage from "@/assets/integrations/s3.svg";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useIsLicensed } from "@/hooks/useIsLicensed";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { EventStream } from "@/interfaces/EventStream";
 import S3Setup from "@/modules/integrations/event-streaming/amazon/s3/S3Setup";
 import { IntegrationCard } from "@/modules/integrations/IntegrationCard";
 
 export default function S3() {
+  const t = useTranslations();
   const { permission } = usePermissions();
   // Event Streaming is a licensed feature; skip the call on open-source.
   const { isLicensed } = useIsLicensed();
@@ -46,22 +48,23 @@ export default function S3() {
     if (!s3Settings) return setSetupModal(true);
 
     const choice = await confirm({
-      title: `Disconnect S3?`,
-      description:
-        "Disconnecting deletes the current configuration. You will need to start the setup process again.",
-      confirmText: "Disconnect",
-      cancelText: "Cancel",
+      title: t("integrations.streamingDisconnectTitle", { name: "Amazon S3" }),
+      description: t("integrations.streamingDisconnectDescription"),
+      confirmText: t("integrations.disconnect"),
+      cancelText: t("common.cancel"),
       type: "warning",
     });
     if (!choice) return;
 
     notify({
-      title: "S3 Integration",
-      description: `S3 was successfully disconnected`,
+      title: t("integrations.edrIntegrationTitle", { name: "Amazon S3" }),
+      description: t("integrations.streamingDisconnectedDescription", {
+        name: "Amazon S3",
+      }),
       promise: integrationRequest.del({}, "/" + s3Settings.id).then(() => {
         mutate("/integrations/event-streaming");
       }),
-      loadingMessage: "Disconnecting integration...",
+      loadingMessage: t("integrations.streamingDisconnectingLoading"),
     });
   };
 
@@ -71,7 +74,7 @@ export default function S3() {
     <>
       <IntegrationCard
         name="Amazon S3"
-        description="Amazon S3 is a scalable storage in the cloud."
+        description={t("integrations.streamingS3Description")}
         url={{
           title: "aws.amazon.com/s3",
           href: "https://aws.amazon.com/s3",

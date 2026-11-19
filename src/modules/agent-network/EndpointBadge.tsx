@@ -5,19 +5,20 @@ import { HelpTooltip } from "@components/HelpTooltip";
 import useCopyToClipboard from "@hooks/useCopyToClipboard";
 import { CheckIcon, CopyIcon, GlobeIcon } from "lucide-react";
 import React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 
 // The tooltip is shared with the providers page's empty state, which shows the
 // same card before an endpoint exists.
-export const ENDPOINT_HELP_TEXT = (
-  <>
-    Use this URL as the base URL when configuring your AI agents or LLM SDK
-    clients (e.g. OpenAI&apos;s
-    <code className={"font-mono"}> base_url</code>, Anthropic&apos;s{" "}
-    <code className={"font-mono"}>baseURL</code>, or any HTTP client). Calls hit
-    NetBird first, get authorised by your policies, and only then reach the
-    upstream provider.
-  </>
-);
+export function EndpointHelpText() {
+  const { rich } = useAgentNetworkText();
+  return rich("agentNetwork.endpointHelp", {
+    baseUrl: () => <code className={"font-mono"}>base_url</code>,
+    baseURL: () => <code className={"font-mono"}>baseURL</code>,
+  });
+}
+
+
 
 // EndpointBadge is the "API Base URL" card — the one presentation of the
 // endpoint everywhere it appears (providers page, Connect Agent). It shows the
@@ -33,6 +34,8 @@ export default function EndpointBadge({
   // shape the Connect Agent page wants, where the URL is the whole point.
   variant?: "default" | "plain";
 }) {
+  const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const [, copy, copied] = useCopyToClipboard(`https://${endpoint}`);
 
   return (
@@ -44,8 +47,8 @@ export default function EndpointBadge({
       icon={<GlobeIcon size={16} />}
       title={
         <>
-          API Base URL
-          <HelpTooltip iconSize={11} content={ENDPOINT_HELP_TEXT} />
+          {tr("agentNetwork.apiBaseUrl")}
+          <HelpTooltip iconSize={11} content={<EndpointHelpText />} />
         </>
       }
       trailing={
@@ -54,11 +57,11 @@ export default function EndpointBadge({
           className={
             "inline-flex items-center gap-1.5 rounded-md border border-nb-gray-700 bg-nb-gray-800/60 px-2.5 py-1.5 text-[11px] font-medium text-nb-gray-300 dark:text-nb-gray-200 hover:bg-nb-gray-800 dark:hover:text-white transition-colors shrink-0"
           }
-          onClick={() => copy("Endpoint copied to clipboard")}
-          aria-label={"Copy endpoint"}
+          onClick={() => copy(tr("agentNetwork.endpointCopied"))}
+          aria-label={tr("agentNetwork.copyEndpoint")}
         >
           {copied ? <CheckIcon size={11} /> : <CopyIcon size={11} />}
-          Copy
+          {t("common.copy")}
         </button>
       }
       description={

@@ -9,6 +9,7 @@ import { Handle, type Node, Position } from "@xyflow/react";
 import { sortBy } from "lodash";
 import { ChevronsUpDown } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
 import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
@@ -26,6 +27,7 @@ type PeerNodeProps = Node<
 >;
 
 export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
+  const t = useTranslations();
   const { data: peers, isLoading: isPeersLoading } =
     useFetchApi<Peer[]>("/peers");
 
@@ -78,7 +80,7 @@ export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
         onChange={data.onPeerChange}
         options={peerSelectOptions}
         showSearch={true}
-        searchPlaceholder={data?.placeholder ?? "Search peers..."}
+        searchPlaceholder={data?.placeholder ?? t("controlCenter.searchPeer")}
         open={open}
         onOpenChange={setOpen}
         popoverWidth={280}

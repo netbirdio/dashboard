@@ -3,6 +3,7 @@ import { cn } from "@utils/helpers";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import React from "react";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   children: React.ReactNode;
@@ -18,13 +19,16 @@ type Props = {
 export default function Code({
   children,
   codeToCopy,
-  message = "Code has been copied to clipboard",
+  message: messageProp,
   onClick,
   className,
   showCopyIcon = true,
   dark = false,
   small = false,
 }: Props) {
+  const t = useTranslations();
+  const message = messageProp ?? t("components.copyCode");
+
   const [wrapper, copyToClipboard, copied] = useCopyToClipboard(
     codeToCopy ? codeToCopy : undefined,
   );

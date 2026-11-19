@@ -6,6 +6,7 @@ import { TrashIcon } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DomainValidationStatus } from "@/interfaces/Account";
 import { EnterpriseConnectionDomain } from "@/interfaces/IdentityProvider";
 import { DomainVerificationModal } from "@/modules/integrations/sso/DomainVerificationModal";
@@ -16,24 +17,25 @@ type Props = {
   connectionId: string;
 };
 export const DomainVerificationCard = ({ domain, connectionId }: Props) => {
+  const t = useTranslations();
   const [modal, setModal] = useState(false);
   const { deleteDomain, verifyDomain, mutate } = useEnterpriseConnections();
   const { confirm } = useDialog();
 
   const deleteDomainHandler = async () => {
     const choice = await confirm({
-      title: `Remove Domain?`,
-      description: "Are you sure you want to remove this domain?",
-      confirmText: "Remove",
-      cancelText: "Cancel",
+      title: t("integrations.ssoRemoveDomainTitle"),
+      description: t("integrations.ssoRemoveDomainDescription"),
+      confirmText: t("common.remove"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
     notify({
-      title: "Okta Domains",
-      description: `${domain.name} has been removed`,
+      title: t("integrations.ssoDomainsTitle"),
+      description: t("integrations.ssoDomainRemoved", { domain: domain.name }),
       promise: deleteDomain(connectionId, domain.name).then(() => mutate()),
-      loadingMessage: "Removing domain...",
+      loadingMessage: t("integrations.ssoRemoveDomainLoading"),
     });
   };
 
@@ -64,7 +66,7 @@ export const DomainVerificationCard = ({ domain, connectionId }: Props) => {
             size={"xs"}
             onClick={() => setModal(true)}
           >
-            Verify
+            {t("integrations.ssoVerify")}
           </Button>
         )}
 
@@ -74,7 +76,7 @@ export const DomainVerificationCard = ({ domain, connectionId }: Props) => {
           onClick={deleteDomainHandler}
         >
           <TrashIcon size={14} />
-          Remove
+          {t("common.remove")}
         </Button>
       </div>
     </Card>
@@ -82,6 +84,7 @@ export const DomainVerificationCard = ({ domain, connectionId }: Props) => {
 };
 
 const VerificationStatus = ({ status }: { status: DomainValidationStatus }) => {
+  const t = useTranslations();
   const isVerified = status === DomainValidationStatus.VERIFIED;
   const isPending = status === DomainValidationStatus.PENDING;
   const isFailed = status === DomainValidationStatus.FAILED;
@@ -100,9 +103,9 @@ const VerificationStatus = ({ status }: { status: DomainValidationStatus }) => {
           isFailed && "bg-red-500",
         )}
       ></span>
-      {isVerified && "Ownership Verified"}
-      {isFailed && "Verification Failed"}
-      {isPending && "Pending Verification"}
+      {isVerified && t("integrations.ssoOwnershipVerified")}
+      {isFailed && t("integrations.ssoVerificationFailed")}
+      {isPending && t("integrations.ssoPendingVerification")}
     </span>
   );
 };

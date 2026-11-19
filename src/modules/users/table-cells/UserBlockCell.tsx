@@ -5,6 +5,7 @@ import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { User } from "@/interfaces/User";
 
 type Props = {
@@ -12,6 +13,7 @@ type Props = {
   isUserPage?: boolean;
 };
 export default function UserBlockCell({ user, isUserPage = false }: Props) {
+  const t = useTranslations();
   const userRequest = useApiCall<User>("/users");
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
@@ -24,22 +26,22 @@ export default function UserBlockCell({ user, isUserPage = false }: Props) {
   const disabled = user.is_current || user.role === "owner";
 
   const update = async (blocked: boolean) => {
-    const name = user.name || "User";
+    const name = user.name || t("common.user");
 
     if (blocked) {
       const choice = await confirm({
-        title: `Block '${name}'?`,
+        title: t("users.blockNamedTitle", { name }),
         description:
-          "This action will immediately revoke the user's access and disconnect all of their active peers.",
-        confirmText: "Block",
-        cancelText: "Cancel",
+          t("users.blockUserDesc"),
+        confirmText: t("users.block"),
+        cancelText: t("common.cancel"),
         type: "danger",
       });
       if (!choice) return;
     }
 
     notify({
-      title: blocked ? "User blocked" : "User unblocked",
+      title: blocked ? t("users.userBlockedNotify") : t("users.userUnblockedNotify"),
       description:
         name + " was successfully " + (blocked ? "blocked." : "unblocked."),
       promise: userRequest
@@ -56,8 +58,8 @@ export default function UserBlockCell({ user, isUserPage = false }: Props) {
           if (isUserPage) mutate(`/users`);
         }),
       loadingMessage: blocked
-        ? "Blocking the user..."
-        : "Unblocking the user...",
+        ? t("users.blockingUser")
+        : t("users.unblockingUser"),
     });
   };
 

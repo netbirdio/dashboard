@@ -15,23 +15,24 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useMatomoVirtualPage } from "@/cloud/analytics/MatomoProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 const parseApproverEmail = (message?: string): string =>
   message?.match(/[^\s@]+@[a-z0-9.-]+\.[a-z]{2,}/i)?.[0] ?? "";
 
 const steps = [
   {
-    label: "Account Created",
+    labelId: "users.accountCreated",
     status: "complete",
     icon: <CheckIcon size={16} />,
   },
   {
-    label: "Waiting for Approval",
+    labelId: "users.waitingForApproval",
     status: "current",
     icon: <Loader2Icon size={16} className={"animate-spin text-netbird"} />,
   },
   {
-    label: "Join Account",
+    labelId: "users.joinAccount",
     status: "upcoming",
     icon: <UserCircleIcon size={16} />,
   },
@@ -45,6 +46,7 @@ type Props = {
 };
 
 export const PendingApproval = ({ error, onRefresh, onLogout }: Props) => {
+  const t = useTranslations();
   const owner = parseApproverEmail(error?.message);
   useMatomoVirtualPage("pending_approval");
 
@@ -63,9 +65,9 @@ export const PendingApproval = ({ error, onRefresh, onLogout }: Props) => {
         }
       >
         <Steps horizontal={true} className={"pt-0 w-full"}>
-          {steps.map(({ label, status, icon }, index) => (
+          {steps.map(({ labelId, status, icon }, index) => (
             <Steps.Step
-              key={label}
+              key={labelId}
               step={icon}
               status={status}
               horizontal={true}
@@ -79,53 +81,55 @@ export const PendingApproval = ({ error, onRefresh, onLogout }: Props) => {
                   status === "upcoming" ? "text-nb-gray-400" : "text-neutral-900 dark:text-white",
                 )}
               >
-                {label}
+                {t(labelId)}
               </span>
             </Steps.Step>
           ))}
         </Steps>
 
         <Paragraph className={"block max-w-md mx-auto text-center"}>
-          Your organization requires new users to be manually approved before
-          joining.{" "}
-          {owner ? (
-            <>
-              Ask the owner of the account at{" "}
-              <span className={"text-nb-gray-100"}>{owner}</span> to approve
-              your access.
-            </>
-          ) : (
-            "Ask the owner of the account to approve your access."
-          )}
+          {t("users.pendingApprovalIntro")}{" "}
+          {owner
+            ? t.rich("users.askOwnerAt", {
+                email: owner,
+                address: (chunks) => (
+                  <span className={"text-nb-gray-100"}>{chunks}</span>
+                ),
+              })
+            : t("users.askOwner")}
         </Paragraph>
 
         <div className={"flex flex-col sm:flex-row gap-3 justify-center"}>
           <Button variant={"secondary"} size={"sm"} onClick={onRefresh}>
             <RefreshCwIcon size={16} />
-            Refresh
+            {t("common.refresh")}
           </Button>
           <Button variant={"default-outline"} size={"sm"} onClick={onLogout}>
             <LogOut size={16} />
-            Log Out
+            {t("common.logOut")}
           </Button>
         </div>
       </div>
 
       <Paragraph className={"text-sm"}>
-        Need help?
-        <InlineLink
-          href={"https://docs.netbird.io/manage/team/approve-users"}
-          target={"_blank"}
-        >
-          Read the Docs
-        </InlineLink>
-        or
-        <InlineLink
-          href={"https://docs.netbird.io/help/netbird-support"}
-          target={"_blank"}
-        >
-          Contact Support
-        </InlineLink>
+        {t.rich("users.pendingApprovalHelp", {
+          docs: (chunks) => (
+            <InlineLink
+              href={"https://docs.netbird.io/manage/team/approve-users"}
+              target={"_blank"}
+            >
+              {chunks}
+            </InlineLink>
+          ),
+          support: (chunks) => (
+            <InlineLink
+              href={"https://docs.netbird.io/help/netbird-support"}
+              target={"_blank"}
+            >
+              {chunks}
+            </InlineLink>
+          ),
+        })}
       </Paragraph>
     </div>
   );

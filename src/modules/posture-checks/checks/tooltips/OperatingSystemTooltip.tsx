@@ -1,5 +1,6 @@
 import FullTooltip from "@components/FullTooltip";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import AndroidIcon from "@/assets/icons/AndroidIcon";
 import AppleIcon from "@/assets/icons/AppleIcon";
 import IOSIcon from "@/assets/icons/IOSIcon";
@@ -19,6 +20,7 @@ type Props = {
   children: React.ReactNode;
 };
 export const OperatingSystemTooltip = ({ check, children }: Props) => {
+  const t = useTranslations();
   return check ? (
     <FullTooltip
       interactive={false}
@@ -31,13 +33,13 @@ export const OperatingSystemTooltip = ({ check, children }: Props) => {
               icon={LinuxIcon}
               os={"Linux"}
               version={check.linux?.min_kernel_version}
-              versionText={"Kernel Version"}
+              versionText={t("postureChecks.kernelVersion")}
             />
             <PostureCheckOperatingSystemInfo
               icon={WindowsIcon}
               os={"Windows"}
               version={check.windows?.min_kernel_version}
-              versionText={"Kernel Version"}
+              versionText={t("postureChecks.kernelVersion")}
               versionList={windowsKernelVersions}
             />
             <PostureCheckOperatingSystemInfo

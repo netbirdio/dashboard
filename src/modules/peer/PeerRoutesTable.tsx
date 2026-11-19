@@ -7,6 +7,7 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { cn } from "@utils/helpers";
 import React, { useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import { Route } from "@/interfaces/Route";
 import PeerRouteActionCell from "@/modules/peer/PeerRouteActionCell";
@@ -25,7 +26,7 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
   {
     accessorKey: "network_id",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.name" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <PeerRouteNameCell route={row.original} />,
@@ -33,7 +34,7 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
   {
     accessorKey: "network",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Network</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.network" />;
     },
     cell: ({ row }) => (
       <GroupedRouteNetworkRangeCell
@@ -47,7 +48,7 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     accessorFn: (r) => r.groups?.length,
     header: ({ column }) => {
       return (
-        <DataTableHeader column={column}>Distribution Groups</DataTableHeader>
+        <DataTableHeader column={column} labelId="routes.distributionGroups" />
       );
     },
     cell: ({ row }) => <RouteDistributionGroupsCell route={row.original} />,
@@ -58,9 +59,11 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     enableSorting: false,
     meta: { className: ENABLED_COLUMN_CLASS.xl },
     header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false}>
-        Active
-      </DataTableHeader>
+      <DataTableHeader
+        column={column}
+        sorting={false}
+        labelId="common.active"
+      />
     ),
     cell: ({ row }) => <PeerRouteActiveCell route={row.original} />,
   },
@@ -76,6 +79,7 @@ export default function PeerRoutesTable({
   isLoading,
   peer,
 }: Props) {
+  const translate = useTranslations();
   // Default sorting state of the table
   const [sorting, setSorting] = useState<SortingState>([
     {
@@ -91,15 +95,13 @@ export default function PeerRoutesTable({
         wrapperProps={{
           className: cn("w-full"),
         }}
-        text={"Network Routes"}
+        text={translate("common.networkRoutes")}
         tableClassName={"mt-0"}
         getStartedCard={
           <NoResults
             className={"py-4"}
-            title={"This peer has no network routes"}
-            description={
-              "You don't have any assigned network routes yet. You can add this peer to an existing network or create a new network route."
-            }
+            title={translate("peer.noNetworkRoutes")}
+            description={translate("peer.noNetworkRoutesDesc")}
             icon={
               <NetworkRoutesIcon size={20} className={"fill-nb-gray-300"} />
             }

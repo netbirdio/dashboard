@@ -17,6 +17,7 @@ import * as React from "react";
 import { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { isL4Mode, ReverseProxyFlatTarget } from "@/interfaces/ReverseProxy";
 
 type Props = {
@@ -26,13 +27,10 @@ type Props = {
 export default function ReverseProxyFlatTargetActionCell({
   target,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { permission } = usePermissions();
-  const {
-    openModal,
-    openTargetModal,
-    handleDeleteTarget,
-    handleToggleTarget,
-  } = useReverseProxies();
+  const { openModal, openTargetModal, handleDeleteTarget, handleToggleTarget } =
+    useReverseProxies();
   const [open, setOpen] = useState(false);
 
   return (
@@ -64,7 +62,7 @@ export default function ReverseProxyFlatTargetActionCell({
           >
             <div className={"flex gap-3 items-center pr-8"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
-              Edit Target
+              {t("reverseProxy.editTarget")}
             </div>
           </DropdownMenuItem>
 
@@ -78,7 +76,7 @@ export default function ReverseProxyFlatTargetActionCell({
           >
             <div className={"flex gap-3 items-center"}>
               <PowerIcon size={14} className={"shrink-0"} />
-              {target.enabled ? "Disable" : "Enable"}
+              {target.enabled ? t("common.disable") : t("common.enable")}
             </div>
           </DropdownMenuItem>
 
@@ -92,7 +90,7 @@ export default function ReverseProxyFlatTargetActionCell({
           >
             <div className={"flex gap-3 items-center pr-6"}>
               <Settings size={14} className={"shrink-0"} />
-              Advanced Settings
+              {t("reverseProxy.advancedSettings")}
             </div>
           </DropdownMenuItem>
 
@@ -108,7 +106,7 @@ export default function ReverseProxyFlatTargetActionCell({
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {t("common.delete")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

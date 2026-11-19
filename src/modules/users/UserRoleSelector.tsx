@@ -25,6 +25,8 @@ import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import type { MessageId } from "@/i18n/translate";
 import { Role, User } from "@/interfaces/User";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 
@@ -54,79 +56,83 @@ type IconComponent = React.ComponentType<{
 
 export const UserRoleCategories: {
   value: UserRoleCategory;
-  name: string;
+  nameId: MessageId;
   icon: IconComponent;
 }[] = [
-  { value: "general", name: "General", icon: UsersIcon },
-  { value: "agent-network", name: "Agent Network", icon: AgentNetworkIcon },
+  { value: "general", nameId: "users.roleCategoryGeneral", icon: UsersIcon },
+  {
+    value: "agent-network",
+    nameId: "common.agentNetwork",
+    icon: AgentNetworkIcon,
+  },
 ];
 
 export const UserRoles: {
-  name: string;
+  nameId: MessageId;
   // Label used inside the role's own tab, where the category is already in the
   // tab title — "Agent Network Admin" reads as just "Admin" under Agent Network.
-  shortName?: string;
+  shortNameId?: MessageId;
   value: Role;
   icon: IconComponent;
   category: UserRoleCategory;
-  description: string;
+  descriptionId: MessageId;
 }[] = [
   {
-    name: "Owner",
+    nameId: "users.owner",
     value: Role.Owner,
     icon: NetBirdIcon,
     category: "general",
-    description: "Full access, including transferring ownership.",
+    descriptionId: "users.ownerDescription",
   },
   {
-    name: "Admin",
+    nameId: "users.admin",
     value: Role.Admin,
     icon: Cog,
     category: "general",
-    description: "Manages users, peers, networks and account settings.",
+    descriptionId: "users.adminDescription",
   },
   {
-    name: "Network Admin",
+    nameId: "users.networkAdmin",
     value: Role.NetworkAdmin,
     icon: NetworkIcon,
     category: "general",
-    description: "Manages peers, networks and access control.",
+    descriptionId: "users.networkAdminDescription",
   },
   {
-    name: "Billing Admin",
+    nameId: "users.billingAdmin",
     value: Role.BillingAdmin,
     icon: CreditCard,
     category: "general",
-    description: "Manages the subscription and billing details.",
+    descriptionId: "users.billingAdminDescription",
   },
   {
-    name: "Auditor",
+    nameId: "users.auditor",
     value: Role.Auditor,
     icon: EyeIcon,
     category: "general",
-    description: "Read-only access to the configuration and audit events.",
+    descriptionId: "users.auditorDescription",
   },
   {
-    name: "User",
+    nameId: "users.user",
     value: Role.User,
     icon: User2,
     category: "general",
-    description: "Access to their own peers only.",
+    descriptionId: "users.userDescription",
   },
   {
-    name: "Agent Network Admin",
-    shortName: "Admin",
+    nameId: "common.agentNetworkAdmin",
+    shortNameId: "users.admin",
     value: Role.AgentNetworkAdmin,
     icon: AgentNetworkIcon,
     category: "agent-network",
-    description: "Manages AI providers, agent policies and guardrails.",
+    descriptionId: "users.agentNetworkAdminDescription",
   },
   {
-    name: "Usage Viewer",
+    nameId: "users.usageViewer",
     value: Role.UsageViewer,
     icon: GaugeIcon,
     category: "agent-network",
-    description: "Read-only access to usage and logs.",
+    descriptionId: "users.usageViewerDescription",
   },
 ];
 
@@ -145,6 +151,7 @@ const RoleList = ({
   // upwards on a long one.
   fixedHeight?: boolean;
 }) => {
+  const t = useTranslations();
   return (
     <ScrollArea
       className={cn(
@@ -169,10 +176,12 @@ const RoleList = ({
                 </div>
                 <div className={"flex flex-col text-sm font-medium"}>
                   <span className={"text-nb-gray-200 whitespace-nowrap"}>
-                    {useShortNames ? (item.shortName ?? item.name) : item.name}
+                    {useShortNames
+                      ? t(item.shortNameId ?? item.nameId)
+                      : t(item.nameId)}
                   </span>
                   <span className={"text-xs font-normal text-nb-gray-400"}>
-                    {item.description}
+                    {t(item.descriptionId)}
                   </span>
                 </div>
               </div>
@@ -196,6 +205,7 @@ export function UserRoleSelector({
   side = "bottom",
   align = "start",
 }: Readonly<MultiSelectProps>) {
+  const translate = useTranslations();
   const [inputRef, { width }] = useElementSize<
     HTMLButtonElement | HTMLDivElement
   >();
@@ -205,24 +215,23 @@ export function UserRoleSelector({
   const toggle = async (item: Role) => {
     if (item === Role.Owner) {
       let ok = await confirm({
-        title: "Transfer Ownership?",
+        title: translate("users.transferOwnership"),
         type: "warning",
         description: (
           <div className={"inline-block"}>
-            This action will transfer the{" "}
-            <span className={"text-netbird inline font-medium"}>Owner</span>{" "}
-            role to{" "}
+            {translate("users.transferOwnershipPrefix")}{" "}
+            <span className={"text-netbird inline font-medium"}>{translate("users.owner")}</span>{" "}
+            {translate("users.transferOwnershipTo")}{" "}
             {currentUser ? (
               <span className={"text-netbird inline font-medium"}>
                 {currentUser.name}
               </span>
             ) : (
-              "this user"
+              translate("users.thisUser")
             )}{" "}
-            and leave you with the{" "}
-            <span className={"text-netbird inline font-medium"}>Admin</span>{" "}
-            role. This action can only be undone if the new owner transfers the
-            role back to you.
+            {translate("users.transferOwnershipSuffix1")}{" "}
+            <span className={"text-netbird inline font-medium"}>{translate("users.admin")}</span>{" "}
+            {translate("users.transferOwnershipSuffix2")}
           </div>
         ),
       });
@@ -324,7 +333,7 @@ export function UserRoleSelector({
                     {/* Truncate instead of overflowing the button: role names
                         can be longer than the column they sit in. */}
                     <span className={"text-nb-gray-200 truncate"}>
-                      {selectedRole?.name}
+                      {translate(selectedRole.nameId)}
                     </span>
                   </div>
                 </div>
@@ -380,7 +389,7 @@ export function UserRoleSelector({
                           "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
                         }
                       />
-                      {category.name}
+                      {translate(category.nameId)}
                     </TabsTrigger>
                   ))}
                 </TabsList>

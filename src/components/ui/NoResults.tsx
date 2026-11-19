@@ -6,6 +6,7 @@ import { FilterX } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback } from "react";
 import Skeleton from "react-loading-skeleton";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   icon?: React.ReactNode;
@@ -22,14 +23,18 @@ type Props = {
 export default function NoResults({
   icon,
   hideIcon = false,
-  title = "Could not find any results",
-  description = "We couldn't find any results. Please try a different search term or change your filters.",
+  title: titleProp,
+  description: descriptionProp,
   children,
   className,
   hasFiltersApplied = false,
   onResetFilters,
   contentClassName,
 }: Props) {
+  const t = useTranslations();
+  const title = titleProp ?? t("components.noResults");
+  const description = descriptionProp ?? t("components.noResultsDescription");
+
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -80,7 +85,11 @@ export default function NoResults({
           <div className={"flex items-center justify-center mb-6"}>
             <SquareIcon
               icon={
-                icon ? icon : <FilterX size={24} className={"text-nb-gray-200"} />
+                icon ? (
+                  icon
+                ) : (
+                  <FilterX size={24} className={"text-nb-gray-200"} />
+                )
               }
               color={"gray"}
               size={"large"}
@@ -100,7 +109,7 @@ export default function NoResults({
               className="mt-4"
             >
               <FilterX size={16} />
-              Reset Filters & Search
+              {t("components.resetFilters")}
             </Button>
           )}
           {children}

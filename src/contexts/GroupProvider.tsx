@@ -6,6 +6,7 @@ import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { User } from "@/interfaces/User";
@@ -41,6 +42,7 @@ export const GroupProvider = ({
   children,
   isDetailPage = true,
 }: Props) => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const [groupNameModal, setGroupNameModal] = useState(false);
   const { mutate } = useSWRConfig();
@@ -58,7 +60,7 @@ export const GroupProvider = ({
   const isAllowedToDelete = !isIntegrationGroup && permission?.groups?.delete;
 
   const handleDelete = async () => {
-    if (!isAllowedToDelete) return Promise.reject("Not allowed to delete");
+    if (!isAllowedToDelete) return Promise.reject(t("groups.notAllowedToDelete"));
 
     const promise = groupRequest.del().then(() => {
       deleteGroupDropdownOption(group.name);
@@ -67,10 +69,10 @@ export const GroupProvider = ({
     });
 
     notify({
-      title: "Delete Group " + group.name,
-      description: "Group successfully deleted",
+      title: t("groups.deleteNamedTitle", { name: group.name }),
+      description: t("groups.deletedDescription"),
       promise,
-      loadingMessage: "Deleting group...",
+      loadingMessage: t("groups.deleting"),
     });
 
     return promise;
@@ -78,11 +80,10 @@ export const GroupProvider = ({
 
   const deleteGroup = async () => {
     const choice = await confirm({
-      title: `Delete '${group.name}'?`,
-      description:
-        "Are you sure you want to delete this group? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      title: t("groups.deleteConfirmTitle", { name: group.name }),
+      description: t("groups.deleteConfirmDescription"),
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
@@ -90,7 +91,7 @@ export const GroupProvider = ({
   };
 
   const renameGroup = (name: string) => {
-    if (!isAllowedToRename) return Promise.reject("Not allowed to rename");
+    if (!isAllowedToRename) return Promise.reject(t("groups.notAllowedToRename"));
 
     const currentPeerIds =
       group.peers?.map((p) => (typeof p === "string" ? p : p.id)) || [];
@@ -103,10 +104,10 @@ export const GroupProvider = ({
       });
 
     notify({
-      title: `Rename Group ${group.name}`,
-      description: "Group successfully renamed to " + name,
+      title: t("groups.renameNamedTitle", { name: group.name }),
+      description: t("groups.renamedDescription", { name }),
       promise,
-      loadingMessage: "Renaming group...",
+      loadingMessage: t("groups.renaming"),
     });
 
     return promise;
@@ -118,13 +119,16 @@ export const GroupProvider = ({
 
     const choice = await confirm({
       title: peer
-        ? `Remove peer '${peer.name}' from '${group.name}'?`
-        : `Remove peers from '${group.name}'?`,
+        ? t("groups.removePeerConfirmTitle", {
+            peer: peer.name,
+            group: group.name,
+          })
+        : t("groups.removePeersConfirmTitle", { group: group.name }),
       description: peer
-        ? `Are you sure you want to remove this peer from the group? You can add it back later if needed.`
-        : `Are you sure you want to remove these peers from the group? You can add them back later if needed.`,
-      confirmText: "Remove",
-      cancelText: "Cancel",
+        ? t("groups.removePeerConfirmDescription")
+        : t("groups.removePeersConfirmDescription"),
+      confirmText: t("common.remove"),
+      cancelText: t("common.cancel"),
       type: "warning",
       maxWidthClass: "max-w-lg",
     });
@@ -144,14 +148,17 @@ export const GroupProvider = ({
       });
 
     notify({
-      title: `Remove Peer from Group`,
+      title: t("groups.removePeerFromGroupTitle"),
       description: peer
-        ? `Peer '${peer.name}' successfully removed from group '${group.name}'`
-        : `Peers successfully removed from group '${group.name}'`,
+        ? t("groups.peerRemovedDescription", {
+            peer: peer.name,
+            group: group.name,
+          })
+        : t("groups.peersRemovedDescription", { group: group.name }),
       promise,
       loadingMessage: peer
-        ? "Removing peer from group..."
-        : `Removing peers from group...`,
+        ? t("groups.removingPeer")
+        : t("groups.removingPeers"),
     });
 
     return promise;
@@ -174,10 +181,10 @@ export const GroupProvider = ({
       });
 
     notify({
-      title: "Adding peers to group",
-      description: `Peers were successfully added to ${group.name}.`,
+      title: t("groups.addingPeersTitle"),
+      description: t("groups.peersAddedDescription", { group: group.name }),
       promise,
-      loadingMessage: "Adding peers to group...",
+      loadingMessage: t("groups.addingPeers"),
     });
 
     return promise;
@@ -203,10 +210,13 @@ export const GroupProvider = ({
 
     if (!returnOnlyPromise) {
       notify({
-        title: `Remove User from Group ${group.name}`,
-        description: `User '${user.name}' was successfully removed from group '${group.name}'.`,
+        title: t("groups.removeUserFromGroupTitle", { group: group.name }),
+        description: t("groups.userRemovedDescription", {
+          user: user.name,
+          group: group.name,
+        }),
         promise,
-        loadingMessage: "Removing user from group...",
+        loadingMessage: t("groups.removingUser"),
       });
     }
 
@@ -222,13 +232,16 @@ export const GroupProvider = ({
 
     const choice = await confirm({
       title: user
-        ? `Remove user '${user?.name ?? user?.id}' from '${group.name}'?`
-        : `Remove users from '${group.name}'?`,
+        ? t("groups.removeUserConfirmTitle", {
+            user: user?.name ?? user?.id,
+            group: group.name,
+          })
+        : t("groups.removeUsersConfirmTitle", { group: group.name }),
       description: user
-        ? `Are you sure you want to remove this user from the group? You can add it back later if needed.`
-        : `Are you sure you want to remove these users from the group? You can add them back later if needed.`,
-      confirmText: "Remove",
-      cancelText: "Cancel",
+        ? t("groups.removeUserConfirmDescription")
+        : t("groups.removeUsersConfirmDescription"),
+      confirmText: t("common.remove"),
+      cancelText: t("common.cancel"),
       type: "warning",
       maxWidthClass: "max-w-lg",
     });
@@ -240,10 +253,10 @@ export const GroupProvider = ({
       mutate("/users?service_user=false");
     });
     notify({
-      title: `Remove Users from Group ${group.name}`,
-      description: `Users were successfully removed from group '${group.name}'.`,
+      title: t("groups.removeUsersFromGroupTitle", { group: group.name }),
+      description: t("groups.usersRemovedDescription", { group: group.name }),
       promise,
-      loadingMessage: "Removing users from group...",
+      loadingMessage: t("groups.removingUsers"),
     });
     return promise;
   };
@@ -263,10 +276,13 @@ export const GroupProvider = ({
       });
     if (!returnOnlyPromise) {
       notify({
-        title: `Add User to Group ${group.name}`,
-        description: `User '${user.name}' was successfully added to group '${group.name}'.`,
+        title: t("groups.addUserToGroupTitle", { group: group.name }),
+        description: t("groups.userAddedDescription", {
+          user: user.name,
+          group: group.name,
+        }),
         promise,
-        loadingMessage: "Adding user to group...",
+        loadingMessage: t("groups.addingUser"),
       });
     }
     return promise;
@@ -280,10 +296,10 @@ export const GroupProvider = ({
       mutate("/users?service_user=false");
     });
     notify({
-      title: `Add Users to Group ${group.name}`,
-      description: `Users were successfully added to group '${group.name}'.`,
+      title: t("groups.addUsersToGroupTitle", { group: group.name }),
+      description: t("groups.usersAddedDescription", { group: group.name }),
       promise,
-      loadingMessage: "Adding users to group...",
+      loadingMessage: t("groups.addingUsers"),
     });
     return promise;
   };

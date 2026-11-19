@@ -11,9 +11,11 @@ import { useSWRConfig } from "swr";
 import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useAccount } from "@/modules/account/useAccount";
 
 export const DistributorTransferAccountModal = () => {
+  const t = useTranslations();
   const { mspInfo } = useMSP();
   const account = useAccount();
   const { confirm } = useDialog();
@@ -30,18 +32,18 @@ export const DistributorTransferAccountModal = () => {
 
   const grantAccess = async () => {
     const choice = await confirm({
-      title: `Grant access to distributor?`,
-      description: `Are you sure you want to grant access? This action cannot be undone.`,
-      confirmText: "Grant Access",
-      cancelText: "Cancel",
+      title: t("distributor.grantAccessToDistributor"),
+      description: t("msp.areYouSureYouWantToGrantAccessThisAction"),
+      confirmText: t("msp.grantAccess"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
 
     notify({
-      title: "Granting access to distributor",
-      description: "Access has been successfully granted.",
-      loadingMessage: "Granting access...",
+      title: t("distributor.grantingAccessToDistributor"),
+      description: t("msp.accessHasBeenSuccessfullyGranted"),
+      loadingMessage: t("msp.grantingAccess"),
       promise: resellerRequest
         .put(
           {
@@ -59,9 +61,9 @@ export const DistributorTransferAccountModal = () => {
 
   const deny = () => {
     notify({
-      title: "Access request denied",
-      description: "You have denied the distributor access request.",
-      loadingMessage: "Declining access...",
+      title: t("msp.accessRequestDenied"),
+      description: t("distributor.youHaveDeniedTheDistributorAccessRequest"),
+      loadingMessage: t("msp.decliningAccess"),
       promise: resellerRequest
         .put(
           {
@@ -99,24 +101,25 @@ export const DistributorTransferAccountModal = () => {
             <h2
               className={"text-lg my-0 leading-[1.5] text-center text-balance"}
             >
-              A distributor is requesting access to your account
+              {t("distributor.aDistributorIsRequestingAccessToYourAccount")}
             </h2>
             <Paragraph
               className={cn("text-sm text-center max-w-[450px] px-4 mt-2")}
             >
-              Granting access allows the distributor to manage billing and
-              subscription for your account.
+              {t(
+                "distributor.grantingAccessAllowsTheDistributorToManageBillingAndSubscription",
+              )}
             </Paragraph>
             <div className={"flex gap-4 items-center mt-6 w-full"}>
               <Button className={"w-full"} variant={"secondary"} onClick={deny}>
-                Deny
+                {t("common.deny")}
               </Button>
               <Button
                 className={"w-full"}
                 variant={"danger"}
                 onClick={grantAccess}
               >
-                Grant Access
+                {t("msp.grantAccess")}
               </Button>
             </div>
           </div>

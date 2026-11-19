@@ -1,13 +1,15 @@
 import { useCallback } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useControlCenterUI } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { FlowView } from "@/modules/control-center/header/FlowSelector";
 import { usePlaceholderArtifacts } from "@/modules/control-center/hooks/usePlaceholderArtifacts";
 
 // Leaving draft destroys the changeset; a deploy exits via exitAfterDeploy.
 export function useDiscardDraft() {
+  const t = useTranslations();
   const { setIsDraft } = useDraftMode();
   const { changeCount, clearChanges } = useDraftChangeset();
   const { onViewChange } = useControlCenterUI();
@@ -37,12 +39,12 @@ export function useDiscardDraft() {
   const discardAndExit = useCallback(async () => {
     if (changeCount > 0) {
       const choice = await confirm({
-        title: "Discard draft changes?",
-        description: `You have ${changeCount} pending change${
-          changeCount !== 1 ? "s" : ""
-        } that will be lost. This cannot be undone.`,
-        confirmText: "Discard",
-        cancelText: "Cancel",
+        title: t("controlCenter.discardDraftChanges"),
+        description: t("controlCenter.youHavePendingChangeOtherThatWillBe", {
+          changeCount: changeCount,
+        }),
+        confirmText: t("controlCenter.discard"),
+        cancelText: t("common.cancel"),
         type: "danger",
         dismissOnOutsideClick: true,
       });
@@ -50,7 +52,7 @@ export function useDiscardDraft() {
     }
     exitDraft();
     return true;
-  }, [changeCount, confirm, exitDraft]);
+  }, [t, changeCount, confirm, exitDraft]);
 
   return { discardAndExit, exitAfterDeploy };
 }

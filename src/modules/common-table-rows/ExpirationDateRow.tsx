@@ -1,10 +1,13 @@
 import dayjs from "dayjs";
 import { Calendar } from "lucide-react";
+import { useDashboardLocale } from "@/i18n/LocaleProvider";
+import { defaultLocale } from "@/i18n/locales";
 
 type Props = {
   date: Date;
 };
 export default function ExpirationDateRow({ date }: Props) {
+  const { locale } = useDashboardLocale();
   return (
     <div
       className={
@@ -12,7 +15,13 @@ export default function ExpirationDateRow({ date }: Props) {
       }
     >
       <Calendar size={14} />
-      {dayjs(date).format("D MMM YYYY")}
+      {locale === defaultLocale
+        ? dayjs(date).format("D MMM YYYY")
+        : new Intl.DateTimeFormat(locale, {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          }).format(date)}
     </div>
   );
 }

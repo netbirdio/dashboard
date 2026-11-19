@@ -7,6 +7,7 @@ import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useUserContext } from "@/contexts/UserProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { AccessToken } from "@/interfaces/AccessToken";
 import { SetupKey } from "@/interfaces/SetupKey";
 
@@ -16,6 +17,7 @@ type Props = {
 export default function AccessTokenActionCell({
   access_token,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { user } = useUserContext();
   const { permission } = usePermissions();
   const { confirm } = useDialog();
@@ -27,21 +29,20 @@ export default function AccessTokenActionCell({
   const handleRevoke = async () => {
     notify({
       title: access_token.name,
-      description: "Access token was successfully deleted",
+      description: t("accessTokens.deleted"),
       promise: deleteRequest.del().then(() => {
         mutate(`/users/${user.id}/tokens`);
       }),
-      loadingMessage: "Deleting the access token...",
+      loadingMessage: t("accessTokens.deleting"),
     });
   };
 
   const handleConfirm = async () => {
     const choice = await confirm({
-      title: `Delete '${access_token.name}'?`,
-      description:
-        "Are you sure you want to delete this token? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      title: t("accessTokens.deleteTitle", { name: access_token.name }),
+      description: t("accessTokens.deleteDescription"),
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
@@ -58,7 +59,7 @@ export default function AccessTokenActionCell({
         data-testid={"access-token-delete"}
       >
         <Trash2 size={16} />
-        Delete
+        {t("common.delete")}
       </Button>
     </div>
   );

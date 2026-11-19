@@ -41,6 +41,8 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import {
   PolicyBudgetLimit,
   PolicyLimits,
@@ -58,6 +60,7 @@ export default function AgentPolicyLimitsTab({
   limits,
   setLimits,
 }: Readonly<Props>) {
+  const { tr } = useAgentNetworkText();
   const [editKind, setEditKind] = useState<LimitKind | null>(null);
 
   const tokenAttached = limits.tokenLimit.enabled;
@@ -94,10 +97,10 @@ export default function AgentPolicyLimitsTab({
           <div className={"flex justify-between gap-10 mb-5 items-end"}>
             <div>
               <Label>
-                {attachedCount} {attachedCount === 1 ? "Limit" : "Limits"}
+                {tr("agentNetwork.limitCount", { count: attachedCount })}
               </Label>
               <HelpText className={"mb-0"}>
-                Token and budget caps applied directly to this policy.
+                {tr("agentNetwork.policyLimitsHelp")}
               </HelpText>
             </div>
             <div className={"flex items-center justify-center gap-4"}>
@@ -108,7 +111,7 @@ export default function AgentPolicyLimitsTab({
                 onClick={() => setEditKind("token")}
               >
                 <PlusCircle size={14} />
-                Add Token Limit
+                {tr("agentNetwork.addTokenLimit")}
               </Button>
               <Button
                 variant={"primary"}
@@ -117,7 +120,7 @@ export default function AgentPolicyLimitsTab({
                 onClick={() => setEditKind("budget")}
               >
                 <PlusCircle size={14} />
-                Add Budget Limit
+                {tr("agentNetwork.addBudgetLimit")}
               </Button>
             </div>
           </div>
@@ -166,8 +169,12 @@ function LimitRow({
   onEdit: () => void;
   onDetach: () => void;
 }) {
+  const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const isToken = kind === "token";
-  const title = isToken ? "Token Limit" : "Budget Limit";
+  const title = isToken
+    ? tr("agentNetwork.tokenLimit")
+    : tr("agentNetwork.budgetLimit");
   const groupCap = isToken
     ? (limit as PolicyTokenLimit).groupCap
     : (limit as PolicyBudgetLimit).groupCapUsd;
@@ -198,8 +205,11 @@ function LimitRow({
         <div className={"flex flex-col gap-0.5 min-w-0"}>
           <div className={"text-sm text-nb-gray-100 truncate"}>{title}</div>
           <div className={"text-xs text-nb-gray-400 truncate"}>
-            Group {groupLabel} · Individual {userLabel} · resets every{" "}
-            {formatWindow(limit.windowSeconds)}
+            {tr("agentNetwork.limitSummary", {
+              group: groupLabel,
+              individual: userLabel,
+              window: formatWindow(limit.windowSeconds),
+            })}
           </div>
         </div>
       </div>
@@ -219,13 +229,13 @@ function LimitRow({
           <DropdownMenuItem onClick={onEdit}>
             <div className={"flex gap-3 items-center"}>
               <Edit size={14} className={"shrink-0"} />
-              Edit Limit
+              {tr("agentNetwork.editLimit")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onDetach}>
             <div className={"flex gap-3 items-center"}>
               <MinusCircleIcon size={14} className={"shrink-0"} />
-              Detach
+              {tr("agentNetwork.detach")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -241,6 +251,7 @@ function NoLimitsInfo({
   onAddToken: () => void;
   onAddBudget: () => void;
 }) {
+  const { tr } = useAgentNetworkText();
   return (
     <div>
       <div
@@ -249,20 +260,20 @@ function NoLimitsInfo({
         }
       >
         <h2 className={"text-lg my-0 leading-[1.5 text-center]"}>
-          {"You haven't added any limits yet"}
+          {tr("agentNetwork.noLimitsYet")}
         </h2>
         <Paragraph className={cn("text-sm text-center max-w-md mt-1")}>
-          Add token or budget caps that apply directly to this policy.
+          {tr("agentNetwork.noLimitsYetDesc")}
         </Paragraph>
       </div>
       <div className={"flex items-center justify-center gap-4 mt-5"}>
         <Button variant={"primary"} size={"xs"} onClick={onAddToken}>
           <IconCirclePlus size={14} />
-          Add Token Limit
+          {tr("agentNetwork.addTokenLimit")}
         </Button>
         <Button variant={"primary"} size={"xs"} onClick={onAddBudget}>
           <IconCirclePlus size={14} />
-          Add Budget Limit
+          {tr("agentNetwork.addBudgetLimit")}
         </Button>
       </div>
     </div>
@@ -306,6 +317,8 @@ function LimitEditModal({
   onSave: (next: PolicyLimits) => void;
   onClose: () => void;
 }) {
+  const translate = useTranslations();
+  const { tr } = useAgentNetworkText();
   const isToken = kind === "token";
   const initial = isToken ? limits.tokenLimit : limits.budgetLimit;
   // Track inputs as strings so the user can clear the field; an empty
@@ -384,11 +397,15 @@ function LimitEditModal({
       <ModalContent maxWidthClass={"max-w-xl"} showClose={true}>
         <ModalHeader
           icon={isToken ? <Gauge size={19} /> : <Wallet size={19} />}
-          title={isToken ? "Token Limit" : "Budget Limit"}
+          title={
+            isToken
+              ? tr("agentNetwork.tokenLimit")
+              : tr("agentNetwork.budgetLimit")
+          }
           description={
             isToken
-              ? "Cap tokens per group and per user over a rolling window."
-              : "Cap USD spend per group and per user over a rolling window."
+              ? tr("agentNetwork.tokenLimitDescription")
+              : tr("agentNetwork.budgetLimitDescription")
           }
           color={"netbird"}
         />
@@ -397,56 +414,38 @@ function LimitEditModal({
           <div className={"grid grid-cols-2 gap-4"}>
             <div>
               <Label>
-                Group Cap
-                <HelpTooltip
-                  content={
-                    <>
-                      Caps the group&apos;s total consumption within the window.
-                      Once reached, every member is blocked until the window
-                      resets, regardless of individual usage.
-                    </>
-                  }
-                />
+                {tr("agentNetwork.groupCap")}
+                <HelpTooltip content={tr("agentNetwork.groupCapTooltip")} />
               </Label>
-              <HelpText>Group total within the window.</HelpText>
+              <HelpText>{tr("agentNetwork.groupCapHelp")}</HelpText>
               <Input
                 type={"number"}
                 min={0}
                 step={isToken ? "1" : "0.01"}
-                placeholder={"0 = uncapped"}
+                placeholder={tr("agentNetwork.uncappedPlaceholder")}
                 value={groupCapStr}
                 onChange={(e) => setGroupCapStr(e.target.value)}
               />
             </div>
             <div>
               <Label>
-                Individual Cap
-                <HelpTooltip
-                  content={
-                    <>
-                      Caps each member&apos;s own consumption within the window.
-                      A user that hits this cap is blocked even when the group
-                      still has headroom.
-                    </>
-                  }
-                />
+                {tr("agentNetwork.individualCap")}
+                <HelpTooltip content={tr("agentNetwork.individualCapTooltip")} />
               </Label>
-              <HelpText>Per-user limit within the window.</HelpText>
+              <HelpText>{tr("agentNetwork.individualCapHelp")}</HelpText>
               <Input
                 type={"number"}
                 min={0}
                 step={isToken ? "1" : "0.01"}
-                placeholder={"0 = uncapped"}
+                placeholder={tr("agentNetwork.uncappedPlaceholder")}
                 value={userCapStr}
                 onChange={(e) => setUserCapStr(e.target.value)}
               />
             </div>
           </div>
           <div>
-            <Label>Reset Window</Label>
-            <HelpText>
-              How often the cap counters reset. Minimum 1 minute.
-            </HelpText>
+            <Label>{tr("agentNetwork.resetWindow")}</Label>
+            <HelpText>{tr("agentNetwork.resetWindowHelp")}</HelpText>
             <div className={"flex gap-3"}>
               <Input
                 type={"number"}
@@ -462,13 +461,13 @@ function LimitEditModal({
                 <SelectTrigger className={"w-[135px] shrink-0"}>
                   <div className={"flex items-center gap-3"}>
                     <CalendarClock size={15} className={"text-nb-gray-300"} />
-                    <SelectValue placeholder={"Select interval..."} />
+                    <SelectValue placeholder={translate("agentNetwork.selectInterval")} />
                   </div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={"m"}>Minutes</SelectItem>
-                  <SelectItem value={"h"}>Hours</SelectItem>
-                  <SelectItem value={"d"}>Days</SelectItem>
+                  <SelectItem value={"m"}>{tr("agentNetwork.minutes")}</SelectItem>
+                  <SelectItem value={"h"}>{translate("agentNetwork.hours")}</SelectItem>
+                  <SelectItem value={"d"}>{translate("agentNetwork.days")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -477,14 +476,14 @@ function LimitEditModal({
         <ModalFooter className={"items-center"}>
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>{translate("common.cancel")}</Button>
             </ModalClose>
             <Button
               variant={"primary"}
               disabled={!canSave}
               onClick={handleSave}
             >
-              Save
+              {translate("common.save")}
             </Button>
           </div>
         </ModalFooter>

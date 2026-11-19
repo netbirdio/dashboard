@@ -19,7 +19,6 @@ import { useSearch } from "@hooks/useSearch";
 import useSortedDropdownOptions from "@hooks/useSortedDropdownOptions";
 import { IconArrowBack } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
-import { usePermissions } from "@/contexts/PermissionsProvider";
 import { cn } from "@utils/helpers";
 import { Command, CommandGroup, CommandInput, CommandList } from "cmdk";
 import { sortBy, trim, unionBy } from "lodash";
@@ -41,7 +40,9 @@ import * as React from "react";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import type { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
@@ -188,12 +189,12 @@ export function PeerGroupSelector({
   closeOnSelect = false,
   resource,
   onResourceChange,
-  placeholder = "Add or select group(s)...",
+  placeholder: placeholderProp,
   customTrigger,
   align = "start",
   side = "bottom",
   users,
-  placeholderForSearch = 'Search groups or add new group by pressing "Enter"...',
+  placeholderForSearch: placeholderForSearchProp,
   resourceIds,
   groupIds,
   additionalResources,
@@ -204,6 +205,11 @@ export function PeerGroupSelector({
   selectedCluster,
   onClusterChange,
 }: Readonly<MultiSelectProps>) {
+  const t = useTranslations();
+  const placeholder = placeholderProp ?? t("components.addSelectGroups");
+  const placeholderForSearch =
+    placeholderForSearchProp ?? t("components.searchAddGroups");
+
   // Network resources sit behind the networks permission; callers without
   // it (e.g. agent_network_admin opening the policy modal) get a plain
   // group selector instead of a 403.
@@ -386,11 +392,11 @@ export function PeerGroupSelector({
 
   const searchPlaceholder = useMemo(() => {
     if (tab === "groups") return placeholderForSearch;
-    if (tab === "resources") return "Search resource...";
-    if (tab === "peers") return "Search peer by name or ip...";
-    if (tab === "clusters") return "Search cluster...";
-    return "Search...";
-  }, [tab, placeholderForSearch]);
+    if (tab === "resources") return t("components.searchResource");
+    if (tab === "peers") return t("components.searchPeer");
+    if (tab === "clusters") return t("components.searchCluster");
+    return t("common.searchInput");
+  }, [tab, placeholderForSearch, t]);
 
   const filteredClusters = useMemo(() => {
     if (!clusters || clusters.length === 0) return [];
@@ -687,10 +693,13 @@ export function PeerGroupSelector({
                         <div
                           className={"text-neutral-500 dark:text-nb-gray-300"}
                         >
-                          Add this group by pressing{" "}
-                          <span className={"font-bold text-netbird"}>
-                            {"'Enter'"}
-                          </span>
+                          {t.rich("components.addGroupEnter", {
+                            key: (chunks) => (
+                              <span className="font-bold text-netbird">
+                                {chunks}
+                              </span>
+                            ),
+                          })}
                         </div>
                       </CommandItem>
                     )}
@@ -700,8 +709,8 @@ export function PeerGroupSelector({
                         className={"mt-5 mb-5 max-w-sm mx-auto"}
                       >
                         {search !== ""
-                          ? "There are no groups matching your search. Please try a different search term."
-                          : "There are no groups that contain resources yet."}
+                          ? t("components.noMatchingGroups")
+                          : t("components.noResourceGroups")}
                       </DropdownInfoText>
                     )}
 
@@ -721,8 +730,7 @@ export function PeerGroupSelector({
                         <FullTooltip
                           content={
                             <div className={"text-xs max-w-xs"}>
-                              This group is already part of the routing peer and
-                              can not be used for the access control groups.
+                              {t("components.routingGroupConflict")}
                             </div>
                           }
                           disabled={!isDisabled}
@@ -850,6 +858,7 @@ const TabTriggers = ({
   hideGroupsTab?: boolean;
   tabOrder?: PeerGroupSelectorTab[];
 }) => {
+  const t = useTranslations();
   const tabCount =
     (!hideGroupsTab ? 1 : 0) +
     (showResources ? 1 : 0) +
@@ -870,7 +879,7 @@ const TabTriggers = ({
         }
         size={14}
       />
-      Groups
+      {t("common.groups")}
     </TabsTrigger>
   );
 
@@ -887,7 +896,7 @@ const TabTriggers = ({
         }
         size={14}
       />
-      Resources
+      {t("common.resources")}
     </TabsTrigger>
   );
 
@@ -904,7 +913,7 @@ const TabTriggers = ({
         }
         size={14}
       />
-      Peers
+      {t("common.peers")}
     </TabsTrigger>
   );
 
@@ -921,7 +930,7 @@ const TabTriggers = ({
         }
         size={14}
       />
-      Proxy Clusters
+      {t("components.proxyClusters")}
     </TabsTrigger>
   );
 
@@ -959,6 +968,7 @@ const UsersCounter = ({
   users: User[];
   selected: boolean;
 }) => {
+  const t = useTranslations();
   const usersOfGroup =
     users?.filter((user) => user.auto_groups.includes(group.id as string)) ||
     [];
@@ -968,7 +978,7 @@ const UsersCounter = ({
       <span
         className={"group-hover/user-stack:text-nb-gray-200 text-nb-gray-300"}
       >
-        0 User(s)
+        {t("components.userCounter", { count: 0 })}
       </span>
     );
 
@@ -992,6 +1002,7 @@ const PeerCounter = ({
   group: Group;
   showResourceCounter?: boolean;
 }) => {
+  const t = useTranslations();
   const peerCount = group.peers?.length ?? group?.peers_count ?? 0;
   const resourcesCount = group?.resources_count ?? 0;
   const hidePeerCounter =
@@ -1005,12 +1016,14 @@ const PeerCounter = ({
       )}
     >
       <MonitorSmartphoneIcon size={14} className={"shrink-0"} />
-      {peerCount} Peer(s)
+      {peerCount}
+      {" " + t("components.usageLimitSuffix")}
     </div>
   );
 };
 
 const ResourcesCounter = ({ group }: { group: Group }) => {
+  const t = useTranslations();
   return group?.resources_count && group.resources_count > 0 ? (
     <div
       className={
@@ -1018,7 +1031,7 @@ const ResourcesCounter = ({ group }: { group: Group }) => {
       }
     >
       <Layers3 size={14} className={"shrink-0"} />
-      {group.resources_count} Resource(s)
+      {t("components.resourceCounter", { count: group.resources_count })}
     </div>
   ) : null;
 };
@@ -1030,6 +1043,7 @@ const PolicyCounter = ({
   group: Group;
   policies: Policy[];
 }) => {
+  const t = useTranslations();
   const count = useMemo(() => {
     if (!group.id) return 0;
     return policies.filter((policy) => {
@@ -1051,7 +1065,7 @@ const PolicyCounter = ({
       }
     >
       <ShieldCheck size={14} className={"shrink-0"} />
-      {count} {count === 1 ? "Policy" : "Policies"}
+      {count} {count === 1 ? t("common.policy") : t("common.policies")}
     </div>
   );
 };
@@ -1075,6 +1089,7 @@ const ResourcesList = ({
   value?: PolicyRuleResource;
   onChange: (resource: NetworkResource) => void;
 }) => {
+  const t = useTranslations();
   const [filteredItems, _, setSearch] = useSearch(
     resources || [],
     resourcesSearchPredicate,
@@ -1099,8 +1114,7 @@ const ResourcesList = ({
   if (search != "" && filteredItems.length == 0) {
     return (
       <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
-        There are no resources matching your search. Please try a different
-        search term.
+        {t("components.noMatchingResources")}
       </DropdownInfoText>
     );
   }
@@ -1108,9 +1122,10 @@ const ResourcesList = ({
   if (search == "" && filteredItems.length == 0) {
     return (
       <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
-        There are no resources available yet. <br />
-        Go to <InlineLink href={"/networks"}>Networks</InlineLink> to add some
-        resources.
+        {t.rich("components.resourcesEmpty", {
+          br: () => <br />,
+          link: (chunks) => <InlineLink href="/networks">{chunks}</InlineLink>,
+        })}
       </DropdownInfoText>
     );
   }
@@ -1177,14 +1192,17 @@ const ClustersList = ({
   value?: string;
   onChange: (cluster?: ClusterOption) => void;
 }) => {
+  const t = useTranslations();
   if (clusters.length === 0) {
     return (
       <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
-        No proxy clusters available. Go to{" "}
-        <InlineLink href={"/reverse-proxy/custom-domains"}>
-          Custom Domains
-        </InlineLink>{" "}
-        to configure one that supports private services.
+        {t.rich("components.clustersEmpty", {
+          link: (chunks) => (
+            <InlineLink href="/reverse-proxy/custom-domains">
+              {chunks}
+            </InlineLink>
+          ),
+        })}
       </DropdownInfoText>
     );
   }
@@ -1249,6 +1267,7 @@ const PeersList = ({
   value?: PolicyRuleResource;
   onChange: (peer: Peer) => void;
 }) => {
+  const t = useTranslations();
   const [filteredItems, _, setSearch] = useSearch(
     peers || [],
     peersSearchPredicate,
@@ -1273,8 +1292,7 @@ const PeersList = ({
   if (search != "" && filteredItems.length == 0) {
     return (
       <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
-        There are no peers matching your search. Please try a different search
-        term.
+        {t("components.noMatchingPeersHint")}
       </DropdownInfoText>
     );
   }
@@ -1282,8 +1300,10 @@ const PeersList = ({
   if (search == "" && filteredItems.length == 0) {
     return (
       <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
-        There are no peers available yet. <br />
-        Go to <InlineLink href={"/peers"}>Peers</InlineLink> to add some peers.
+        {t.rich("components.peersEmpty", {
+          br: () => <br />,
+          link: (chunks) => <InlineLink href="/peers">{chunks}</InlineLink>,
+        })}
       </DropdownInfoText>
     );
   }

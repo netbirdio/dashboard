@@ -5,6 +5,7 @@ import { cn } from "@utils/helpers";
 import { AnimatePresence, motion } from "framer-motion";
 import { MonitorSmartphoneIcon } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props<T> = {
   selectedItems?: T[];
@@ -21,6 +22,7 @@ export function DataTableMultiSelectPopup<T>({
   rightSide,
   icon,
 }: Props<T>) {
+  const translate = useTranslations();
   const count = selectedItems?.length || 0;
   return (
     <AnimatePresence>
@@ -69,7 +71,7 @@ export function DataTableMultiSelectPopup<T>({
                     <div className={"flex gap-2 items-center"}>
                       {rightSide}
                       <FullTooltip
-                        content={<span className={"text-xs"}>Cancel</span>}
+                        content={<span className={"text-xs"}>{translate("common.cancel")}</span>}
                       >
                         <Button
                           onClick={onCanceled}

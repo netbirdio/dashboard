@@ -51,6 +51,8 @@ import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import { Group } from "@/interfaces/Group";
 import { duplicateAgentPolicy } from "@/modules/agent-network/agentPolicyDuplicate";
 import AgentPolicyModal from "@/modules/agent-network/AgentPolicyModal";
@@ -84,6 +86,7 @@ function NameCell({ policy }: { policy: AgentPolicy }) {
 }
 
 function SourceCell({ policy }: { policy: AgentPolicy }) {
+  const { tr } = useAgentNetworkText();
   const { groups: realGroups } = useGroups();
   if (policy.sourceGroups.length === 0) return <EmptyRow />;
   const groups: Group[] = policy.sourceGroups.map((id) => {
@@ -95,10 +98,8 @@ function SourceCell({ policy }: { policy: AgentPolicy }) {
   return (
     <MultipleGroups
       groups={groups}
-      label={"Source Groups"}
-      description={
-        "Members of these groups are allowed to call the destination providers."
-      }
+      label={tr("agentNetwork.sourceGroups")}
+      description={tr("agentNetwork.sourceGroupsDesc")}
     />
   );
 }
@@ -163,6 +164,8 @@ function ModelsCell({
   policy: AgentPolicy;
   onClickAdd: () => void;
 }) {
+  const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const { guardrails } = useAIProviders();
   const models = allowlistModels(policy, guardrails);
 
@@ -180,7 +183,7 @@ function ModelsCell({
           }}
         >
           <IconCirclePlus size={14} />
-          Restrict
+          {tr("agentNetwork.restrict")}
         </Badge>
       </div>
     );
@@ -209,11 +212,13 @@ function ModelsCell({
       <FullTooltip
         content={
           <div className={"text-xs space-y-0.5"}>
-            <div className={"font-semibold"}>Model allowlist</div>
+            <div className={"font-semibold"}>{tr("agentNetwork.modelAllowlist")}</div>
             {listed.map((model) => (
               <div key={model}>· {model}</div>
             ))}
-            {rest > 0 && <div>· and {rest} more</div>}
+            {rest > 0 && (
+              <div>· {tr("agentNetwork.andMore", { count: rest })}</div>
+            )}
           </div>
         }
       >
@@ -222,7 +227,7 @@ function ModelsCell({
           useHover={true}
           className={"px-3 gap-2 whitespace-nowrap"}
         >
-          {models.length} Models
+          {models.length}{" " + t("common.models")}
         </Badge>
       </FullTooltip>
     </div>
@@ -236,6 +241,7 @@ function LimitsCell({
   policy: AgentPolicy;
   onClickAdd: () => void;
 }) {
+  const { tr } = useAgentNetworkText();
   const tokenOn = policy.limits.tokenLimit.enabled;
   const budgetOn = policy.limits.budgetLimit.enabled;
 
@@ -251,7 +257,7 @@ function LimitsCell({
           }}
         >
           <IconCirclePlus size={14} />
-          Add Limit
+          {tr("agentNetwork.addLimit")}
         </Badge>
       </div>
     );
@@ -264,10 +270,22 @@ function LimitsCell({
         <FullTooltip
           content={
             <div className={"text-xs space-y-0.5"}>
-              <div className={"font-semibold"}>Token Limit</div>
-              <div>· Group: {capDisplay(tl.groupCap, false)}</div>
-              <div>· Individual: {capDisplay(tl.userCap, false)}</div>
-              <div>· Resets every {formatLimitWindow(tl.windowSeconds)}</div>
+              <div className={"font-semibold"}>{tr("agentNetwork.tokenLimit")}</div>
+              <div>
+                · {tr("agentNetwork.groupCapValue", {
+                  value: capDisplay(tl.groupCap, false),
+                })}
+              </div>
+              <div>
+                · {tr("agentNetwork.individualCapValue", {
+                  value: capDisplay(tl.userCap, false),
+                })}
+              </div>
+              <div>
+                · {tr("agentNetwork.resetsEvery", {
+                  window: formatLimitWindow(tl.windowSeconds, tr),
+                })}
+              </div>
             </div>
           }
         >
@@ -281,10 +299,22 @@ function LimitsCell({
         <FullTooltip
           content={
             <div className={"text-xs space-y-0.5"}>
-              <div className={"font-semibold"}>Budget Limit</div>
-              <div>· Group: {capDisplay(bl.groupCapUsd, true)}</div>
-              <div>· Individual: {capDisplay(bl.userCapUsd, true)}</div>
-              <div>· Resets every {formatLimitWindow(bl.windowSeconds)}</div>
+              <div className={"font-semibold"}>{tr("agentNetwork.budgetLimit")}</div>
+              <div>
+                · {tr("agentNetwork.groupCapValue", {
+                  value: capDisplay(bl.groupCapUsd, true),
+                })}
+              </div>
+              <div>
+                · {tr("agentNetwork.individualCapValue", {
+                  value: capDisplay(bl.userCapUsd, true),
+                })}
+              </div>
+              <div>
+                · {tr("agentNetwork.resetsEvery", {
+                  window: formatLimitWindow(bl.windowSeconds, tr),
+                })}
+              </div>
             </div>
           }
         >
@@ -318,19 +348,22 @@ function capDisplay(value: number, isUsd: boolean): string {
   return isUsd ? `$${compact}` : compact;
 }
 
-function formatLimitWindow(seconds: number): string {
+function formatLimitWindow(
+  seconds: number,
+  tr: ReturnType<typeof useAgentNetworkText>["tr"],
+): string {
   if (seconds <= 0) return "—";
   if (seconds < 3600) {
     const minutes = Math.round(seconds / 60);
-    return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+    return tr("agentNetwork.minuteCount", { count: minutes });
   }
   if (seconds < 86_400) {
     const hours = Math.round(seconds / 3600);
-    return `${hours} hour${hours === 1 ? "" : "s"}`;
+    return tr("agentNetwork.hourCount", { count: hours });
   }
   const days = Math.floor(seconds / 86_400);
   const remHours = Math.round((seconds % 86_400) / 3600);
-  if (remHours === 0) return `${days} day${days === 1 ? "" : "s"}`;
+  if (remHours === 0) return tr("agentNetwork.dayCount", { count: days });
   return `${days}d ${remHours}h`;
 }
 
@@ -343,6 +376,8 @@ function ActionsCell({
   onEdit: (p: AgentPolicy) => void;
   onDuplicate: (p: AgentPolicy) => void;
 }) {
+  const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const { confirm } = useDialog();
   const { togglePolicy, deletePolicy } = useAIProviders();
   const { permission } = usePermissions();
@@ -350,11 +385,11 @@ function ActionsCell({
 
   const onDelete = async () => {
     const ok = await confirm({
-      title: `Delete '${policy.name}'?`,
+      title: tr("agentNetwork.deleteNamed", { name: policy.name }),
       description:
-        "Are you sure you want to delete this policy? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+        t("agentNetwork.deletePolicyDesc"),
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!ok) return;
@@ -374,7 +409,7 @@ function ActionsCell({
           <Button
             variant={"secondary"}
             className={"!px-3"}
-            aria-label={"Policy actions"}
+            aria-label={t("agentNetwork.policyActions")}
             data-testid={"agent-policy-actions"}
           >
             <MoreVertical size={16} className={"shrink-0"} />
@@ -384,7 +419,7 @@ function ActionsCell({
           <DropdownMenuItem onClick={() => onEdit(policy)}>
             <div className={"flex gap-3 items-center"}>
               <PencilLineIcon size={14} className={"shrink-0"} />
-              Edit Policy
+              {t("agentNetwork.edit")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -394,20 +429,20 @@ function ActionsCell({
           >
             <div className={"flex gap-3 items-center"}>
               <Copy size={14} className={"shrink-0"} />
-              Duplicate
+              {tr("agentNetwork.duplicate")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => togglePolicy(policy.id)}>
             <div className={"flex gap-3 items-center"}>
               <Power size={14} className={"shrink-0"} />
-              {policy.enabled ? "Disable" : "Enable"}
+              {policy.enabled ? t("common.disable") : t("common.enable")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={onDelete} variant={"danger"}>
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {t("common.delete")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -421,6 +456,8 @@ type Props = {
 };
 
 export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
+  const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const path = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -451,7 +488,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
     () => [
       {
         id: "source_group_names",
-        label: "Groups",
+        label: t("common.groups"),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -464,7 +501,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
       },
       {
         id: "provider_ids",
-        label: "Providers",
+        label: t("common.providers"),
         renderPicker: (p) => (
           <CheckboxListPicker
             value={p.value as string[] | undefined}
@@ -481,7 +518,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
           ),
       },
     ],
-    [realGroups, providerOptions],
+    [realGroups, providerOptions, t],
   );
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -514,7 +551,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
       accessorKey: "name",
       sortingFn: "text",
       header: ({ column }) => (
-        <DataTableHeader column={column}>Name</DataTableHeader>
+        <DataTableHeader column={column}>{t("common.name")}</DataTableHeader>
       ),
       cell: ({ row }) => <NameCell policy={row.original} />,
     },
@@ -523,7 +560,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
       accessorFn: (p) => p.sourceGroups.length,
       sortingFn: "basic",
       header: ({ column }) => (
-        <DataTableHeader column={column}>Groups</DataTableHeader>
+        <DataTableHeader column={column}>{t("common.groups")}</DataTableHeader>
       ),
       cell: ({ row }) => <SourceCell policy={row.original} />,
     },
@@ -532,7 +569,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
       accessorFn: (p) => p.destinationProviderIds.length,
       sortingFn: "basic",
       header: ({ column }) => (
-        <DataTableHeader column={column}>Provider</DataTableHeader>
+        <DataTableHeader column={column}>{t("common.provider")}</DataTableHeader>
       ),
       cell: ({ row }) => <ProviderCell policy={row.original} />,
     },
@@ -541,7 +578,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
       accessorFn: (p) => allowlistModels(p, guardrails).length,
       sortingFn: "basic",
       header: ({ column }) => (
-        <DataTableHeader column={column}>Models</DataTableHeader>
+        <DataTableHeader column={column}>{t("common.models")}</DataTableHeader>
       ),
       cell: ({ row }) => (
         <ModelsCell
@@ -568,7 +605,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
         (p.limits.budgetLimit.enabled ? 1 : 0),
       sortingFn: "basic",
       header: ({ column }) => (
-        <DataTableHeader column={column}>Limits</DataTableHeader>
+        <DataTableHeader column={column}>{tr("agentNetwork.limits")}</DataTableHeader>
       ),
       cell: ({ row }) => (
         <LimitsCell
@@ -617,13 +654,13 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
         key={`policies-${initialSearch ?? ""}`}
         headingTarget={headingTarget}
         isLoading={isLoading}
-        text={"Policies"}
+        text={t("common.policies")}
         sorting={sorting}
         setSorting={setSorting}
         columns={columns}
         data={policies}
         initialSearch={initialSearch}
-        searchPlaceholder={"Search by name or description..."}
+        searchPlaceholder={tr("agentNetwork.searchPolicies")}
         // Clicking the Models cell lands on the tab that actually owns the
         // model allowlist — the guardrails attached to the policy.
         onRowClick={(row, cell) =>
@@ -640,10 +677,8 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
                 size={"large"}
               />
             }
-            title={"Create your first policy"}
-            description={
-              "Policies connect user and agent groups to AI providers, with optional token and budget limits and guardrails for model access and prompt capture."
-            }
+            title={tr("agentNetwork.createFirstPolicy")}
+            description={tr("agentNetwork.createFirstPolicyDesc")}
             button={
               <Button
                 variant={"primary"}
@@ -653,17 +688,17 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
                 }}
               >
                 <PlusCircle size={16} />
-                Add Policy
+                {t("common.addPolicy")}
               </Button>
             }
             learnMore={
               <>
-                Learn more about
+                {t("common.learnMore")}
                 <InlineLink
                   href={"https://docs.netbird.io/agent-network"}
                   target={"_blank"}
                 >
-                  Agent Network
+                  {t("common.agentNetwork")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </>
@@ -681,7 +716,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
                 }}
               >
                 <PlusCircle size={16} />
-                Add Policy
+                {t("common.addPolicy")}
               </Button>
             </div>
           )

@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { Label } from "@components/Label";
-import HelpText from "@components/HelpText";
 import Button from "@components/Button";
+import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
+import { Label } from "@components/Label";
+import {
+  SelectDropdown,
+  SelectOption,
+} from "@components/select/SelectDropdown";
 import { hostSuffixFor, isIPv6, isValidIP } from "@utils/ip";
 import {
   FlagIcon,
@@ -13,47 +16,15 @@ import {
   ShieldXIcon,
   WorkflowIcon,
 } from "lucide-react";
-import {
-  SelectDropdown,
-  SelectOption,
-} from "@components/select/SelectDropdown";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { CountrySelector } from "@/components/ui/CountrySelector";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import { englishTranslations } from "@/i18n/translate";
 import { AccessRestrictions, CrowdSecMode } from "@/interfaces/ReverseProxy";
 import { ReverseProxyCrowdSecIPReputation } from "@/modules/reverse-proxy/ReverseProxyCrowdSecIPReputation";
 
 type AccessAction = "allow" | "block";
 type AccessRuleType = "country" | "ip" | "cidr";
-
-const ACTION_OPTIONS: SelectOption[] = [
-  {
-    label: "Allow Only",
-    value: "allow",
-    icon: (props) => <ShieldCheckIcon {...props} className="text-green-500" />,
-  },
-  {
-    label: "Block Only",
-    value: "block",
-    icon: (props) => <ShieldXIcon {...props} className="text-red-500" />,
-  },
-];
-
-const TYPE_OPTIONS: SelectOption[] = [
-  {
-    label: "Country",
-    value: "country",
-    icon: (props) => <FlagIcon {...props} />,
-  },
-  {
-    label: "IP Address",
-    value: "ip",
-    icon: (props) => <WorkflowIcon {...props} />,
-  },
-  {
-    label: "CIDR Block",
-    value: "cidr",
-    icon: (props) => <NetworkIcon {...props} />,
-  },
-];
 
 type AccessRule = {
   id: string;
@@ -168,7 +139,7 @@ type Props = {
   supportsCrowdSec?: boolean;
 };
 
-function validateRule(rule: AccessRule): string {
+function validateRule(rule: AccessRule, t = englishTranslations): string {
   if (rule.type === "country" || !rule.value) return "";
   if (rule.type === "ip") {
     let val = rule.value;
@@ -177,11 +148,11 @@ function validateRule(rule: AccessRule): string {
       val = `${val}/${suffix}`;
     }
     if (!isValidIP(val)) {
-      return "Please enter a valid IP address, e.g., 85.203.15.42 or 2001:db8::1";
+      return t("reverseProxy.pleaseEnterAValidIPAddressEG852031542");
     }
   } else {
     if (!rule.value.includes("/") || !isValidIP(rule.value)) {
-      return "Please enter a valid CIDR block, e.g., 74.125.0.0/16 or 2001:db8::/64";
+      return t("reverseProxy.pleaseEnterAValidCIDRBlockEG7412500");
     }
   }
   return "";
@@ -193,6 +164,38 @@ export const ReverseProxyAccessControlRules = ({
   onValidationChange,
   supportsCrowdSec,
 }: Props) => {
+  const t = useTranslations();
+  const TYPE_OPTIONS: SelectOption[] = [
+    {
+      label: t("common.country"),
+      value: "country",
+      icon: (props) => <FlagIcon {...props} />,
+    },
+    {
+      label: t("reverseProxy.iPAddress"),
+      value: "ip",
+      icon: (props) => <WorkflowIcon {...props} />,
+    },
+    {
+      label: t("reverseProxy.cIDRBlock"),
+      value: "cidr",
+      icon: (props) => <NetworkIcon {...props} />,
+    },
+  ];
+  const ACTION_OPTIONS: SelectOption[] = [
+    {
+      label: t("reverseProxy.allowOnly"),
+      value: "allow",
+      icon: (props) => (
+        <ShieldCheckIcon {...props} className="text-green-500" />
+      ),
+    },
+    {
+      label: t("reverseProxy.blockOnly"),
+      value: "block",
+      icon: (props) => <ShieldXIcon {...props} className="text-red-500" />,
+    },
+  ];
   const [rules, dispatch] = useReducer(
     rulesReducer,
     value,
@@ -204,8 +207,8 @@ export const ReverseProxyAccessControlRules = ({
   );
 
   const errors = useMemo(
-    () => Object.fromEntries(rules.map((r) => [r.id, validateRule(r)])),
-    [rules],
+    () => Object.fromEntries(rules.map((r) => [r.id, validateRule(r, t)])),
+    [rules, t],
   );
 
   const hasErrors = useMemo(
@@ -242,12 +245,13 @@ export const ReverseProxyAccessControlRules = ({
         />
       )}
       <div>
-        <Label>Access Control Rules</Label>
+        <Label>{t("reverseProxy.accessControlRules")}</Label>
         <HelpText>
-          Define rules to allow or block traffic based on country, IP address,
-          or CIDR block.
+          {t(
+            "reverseProxy.defineRulesToAllowOrBlockTrafficBasedOnCountryIPAddress",
+          )}
           <br />
-          Block rules always take priority over allow rules.
+          {t("reverseProxy.blockRulesAlwaysTakePriorityOverAllowRules")}
         </HelpText>
       </div>
       {rules.length > 0 && (
@@ -316,8 +320,8 @@ export const ReverseProxyAccessControlRules = ({
                   <Input
                     placeholder={
                       rule.type === "ip"
-                        ? "e.g., 85.203.15.42 or 2001:db8::1"
-                        : "e.g., 74.125.0.0/16 or 2001:db8::/64"
+                        ? t("reverseProxy.eG852031542Or2001Db81")
+                        : t("reverseProxy.eG741250016Or2001Db864")
                     }
                     value={rule.value}
                     onChange={(e) =>
@@ -340,7 +344,7 @@ export const ReverseProxyAccessControlRules = ({
                 variant="default-outline"
                 className="h-[42px] w-[42px] !px-0 shrink-0 ml-2"
                 onClick={() => dispatch({ type: "remove", id: rule.id })}
-                aria-label="Remove rule"
+                aria-label={t("reverseProxy.removeRule")}
                 data-testid="remove-access-rule"
               >
                 <MinusCircleIcon size={14} />
@@ -357,7 +361,7 @@ export const ReverseProxyAccessControlRules = ({
         data-testid="add-access-rule"
       >
         <PlusIcon size={14} />
-        Add Rule
+        {t("reverseProxy.addRule")}
       </Button>
     </div>
   );

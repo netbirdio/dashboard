@@ -2,9 +2,11 @@ import Button from "@components/Button";
 import { Modal, ModalTrigger } from "@components/modal/Modal";
 import { DownloadIcon } from "lucide-react";
 import React, { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 
 export function InstallNetBirdButton() {
+  const t = useTranslations();
   const [installModal, setInstallModal] = useState(false);
 
   return (
@@ -12,7 +14,7 @@ export function InstallNetBirdButton() {
       <ModalTrigger asChild>
         <Button variant={"secondary"} size={"sm"}>
           <DownloadIcon size={16} />
-          Install NetBird
+          {t("components.installNetBird")}
         </Button>
       </ModalTrigger>
       <SetupModal />

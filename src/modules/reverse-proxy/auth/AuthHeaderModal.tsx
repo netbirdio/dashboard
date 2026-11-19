@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import React, { useMemo, useReducer, useRef } from "react";
 import { useHasChanges } from "@/hooks/useHasChanges";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import type { HeaderAuthConfig } from "@/interfaces/ReverseProxy";
 
 type HeaderType = "basic" | "bearer" | "custom";
@@ -31,24 +32,6 @@ interface HeaderAuthItem {
   password: string;
   existingSecret: boolean;
 }
-
-const HEADER_TYPE_OPTIONS: SelectOption[] = [
-  {
-    value: "basic" satisfies HeaderType,
-    label: "Basic Auth",
-    icon: () => <CircleUserIcon size={14} />,
-  },
-  {
-    value: "bearer" satisfies HeaderType,
-    label: "Bearer Token",
-    icon: () => <KeyRoundIcon size={14} />,
-  },
-  {
-    value: "custom" satisfies HeaderType,
-    label: "Custom Header",
-    icon: () => <BracesIcon size={14} />,
-  },
-];
 
 const MASKED_VALUE = "••••••••";
 
@@ -201,6 +184,7 @@ export default function AuthHeaderModal({
   onSave,
   onRemove,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const [items, dispatch] = useReducer(
     headersReducer,
     currentHeaders,
@@ -234,8 +218,8 @@ export default function AuthHeaderModal({
         }}
       >
         <ModalHeader
-          title="HTTP Headers"
-          description="Require specific HTTP headers to access this service."
+          title={t("reverseProxy.httpHeaders")}
+          description={t("reverseProxy.httpHeadersDescription")}
         />
 
         <div className="px-8">
@@ -261,33 +245,41 @@ export default function AuthHeaderModal({
             onClick={() => dispatch({ type: "add" })}
           >
             <PlusIcon size={14} />
-            Add Header
+            {t("reverseProxy.addHeader")}
           </Button>
 
           {items.length > 1 && (
             <Callout className="mt-4" variant="info">
-              Any request matching one of these headers will grant access.
+              {t(
+                "reverseProxy.anyRequestMatchingOneOfTheseHeadersWillGrantAccess",
+              )}
               <br />
-              Matched headers are stripped before reaching your backend.
+              {t(
+                "reverseProxy.matchedHeadersAreStrippedBeforeReachingYourBackend",
+              )}
             </Callout>
           )}
 
           <div className="flex gap-3 w-full justify-between mt-6">
             {isEditing ? (
               <>
-                <Button variant="danger-text" data-testid="remove-headers" onClick={handleRemoveAll}>
-                  Remove All
+                <Button
+                  variant="danger-text"
+                  data-testid="remove-headers"
+                  onClick={handleRemoveAll}
+                >
+                  {t("reverseProxy.removeAll")}
                 </Button>
                 <div className="flex gap-3">
                   <ModalClose asChild>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{t("common.cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant="primary"
                     onClick={handleSave}
                     disabled={!canSave || !hasChanges}
                   >
-                    Save
+                    {t("common.save")}
                   </Button>
                 </div>
               </>
@@ -296,7 +288,7 @@ export default function AuthHeaderModal({
                 <div />
                 <div className="flex gap-3">
                   <ModalClose asChild>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{t("common.cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant="primary"
@@ -304,7 +296,7 @@ export default function AuthHeaderModal({
                     disabled={!canSave}
                     data-testid="submit-headers"
                   >
-                    Add Headers
+                    {t("reverseProxy.addHeaders")}
                   </Button>
                 </div>
               </>
@@ -331,6 +323,24 @@ function HeaderItemRow({
   onRemove,
   showRemove,
 }: Readonly<HeaderItemRowProps>) {
+  const t = useTranslations();
+  const HEADER_TYPE_OPTIONS: SelectOption[] = [
+    {
+      value: "basic" satisfies HeaderType,
+      label: t("reverseProxy.basicAuth"),
+      icon: () => <CircleUserIcon size={14} />,
+    },
+    {
+      value: "bearer" satisfies HeaderType,
+      label: t("reverseProxy.bearerToken"),
+      icon: () => <KeyRoundIcon size={14} />,
+    },
+    {
+      value: "custom" satisfies HeaderType,
+      label: t("reverseProxy.customHeader"),
+      icon: () => <BracesIcon size={14} />,
+    },
+  ];
   const isMaskedRef = useRef(item.existingSecret);
 
   const handleHeaderTypeChange = (value: string) => {
@@ -351,24 +361,33 @@ function HeaderItemRow({
           <span className="text-xs font-normal text-nb-gray-200 flex items-center gap-2">
             <FileCode2Icon size={14} />
             {item.existingSecret
-              ? `Header ${index + 1} - ${item.header}`
-              : `Header ${index + 1}`}
+              ? t("reverseProxy.authHeaderExistingTitle", {
+                  index: index + 1,
+                  header: item.header,
+                })
+              : t("reverseProxy.authHeaderTitle", { index: index + 1 })}
           </span>
           {showRemove && (
             <Button variant="danger-text" size="xs" onClick={onRemove}>
               <MinusCircleIcon size={12} />
-              Remove
+              {t("common.remove")}
             </Button>
           )}
         </div>
         {item.existingSecret ? (
           <div>
             <Input
-              customPrefix={<span className="min-w-[38px]">Value</span>}
+              customPrefix={
+                <span className="min-w-[38px]">
+                  {t("reverseProxy.headerValue")}
+                </span>
+              }
               type="password"
               showPasswordToggle={!isMaskedRef.current}
               value={isMaskedRef.current ? MASKED_VALUE : item.value}
-              placeholder="e.g., AIiaSyDaGmWKa4JsXZ-HjGw7ISLn_3namBGewQe"
+              placeholder={t(
+                "reverseProxy.eGAIiaSyDaGmWKa4JsXZHjGw7ISLn3namBGewQe",
+              )}
               {...INPUT_PROPS}
               onChange={(e) => {
                 if (isMaskedRef.current) {
@@ -395,7 +414,7 @@ function HeaderItemRow({
               <div className="flex flex-col gap-2">
                 <Input
                   customPrefix={<UserIcon size={16} />}
-                  placeholder="Username"
+                  placeholder={t("reverseProxy.username")}
                   maxWidthClass="w-full"
                   value={item.username}
                   onChange={(e) => onChange({ username: e.target.value })}
@@ -404,7 +423,7 @@ function HeaderItemRow({
                 />
                 <Input
                   customPrefix={<KeyRoundIcon size={16} />}
-                  placeholder="Password"
+                  placeholder={t("common.password")}
                   maxWidthClass="w-full"
                   value={item.password}
                   onChange={(e) => onChange({ password: e.target.value })}
@@ -419,7 +438,9 @@ function HeaderItemRow({
             {item.type === "bearer" && (
               <Input
                 customPrefix={"Bearer"}
-                placeholder="e.g. eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+                placeholder={t(
+                  "reverseProxy.eGEyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9",
+                )}
                 maxWidthClass="w-full"
                 value={item.value}
                 onChange={(e) => onChange({ value: e.target.value })}
@@ -432,16 +453,24 @@ function HeaderItemRow({
             {item.type === "custom" && (
               <div className="flex flex-col gap-2">
                 <Input
-                  customPrefix={<span className="min-w-[38px]">Name</span>}
-                  placeholder="e.g., X-API-Key"
+                  customPrefix={
+                    <span className="min-w-[38px]">{t("common.name")}</span>
+                  }
+                  placeholder={t("reverseProxy.eGXAPIKey")}
                   maxWidthClass="w-full"
                   value={item.header}
                   onChange={(e) => onChange({ header: e.target.value })}
                   {...INPUT_PROPS}
                 />
                 <Input
-                  customPrefix={<span className="min-w-[38px]">Value</span>}
-                  placeholder="e.g., AIiaSyDaGmWKa4JsXZ-HjGw7ISLn_3namBGewQe"
+                  customPrefix={
+                    <span className="min-w-[38px]">
+                      {t("reverseProxy.headerValue")}
+                    </span>
+                  }
+                  placeholder={t(
+                    "reverseProxy.eGAIiaSyDaGmWKa4JsXZHjGw7ISLn3namBGewQe",
+                  )}
                   maxWidthClass="w-full"
                   value={item.value}
                   onChange={(e) => onChange({ value: e.target.value })}

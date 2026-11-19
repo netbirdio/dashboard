@@ -9,6 +9,7 @@ import { ChevronsUpDown, MapPin } from "lucide-react";
 import * as React from "react";
 import { memo, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { User } from "@/interfaces/User";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
@@ -39,8 +40,11 @@ export function UserSelector({
   value,
   disabled = false,
   options = [],
-  placeholder = "Select a user...",
+  placeholder: placeholderProp,
 }: MultiSelectProps) {
+  const t = useTranslations();
+  const placeholder = placeholderProp ?? t("components.selectUser");
+
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
   const [filteredItems, search, setSearch] = useSearch(
@@ -119,22 +123,20 @@ export function UserSelector({
             value={search}
             onChange={setSearch}
             hideEnterIcon={true}
-            placeholder={"Search for users by name or email..."}
+            placeholder={t("components.searchByNameOrEmail")}
           />
 
           {options.length == 0 && !search && (
             <div className={"max-w-xs mx-auto"}>
               <DropdownInfoText>
-                {
-                  "There are no users to select. Invite some users for this tenant before unlinking."
-                }
+                {t("components.noUsersToSelect")}
               </DropdownInfoText>
             </div>
           )}
 
           {filteredItems.length == 0 && search != "" && (
             <DropdownInfoText>
-              There are no users matching your search.
+              {t("components.noMatchingUsers")}
             </DropdownInfoText>
           )}
 
@@ -170,6 +172,8 @@ export const UserListItem = ({
   className,
   variant,
 }: UserListItemProps) => {
+  const t = useTranslations();
+
   const isSystemUser = user?.email === "NetBird" || user?.email === "";
   const maxChars = variant === "selected" ? 30 : 20;
 
@@ -197,7 +201,9 @@ export const UserListItem = ({
           )}
         >
           <TextWithTooltip
-            text={isSystemUser ? "System" : user?.name || user?.id}
+            text={
+              isSystemUser ? t("tables.systemUser") : user?.name || user?.id
+            }
             maxChars={maxChars}
           />
         </span>

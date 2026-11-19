@@ -33,6 +33,7 @@ import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/fleetdm.png";
 import HelpText from "@/components/HelpText";
 import { PeerGroupSelector } from "@/components/PeerGroupSelector";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import {
   DEFAULT_FLEETDM_MATCH_ATTRIBUTES,
@@ -80,6 +81,7 @@ type ModalProps = {
 };
 
 export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const fleetDMRequest = useApiCall<FleetDMIntegration>(
     "/integrations/edr/fleetdm",
@@ -109,10 +111,10 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
   const urlError = useMemo(() => {
     if (apiUrl === "") return "";
     if (!validator.isValidUrl(apiUrl)) {
-      return "Please enter a valid url, e.g., https://fleet.example.com";
+      return translate("integrations.edrInvalidFleetUrl");
     }
     return "";
-  }, [apiUrl]);
+  }, [apiUrl, translate]);
 
   const apiTokenEntered = !isEmpty(apiToken);
   const apiUrlEntered = !isEmpty(apiUrl);
@@ -142,8 +144,10 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
     const savedGroups = await saveGroups();
 
     notify({
-      title: "FleetDM Integration",
-      description: `FleetDM was successfully connected to NetBird.`,
+      title: translate("integrations.edrIntegrationTitle", { name: "FleetDM" }),
+      description: translate("integrations.edrConnectedDescription", {
+        name: "FleetDM",
+      }),
       promise: fleetDMRequest
         .post({
           api_token: apiToken,
@@ -158,7 +162,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
           mutate("/integrations/edr/fleetdm");
           onSuccess();
         }),
-      loadingMessage: "Setting up integration...",
+      loadingMessage: translate("integrations.edrSettingUpLoading"),
     });
   };
 
@@ -201,10 +205,8 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
 
       <IntegrationModalHeader
         image={integrationImage}
-        title={"Connect NetBird with FleetDM"}
-        description={
-          "Restrict network access to devices managed by FleetDM based on their compliance policies."
-        }
+        title={translate("integrations.edrConnectTitle", { name: "FleetDM" })}
+        description={translate("integrations.edrFleetDMConnectDescription")}
       />
 
       {step == 0 && (
@@ -219,21 +221,14 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             }
           >
             <Shield size={16} />
-            Required Permissions
+            {translate("common.requiredPermissions")}
           </div>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
-            Ensure that you have a{" "}
-            <span className={"text-nb-gray-100 font-semibold"}>
-              FleetDM account
-            </span>{" "}
-            with the following{" "}
-            <span className={"text-nb-gray-100 font-semibold"}>
-              permissions
-            </span>
-            .{" "}
-            {
-              "If you don't have the required permissions, ask your administrator to grant them to you."
-            }
+            {translate.rich("integrations.edrPermissionsIntro", {
+              account: translate("integrations.edrFleetDMAccount"),
+              requirement: translate("integrations.edrPermissionsWord"),
+              followup: translate("integrations.edrPermissionsMissingAdmin"),
+            })}
           </p>
           <div
             className={
@@ -246,7 +241,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
               }
             >
               <PlusCircle size={14} className={"text-sky-500"} />
-              API-only User or Admin Access
+              {translate("integrations.edrApiOnlyUserOrAdmin")}
             </div>
             <div
               className={
@@ -254,7 +249,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
               }
             >
               <Settings2 size={14} className={"text-sky-500"} />
-              Read Access to Hosts and Policies
+              {translate("integrations.edrReadHostsAndPolicies")}
             </div>
           </div>
         </div>
@@ -264,18 +259,17 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <GlobeIcon size={18} />
-            Enter your FleetDM Server URL
+            {translate("integrations.edrEnterServerUrl")}
           </p>
 
           <Steps>
             <Steps.Step step={1}>
-              <p>Navigate to your FleetDM Management Console.</p>
+              <p>{translate("integrations.edrNavigateConsole", { name: "FleetDM" })}</p>
             </Steps.Step>
 
             <Steps.Step step={2} line={false}>
               <p>
-                Copy your FleetDM server URL from the browser&apos;s address bar
-                and enter it here.
+                {translate("integrations.edrCopyServerUrl")}
               </p>
             </Steps.Step>
           </Steps>
@@ -303,38 +297,44 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <Box size={20} />
-            Create a FleetDM API Token
+            {translate("integrations.edrCreateFleetToken")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                Log in as an admin to your Fleet instance using{" "}
-                <InlineLink
-                  href={"https://fleetdm.com/guides/fleetctl"}
-                  target={"_blank"}
-                >
-                  fleetctl
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
+                {translate.rich("integrations.edrLoginWithFleetctl", {
+                  link: (chunks) => (
+                    <InlineLink
+                      href={"https://fleetdm.com/guides/fleetctl"}
+                      target={"_blank"}
+                    >
+                      {chunks}
+                      <ExternalLinkIcon size={12} />
+                    </InlineLink>
+                  ),
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Create an{" "}
-                <InlineLink
-                  href={
-                    "https://fleetdm.com/guides/fleetctl#create-api-only-user"
-                  }
-                  target={"_blank"}
-                >
-                  API-only user
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
+                {translate.rich("integrations.edrCreateApiOnlyUser", {
+                  link: (chunks) => (
+                    <InlineLink
+                      href={
+                        "https://fleetdm.com/guides/fleetctl#create-api-only-user"
+                      }
+                      target={"_blank"}
+                    >
+                      {chunks}
+                      <ExternalLinkIcon size={12} />
+                    </InlineLink>
+                  ),
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                Once created, paste the received API token below.
+                {translate("integrations.edrPasteApiToken")}
               </p>
             </Steps.Step>
           </Steps>
@@ -362,11 +362,11 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4 mb-3"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <FolderGit2 size={16} />
-            Peer Approval
+            {translate("common.peerApproval")}
           </p>
 
           <HelpText className={"max-w-lg mt-2"}>
-            Select groups you want to apply the FleetDM integration to
+            {translate("integrations.edrSelectGroupsFor", { name: "FleetDM" })}
           </HelpText>
 
           <PeerGroupSelector
@@ -381,11 +381,10 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4 mb-3"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <ShieldCheckIcon size={16} />
-            Compliance Requirements
+            {translate("integrations.edrComplianceRequirements")}
           </p>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
-            Set the specific requirements that devices must meet to be
-            considered compliant.
+            {translate("integrations.edrComplianceHelp")}
           </p>
 
           <FleetDMMatchSettings
@@ -399,23 +398,21 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4 mb-3"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <RefreshCcw size={16} />
-            FleetDM Sync Window
+            {translate("integrations.edrSyncWindowTitle", { name: "FleetDM" })}
           </p>
           <div className={"mt-2 flex flex-row gap-3"}>
             <FullTooltip
               interactive={false}
               content={
                 <div className={"max-w-xs text-xs"}>
-                  Example: This property is set to 24 hours. Jane&apos;s laptop
-                  hasn&apos;t synced with FleetDM for 27 hours. Even though
-                  it&apos;s marked as Compliant in FleetDM, it will still be
-                  blocked from network access.
+                  {translate("integrations.edrSyncWindowExample", {
+                    name: "FleetDM",
+                  })}
                 </div>
               }
             >
               <HelpText className={"max-w-lg"}>
-                Devices not synced with FleetDM in this time won&apos;t have
-                network access.
+                {translate("integrations.edrSyncWindowHelp", { name: "FleetDM" })}
                 <IconInfoCircle
                   size={14}
                   className={"relative inline ml-1 -top-[1px]"}
@@ -430,7 +427,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
               value={lastSyncedInterval}
               type={"number"}
               onChange={(e) => setLastSyncedInterval(e.target.value)}
-              customSuffix={"Hours"}
+              customSuffix={translate("integrations.edrHours")}
             />
           </div>
           <EDRSyncIntervalInput
@@ -450,7 +447,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             onClick={() => setStep(step - 1)}
           >
             <IconArrowLeft size={16} />
-            Back
+            {translate("common.back")}
           </Button>
         )}
         {step >= 0 && step < maxSteps && (
@@ -460,7 +457,9 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             disabled={isDisabled}
             onClick={() => setStep(step + 1)}
           >
-            {step == 0 ? "Get Started" : "Continue"}
+            {step == 0
+              ? translate("integrations.edrGetStarted")
+              : translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -472,7 +471,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             onClick={connect}
           >
             <Repeat size={16} />
-            Connect
+            {translate("integrations.connect")}
           </Button>
         )}
       </ModalFooter>
@@ -484,8 +483,11 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         >
           <Clock4 size={12} />
           <div>
-            Estimated setup time:
-            <span className={"font-medium"}> 5-10 Minutes</span>
+            {translate("integrations.edrEstimatedSetupTime")}
+            <span className={"font-medium"}>
+              {" "}
+              {translate("integrations.edrSetupDuration", { duration: "5-10" })}
+            </span>
           </div>
         </div>
       )}

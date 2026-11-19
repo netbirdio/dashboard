@@ -12,6 +12,7 @@ import React, { lazy, Suspense } from "react";
 import { AccountMfaCard } from "@/cloud/mfa/AccountMFACard";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
 import { IdentityProviderCard } from "@/modules/integrations/idp-sync/IdentityProviderCard";
@@ -20,6 +21,7 @@ import UsersTabs from "@/modules/users/UsersTabs";
 const UsersTable = lazy(() => import("@/modules/users/UsersTable"));
 
 export default function TeamUsers() {
+  const t = useTranslations();
   const { isLoading: isGroupsLoading } = useGroups();
   const { permission } = usePermissions();
   const { data: users, isLoading } = useFetchApi<User[]>(
@@ -32,21 +34,20 @@ export default function TeamUsers() {
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
-        <h1 ref={headingRef}>Users</h1>
+        <h1 ref={headingRef}>{t("common.users")}</h1>
         <Paragraph>
-          Manage users and their permissions. Same-domain email users are added
-          automatically on first sign-in.{" "}
+          {t("team.usersPageDescription")}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/add-users-to-your-network"}
             target={"_blank"}
           >
-            Learn more
+            {t("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
       </div>
       <UsersTabs current={"users"} />
-      <RestrictedAccess page={"Users"} hasAccess={permission.users.read}>
+      <RestrictedAccess page={t("common.users")} hasAccess={permission.users.read}>
         <Suspense fallback={<SkeletonTable />}>
           {permission.settings.read && (
             <div className={"flex flex-wrap gap-4 p-default pb-6"}>

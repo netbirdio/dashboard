@@ -6,6 +6,7 @@ import { cn, generateColorFromString } from "@utils/helpers";
 import { orderBy } from "lodash";
 import * as React from "react";
 import { useMemo } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { User } from "@/interfaces/User";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
@@ -24,6 +25,7 @@ export const HorizontalUsersStack = ({
   side = "top",
   isAllGroup = false,
 }: Props) => {
+  const t = useTranslations();
   let usersToDisplay = orderBy(users?.slice(0, max) || [], ["name"]);
 
   const userCountText = useMemo(() => {
@@ -59,7 +61,7 @@ export const HorizontalUsersStack = ({
                     <TextWithTooltip
                       text={
                         user?.email === "NetBird"
-                          ? "System"
+                          ? t("users.system")
                           : user?.name || user?.id
                       }
                       maxChars={500}

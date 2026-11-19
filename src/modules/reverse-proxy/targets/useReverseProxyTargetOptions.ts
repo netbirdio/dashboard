@@ -1,4 +1,6 @@
 import { useCallback, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import { englishTranslations } from "@/i18n/translate";
 import { ServiceTargetOptions } from "@/interfaces/ReverseProxy";
 import {
   headerEntriesToRecord,
@@ -8,25 +10,30 @@ import {
 // Go time.ParseDuration format: one or more {number}{unit} pairs
 const DURATION_RE = /^(\d+(\.\d+)?(ns|us|µs|ms|s|m|h))+$/;
 
-export function validateTimeout(timeout: string): string | undefined {
+export function validateTimeout(
+  timeout: string,
+  t = englishTranslations,
+): string | undefined {
   if (!timeout) return undefined;
   if (!DURATION_RE.test(timeout))
-    return 'Invalid duration, use e.g., "10s", "30s", "1m"';
+    return t("reverseProxy.invalidDurationUseEG10s30s1m");
   return undefined;
 }
 
 export function validateSessionIdleTimeout(
   timeout: string,
+  t = englishTranslations,
 ): string | undefined {
   if (!timeout) return undefined;
   if (!DURATION_RE.test(timeout))
-    return 'Invalid duration, use e.g., "30s", "2m", "5m"';
+    return t("reverseProxy.invalidDurationUseEG30s2m5m");
   return undefined;
 }
 
 export function useReverseProxyTargetOptions(
   initialOptions?: ServiceTargetOptions,
 ) {
+  const t = useTranslations();
   const [targetOptions, setTargetOptions] = useState<ServiceTargetOptions>(
     () => {
       const { custom_headers: _ch, ...rest } = initialOptions ?? {};
@@ -53,9 +60,10 @@ export function useReverseProxyTargetOptions(
     [],
   );
 
-  const timeoutError = validateTimeout(targetOptions.request_timeout ?? "");
+  const timeoutError = validateTimeout(targetOptions.request_timeout ?? "", t);
   const sessionIdleTimeoutError = validateSessionIdleTimeout(
     targetOptions.session_idle_timeout ?? "",
+    t,
   );
   const hasOptionsErrors =
     !!timeoutError || !!sessionIdleTimeoutError || hasHeaderErrors;

@@ -1,7 +1,8 @@
 import { notify } from "@components/Notification";
 import useFetchApi from "@utils/api";
-import { useCallback } from "react";
 import { Node, useReactFlow } from "@xyflow/react";
+import { useCallback } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
@@ -37,6 +38,7 @@ export const getNetworkRef = (node?: Node): DraftNetworkRef | undefined => {
 
 // Changeset-only: the API is called on deploy.
 export function useDraftNetworkActions() {
+  const t = useTranslations();
   const reactFlow = useReactFlow();
   const { data: networks } = useFetchApi<Network[]>("/networks");
   const { updateDraftPolicy } = useControlCenterPolicy();
@@ -278,8 +280,7 @@ export function useDraftNetworkActions() {
         const list = (n.data as { draftResources?: NetworkResource[] })
           ?.draftResources;
         if (!list?.some((r) => r.id === resourceId)) return;
-        const g = (n.data as { group?: { id?: string; name?: string } })
-          ?.group;
+        const g = (n.data as { group?: { id?: string; name?: string } })?.group;
         const ref = g?.id ?? g?.name;
         if (ref && ref !== "All" && !holders.includes(ref)) holders.push(ref);
         held = held ?? list.find((r) => r.id === resourceId);
@@ -321,7 +322,12 @@ export function useDraftNetworkActions() {
       const nodeId = findNetworkNodeIdForRef(networkRef);
       if (nodeId) highlightNetworkNode(nodeId);
     },
-    [reactFlow, trackCreateResource, findNetworkNodeIdForRef, highlightNetworkNode],
+    [
+      reactFlow,
+      trackCreateResource,
+      findNetworkNodeIdForRef,
+      highlightNetworkNode,
+    ],
   );
 
   // An EXISTING (API) network with no frame on the canvas: stamp the ref only.
@@ -358,7 +364,12 @@ export function useDraftNetworkActions() {
       });
       if (nodeId) highlightNetworkNode(nodeId);
     },
-    [reactFlow, syncDraftResource, findNetworkNodeIdForRef, highlightNetworkNode],
+    [
+      reactFlow,
+      syncDraftResource,
+      findNetworkNodeIdForRef,
+      highlightNetworkNode,
+    ],
   );
 
   const saveDraftResource = useCallback(
@@ -415,8 +426,9 @@ export function useDraftNetworkActions() {
           // rename the deploy never carries, so refuse the save outright.
           notify({
             title: resource?.name ?? name,
-            description:
-              "The resource's network could not be determined, so the edit was not saved.",
+            description: t(
+              "controlCenter.theResourceSNetworkCouldNotBeDetermined",
+            ),
             backgroundColor: "bg-red-500",
           });
           return;
@@ -485,6 +497,7 @@ export function useDraftNetworkActions() {
       }
     },
     [
+      t,
       reactFlow,
       networks,
       assignResourceToNetwork,
@@ -562,9 +575,7 @@ export function useDraftNetworkActions() {
     }) => {
       const { networkNodeId, peer, peerGroups, metric, masquerade, enabled } =
         params;
-      const frame = reactFlow
-        .getNodes()
-        .find((n) => n.id === networkNodeId);
+      const frame = reactFlow.getNodes().find((n) => n.id === networkNodeId);
       const networkRef = getNetworkRef(frame);
       const group = peerGroups[0];
       if (!networkRef || (peer ? !peer.id : !group?.name)) return;

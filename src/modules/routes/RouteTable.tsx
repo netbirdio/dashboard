@@ -8,6 +8,7 @@ import { ENABLED_COLUMN_CLASS } from "@components/table/enabledColumnClass";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import React, { useMemo, useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { GroupedRoute, Route } from "@/interfaces/Route";
 import RouteAccessControlGroups from "@/modules/routes/RouteAccessControlGroups";
 import RouteActionCell from "@/modules/routes/RouteActionCell";
@@ -24,7 +25,7 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
   {
     accessorKey: "network_id",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.name" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <RoutePeerCell route={row.original} />,
@@ -49,7 +50,7 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
   {
     accessorKey: "metric",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Metric</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="networks.metric" />;
     },
     cell: ({ row }) => <RouteMetricCell metric={row.original.metric} />,
     sortingFn: "alphanumeric",
@@ -62,9 +63,11 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     // toggle column waits for a larger viewport than in the other tables.
     meta: { className: ENABLED_COLUMN_CLASS["2xl"] },
     header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false}>
-        Active
-      </DataTableHeader>
+      <DataTableHeader
+        column={column}
+        sorting={false}
+        labelId="common.active"
+      />
     ),
     cell: ({ row }) => <RouteActiveCell route={row.original} />,
   },
@@ -73,7 +76,7 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     accessorFn: (r) => r.groups?.length,
     header: ({ column }) => {
       return (
-        <DataTableHeader column={column}>Distribution Groups</DataTableHeader>
+        <DataTableHeader column={column} labelId="routes.distributionGroups" />
       );
     },
     cell: ({ row }) => <RouteDistributionGroupsCell route={row.original} />,
@@ -83,7 +86,7 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     accessorFn: (r) => r?.access_control_groups?.length,
     header: ({ column }) => {
       return (
-        <DataTableHeader column={column}>Access Control Groups</DataTableHeader>
+        <DataTableHeader column={column} labelId="routes.accessControlGroups" />
       );
     },
     cell: ({ row }) => <RouteAccessControlGroups route={row.original} />,
@@ -92,7 +95,7 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     id: "skipAutoApply",
     accessorKey: "skip_auto_apply",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Auto Apply</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="routes.autoApply" />;
     },
     cell: ({ row }) => <RouteAutoApplyCell route={row.original} />,
     sortingFn: "basic",
@@ -112,6 +115,7 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
 ];
 
 export default function RouteTable({ row }: Props) {
+  const t = useTranslations();
   const { groups } = useGroups();
 
   // Default sorting state of the table
@@ -162,7 +166,7 @@ export default function RouteTable({ row }: Props) {
         showSearchAndFilters={false}
         className={"bg-nb-gray-960 py-2"}
         inset={true}
-        text={"Network Routes"}
+        text={t("common.networkRoutes")}
         manualPagination={true}
         sorting={sorting}
         columnVisibility={{

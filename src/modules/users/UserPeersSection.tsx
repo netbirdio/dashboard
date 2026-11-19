@@ -4,6 +4,7 @@ import { usePortalElement } from "@hooks/usePortalElement";
 import SkeletonTable, {
   SkeletonTableHeader,
 } from "@components/skeletons/SkeletonTable";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { User } from "@/interfaces/User";
 import useFetchApi from "@utils/api";
 import { Peer } from "@/interfaces/Peer";
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export const UserPeersSection = ({ user }: Props) => {
+  const t = useTranslations();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
 
@@ -36,8 +38,8 @@ export const UserPeersSection = ({ user }: Props) => {
       <div className={"max-w-6xl"}>
         <div className={"flex justify-between items-center mb-5"}>
           <div>
-            <h2 ref={headingRef}>Peers</h2>
-            <Paragraph>View all peers registered by this user.</Paragraph>
+            <h2 ref={headingRef}>{t("common.peers")}</h2>
+            <Paragraph>{t("users.userPeersDescription")}</Paragraph>
           </div>
         </div>
 
@@ -58,10 +60,8 @@ export const UserPeersSection = ({ user }: Props) => {
             getStartedCard={
               <NoResults
                 className={"py-4"}
-                title={"This user has no registered peers"}
-                description={
-                  "Install NetBird and sign in as this user to register peers."
-                }
+                title={t("users.noRegisteredPeers")}
+                description={t("users.noRegisteredPeersDesc")}
                 icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
               />
             }

@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation";
 import React from "react";
 import UserProvider from "@/contexts/UserProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { AccessToken } from "@/interfaces/AccessToken";
 import { User } from "@/interfaces/User";
 import AccessTokenActionCell from "@/modules/access-tokens/AccessTokenActionCell";
@@ -26,7 +27,7 @@ export const AccessTokensTableColumns: ColumnDef<AccessToken>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.name" />;
     },
     sortingFn: "text",
     cell: ({ row }) => {
@@ -37,7 +38,7 @@ export const AccessTokensTableColumns: ColumnDef<AccessToken>[] = [
   {
     accessorKey: "expiration_date",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Expires</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="tables.expires" />;
     },
     cell: ({ row }) => (
       <ExpirationDateRow date={row.original.expiration_date} />
@@ -46,14 +47,14 @@ export const AccessTokensTableColumns: ColumnDef<AccessToken>[] = [
   {
     accessorKey: "last_used",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Last used</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="tables.lastUsed" />;
     },
     sortingFn: "datetime",
     cell: ({ row }) => {
       return typeof row.original.last_used === "undefined" ? (
         <EmptyRow />
       ) : (
-        <LastTimeRow date={row.original.last_used} text={"Last used on"} />
+        <LastTimeRow date={row.original.last_used} textId="tables.lastUsedOn" />
       );
     },
   },
@@ -65,6 +66,7 @@ export const AccessTokensTableColumns: ColumnDef<AccessToken>[] = [
 ];
 
 export default function AccessTokensTable({ user }: Readonly<Props>) {
+  const translate = useTranslations();
   const { data: tokens } = useFetchApi<AccessToken[]>(
     `/users/${user.id}/tokens`,
     true,
@@ -88,7 +90,7 @@ export default function AccessTokensTable({ user }: Readonly<Props>) {
       <Card className={"mt-5 w-full"}>
         {tokens && tokens.length > 0 ? (
           <DataTable
-            text={"Access Tokens"}
+            text={translate("accessTokens.accessTokens")}
             tableClassName={"mt-0"}
             minimal={true}
             showSearchAndFilters={false}
@@ -102,10 +104,8 @@ export default function AccessTokensTable({ user }: Readonly<Props>) {
           <div className={"bg-nb-gray-950 overflow-hidden"}>
             <NoResults
               className={"py-3"}
-              title={"No access tokens"}
-              description={
-                "You don't have any access tokens yet. You can add a token to access the NetBird API."
-              }
+              title={translate("accessTokens.noAccessTokens")}
+              description={translate("accessTokens.noAccessTokensDesc")}
               icon={<IconApi size={20} className={"text-nb-gray-300"} />}
             />
           </div>

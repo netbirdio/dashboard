@@ -1,5 +1,6 @@
 "use client";
 
+import { DatePickerWithRange } from "@components/DatePickerWithRange";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
@@ -26,33 +27,33 @@ import {
 } from "@components/table/TableFilters";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
-import { ExternalLinkIcon } from "lucide-react";
-import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import dayjs from "dayjs";
+import { ExternalLinkIcon } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
-import { DatePickerWithRange } from "@components/DatePickerWithRange";
+import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { useServerPagination } from "@/contexts/ServerPaginationProvider";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   REVERSE_PROXY_EVENTS_DOCS_LINK,
   ReverseProxy,
   ReverseProxyEvent,
 } from "@/interfaces/ReverseProxy";
 import type { User } from "@/interfaces/User";
-import useFetchApi from "@/utils/api";
-import { ReverseProxyEventsStatusCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsStatusCell";
-import { ReverseProxyEventsUserCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsUserCell";
+import ReverseProxyEventExpandedRow from "@/modules/reverse-proxy/events/ReverseProxyEventExpandedRow";
+import { ReverseProxyEventsAuthMethodCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsAuthMethodCell";
+import { ReverseProxyEventsBytesCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsBytesCell";
+import { ReverseProxyEventsDurationCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsDurationCell";
 import { ReverseProxyEventsLocationIpCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsLocationIpCell";
 import {
   ReverseProxyEventsMethodCell,
   ReverseProxyEventsUrlCell,
 } from "@/modules/reverse-proxy/events/ReverseProxyEventsRequestCell";
+import { ReverseProxyEventsStatusCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsStatusCell";
 import { ReverseProxyEventsTimeCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsTimeCell";
-import { ReverseProxyEventsAuthMethodCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsAuthMethodCell";
-import { ReverseProxyEventsDurationCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsDurationCell";
-import { ReverseProxyEventsBytesCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsBytesCell";
-import ReverseProxyEventExpandedRow from "@/modules/reverse-proxy/events/ReverseProxyEventExpandedRow";
+import { ReverseProxyEventsUserCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsUserCell";
+import useFetchApi from "@/utils/api";
 
 export const makeEventsColumns = (
   servicesMap: Map<string, ReverseProxy>,
@@ -61,9 +62,11 @@ export const makeEventsColumns = (
   {
     id: "timestamp",
     header: ({ column }) => (
-      <DataTableHeader column={column} name="timestamp">
-        Time
-      </DataTableHeader>
+      <DataTableHeader
+        column={column}
+        name="timestamp"
+        labelId="reverseProxy.time"
+      />
     ),
     cell: ({ row }) => (
       <ReverseProxyEventsTimeCell timestamp={row.original.timestamp} />
@@ -77,9 +80,11 @@ export const makeEventsColumns = (
     accessorFn: (row) =>
       `${row.source_ip} ${row.city_name || ""} ${row.country_code || ""}`,
     header: ({ column }) => (
-      <DataTableHeader column={column} name="source_ip">
-        Location / IP
-      </DataTableHeader>
+      <DataTableHeader
+        column={column}
+        name="source_ip"
+        labelId="reverseProxy.locationAndIp"
+      />
     ),
     cell: ({ row }) => (
       <ReverseProxyEventsLocationIpCell event={row.original} />
@@ -90,9 +95,11 @@ export const makeEventsColumns = (
     id: "method",
     accessorKey: "method",
     header: ({ column }) => (
-      <DataTableHeader column={column} name="method">
-        Request
-      </DataTableHeader>
+      <DataTableHeader
+        column={column}
+        name="method"
+        labelId="reverseProxy.request"
+      />
     ),
     cell: ({ row }) => (
       <div className={"flex items-baseline gap-3"}>
@@ -111,9 +118,11 @@ export const makeEventsColumns = (
     id: "status",
     accessorKey: "status_code",
     header: ({ column }) => (
-      <DataTableHeader column={column} name="status_code">
-        Status
-      </DataTableHeader>
+      <DataTableHeader
+        column={column}
+        name="status_code"
+        labelId="common.status"
+      />
     ),
     cell: ({ row }) => (
       <div className={"flex items-center gap-3"}>
@@ -137,9 +146,11 @@ export const makeEventsColumns = (
     id: "bytes",
     accessorFn: (row) => (row.bytes_download ?? 0) + (row.bytes_upload ?? 0),
     header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false}>
-        Bytes
-      </DataTableHeader>
+      <DataTableHeader
+        column={column}
+        sorting={false}
+        labelId="reverseProxy.bytes"
+      />
     ),
     cell: ({ row }) => <ReverseProxyEventsBytesCell event={row.original} />,
   },
@@ -150,9 +161,7 @@ export const makeEventsColumns = (
       return userById.get(row.user_id)?.email ?? "";
     },
     header: ({ column }) => (
-      <DataTableHeader column={column} name="user_id">
-        User
-      </DataTableHeader>
+      <DataTableHeader column={column} name="user_id" labelId="users.user" />
     ),
     cell: ({ row }) => (
       <div className={"flex items-center gap-2"}>
@@ -174,6 +183,7 @@ type Props = {
 export default function ReverseProxyEventsTable({
   headingTarget,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const {
     data: events,
     isLoading,
@@ -246,16 +256,31 @@ export default function ReverseProxyEventsTable({
 
   const statusOptions = useMemo<RadioOption<string | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: "success", label: "Success", dotClass: "bg-green-500" },
-      { value: "failed", label: "Failed", dotClass: "bg-red-500" },
+      {
+        value: undefined,
+        id: "all",
+        label: t("common.all"),
+        dotClass: "bg-nb-gray-500",
+      },
+      {
+        value: "success",
+        id: "success",
+        label: t("common.success"),
+        dotClass: "bg-green-500",
+      },
+      {
+        value: "failed",
+        id: "failed",
+        label: t("common.failed"),
+        dotClass: "bg-red-500",
+      },
     ],
-    [],
+    [t],
   );
 
   const methodOptions = useMemo<RadioOption<string | undefined>[]>(
     () => [
-      { value: undefined, label: "All" },
+      { value: undefined, id: "all", label: t("common.all") },
       { value: "GET", label: "GET" },
       { value: "POST", label: "POST" },
       { value: "PUT", label: "PUT" },
@@ -264,7 +289,7 @@ export default function ReverseProxyEventsTable({
       { value: "HEAD", label: "HEAD" },
       { value: "OPTIONS", label: "OPTIONS" },
     ],
-    [],
+    [t],
   );
 
   const userOptions = useMemo<UserOption[]>(() => {
@@ -284,7 +309,7 @@ export default function ReverseProxyEventsTable({
     () => [
       {
         id: "status_filter",
-        label: "Status",
+        label: t("common.status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as string | undefined}
@@ -301,7 +326,7 @@ export default function ReverseProxyEventsTable({
       },
       {
         id: "method",
-        label: "Method",
+        label: t("reverseProxy.method"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as string | undefined}
@@ -318,7 +343,7 @@ export default function ReverseProxyEventsTable({
       },
       {
         id: "user",
-        label: "User",
+        label: t("users.user"),
         renderPicker: (p) => (
           <UsersPicker
             value={p.value as string | undefined}
@@ -338,7 +363,7 @@ export default function ReverseProxyEventsTable({
       },
       {
         id: "location_ip",
-        label: "Location / IP",
+        label: t("reverseProxy.locationAndIp"),
         renderPicker: (p) => (
           <TextInputPicker
             value={p.value as string | undefined}
@@ -348,13 +373,13 @@ export default function ReverseProxyEventsTable({
               setFilter("source_ip", trimmed ? trimmed : undefined);
             }}
             close={p.close}
-            placeholder={"e.g. 10.0.0.5 or Berlin"}
+            placeholder={t("reverseProxy.locationExample")}
           />
         ),
         formatChip: (v) => formatTextChip(v as string | undefined),
       },
     ],
-    [statusOptions, methodOptions, userOptions, setFilter],
+    [statusOptions, methodOptions, userOptions, setFilter, t],
   );
 
   const initialColumnFilters = useMemo<{ id: string; value: unknown }[]>(() => {
@@ -388,7 +413,7 @@ export default function ReverseProxyEventsTable({
       isLoading={isLoading}
       inset={false}
       tableCellClassName={"py-1 px-2"}
-      text={"Proxy Events"}
+      text={t("reverseProxy.proxyEvents")}
       sorting={sorting}
       setSorting={setSorting}
       columns={columns}
@@ -404,7 +429,7 @@ export default function ReverseProxyEventsTable({
       renderExpandedRow={(event) => (
         <ReverseProxyEventExpandedRow event={event} />
       )}
-      searchPlaceholder={"Search by IP, host, path, user..."}
+      searchPlaceholder={t("reverseProxy.searchProxyEvents")}
       getStartedCard={
         <GetStartedTest
           icon={
@@ -416,18 +441,16 @@ export default function ReverseProxyEventsTable({
               size={"large"}
             />
           }
-          title={"No Proxy Events Yet"}
-          description={
-            "No proxy traffic yet. Events appear here once your reverse proxy services start serving requests."
-          }
+          title={t("reverseProxy.noProxyEventsTitle")}
+          description={t("reverseProxy.noProxyEventsDescription")}
           learnMore={
             <>
-              Learn more about
+              {t("reverseProxy.learnMoreAbout")}
               <InlineLink
                 href={REVERSE_PROXY_EVENTS_DOCS_LINK}
                 target={"_blank"}
               >
-                Proxy Events
+                {t("reverseProxy.proxyEvents")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </>

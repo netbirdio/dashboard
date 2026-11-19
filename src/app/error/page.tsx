@@ -9,11 +9,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { useMatomoVirtualPage } from "@/cloud/analytics/MatomoProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PendingApproval } from "@/modules/users/PendingApproval";
 
 const config = loadConfig();
 
 export default function ErrorPage() {
+  const t = useTranslations();
   const { logout, isAuthenticated } = useOidc();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -107,19 +109,19 @@ export default function ErrorPage() {
       )}
 
       <Paragraph className="text-center mt-2 text-sm">
-        If you believe this is an error, please contact your administrator.
+        {t("error.contactAdminDescription")}
       </Paragraph>
 
       <div className="mt-5 [&>*+*]:mt-3">
         {!isBlockedUser && (
           <Button variant="default-outline" size="sm" onClick={handleRetry}>
             <RefreshCw size={16} className="mr-2" />
-            Try Again
+            {t("error.tryAgain")}
           </Button>
         )}
 
         <Button variant="primary" size="sm" onClick={handleLogout}>
-          {isBlockedUser ? "Sign Out" : "Logout"}
+          {isBlockedUser ? t("error.signOut") : "Logout"}
           <ArrowRightIcon size={16} />
         </Button>
       </div>

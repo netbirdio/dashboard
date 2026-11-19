@@ -9,6 +9,7 @@ import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/crowdstrike.png";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import { CrowdstrikeIntegration } from "@/interfaces/EDR";
 import CrowdStrikeConfiguration from "@/modules/integrations/edr/crowdstrike/CrowdStrikeConfiguration";
@@ -21,6 +22,7 @@ type Props = {
 };
 
 export const CrowdStrike = ({ account }: Props) => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const [setupModal, setSetupModal] = useState(false);
@@ -49,11 +51,12 @@ export const CrowdStrike = ({ account }: Props) => {
 
     const choice = isCurrentlyEnabled
       ? await confirm({
-          title: `Disable CrowdStrike?`,
-          description:
-            "Are you sure you want to disable the CrowdStrike integration?",
-          confirmText: "Disable",
-          cancelText: "Cancel",
+          title: t("integrations.edrDisableTitle", { name: "CrowdStrike" }),
+          description: t("integrations.edrDisableDescription", {
+            name: "CrowdStrike",
+          }),
+          confirmText: t("common.disable"),
+          cancelText: t("common.cancel"),
           type: "warning",
         })
       : true;
@@ -65,10 +68,13 @@ export const CrowdStrike = ({ account }: Props) => {
       ) || [];
 
     notify({
-      title: "CrowdStrike Integration",
-      description: `CrowdStrike was successfully ${
-        isCurrentlyEnabled ? "disabled" : "enabled"
-      }`,
+      title: t("integrations.edrIntegrationTitle", { name: "CrowdStrike" }),
+      description: t("integrations.edrToggledDescription", {
+        name: "CrowdStrike",
+        state: isCurrentlyEnabled
+          ? t("integrations.edrStateDisabled")
+          : t("integrations.edrStateEnabled"),
+      }),
       promise: integrationRequest
         .put({
           ...integration,
@@ -80,7 +86,7 @@ export const CrowdStrike = ({ account }: Props) => {
         .then(() => {
           mutate("/integrations/edr/falcon");
         }),
-      loadingMessage: "Updating integration...",
+      loadingMessage: t("integrations.edrUpdatingLoading"),
     });
   };
 
@@ -90,7 +96,7 @@ export const CrowdStrike = ({ account }: Props) => {
     <>
       <IntegrationCard
         name="CrowdStrike"
-        description="CrowdStrike is a cloud-native platform for protecting endpoints, cloud workloads, identities and data."
+        description={t("integrations.edrCrowdStrikeDescription")}
         url={{
           title: "crowdstrike.com",
           href: "https://www.crowdstrike.com/",
@@ -125,6 +131,7 @@ type ConfigurationProps = {
   config: CrowdstrikeIntegration;
 };
 const ConfigurationButton = ({ config }: ConfigurationProps) => {
+  const t = useTranslations();
   const [configModal, setConfigModal] = useState(false);
 
   return (
@@ -139,7 +146,7 @@ const ConfigurationButton = ({ config }: ConfigurationProps) => {
           }}
         >
           <Settings size={14} />
-          Settings
+          {t("common.settings")}
         </Button>
       </div>
       <CrowdStrikeConfiguration

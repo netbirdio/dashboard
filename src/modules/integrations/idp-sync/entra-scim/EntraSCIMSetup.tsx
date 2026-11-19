@@ -25,6 +25,7 @@ import { useEmbeddedIdentityProviders } from "@/hooks/useEmbeddedIdentityProvide
 import Skeleton from "react-loading-skeleton";
 import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/generic-scim.png";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   IdentityProvider,
   ScimIntegration,
@@ -91,6 +92,7 @@ export function SetupContent({
   onClose,
   provider = IdentityProvider.ENTRA,
 }: ModalProps) {
+  const translate = useTranslations();
   const { isEmbeddedIdPEnabled } = useEmbeddedIdentityProviders();
   const [step, setStep] = useState(isEmbeddedIdPEnabled ? -1 : 0);
   const [authToken, setAuthToken] = useState("");
@@ -119,8 +121,12 @@ export function SetupContent({
       return;
     }
     notify({
-      title: `${name} Integration`,
-      description: `${name} was successfully set up`,
+      title: translate("integrations.idpIntegrationTitle", {
+        name: name ?? "",
+      }),
+      description: translate("integrations.idpSetUpDescription", {
+        name: name ?? "",
+      }),
       promise: integrationRequest
         .put(
           {
@@ -138,7 +144,7 @@ export function SetupContent({
           mutate("/integrations/scim-idp");
           onSuccess();
         }),
-      loadingMessage: "Setting up integration...",
+      loadingMessage: translate("integrations.idpSettingUpLoading"),
     });
   };
 
@@ -222,8 +228,10 @@ export function SetupContent({
 
       <IntegrationModalHeader
         image={image || integrationImage}
-        title={`Connect NetBird with ${name}`}
-        description={`Start syncing your users and groups from ${name} to NetBird. Follow the steps below to get started.`}
+        title={translate("integrations.idpConnectTitle", { name: name ?? "" })}
+        description={translate("integrations.idpConnectDescription", {
+          name: name ?? "",
+        })}
       />
 
       {step === -1 && (
@@ -247,21 +255,24 @@ export function SetupContent({
             }
           >
             <Shield size={16} />
-            Required Permissions
+            {translate("common.requiredPermissions")}
           </div>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
-            Ensure that you have an{" "}
-            <span className={"text-nb-gray-100 font-semibold"}>
-              Azure AD user account
-            </span>{" "}
-            with the following{" "}
-            <span className={"text-nb-gray-100 font-semibold"}>
-              permissions
-            </span>
-            .{" "}
-            {
-              "If you don't have the required permissions, ask your Azure AD administrator to grant them to you."
-            }
+            {translate.rich("integrations.idpPermissionsIntro", {
+              account: () => (
+                <span className={"text-nb-gray-100 font-semibold"}>
+                  {translate("integrations.idpAzureUserAccount")}
+                </span>
+              ),
+              requirement: () => (
+                <span className={"text-nb-gray-100 font-semibold"}>
+                  {translate("integrations.idpPermissionsWord")}
+                </span>
+              ),
+              followup: translate("integrations.idpPermissionsMissing", {
+                administrator: "Azure AD",
+              }),
+            })}
           </p>
           <div
             className={
@@ -274,7 +285,7 @@ export function SetupContent({
               }
             >
               <PlusCircle size={14} className={"text-sky-500"} />
-              Create Azure AD applications
+              {translate("integrations.idpAzureCreateApps")}
             </div>
             <div
               className={
@@ -282,17 +293,18 @@ export function SetupContent({
               }
             >
               <Settings2 size={14} className={"text-sky-500"} />
-              Manage Azure AD applications
+              {translate("integrations.idpAzureManageApps")}
             </div>
           </div>
 
           {!entraConnection && !isSSOLoading && isAuth0() && (
             <Callout className={"max-w-xl mt-5 text-left"} variant={"warning"}>
               <span>
-                It seems your account is currently not logged in via Entra ID.
-                Please logout and simply sign in with the{" "}
-                <span className={"font-medium"}>Continue with Entra ID </span>{" "}
-                button on the login page.
+                {translate.rich("integrations.idpEntraNotSignedIn", {
+                  mark: (chunks) => (
+                    <span className={"font-medium"}>{chunks}</span>
+                  ),
+                })}
               </span>
             </Callout>
           )}
@@ -303,48 +315,51 @@ export function SetupContent({
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <BoxIcon size={20} />
-            Configure SCIM in Microsoft Entra ID
+            {translate("integrations.idpEntraConfigureScim")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p>
-                Navigate to{"  "}
-                <InlineLink
-                  className={"inline"}
-                  target={"_blank"}
-                  href={"https://portal.azure.com/"}
-                >
-                  Azure Portal
-                </InlineLink>
+                {translate.rich("integrations.idpEntraOpenPortal", {
+                  link: (chunks) => (
+                    <InlineLink
+                      className={"inline"}
+                      target={"_blank"}
+                      href={"https://portal.azure.com/"}
+                    >
+                      {chunks}
+                    </InlineLink>
+                  ),
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Go to <Mark>Azure Active Directory</Mark> then{" "}
-                <Mark>Enterprise applications</Mark>
+                {translate.rich("integrations.idpEntraOpenEnterpriseApps", {
+                  directory: (chunks) => <Mark>{chunks}</Mark>,
+                  apps: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={3}>
               <p className={"font-normal"}>
-                Click
-                <Mark>+ New application</Mark> to create a new enterprise
-                application and then click{" "}
-                <Mark>+ Create your own application</Mark>
+                {translate.rich("integrations.idpEntraCreateApplication", {
+                  newApp: (chunks) => <Mark>{chunks}</Mark>,
+                  ownApp: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={4}>
               <p className={"font-normal"}>
-                Enter <Mark copy={true}>NetBird SCIM</Mark> as the name and
-                select
-                <Mark>
-                  Integrate any other application you don&apos;t find in the
-                  gallery (Non-gallery)
-                </Mark>
+                {translate.rich("integrations.idpEntraNameApplication", {
+                  name: () => <Mark copy={true}>NetBird SCIM</Mark>,
+                  option: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={5} line={false}>
               <p className={"font-normal"}>
-                Click <Mark>Create</Mark>
+                Click <Mark>{translate("common.create")}</Mark>
               </p>
             </Steps.Step>
           </Steps>
@@ -355,35 +370,37 @@ export function SetupContent({
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <BoxIcon size={20} />
-            Enable Provisioning
+            {translate("integrations.idpEntraEnableProvisioning")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p>
-                Once the application is created, click <Mark>Manage</Mark>, then
-                click <Mark>Provisioning</Mark>. Under the Create configuration
-                section, click <Mark>Connect your application</Mark>
+                {translate.rich("integrations.idpEntraConnectApplication", {
+                  manage: (chunks) => <Mark>{chunks}</Mark>,
+                  provisioning: (chunks) => <Mark>{chunks}</Mark>,
+                  connect: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
               <Lightbox image={entraGetStarted} />
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Fill in the form with the following details
+                {translate("integrations.idpEntraFillForm")}
               </p>
               <MinimalList
                 data={[
                   {
-                    label: "Authentication Method",
-                    value: "Bearer authentication",
+                    label: translate("integrations.idpEntraAuthenticationMethod"),
+                    value: translate("integrations.idpEntraBearerAuthentication"),
                     noCopy: true,
                   },
                   {
-                    label: "Tenant URL",
+                    label: translate("integrations.idpEntraTenantUrl"),
                     value:
                       "https://api.netbird.io/api/scim/v2?aadOptscim062020",
                   },
                   {
-                    label: "Secret token",
+                    label: translate("integrations.idpSecretToken"),
                     value:
                       authToken === "" ? (
                         <Skeleton height={17} width={200} />
@@ -395,25 +412,30 @@ export function SetupContent({
                 ]}
               />
               <Callout variant={"warning"}>
-                The <span className={"font-medium"}>'?aadOptscim062020'</span>{" "}
-                flag appended to the Tenant URL is required to ensure Microsoft
-                Entra ID sends SCIM 2.0 compliant requests.{" "}
-                <InlineLink
-                  target={"_blank"}
-                  href={
-                    "https://learn.microsoft.com/en-us/entra/identity/app-provisioning/application-provisioning-config-problem-scim-compatibility#flags-to-alter-the-scim-behavior"
-                  }
-                >
-                  Learn more
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
+                {translate.rich("integrations.idpScimFlagCallout", {
+                  flag: (chunks) => (
+                    <span className={"font-medium"}>{chunks}</span>
+                  ),
+                  more: () => (
+                    <InlineLink
+                      target={"_blank"}
+                      href={
+                        "https://learn.microsoft.com/en-us/entra/identity/app-provisioning/application-provisioning-config-problem-scim-compatibility#flags-to-alter-the-scim-behavior"
+                      }
+                    >
+                      {translate("common.learnMore")}
+                      <ExternalLinkIcon size={12} />
+                    </InlineLink>
+                  ),
+                })}
               </Callout>
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                After that click <Mark>Test Connection</Mark> to verify the SCIM
-                connection. If the connection is successful click{" "}
-                <Mark>Create</Mark> to save the configuration.
+                {translate.rich("integrations.idpEntraTestAndCreate", {
+                  test: (chunks) => <Mark>{chunks}</Mark>,
+                  create: () => <Mark>{translate("common.create")}</Mark>,
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -424,27 +446,32 @@ export function SetupContent({
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <BoxIcon size={20} />
-            Group Attribute Mapping
+            {translate("integrations.idpGroupAttributeMapping")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p>
-                Navigate to the <Mark>Attribute mapping</Mark> section and
-                select the <Mark>Groups</Mark> tab
+                {translate.rich("integrations.idpEntraOpenGroupMapping", {
+                  mapping: (chunks) => <Mark>{chunks}</Mark>,
+                  groups: () => <Mark>{translate("common.groups")}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                In the attribute mappings list, locate the{" "}
-                <Mark>externalId</Mark> row <br />
-                and click <Mark>Delete</Mark>
+                {translate.rich("integrations.idpEntraDeleteExternalId", {
+                  externalId: (chunks) => <Mark>{chunks}</Mark>,
+                  br: () => <br />,
+                  delete: () => <Mark>{translate("common.delete")}</Mark>,
+                })}
               </p>
               <Lightbox image={entraGroupMapping} />
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                Click <Mark>Save</Mark> to apply the updated group attribute
-                mapping configuration
+                {translate.rich("integrations.idpEntraSaveGroupMapping", {
+                  save: () => <Mark>{translate("common.save")}</Mark>,
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -455,19 +482,20 @@ export function SetupContent({
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <BoxIcon size={20} />
-            User Attribute Mapping
+            {translate("integrations.idpEntraUserMapping")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p>
-                Navigate to the <Mark>Attribute mapping</Mark> section and
-                select the <Mark>Users</Mark> tab
+                {translate.rich("integrations.idpEntraOpenUserMapping", {
+                  mapping: (chunks) => <Mark>{chunks}</Mark>,
+                  users: () => <Mark>{translate("common.users")}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                In the attribute mappings list, remove all attribute mappings
-                except for the following:
+                {translate("integrations.idpEntraKeepAttributes")}
               </p>
               <div>
                 <Mark>userName</Mark>
@@ -481,19 +509,26 @@ export function SetupContent({
             </Steps.Step>
             <Steps.Step step={3}>
               <p className={"font-normal"}>
-                In the attribute mappings list, locate the{" "}
-                <Mark>externalId</Mark> row <br />
-                and click <Mark>Edit</Mark>. Change the{" "}
-                <Mark>Source attribute</Mark> from <Mark>mailNickname</Mark> to{" "}
-                <Mark>objectId</Mark> and click <Mark>Ok</Mark> to save the
-                change
+                {translate.rich("integrations.idpEntraEditExternalId", {
+                  externalId: (chunks) => <Mark>{chunks}</Mark>,
+                  br: () => <br />,
+                  edit: () => <Mark>{translate("common.edit")}</Mark>,
+                  source: () =>
+                    translate.rich("integrations.idpExternalIdSource", {
+                      source: (chunks) => <Mark>{chunks}</Mark>,
+                      from: (chunks) => <Mark>{chunks}</Mark>,
+                      to: (chunks) => <Mark>{chunks}</Mark>,
+                      ok: (chunks) => <Mark>{chunks}</Mark>,
+                    }),
+                })}
               </p>
               <Lightbox image={entraEditExternalId} />
             </Steps.Step>
             <Steps.Step step={4} line={false}>
               <p className={"font-normal"}>
-                Click <Mark>Save</Mark> to apply the final attribute mapping
-                configuration
+                {translate.rich("integrations.idpEntraSaveUserMapping", {
+                  save: () => <Mark>{translate("common.save")}</Mark>,
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -504,25 +539,29 @@ export function SetupContent({
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <BoxIcon size={20} />
-            Assign Users and Groups
+            {translate("integrations.idpEntraAssignUsers")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p>
-                Navigate to your NetBird enterprise application and click on{" "}
-                <Mark>Users and groups</Mark> in the left menu
+                {translate.rich("integrations.idpEntraOpenUsersAndGroups", {
+                  users: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
               <Lightbox image={entraAssignUsers} />
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Click <Mark>+ Add user/group</Mark> and select the users and
-                groups you want to synchronize to NetBird
+                {translate.rich("integrations.idpEntraAddUserGroup", {
+                  add: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                Click <Mark>Assign</Mark> to save the assignments
+                {translate.rich("integrations.idpEntraSaveAssignments", {
+                  assign: () => <Mark>{translate("common.assign")}</Mark>,
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -533,23 +572,28 @@ export function SetupContent({
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <BoxIcon size={20} />
-            Start provisioning
+            {translate("integrations.idpEntraStartProvisioning")}
           </p>
           <Steps>
             <Steps.Step step={1}>
               <p>
-                After assigning users and groups, navigate back to the
-                provisioning configuration, click <Mark>Overview</Mark>, then
-                click the <Mark>Start provisioning</Mark> button to enable
-                automatic synchronization
+                {translate.rich("integrations.idpEntraStartProvisioningHelp", {
+                  overview: () => (
+                    <Mark>{translate("integrations.tabOverview")}</Mark>
+                  ),
+                  start: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
               <Lightbox image={entraStartProvisioning} />
             </Steps.Step>
             <Steps.Step step={2} line={false}>
               <p className={"font-normal"}>
-                The first sync will begin shortly after provisioning is started.{" "}
-                <br />
-                Click <Mark>Finish Setup</Mark> below to finalize this setup.
+                {translate.rich("integrations.idpEntraFinishProvisioning", {
+                  br: () => <br />,
+                  finish: () => (
+                    <Mark>{translate("common.finishSetup")}</Mark>
+                  ),
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -564,7 +608,7 @@ export function SetupContent({
             onClick={() => setStep(step + 1)}
             disabled={!connectorId || connectorId === ""}
           >
-            Continue
+            {translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -575,7 +619,7 @@ export function SetupContent({
             onClick={() => setStep(step - 1)}
           >
             <IconArrowLeft size={16} />
-            Back
+            {translate("common.back")}
           </Button>
         )}
         {step >= 0 && step < maxSteps && (
@@ -585,7 +629,9 @@ export function SetupContent({
             disabled={!entraConnection && isAuth0()}
             onClick={() => setStep(step + 1)}
           >
-            {step == 0 ? "Get Started" : "Continue"}
+            {step == 0
+              ? translate("integrations.idpGetStarted")
+              : translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -596,7 +642,7 @@ export function SetupContent({
             onClick={finishSetup}
             disabled={integrationId === "" || authToken === ""}
           >
-            Finish Setup
+            {translate("common.finishSetup")}
           </Button>
         )}
       </ModalFooter>
@@ -608,8 +654,14 @@ export function SetupContent({
         >
           <Clock4 size={12} />
           <div>
-            Estimated setup time:
-            <span className={"font-medium"}> 10-20 Minutes</span>
+            {translate.rich("integrations.idpEstimatedSetupTime", {
+              duration: () => (
+                <span className={"font-medium"}>
+                  {" "}
+                  {translate("integrations.idpSetupDurationLong")}
+                </span>
+              ),
+            })}
           </div>
         </div>
       )}

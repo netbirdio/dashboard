@@ -6,19 +6,27 @@ import {
 } from "@components/Tooltip";
 import dayjs from "dayjs";
 import { History } from "lucide-react";
+import { formatDateTooltip, formatRelativeDate } from "@/i18n/date-time";
+import { useDashboardLocale } from "@/i18n/LocaleProvider";
+import type { MessageId } from "@/i18n/translate";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 
 type Props = {
   date: Date;
   text?: string;
+  textId?: MessageId;
   prefix?: string;
 };
 export default function LastTimeRow({
   date,
-  text = "Last seen on",
+  text,
+  textId = "tables.lastSeenOn",
   prefix,
 }: Props) {
-  const neverUsed = dayjs(date).isBefore(dayjs().subtract(2000, "years"));
+  const { locale, t } = useDashboardLocale();
+  const timestamp = dayjs(date);
+  const neverUsed =
+    !timestamp.isValid() || timestamp.isBefore(dayjs().subtract(2000, "years"));
 
   return !neverUsed ? (
     <TooltipProvider>
@@ -32,15 +40,15 @@ export default function LastTimeRow({
             <>
               <History size={14} />
               {prefix && <>{prefix} </>}
-              {dayjs().to(date)}
+              {formatRelativeDate(timestamp.toDate(), locale)}
             </>
           </div>
         </TooltipTrigger>
         <TooltipContent>
           <div className={"text-nb-gray-300 dark:text-neutral-300 flex flex-col gap-1"}>
-            <span className={"text-xs"}>{text}</span>
+            <span className={"text-xs"}>{text ?? t(textId)}</span>
             <span className={"text-nb-gray-200 dark:text-neutral-200"}>
-              {dayjs(date).format("D MMMM, YYYY [at] h:mm A")}
+              {formatDateTooltip(timestamp.toDate(), locale)}
             </span>
           </div>
         </TooltipContent>

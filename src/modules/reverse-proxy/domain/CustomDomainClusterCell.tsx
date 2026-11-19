@@ -3,6 +3,7 @@
 import Badge from "@components/Badge";
 import { Globe, Server } from "lucide-react";
 import React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { ReverseProxyDomain } from "@/interfaces/ReverseProxy";
 
 type Props = {
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export default function CustomDomainClusterCell({ domain }: Readonly<Props>) {
+  const t = useTranslations();
   const hasCluster = !!domain.target_cluster;
 
   if (!hasCluster) {
@@ -17,7 +19,7 @@ export default function CustomDomainClusterCell({ domain }: Readonly<Props>) {
       <div className="flex items-center gap-2">
         <Badge variant="gray" className="font-normal">
           <Globe size={12} />
-          All
+          {t("common.all")}
         </Badge>
       </div>
     );

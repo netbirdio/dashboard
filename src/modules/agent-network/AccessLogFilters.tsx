@@ -30,6 +30,9 @@ import { useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useDashboardLocale } from "@/i18n/LocaleProvider";
+import { defaultLocale, type Locale } from "@/i18n/locales";
+import { englishTranslations } from "@/i18n/translate";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 
 type FilterRow = Record<string, unknown>;
@@ -37,13 +40,27 @@ type FilterRow = Record<string, unknown>;
 // formatDateChip renders the active date-range filter as a compact chip body.
 // Quick-range presets (Last 14 Days, Last Month, …) show their label; a custom
 // range shows the compact "from – to" span.
-export function formatDateChip(value: DateRange | undefined): string | null {
+export function formatDateChip(
+  value: DateRange | undefined,
+  t = englishTranslations,
+  locale: Locale = defaultLocale,
+): string | null {
   if (!value?.from && !value?.to) return null;
-  const preset = dateRangePresetLabel(value);
+  const preset = dateRangePresetLabel(value, t);
   if (preset) return preset;
-  const from = value?.from ? dayjs(value.from).format("MMM D") : "…";
-  const to = value?.to ? dayjs(value.to).format("MMM D") : "…";
-  return `${from} – ${to}`;
+  const format = (date?: Date) => {
+    if (!date) return "…";
+    return locale === defaultLocale
+      ? dayjs(date).format("MMM D")
+      : new Intl.DateTimeFormat(locale, {
+          month: "short",
+          day: "numeric",
+        }).format(date);
+  };
+  return t("components.compactDateRange", {
+    from: format(value?.from),
+    to: format(value?.to),
+  });
 }
 
 export type AccessLogFilterId =
@@ -63,6 +80,7 @@ export type AccessLogFilterId =
 export function useAccessLogFilters(options?: {
   include?: AccessLogFilterId[];
 }) {
+  const { locale, t } = useDashboardLocale();
   const include = options?.include;
   const { providers } = useAIProviders();
   const { users } = useUsers();
@@ -135,7 +153,7 @@ export function useAccessLogFilters(options?: {
     () => [
       {
         id: "date",
-        label: "Date",
+        label: t("common.date"),
         renderPicker: (p) => (
           <div className={"p-1"}>
             <DatePickerWithRange
@@ -144,11 +162,12 @@ export function useAccessLogFilters(options?: {
             />
           </div>
         ),
-        formatChip: (v) => formatDateChip(v as DateRange | undefined),
+        formatChip: (v) =>
+          formatDateChip(v as DateRange | undefined, t, locale),
       },
       {
         id: "user",
-        label: "User",
+        label: t("common.user"),
         renderPicker: (p) => (
           <UsersPicker
             value={p.value as string | undefined}
@@ -162,7 +181,7 @@ export function useAccessLogFilters(options?: {
       },
       {
         id: "group",
-        label: "Group",
+        label: t("common.group"),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -175,7 +194,7 @@ export function useAccessLogFilters(options?: {
       },
       {
         id: "provider",
-        label: "Provider",
+        label: t("common.provider"),
         renderPicker: (p) => (
           <CheckboxListPicker
             value={p.value as string[] | undefined}
@@ -193,7 +212,7 @@ export function useAccessLogFilters(options?: {
       },
       {
         id: "model",
-        label: "Model",
+        label: t("common.model"),
         renderPicker: (p) => (
           <CheckboxListPicker
             value={p.value as string[] | undefined}
@@ -206,7 +225,7 @@ export function useAccessLogFilters(options?: {
           formatCheckboxChip(v as string[] | undefined, modelOptions, "models"),
       },
     ],
-    [userOptions, groups, providerOptions, modelOptions],
+    [userOptions, groups, providerOptions, modelOptions, locale, t],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(

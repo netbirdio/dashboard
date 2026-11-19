@@ -15,6 +15,7 @@ import { MSPTenantDocsLink } from "@/cloud/msp/MSPTenantDocsLink";
 import MSPTenantsTable from "@/cloud/msp/MSPTenantsTable";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -38,6 +39,7 @@ const Redirect = () => {
 };
 
 const TenantsPageContent = () => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { data: tenants, isLoading } = useFetchApi<Tenant[]>(
     "/integrations/msp/tenants",
@@ -50,17 +52,19 @@ const TenantsPageContent = () => {
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
-        <h1 ref={headingRef}>Tenants</h1>
+        <h1 ref={headingRef}>{t("common.tenants")}</h1>
         <Paragraph>
-          A list of all tenants and their subscription details. Use this view to
-          manage accounts, plans and permissions.
+          {t("tenants.aListOfAllTenantsAndTheirSubscriptionDetailsUse")}
         </Paragraph>
         <Paragraph>
           <MSPTenantDocsLink />
-          in our documentation.
+          {t("tenants.inOurDocumentation")}
         </Paragraph>
       </div>
-      <RestrictedAccess page={"Tenants"} hasAccess={permission.tenants.read}>
+      <RestrictedAccess
+        page={t("common.tenants")}
+        hasAccess={permission.tenants.read}
+      >
         <Suspense fallback={<SkeletonTable />}>
           <TenantsProvider>
             <MSPTenantsTable

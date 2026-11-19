@@ -11,6 +11,7 @@ import React, { lazy, Suspense } from "react";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -18,6 +19,7 @@ const PostureCheckTable = lazy(
   () => import("@/modules/posture-checks/table/PostureCheckTable"),
 );
 export default function PostureChecksPage() {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { data: postureChecks, isLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
@@ -29,21 +31,21 @@ export default function PostureChecksPage() {
     <PageContainer>
       <GroupsProvider>
         <div className={"p-default py-6"}>
-          <h1 ref={headingRef}>Posture Checks</h1>
+          <h1 ref={headingRef}>{t("common.postureChecks")}</h1>
           <Paragraph>
-            Use posture checks to further restrict access in your network.{" "}
+            {t("postureChecks.usePostureChecks")}{" "}
             <InlineLink
               href={"https://docs.netbird.io/how-to/manage-posture-checks"}
               target={"_blank"}
             >
-              Learn more
+              {t("common.learnMore")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
 
         <RestrictedAccess
-          page={"Posture Checks"}
+          page={t("common.postureChecks")}
           hasAccess={permission.policies.read}
         >
           <PoliciesProvider>

@@ -1,6 +1,7 @@
 import { Edge, Node, useReactFlow, XYPosition } from "@xyflow/react";
 import { useCallback } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group, GroupIssued } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
@@ -139,6 +140,7 @@ const collectGroupStrip = (
 
 // Every action here touches only the canvas and the changeset; the API runs on deploy.
 export function useDraftGroupActions() {
+  const t = useTranslations();
   const reactFlow = useReactFlow();
   const { setNodes, setEdges, setSelectedDestinationGroup } = useCanvasState();
   const { groups, policies } = useControlCenterData();
@@ -879,7 +881,13 @@ export function useDraftGroupActions() {
         existing,
       );
       const nameList = (list: Policy[]) =>
-        list.map((p) => `“${p.name ?? "Policy"}”`).join(", ");
+        list
+          .map((p) =>
+            t("controlCenter.quotedPolicyName", {
+              p_Policy: p.name ?? t("common.policy"),
+            }),
+          )
+          .join(", ");
       // A draft policy is not deleted — it has nothing to delete yet. It stays in
       // the changeset carrying a blocking issue until the user completes it.
       const emptiedLive = emptied.filter((p) => !p.id?.startsWith("new-"));
@@ -895,12 +903,17 @@ export function useDraftGroupActions() {
       );
       const blockerNames = blockedBy.map((c) =>
         c.type === "create-resource" || c.type === "update-resource"
-          ? `resource “${c.name}”`
-          : `a routing peer in “${
-              c.type === "create-router" || c.type === "update-router"
-                ? c.networkName
-                : ""
-            }”`,
+          ? t("controlCenter.namedResource", { c: c.name })
+          : t("controlCenter.routingPeerBlocker", {
+              updateRouter:
+                c.type === "create-router" || c.type === "update-router"
+                  ? "true"
+                  : "false",
+              cNetworkName:
+                c.type === "create-router" || c.type === "update-router"
+                  ? c.networkName
+                  : "",
+            }),
       );
 
       const emptiedAgent = agentGroupDeletionUpdates(
@@ -918,58 +931,27 @@ export function useDraftGroupActions() {
         .map(({ policy }) => `“${policy.name}”`);
 
       const choice = await confirm({
-        title: `Delete ${
-          deletable.length === 1 ? "group" : `${deletable.length} groups`
-        } ${names}?`,
-        description: `${
-          deletable.length === 1 ? "It" : "They"
-        } will be marked for deletion and deleted when you review and deploy.${
-          emptiedLive.length > 0
-            ? ` This also deletes ${
-                emptiedLive.length === 1
-                  ? "the policy"
-                  : `${emptiedLive.length} policies`
-              } ${nameList(
-                emptiedLive,
-              )}, which would be left authorizing nothing.`
-            : ""
-        }${
-          emptiedDraft.length > 0
-            ? ` ${
-                emptiedDraft.length === 1
-                  ? "The new policy"
-                  : `${emptiedDraft.length} new policies`
-              } ${nameList(
-                emptiedDraft,
-              )} would be left without a source or destination, and won't deploy until you complete ${
-                emptiedDraft.length === 1 ? "it" : "them"
-              }.`
-            : ""
-        }${
-          emptiedAgent.length > 0
-            ? ` ${
-                emptiedAgent.length === 1
-                  ? "The agent policy"
-                  : `${emptiedAgent.length} agent policies`
-              } ${emptiedAgent.join(", ")} authorize nothing without ${
-                deletable.length === 1 ? "it" : "them"
-              } and are deleted too.`
-            : ""
-        }${
-          blockerNames.length > 0
-            ? ` ${
-                blockerNames.length === 1 ? "Your change to" : "Your changes to"
-              } ${blockerNames.join(", ")} still ${
-                blockerNames.length === 1 ? "references" : "reference"
-              } ${
-                deletable.length === 1 ? "it" : "them"
-              }, and the deletion can't deploy until you take the group off ${
-                blockerNames.length === 1 ? "it" : "them"
-              }.`
-            : ""
-        }`,
-        confirmText: "Delete",
-        cancelText: "Cancel",
+        title: t("controlCenter.deleteGroupsTitle", {
+          deletable: deletable.length,
+          names: names,
+        }),
+        description: t("controlCenter.deleteGroupsDescription", {
+          deletable: deletable.length,
+          emptiedLive: emptiedLive.length > 0 ? "true" : "false",
+          emptiedLive2: emptiedLive.length,
+          nameListEmptiedLive: nameList(emptiedLive),
+          emptiedDraft: emptiedDraft.length > 0 ? "true" : "false",
+          emptiedDraft2: emptiedDraft.length,
+          nameListEmptiedDraft: nameList(emptiedDraft),
+          emptiedAgent: emptiedAgent.length > 0 ? "true" : "false",
+          emptiedAgent2: emptiedAgent.length,
+          emptiedAgent3: emptiedAgent.join(", "),
+          blockerNames: blockerNames.length > 0 ? "true" : "false",
+          blockerNames2: blockerNames.length,
+          blockerNames3: blockerNames.join(", "),
+        }),
+        confirmText: t("common.delete"),
+        cancelText: t("common.cancel"),
         type: "danger",
         dismissOnOutsideClick: true,
       });
@@ -978,7 +960,7 @@ export function useDraftGroupActions() {
       deleteGroups(deletable);
       return true;
     },
-    [confirm, deleteGroups, policySnapshots, agentPolicySnapshots, changes],
+    [t, confirm, deleteGroups, policySnapshots, agentPolicySnapshots, changes],
   );
 
   return {

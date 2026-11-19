@@ -12,6 +12,7 @@ import { lazy, useState } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { useGroupContext } from "@/contexts/GroupProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import { AssignPeerToGroupModal } from "@/modules/groups/AssignPeerToGroupModal";
 import { GroupPeersRemoveCell } from "@/modules/groups/details/GroupDetailsRemoveCell";
@@ -23,7 +24,9 @@ import { PeerOSCell } from "@/modules/peers/PeerOSCell";
 
 const GroupPeersTable = lazy(() => import("@/modules/peer/MinimalPeersTable"));
 
-const GroupPeersTableColumns: ColumnDef<Peer>[] = [
+function useGroupPeersTableColumns(): ColumnDef<Peer>[] {
+  const t = useTranslations();
+  return [
   {
     id: "select",
     header: ({ table }) => (
@@ -31,7 +34,7 @@ const GroupPeersTableColumns: ColumnDef<Peer>[] = [
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
+          aria-label={t("tables.selectAll")}
         />
       </div>
     ),
@@ -41,7 +44,7 @@ const GroupPeersTableColumns: ColumnDef<Peer>[] = [
           checked={row.getIsSelected()}
           variant={"tableCell"}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
+          aria-label={t("tables.selectRow")}
         />
       </div>
     ),
@@ -51,7 +54,9 @@ const GroupPeersTableColumns: ColumnDef<Peer>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} labelId="common.name" />
+      );
     },
     sortingFn: "text",
     cell: ({ row }) => <PeerNameCell peer={row.original} />,
@@ -76,14 +81,18 @@ const GroupPeersTableColumns: ColumnDef<Peer>[] = [
   {
     accessorKey: "dns_label",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Address</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} labelId="common.address" />
+      );
     },
     cell: ({ row }) => <PeerAddressCell peer={row.original} />,
   },
   {
     accessorKey: "last_seen",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Last seen</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} labelId="tables.lastSeen" />
+      );
     },
     sortingFn: "datetime",
     cell: ({ row }) => <PeerLastSeenCell peer={row.original} />,
@@ -91,7 +100,9 @@ const GroupPeersTableColumns: ColumnDef<Peer>[] = [
   {
     accessorKey: "os",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>OS</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>{t("groups.os")}</DataTableHeader>
+      );
     },
     cell: ({ row }) => <PeerOSCell os={row.original.os} />,
   },
@@ -101,7 +112,8 @@ const GroupPeersTableColumns: ColumnDef<Peer>[] = [
     header: "",
     cell: ({ row }) => <GroupPeersRemoveCell peer={row.original} />,
   },
-];
+  ];
+}
 
 type Props = {
   peers?: Peer[];
@@ -109,6 +121,8 @@ type Props = {
 };
 
 export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
+  const t = useTranslations();
+  const columns = useGroupPeersTableColumns();
   const { group, addPeersToGroup, removePeersFromGroup } = useGroupContext();
   const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
   const [open, setOpen] = useState(false);
@@ -119,16 +133,14 @@ export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
       <GroupPeersTable
         isLoading={isLoading}
         peers={peers}
-        columns={GroupPeersTableColumns}
+        columns={columns}
         selectedRows={selectedRows}
         setSelectedRows={setSelectedRows}
         getStartedCard={
           <NoResults
             className={"py-4"}
-            title={"This group has no assigned peers yet"}
-            description={
-              "Install NetBird and assign existing peers to this group to see them listed here."
-            }
+            title={t("groups.noAssignedPeersTitle")}
+            description={t("groups.noAssignedPeersDescription")}
             icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
           >
             {permission?.peers?.update && permission?.groups?.update && (
@@ -140,7 +152,7 @@ export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
                   onClick={() => setOpen(true)}
                 >
                   <PlusCircle size={16} />
-                  Assign Peers
+                  {t("groups.assignPeers")}
                 </Button>
               </div>
             )}
@@ -158,7 +170,7 @@ export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
                 <>
                   <FullTooltip
                     content={
-                      <span className={"text-xs"}>Remove Peers from Group</span>
+                      <span className={"text-xs"}>{t("groups.removePeersFromGroup")}</span>
                     }
                   >
                     <Button
@@ -186,7 +198,7 @@ export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
               useSave={false}
               showHeader={false}
               showClose={false}
-              buttonText={"Assign Peers"}
+              buttonText={t("groups.assignPeers")}
               selectInitialPeers={false}
               excludedPeers={peers}
               onUpdate={(g) => {
@@ -205,7 +217,7 @@ export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
                       onClick={() => setOpen(true)}
                     >
                       <PlusCircle size={16} />
-                      Assign Peers
+                      {t("groups.assignPeers")}
                     </Button>
                   )}
                 </div>

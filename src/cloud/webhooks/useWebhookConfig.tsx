@@ -1,3 +1,4 @@
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useEffect, useMemo, useReducer, useState } from "react";
 import { validator } from "@utils/helpers";
 import { uniqueId } from "lodash";
@@ -19,6 +20,8 @@ export function useWebhookConfig({
   initialUrl = "",
   initialHeaders,
 }: UseWebhookConfigOptions = {}) {
+  const t = useTranslations();
+
   const [url, setUrl] = useState(initialUrl);
   const [authenticationType, setAuthenticationType] = useState<string>(
     AuthType.None,
@@ -62,10 +65,10 @@ export function useWebhookConfig({
   const urlError = useMemo(() => {
     if (url === "") return "";
     if (!validator.isValidUrl(url)) {
-      return "Please enter a valid url, e.g., https://api.example.com/webhook";
+      return t("webhooks.pleaseEnterAValidUrlEGHttpsApiExample");
     }
     return "";
-  }, [url]);
+  }, [url, t]);
 
   const authHeaderConflict = useMemo(() => {
     return (
@@ -104,9 +107,9 @@ export function useWebhookConfig({
 
   const canSave = canContinueToHeaders && !headerError && !authHeaderConflict;
 
-  const formatHeaders = (
-    options?: { undefinedOnEmpty?: boolean },
-  ): Record<string, string> | undefined => {
+  const formatHeaders = (options?: {
+    undefinedOnEmpty?: boolean;
+  }): Record<string, string> | undefined => {
     const headersObject = httpHeaders.reduce(
       (obj: Record<string, string>, header) => {
         if (header.key && header.value) {

@@ -26,6 +26,7 @@ import {
 } from "@/cloud/traffic-events/interfaces/TrafficEvent";
 import { stripZeroPort } from "@/cloud/traffic-events/utils/parseAddress";
 import { useCountries } from "@/contexts/CountryProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { OSLogo } from "@/modules/peers/PeerOSCell";
 
@@ -37,6 +38,7 @@ export const TrafficEventsMachineCell = ({
   event,
   isSource = false,
 }: Props) => {
+  const t = useTranslations();
   const router = useRouter();
   const machine = isSource ? event.source : event.destination;
   const isPeer = machine.type === TrafficEventMachineType.PEER;
@@ -91,18 +93,18 @@ export const TrafficEventsMachineCell = ({
               }
               label={
                 machine.type === TrafficEventMachineType.PEER
-                  ? "Peer"
+                  ? t("trafficEvents.peer")
                   : isExitNode
-                  ? "Exit Node"
-                  : "Resource"
+                  ? t("common.exitNode")
+                  : t("common.resource")
               }
               value={
                 <CopyToClipboardText
                   iconAlignment={"right"}
-                  message={"IP has been copied to your clipboard"}
+                  message={t("trafficEvents.iPHasBeenCopiedToYourClipboard")}
                   alwaysShowIcon={true}
                 >
-                  {machine.name || "Unknown"}
+                  {machine.name || t("common.unknown")}
                 </CopyToClipboardText>
               }
             />
@@ -111,11 +113,13 @@ export const TrafficEventsMachineCell = ({
           {machine.dns_label && (
             <ListItem
               icon={<GlobeIcon size={14} />}
-              label={"Domain"}
+              label={t("common.domain")}
               value={
                 <CopyToClipboardText
                   iconAlignment={"right"}
-                  message={"Domain has been copied to your clipboard"}
+                  message={t(
+                    "trafficEvents.domainHasBeenCopiedToYourClipboard",
+                  )}
                   alwaysShowIcon={true}
                 >
                   {machine.dns_label}
@@ -128,11 +132,11 @@ export const TrafficEventsMachineCell = ({
             <>
               <ListItem
                 icon={<UserIcon size={14} />}
-                label={"User"}
+                label={t("trafficEvents.user")}
                 value={
                   <CopyToClipboardText
                     iconAlignment={"right"}
-                    message={"IP has been copied to your clipboard"}
+                    message={t("trafficEvents.iPHasBeenCopiedToYourClipboard")}
                     alwaysShowIcon={true}
                   >
                     {event?.user.name}
@@ -142,11 +146,13 @@ export const TrafficEventsMachineCell = ({
               {event?.user.email && (
                 <ListItem
                   icon={<MailIcon size={14} />}
-                  label={"User E-Mail"}
+                  label={t("trafficEvents.userEMail")}
                   value={
                     <CopyToClipboardText
                       iconAlignment={"right"}
-                      message={"E-Mail has been copied to your clipboard"}
+                      message={t(
+                        "trafficEvents.eMailHasBeenCopiedToYourClipboard",
+                      )}
                       alwaysShowIcon={true}
                     >
                       {event?.user.email}
@@ -159,11 +165,11 @@ export const TrafficEventsMachineCell = ({
 
           <ListItem
             icon={<MapPin size={14} />}
-            label={isSource ? "Source" : "Destination"}
+            label={isSource ? t("common.source") : t("common.destination")}
             value={
               <CopyToClipboardText
                 iconAlignment={"right"}
-                message={"IP has been copied to your clipboard"}
+                message={t("trafficEvents.iPHasBeenCopiedToYourClipboard")}
                 alwaysShowIcon={true}
               >
                 {stripZeroPort(machine.address ?? "")}
@@ -173,7 +179,7 @@ export const TrafficEventsMachineCell = ({
 
           <ListItem
             icon={<FlagIcon size={14} />}
-            label={"Region"}
+            label={t("trafficEvents.region")}
             value={
               <>
                 {isGeoDataLoading ? (
@@ -181,7 +187,9 @@ export const TrafficEventsMachineCell = ({
                 ) : (
                   <CopyToClipboardText
                     iconAlignment={"right"}
-                    message={"Region has been copied to your clipboard"}
+                    message={t(
+                      "trafficEvents.regionHasBeenCopiedToYourClipboard",
+                    )}
                     alwaysShowIcon={true}
                   >
                     <div className={"flex gap-2 items-center"}>
@@ -241,6 +249,8 @@ export const MachineCard = ({
   onClick,
   showUser = false,
 }: MachineCardProps) => {
+  const t = useTranslations();
+
   const isPeer = machine.type === TrafficEventMachineType.PEER;
 
   return (
@@ -288,7 +298,7 @@ export const MachineCard = ({
           }
         >
           <TextWithTooltip
-            text={machine.name || "Unknown"}
+            text={machine.name || t("common.unknown")}
             maxChars={20}
             hideTooltip={true}
           />

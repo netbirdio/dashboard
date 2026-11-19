@@ -44,6 +44,8 @@ import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import { Group } from "@/interfaces/Group";
 import AgentPolicyGuardrailsTab from "@/modules/agent-network/AgentPolicyGuardrailsTab";
 import AgentPolicyLimitsTab from "@/modules/agent-network/AgentPolicyLimitsTab";
@@ -122,6 +124,8 @@ function AgentPolicyModalContent({
   onDraftSubmit?: (policy: Omit<AgentPolicy, "id">) => void;
   onSuccess: () => void;
 }) {
+  const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const {
     providers: accountProviders,
     addPolicy,
@@ -290,10 +294,12 @@ function AgentPolicyModalContent({
     <ModalContent maxWidthClass={"max-w-3xl"}>
       <ModalHeader
         icon={<AccessControlIcon className={"fill-current"} />}
-        title={policy ? "Update Agent Policy" : "Create Agent Policy"}
-        description={
-          "Govern which groups can call which AI providers and under what guardrails."
+        title={
+          policy
+            ? tr("agentNetwork.updateAgentPolicy")
+            : tr("agentNetwork.createAgentPolicy")
         }
+        description={tr("agentNetwork.agentPolicyDescription")}
         color={"netbird"}
       />
 
@@ -301,15 +307,15 @@ function AgentPolicyModalContent({
         <TabsList justify={"start"} className={"px-8"}>
           <TabsTrigger value={"policy"}>
             <ArrowRightLeft size={16} />
-            Policy
+            {t("common.policy")}
           </TabsTrigger>
           <TabsTrigger value={"limits"}>
             <Gauge size={16} />
-            Limits
+            {tr("agentNetwork.limits")}
           </TabsTrigger>
           <TabsTrigger value={"guardrails"}>
             <ShieldHalf size={16} />
-            Guardrails
+            {tr("agentNetwork.guardrails")}
           </TabsTrigger>
         </TabsList>
 
@@ -319,15 +325,9 @@ function AgentPolicyModalContent({
               <div className={"w-full self-start"}>
                 <Label className={"mb-2"}>
                   <FolderDown size={15} />
-                  Source
+                  {t("common.source")}
                   <HelpTooltip
-                    content={
-                      <>
-                        Group of users this policy authorises to call the
-                        destination providers. One group per policy in this
-                        release.
-                      </>
-                    }
+                    content={tr("agentNetwork.sourceTooltip")}
                   />
                 </Label>
                 <SourceGroupsSelector
@@ -336,10 +336,9 @@ function AgentPolicyModalContent({
                 />
                 {hasLegacyExtraGroups && (
                   <div className={"mt-2 text-xs text-yellow-400 leading-snug"}>
-                    This policy was created with multiple source groups. Only
-                    the first group is kept on save —{" "}
-                    {sourceGroupsRaw[0]?.name ?? "—"} will be retained, the
-                    others removed.
+                    {tr("agentNetwork.legacySourceGroups", {
+                      name: sourceGroupsRaw[0]?.name ?? "—",
+                    })}
                   </div>
                 )}
               </div>
@@ -347,9 +346,9 @@ function AgentPolicyModalContent({
               <div className={"w-full self-start"}>
                 <Label className={"mb-2"}>
                   <Sparkles size={15} />
-                  Provider
+                  {t("common.provider")}
                   <HelpTooltip
-                    content={<>AI providers the source is allowed to reach.</>}
+                    content={tr("agentNetwork.destinationProvidersTooltip")}
                   />
                 </Label>
                 <ProviderMultiSelect
@@ -361,9 +360,9 @@ function AgentPolicyModalContent({
             </div>
 
             <div>
-              <Label>Name of the Policy</Label>
+              <Label>{tr("agentNetwork.policyName")}</Label>
               <HelpText>
-                Set an easily identifiable name for your policy.
+                {t("agentNetwork.ruleNameHelp")}
               </HelpText>
               <Input
                 value={name}
@@ -371,20 +370,18 @@ function AgentPolicyModalContent({
                   userEditedName.current = true;
                   setName(e.target.value);
                 }}
-                placeholder={"e.g. Engineering → OpenAI"}
+                placeholder={tr("agentNetwork.policyNamePlaceholder")}
               />
             </div>
             <div>
-              <Label>Description (optional)</Label>
+              <Label>{t("agentNetwork.policyDescriptionLabel")}</Label>
               <HelpText>
-                Write a short description to add more context to this policy.
+                {t("agentNetwork.policyDescriptionHelp")}
               </HelpText>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder={
-                  "e.g., Engineers can call OpenAI under production guardrails."
-                }
+                placeholder={tr("agentNetwork.policyDescriptionPlaceholder")}
                 rows={3}
               />
             </div>
@@ -408,7 +405,7 @@ function AgentPolicyModalContent({
               href={"https://docs.netbird.io/agent-network"}
               target={"_blank"}
             >
-              Agent Network
+              {t("common.agentNetwork")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
@@ -419,7 +416,7 @@ function AgentPolicyModalContent({
               {tab === "policy" && (
                 <>
                   <ModalClose asChild>
-                    <Button variant={"secondary"}>Cancel</Button>
+                    <Button variant={"secondary"}>{t("common.cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant={"primary"}
@@ -428,7 +425,7 @@ function AgentPolicyModalContent({
                       !canContinueFromPolicy || name.trim().length === 0
                     }
                   >
-                    Continue
+                    {t("common.continue")}
                   </Button>
                 </>
               )}
@@ -438,13 +435,13 @@ function AgentPolicyModalContent({
                     variant={"secondary"}
                     onClick={() => setTab("policy")}
                   >
-                    Back
+                    {t("common.back")}
                   </Button>
                   <Button
                     variant={"primary"}
                     onClick={() => setTab("guardrails")}
                   >
-                    Continue
+                    {t("common.continue")}
                   </Button>
                 </>
               )}
@@ -454,7 +451,7 @@ function AgentPolicyModalContent({
                     variant={"secondary"}
                     onClick={() => setTab("limits")}
                   >
-                    Back
+                    {t("common.back")}
                   </Button>
                   <Button
                     variant={"primary"}
@@ -462,7 +459,7 @@ function AgentPolicyModalContent({
                     disabled={submitDisabled}
                   >
                     <PlusCircle size={16} />
-                    Add Policy
+                    {t("common.addPolicy")}
                   </Button>
                 </>
               )}
@@ -470,14 +467,14 @@ function AgentPolicyModalContent({
           ) : (
             <>
               <ModalClose asChild>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{t("common.cancel")}</Button>
               </ModalClose>
               <Button
                 variant={"primary"}
                 onClick={handleSubmit}
                 disabled={submitDisabled}
               >
-                Save Changes
+                {t("common.saveChanges")}
               </Button>
             </>
           )}
@@ -494,6 +491,8 @@ function SourceGroupsSelector({
   value: Group[];
   onChange: React.Dispatch<React.SetStateAction<Group[]>>;
 }) {
+  const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const { users } = useUsers();
   return (
     <PeerGroupSelector
@@ -502,9 +501,9 @@ function SourceGroupsSelector({
         <div className={"flex items-center gap-2"}>
           <Badge className={"py-[3px]"} variant={"gray-ghost"}>
             <CircleUser size={12} />
-            All
+            {t("common.all")}
           </Badge>
-          Select source group(s)...
+          {tr("agentNetwork.selectSourceGroups")}
         </div>
       }
       values={value}
@@ -526,6 +525,7 @@ function ProviderMultiSelect({
   value: string[];
   onChange: (next: string[]) => void;
 }) {
+  const { tr } = useAgentNetworkText();
   const [open, setOpen] = useState(false);
   // The popover is sized to the trigger, the way every other multi-select in
   // the dashboard sizes its list.
@@ -581,7 +581,9 @@ function ProviderMultiSelect({
             }
           >
             {selected.length === 0 ? (
-              <span className={"pl-1"}>Select provider(s)...</span>
+              <span className={"pl-1"}>
+                {tr("agentNetwork.selectProviders")}
+              </span>
             ) : (
               selected.map((p) => (
                 <Badge
@@ -634,7 +636,7 @@ function ProviderMultiSelect({
                 )}
                 value={search}
                 onValueChange={setSearch}
-                placeholder={"Search providers..."}
+                placeholder={tr("agentNetwork.searchProviders")}
               />
               <div
                 className={
@@ -653,8 +655,8 @@ function ProviderMultiSelect({
                 {filtered.length === 0 && (
                   <div className={"text-xs text-nb-gray-400 px-3 py-3"}>
                     {providers.length === 0
-                      ? "No providers connected yet."
-                      : "No providers found."}
+                      ? tr("agentNetwork.noProvidersConnected")
+                      : tr("agentNetwork.noProvidersFound")}
                   </div>
                 )}
                 {filtered.map((p) => {

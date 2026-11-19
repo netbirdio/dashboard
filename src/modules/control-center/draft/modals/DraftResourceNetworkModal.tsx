@@ -7,21 +7,22 @@ import {
   SelectOption,
 } from "@components/select/SelectDropdown";
 import Separator from "@components/Separator";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { useReactFlow } from "@xyflow/react";
 import { NetworkIcon, PlusCircle } from "lucide-react";
 import * as React from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network } from "@/interfaces/Network";
-import { isFrameNode } from "@/modules/control-center/utils/helpers";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import {
   getNetworkRef,
   useDraftNetworkActions,
 } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
+import { isFrameNode } from "@/modules/control-center/utils/helpers";
 import { NetworkModalContent } from "@/modules/networks/NetworkModal";
-import { SmallBadge } from "@components/ui/SmallBadge";
 
 // "No Network" picker for a standalone draft resource: assign it to an existing
 // network (a canvas frame or a real API network) or to a new draft network.
@@ -49,6 +50,7 @@ const PickerContent = ({
   resourceNodeId: string;
   onClose: () => void;
 }) => {
+  const translate = useTranslations();
   const reactFlow = useReactFlow();
   const { networks } = useControlCenterData();
   const {
@@ -67,7 +69,7 @@ const PickerContent = ({
     const frames = frameNodes.map((n) => {
       const name =
         (n.data as { network?: { name?: string } })?.network?.name ??
-        "Network";
+        translate("common.network");
       const isNew = n.id.startsWith("network-new-");
       return {
         value: `frame:${n.id}`,
@@ -94,7 +96,7 @@ const PickerContent = ({
         icon: ({ size }: { size?: number }) => <NetworkIcon size={size} />,
       }));
     return [...frames, ...api];
-  }, [reactFlow, networks]);
+  }, [translate, reactFlow, networks]);
 
   // The resource may have no canvas node anymore (absorbed into a group), and
   // those assign through the group-held path.
@@ -172,8 +174,10 @@ const PickerContent = ({
       <ModalContent maxWidthClass={"max-w-lg"}>
         <ModalHeader
           icon={<NetworkRoutesIcon className={"fill-current"} />}
-          title={"Assign a network"}
-          description={"Pick a network for this resource or create a new one."}
+          title={translate("controlCenter.assignANetwork")}
+          description={translate(
+            "controlCenter.pickANetworkForThisResourceOrCreate",
+          )}
           color={"netbird"}
         />
         <Separator />
@@ -183,8 +187,8 @@ const PickerContent = ({
             onChange={setSelected}
             options={options}
             showSearch={true}
-            searchPlaceholder={"Search networks..."}
-            placeholder={"Select or create a network..."}
+            searchPlaceholder={translate("controlCenter.searchNetworks")}
+            placeholder={translate("controlCenter.selectOrCreateANetwork")}
             maxHeight={190}
             // Pinned below the options so scroll or search can't hide it.
             footer={(close) => (
@@ -200,7 +204,7 @@ const PickerContent = ({
                   }}
                 >
                   <PlusCircle size={14} />
-                  Create New Network
+                  {translate("controlCenter.createNewNetwork")}
                 </button>
               </div>
             )}
@@ -211,10 +215,12 @@ const PickerContent = ({
         <ModalFooter className={"items-center"} separator={false}>
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>
+                {translate("common.cancel")}
+              </Button>
             </ModalClose>
             <Button variant={"primary"} disabled={!selected} onClick={save}>
-              Assign Network
+              {translate("controlCenter.assignNetwork")}
             </Button>
           </div>
         </ModalFooter>

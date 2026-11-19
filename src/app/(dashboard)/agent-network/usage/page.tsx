@@ -12,6 +12,8 @@ import GroupsProvider from "@/contexts/GroupsProvider";
 import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import ServerPaginationProvider from "@/contexts/ServerPaginationProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import PageContainer from "@/layouts/PageContainer";
 import AgentAccessLogTable from "@/modules/agent-network/AgentAccessLogTable";
 import AgentOverviewPanel from "@/modules/agent-network/AgentOverviewPanel";
@@ -28,6 +30,8 @@ const TAB_ACCESS_LOGS = "access-logs";
 // Configuration entry. Providers are mounted once at the top so switching
 // tabs is instant — no re-fetch on tab change.
 export default function UsageAndLogsPage() {
+  const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const { permission } = usePermissions();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -84,15 +88,12 @@ export default function UsageAndLogsPage() {
   return (
     <PageContainer>
       <div className={"p-default py-6 pb-0"}>
-        <h1>Usage & Logs</h1>
-        <Paragraph>
-          Per-request audit with real caller identity, cost attribution, and
-          budget controls.
-        </Paragraph>
+        <h1>{t("common.usageAndLogs")}</h1>
+        <Paragraph>{tr("agentNetwork.usageIntro")}</Paragraph>
       </div>
 
       <RestrictedAccess
-        page={"Usage & Logs"}
+        page={t("common.usageAndLogs")}
         hasAccess={canUseUsage || canUseLogs}
       >
         <GroupsProvider>
@@ -107,13 +108,13 @@ export default function UsageAndLogsPage() {
                   {canUseUsage && (
                     <TabsTrigger value={TAB_USAGE}>
                       <LayoutDashboard size={16} />
-                      Usage
+                      {t("agentNetwork.usage")}
                     </TabsTrigger>
                   )}
                   {canUseLogs && (
                     <TabsTrigger value={TAB_ACCESS_LOGS}>
                       <ScrollText size={16} />
-                      Access Logs
+                      {t("common.accessLogs")}
                     </TabsTrigger>
                   )}
                 </TabsList>

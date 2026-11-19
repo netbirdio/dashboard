@@ -11,6 +11,7 @@ import * as React from "react";
 import Skeleton from "react-loading-skeleton";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { VersionInfo as VersionInfoType } from "@/interfaces/Instance";
 
 function formatVersion(version: string): string {
@@ -94,6 +95,7 @@ export const NavigationVersionInfo = () => {
 };
 
 const NavigationVersionInfoContent = () => {
+  const translate = useTranslations();
   const { data: versionInfo, isLoading } = useFetchApi<VersionInfoType>(
     "/instance/version",
     true, // ignore errors
@@ -137,11 +139,11 @@ const NavigationVersionInfoContent = () => {
           content={
             <div className="text-xs flex flex-col gap-1">
               <span>
-                Installed:{" "}
+                {translate("components.installedVersion")}{" "}
                 {formatVersion(versionInfo.management_current_version)}
               </span>
               <span>
-                Latest:{" "}
+                {translate("components.latestVersionLabel")}{" "}
                 {formatVersion(versionInfo.management_available_version)}
               </span>
             </div>
@@ -150,16 +152,22 @@ const NavigationVersionInfoContent = () => {
           className="w-full"
         >
           <div className="flex items-center justify-between w-full cursor-default gap-2">
-            <span className="shrink-0">Management</span>
+            <span className="shrink-0">
+              {translate("components.management")}
+            </span>
             <VersionValue version={versionInfo.management_current_version} />
           </div>
         </FullTooltip>
         <FullTooltip
           content={
             <div className="text-xs flex flex-col gap-1">
-              <span>Installed: {formatVersion(dashboardVersion)}</span>
               <span>
-                Latest: {formatVersion(versionInfo.dashboard_available_version)}
+                {translate("components.installedVersion")}{" "}
+                {formatVersion(dashboardVersion)}
+              </span>
+              <span>
+                {translate("components.latestVersionLabel")}{" "}
+                {formatVersion(versionInfo.dashboard_available_version)}
               </span>
             </div>
           }
@@ -167,7 +175,9 @@ const NavigationVersionInfoContent = () => {
           className="w-full"
         >
           <div className="flex items-center justify-between w-full cursor-default gap-2">
-            <span className="shrink-0">Dashboard</span>
+            <span className="shrink-0">
+              {translate("components.dashboard")}
+            </span>
             <VersionValue version={dashboardVersion} />
           </div>
         </FullTooltip>
@@ -181,7 +191,7 @@ const NavigationVersionInfoContent = () => {
           className="flex items-center justify-center gap-1.5 text-white font-medium bg-netbird hover:bg-netbird-500 transition-colors rounded-md py-1.5 px-2 mt-1"
         >
           <ArrowUpCircle size={12} />
-          <span>Update available</span>
+          <span>{translate("components.updateAvailable")}</span>
         </a>
       )}
     </div>

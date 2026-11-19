@@ -30,6 +30,7 @@ import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -37,21 +38,6 @@ import useGroupHelper from "@/modules/groups/useGroupHelper";
 type Props = {
   account: Account;
 };
-
-const latestOrCustomVersion = [
-  {
-    label: "Disabled",
-    value: "disabled",
-  },
-  {
-    label: "Latest Version",
-    value: "latest",
-  },
-  {
-    label: "Custom Version",
-    value: "custom",
-  },
-] as SelectOption[];
 
 export default function ClientSettingsTab({ account }: Readonly<Props>) {
   const { isLoading: isGroupsLoading } = useGroups();
@@ -64,6 +50,21 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
 }
 
 function ClientSettingsTabContent({ account }: Readonly<Props>) {
+  const translate = useTranslations();
+  const latestOrCustomVersion = [
+    {
+      label: translate("common.disabled"),
+      value: "disabled",
+    },
+    {
+      label: translate("settings.latestVersion"),
+      value: "latest",
+    },
+    {
+      label: translate("settings.customVersion"),
+      value: "custom",
+    },
+  ] as SelectOption[];
   const { permission } = usePermissions();
   const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
 
@@ -126,13 +127,13 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
   };
 
   const versionError = useMemo(() => {
-    const msg = "Please enter a valid version, e.g., 0.2, 0.2.0, 0.2.0-alpha.1";
+    const msg = translate("settings.invalidVersion");
     if (autoUpdateCustomVersion == "") return "";
     if (autoUpdateCustomVersion == "-") return "";
     const validSemver = validator.isValidVersion(autoUpdateCustomVersion);
     if (!validSemver) return msg;
     return "";
-  }, [autoUpdateCustomVersion]);
+  }, [autoUpdateCustomVersion, translate]);
 
   const canSaveCustomVersion =
     autoUpdateCustomVersion !== "" &&
@@ -162,8 +163,8 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
       .filter(Boolean) as string[];
 
     notify({
-      title: "Client Settings",
-      description: `Client settings successfully updated.`,
+      title: translate("settings.clientSettings"),
+      description: translate("settings.clientSettingsUpdated"),
       promise: saveRequest
         .put({
           id: account.id,
@@ -188,16 +189,16 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
             peerExposeGroupNames,
           ]);
         }),
-      loadingMessage: "Updating client settings...",
+      loadingMessage: translate("settings.clientSettingsUpdating"),
     });
   };
 
   const toggleLazyConnection = async (toggle: boolean) => {
     notify({
-      title: "Lazy Connections",
-      description: `Lazy Connections successfully ${
-        toggle ? "enabled" : "disabled"
-      }.`,
+      title: translate("settings.lazyConnections"),
+      description: translate(
+        toggle ? "settings.lazyStateEnabled" : "settings.lazyStateDisabled",
+      ),
       promise: saveRequest
         .put({
           id: account.id,
@@ -210,16 +211,18 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
           setLazyConnection(toggle);
           mutate("/accounts");
         }),
-      loadingMessage: "Updating Lazy Connections setting...",
+      loadingMessage: translate("settings.lazyConnectionsUpdating"),
     });
   };
 
   const toggleHostnameCollisionRejected = async (toggle: boolean) => {
     notify({
-      title: "Unique Peer Hostnames",
-      description: `Unique peer hostnames successfully ${
-        toggle ? "enabled" : "disabled"
-      }.`,
+      title: translate("settings.uniqueHostnames"),
+      description: translate(
+        toggle
+          ? "settings.hostnameStateEnabled"
+          : "settings.hostnameStateDisabled",
+      ),
       promise: saveRequest
         .put({
           id: account.id,
@@ -232,16 +235,16 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
           setHostnameCollisionRejected(toggle);
           mutate("/accounts");
         }),
-      loadingMessage: "Updating unique peer hostnames setting...",
+      loadingMessage: translate("settings.uniqueHostnamesUpdating"),
     });
   };
 
   const toggleAgentNetworkOnly = async (toggle: boolean) => {
     notify({
-      title: "Agent Network Focused View",
-      description: `Agent Network focused view successfully ${
-        toggle ? "enabled" : "disabled"
-      }.`,
+      title: translate("settings.agentFocusedTitle"),
+      description: translate(
+        toggle ? "settings.agentStateEnabled" : "settings.agentStateDisabled",
+      ),
       promise: saveRequest
         .put({
           id: account.id,
@@ -254,7 +257,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
           setAgentNetworkOnly(toggle);
           mutate("/accounts");
         }),
-      loadingMessage: "Updating Agent Network focused view setting...",
+      loadingMessage: translate("settings.agentFocusedUpdating"),
     });
   };
 
@@ -262,14 +265,14 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
     <Tabs.Content value={"clients"}>
       <div className={"p-default py-6 max-w-2xl"}>
         <div className={"flex items-start justify-between -mt-1"}>
-          <h1>Clients</h1>
+          <h1>{translate("common.clients")}</h1>
           <Button
             variant={"primary"}
             disabled={isSaveButtonDisabled}
             onClick={saveChanges}
             data-testid={"save-clients-settings"}
           >
-            Save Changes
+            {translate("common.saveChanges")}
           </Button>
         </div>
 
@@ -277,26 +280,29 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
           <div className={"flex flex-col relative"}>
             <Label>
               <RefreshCcw size={15} />
-              Automatic Updates
+              {translate("settings.automaticUpdates")}
               <SmallBadge
-                text={"Beta"}
+                text={translate("common.beta")}
                 variant={"sky"}
                 className={"text-[9px] leading-none py-[3px] px-[5px]"}
                 textClassName={"top-0"}
               />
             </Label>
             <HelpText>
-              Configure how NetBird clients receive update notifications. When
-              enabled, users will be prompted to install the selected version.
-              This requires at least NetBird{" "}
-              <span className={"text-nb-gray-100 dark:text-white font-medium"}>v0.61.0</span>.{" "}
-              <InlineLink
-                href={"https://docs.netbird.io/manage/peers/auto-update"}
-                target={"_blank"}
-              >
-                Learn more
-                <ExternalLinkIcon size={12} />
-              </InlineLink>
+              {translate.rich("settings.clientUpdatesHelp", {
+                version: (chunks) => (
+                  <span className="text-nb-gray-100 dark:text-white font-medium">{chunks}</span>
+                ),
+                link: (chunks) => (
+                  <InlineLink
+                    href="https://docs.netbird.io/manage/peers/auto-update"
+                    target="_blank"
+                  >
+                    {chunks}
+                    <ExternalLinkIcon size={12} />
+                  </InlineLink>
+                ),
+              })}
             </HelpText>
             <div className={"gap-4 items-center grid grid-cols-2"}>
               <SelectDropdown
@@ -307,8 +313,8 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               />
               <Input
                 value={autoUpdateCustomVersion}
-                customPrefix={"Version"}
-                placeholder={"e.g., 0.52.2"}
+                customPrefix={translate("common.version")}
+                placeholder={translate("settings.versionPlaceholder")}
                 error={versionError}
                 errorTooltip={true}
                 disabled={autoUpdateMethod !== "custom"}
@@ -326,12 +332,10 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               label={
                 <>
                   <AlertTriangle size={15} className={"text-yellow-400"} />
-                  Force Automatic Updates
+                  {translate("settings.forceAutomaticUpdates")}
                 </>
               }
-              helpText={
-                "When enabled, updates are installed automatically in the background without user interaction."
-              }
+              helpText={translate("settings.forceUpdatesHelp")}
               disabled={
                 !permission.settings.update || autoUpdateMethod === "disabled"
               }
@@ -347,9 +351,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
                   />
                 }
               >
-                Enabling automatic updates will restart the NetBird client
-                during updates, which can temporarily disrupt active
-                connections. Use with caution in production environments.
+                {translate("settings.automaticUpdatesWarning")}
               </Callout>
             )}
           </div>
@@ -358,21 +360,24 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
             <div>
               <Label>
                 <ReverseProxyIcon size={15} className={"text-nb-gray-300"} />
-                Expose Services from CLI
+                {translate("settings.exposeServicesFromCli")}
               </Label>
               <HelpText>
-                Allow peers to expose local services through the NetBird reverse
-                proxy using the CLI. <br /> This requires at least NetBird{" "}
-                <span className={"text-nb-gray-100 dark:text-white font-medium"}>v0.66.0</span>.{" "}
-                <InlineLink
-                  href={
-                    "https://docs.netbird.io/manage/reverse-proxy/expose-from-cli"
-                  }
-                  target={"_blank"}
-                >
-                  Learn more
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
+                {translate.rich("settings.cliExposeHelp", {
+                  br: () => <br />,
+                  version: (chunks) => (
+                    <span className="text-nb-gray-100 dark:text-white font-medium">{chunks}</span>
+                  ),
+                  link: (chunks) => (
+                    <InlineLink
+                      href="https://docs.netbird.io/manage/reverse-proxy/expose-from-cli"
+                      target="_blank"
+                    >
+                      {chunks}
+                      <ExternalLinkIcon size={12} />
+                    </InlineLink>
+                  ),
+                })}
               </HelpText>
             </div>
 
@@ -381,10 +386,8 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               value={peerExposeEnabled}
               onChange={setPeerExposeEnabled}
               data-testid="peer-expose"
-              label={"Enable Peer Expose"}
-              helpText={
-                "When enabled, peers can expose local HTTP services accessible via a public URL."
-              }
+              label={translate("settings.enablePeerExpose")}
+              helpText={translate("settings.peerExposeHelp")}
               disabled={!permission.settings.update}
             />
 
@@ -397,15 +400,14 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               )}
             >
               <div className={"mt-2"}>
-                <Label>Allowed peer groups</Label>
+                <Label>{translate("settings.allowedPeerGroups")}</Label>
                 <HelpText>
-                  Select which peer groups are allowed to expose services. At
-                  least one group is required.
+                  {translate("settings.allowedPeerGroupsHelp")}
                 </HelpText>
                 <PeerGroupSelector
                   values={peerExposeGroups}
                   onChange={setPeerExposeGroups}
-                  placeholder="Select peer groups..."
+                  placeholder={translate("settings.selectPeerGroups")}
                   data-testid="peer-expose-groups-selector"
                 />
               </div>
@@ -415,18 +417,16 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
           <div>
             <Label>
               <ClockFadingIcon size={15} />
-              Lazy Connections
+              {translate("settings.lazyConnections")}
             </Label>
 
             <HelpText>
-              Instead of maintaining always-on connections, NetBird activates
-              them on-demand based on activity or signaling. This requires
-              NetBird client v0.50.1 or higher.{" "}
+              {translate("settings.lazyConnectionsHelp")}{" "}
               <InlineLink
                 href={"https://docs.netbird.io/how-to/lazy-connection"}
                 target={"_blank"}
               >
-                Learn more
+                {translate("common.learnMore")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </HelpText>
@@ -435,14 +435,8 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               value={lazyConnection}
               onChange={toggleLazyConnection}
               data-testid="lazy-connections"
-              label={<>Enable Lazy Connections</>}
-              helpText={
-                <>
-                  Allow to establish connections between peers only when
-                  required. Changes will take effect after restarting the
-                  clients.
-                </>
-              }
+              label={<>{translate("settings.enableLazyConnections")}</>}
+              helpText={<>{translate("settings.lazyToggleHelp")}</>}
               disabled={!permission.settings.update}
             />
           </div>
@@ -450,22 +444,16 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
           <div>
             <Label>
               <TagIcon size={15} />
-              Unique Peer Hostnames
+              {translate("settings.uniqueHostnames")}
             </Label>
-            <HelpText>
-              By default, a peer registering or being renamed with a hostname
-              that is already in use receives an IP-based suffix on its DNS
-              label.
-            </HelpText>
+            <HelpText>{translate("settings.hostnameDefaultHelp")}</HelpText>
             <FancyToggleSwitch
               className={"mt-2"}
               value={hostnameCollisionRejected}
               onChange={toggleHostnameCollisionRejected}
               data-testid="peer-hostname-collision-rejected"
-              label={"Reject Hostname Collisions"}
-              helpText={
-                "When enabled, registering or renaming a peer to a hostname that is already in use fails instead of receiving a suffix. This applies to ephemeral peers as well."
-              }
+              label={translate("settings.rejectHostnameCollisions")}
+              helpText={translate("settings.rejectHostnameHelp")}
               disabled={!permission.settings.update}
             />
           </div>
@@ -474,22 +462,16 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
             <div>
               <Label>
                 <AgentNetworkIcon size={15} />
-                Agent Network
+                {translate("common.agentNetwork")}
               </Label>
-              <HelpText>
-                Focus the dashboard on the Agent Network surface and hide
-                sections that are not relevant for it, such as Networks, DNS and
-                Reverse Proxy.
-              </HelpText>
+              <HelpText>{translate("settings.agentNetworkHelp")}</HelpText>
               <FancyToggleSwitch
                 className={"mt-2"}
                 value={agentNetworkOnly}
                 onChange={toggleAgentNetworkOnly}
                 data-testid="agent-network-only"
-                label={"Agent Network focused view"}
-                helpText={
-                  "When enabled, the dashboard shows only the Agent Network related sections. Disable it to bring back the full dashboard."
-                }
+                label={translate("settings.agentNetworkFocusedView")}
+                helpText={translate("settings.agentFocusedToggleHelp")}
                 disabled={!permission.settings.update}
               />
             </div>

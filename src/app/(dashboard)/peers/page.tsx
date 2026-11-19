@@ -13,6 +13,7 @@ import { useBypassedPeers } from "@/cloud/edr/useBypass";
 import PeersProvider, { usePeers } from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import PageContainer from "@/layouts/PageContainer";
 import type { PeersTableKind } from "@/modules/peers/PeersTable";
 import { SetupModalContent } from "@/modules/setup-netbird-modal/SetupModal";
@@ -42,6 +43,7 @@ export default function PeersPage() {
 }
 
 function PeersView() {
+  const t = useTranslations();
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -88,14 +90,14 @@ function PeersView() {
   return (
     <>
       <div className={"p-default py-6"}>
-        <h1 ref={headingRef}>Peers</h1>
+        <h1 ref={headingRef}>{t("common.peers")}</h1>
         <Paragraph>
-            User devices and headless machines, such as servers and autonomous agents, connected to your network.{" "}
+          {t("peers.pageDescription")}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/add-machines-to-your-network"}
             target={"_blank"}
           >
-            Learn more
+            {t("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
@@ -114,19 +116,18 @@ function PeersView() {
 }
 
 function PeersBlockedView() {
+  const t = useTranslations();
   return (
     <div className={"flex items-center justify-center flex-col"}>
       <div className={"p-default py-6 max-w-3xl text-center"}>
-        <h1>Add new device to your network</h1>
+        <h1>{t("peers.addNewDeviceTitle")}</h1>
         <Paragraph className={"inline"}>
-          To get started, install NetBird and log in using your email account.
-          After that you should be connected. If you have further questions
-          check out our{" "}
+          {t("peers.addNewDeviceDescription")}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/getting-started#installation"}
             target={"_blank"}
           >
-            Installation Guide
+            {t("peers.installationGuide")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>

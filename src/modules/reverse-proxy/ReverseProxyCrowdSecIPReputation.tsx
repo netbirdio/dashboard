@@ -1,7 +1,6 @@
-import * as React from "react";
-import { ReactNode } from "react";
-import { Label } from "@components/Label";
 import HelpText from "@components/HelpText";
+import { HelpTooltip } from "@components/HelpTooltip";
+import { Label } from "@components/Label";
 import {
   Select,
   SelectContent,
@@ -10,10 +9,12 @@ import {
   SelectValue,
 } from "@components/Select";
 import { EyeIcon, PowerOffIcon, ShieldCheckIcon } from "lucide-react";
-import { HelpTooltip } from "@components/HelpTooltip";
-import { CrowdSecMode } from "@/interfaces/ReverseProxy";
 import Image from "next/image";
+import * as React from "react";
+import { ReactNode } from "react";
 import CrowdSecIconImage from "@/assets/integrations/crowdsec.png";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import { CrowdSecMode } from "@/interfaces/ReverseProxy";
 
 type Props = {
   value: CrowdSecMode;
@@ -26,29 +27,31 @@ type CrowdSecOption = {
   icon: ReactNode;
 };
 
-const CROWDSEC_OPTIONS: Record<CrowdSecMode, CrowdSecOption> = {
-  [CrowdSecMode.OFF]: {
-    label: "Disabled",
-    icon: <PowerOffIcon size={14} />,
-  },
-  [CrowdSecMode.ENFORCE]: {
-    label: "Enforce",
-    description:
-      "Blocked IPs are denied immediately. If the bouncer is not yet synced, connections are denied (fail-closed).",
-    icon: <ShieldCheckIcon size={14} />,
-  },
-  [CrowdSecMode.OBSERVE]: {
-    label: "Observe",
-    description:
-      "Blocked IPs are logged but not denied. Use this to evaluate CrowdSec before enforcing.",
-    icon: <EyeIcon size={14} />,
-  },
-};
-
 export const ReverseProxyCrowdSecIPReputation = ({
   value,
   onChange,
 }: Props) => {
+  const t = useTranslations();
+  const CROWDSEC_OPTIONS: Record<CrowdSecMode, CrowdSecOption> = {
+    [CrowdSecMode.OFF]: {
+      label: t("common.disabled"),
+      icon: <PowerOffIcon size={14} />,
+    },
+    [CrowdSecMode.ENFORCE]: {
+      label: t("reverseProxy.enforce"),
+      description: t(
+        "reverseProxy.blockedIPsAreDeniedImmediatelyIfTheBouncerIsNotYetSynced",
+      ),
+      icon: <ShieldCheckIcon size={14} />,
+    },
+    [CrowdSecMode.OBSERVE]: {
+      label: t("reverseProxy.observe"),
+      description: t(
+        "reverseProxy.blockedIPsAreLoggedButNotDeniedUseThisToEvaluateCrowdSec",
+      ),
+      icon: <EyeIcon size={14} />,
+    },
+  };
   const selected = CROWDSEC_OPTIONS[value];
 
   return (
@@ -66,18 +69,21 @@ export const ReverseProxyCrowdSecIPReputation = ({
           />
         </div>
         <div>
-          <Label>CrowdSec IP Reputation</Label>
+          <Label>{t("reverseProxy.crowdSecIPReputation")}</Label>
           <HelpText>
-            Detect malicious IPs with CrowdSec.{" "}
-            <b className={"text-nb-gray-100 dark:text-white"}>Enforce</b> to block them or{" "}
-            <b className={"text-nb-gray-100 dark:text-white"}>Observe</b> to only log without
-            blocking.
+            {t.rich("reverseProxy.crowdSecHelp", {
+              enforce: (chunks) => <b className="text-nb-gray-100 dark:text-white">{chunks}</b>,
+              observe: (chunks) => <b className="text-nb-gray-100 dark:text-white">{chunks}</b>,
+            })}
           </HelpText>
         </div>
       </div>
 
       <Select value={value} onValueChange={(v) => onChange(v as CrowdSecMode)}>
-        <SelectTrigger className="w-[260px]" data-testid="crowdsec-mode-trigger">
+        <SelectTrigger
+          className="w-[260px]"
+          data-testid="crowdsec-mode-trigger"
+        >
           <div className="flex items-center gap-2 whitespace-nowrap">
             {selected.icon}
             <SelectValue />

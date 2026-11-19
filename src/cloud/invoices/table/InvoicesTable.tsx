@@ -14,6 +14,7 @@ import InvoicesActionCell from "@/cloud/invoices/table/InvoicesActionCell";
 import InvoicesPeriodCell from "@/cloud/invoices/table/InvoicesPeriodCell";
 import InvoicesTypeCell from "@/cloud/invoices/table/InvoicesTypeCell";
 import { Invoice } from "@/cloud/msp/interfaces/Invoice";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   invoices?: Invoice[];
@@ -23,8 +24,12 @@ type Props = {
 
 const InvoicesColumns: ColumnDef<Invoice>[] = [
   {
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Date</DataTableHeader>;
+    header: function Header({ column }) {
+      const t = useTranslations();
+
+      return (
+        <DataTableHeader column={column}>{t("common.date")}</DataTableHeader>
+      );
     },
     accessorKey: "period_start",
     cell: ({ row }) => <InvoicesPeriodCell invoice={row.original} />,
@@ -33,8 +38,12 @@ const InvoicesColumns: ColumnDef<Invoice>[] = [
     accessorKey: "period_end",
   },
   {
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Type</DataTableHeader>;
+    header: function Header({ column }) {
+      const t = useTranslations();
+
+      return (
+        <DataTableHeader column={column}>{t("common.type")}</DataTableHeader>
+      );
     },
     accessorKey: "type",
     cell: ({ row }) => <InvoicesTypeCell invoice={row.original} />,
@@ -52,6 +61,7 @@ export default function InvoicesTable({
   isLoading,
   headingTarget,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   const { isActive: isDistributor } = useDistributor();
   const apiRequestPath = isDistributor
     ? "/integrations/msp/reseller/invoices"
@@ -79,19 +89,17 @@ export default function InvoicesTable({
       tableClassName={"mt-0"}
       tableCellClassName={""}
       rowClassName={"last:mb-5"}
-      text={"Invoices"}
+      text={translate("invoices.title")}
       columns={InvoicesColumns}
       keepStateInLocalStorage={false}
       data={invoices}
-      searchPlaceholder={"Search by invoice number or date..."}
+      searchPlaceholder={translate("invoices.searchPlaceholder")}
       isLoading={isLoading}
       getStartedCard={
         <NoResults
           className={"py-4"}
-          title={"You don't have any invoices"}
-          description={
-            "Invoices are created at the end of each billing period. You will see them here once they are available."
-          }
+          title={translate("invoices.noInvoicesTitle")}
+          description={translate("invoices.noInvoicesDescription")}
           icon={<ReceiptTextIcon size={20} className={"text-nb-gray-300"} />}
         />
       }

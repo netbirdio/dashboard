@@ -3,6 +3,7 @@ import Paragraph from "@components/Paragraph";
 import * as Tabs from "@radix-ui/react-tabs";
 import { ExternalLinkIcon } from "lucide-react";
 import React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { LockedFeatureInfoCard } from "@/modules/billing/locked-feature/LockedFeatureInfoCard";
 import { LockedFeatureOverlay } from "@/modules/billing/locked-feature/LockedFeatureOverlay";
 import Firehose from "@/modules/integrations/event-streaming/amazon/firehose/Firehose";
@@ -11,26 +12,26 @@ import Datadog from "@/modules/integrations/event-streaming/datadog/Datadog";
 import GenericHTTP from "@/modules/integrations/event-streaming/generic-http/GenericHTTP";
 
 export default function EventStreamingTab() {
+  const t = useTranslations();
   return (
     <Tabs.Content value={"event-streaming"}>
       <div className={"p-default py-6"}>
-        <h1>Event Streaming</h1>
+        <h1>{t("common.eventStreaming")}</h1>
         <Paragraph>
-          Event Streaming allows you to stream NetBirds audit & traffic events
-          to different third-party services.
+          {t("integrations.streamingTabDescription")}
         </Paragraph>
         <Paragraph>
           <InlineLink
             href={"https://docs.netbird.io/how-to/activity-event-streaming"}
             target={"_blank"}
           >
-            Learn more
+            {t("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
 
         <LockedFeatureInfoCard
-          featureText={"Event Streaming"}
+          featureText={t("common.eventStreaming")}
           feature={"EVENT_STREAMING"}
         />
         <LockedFeatureOverlay feature={"EVENT_STREAMING"} opacity={100}>

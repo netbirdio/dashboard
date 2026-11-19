@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { AccountMFAInfoModal } from "@/cloud/mfa/AccountMFAInfoModal";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 const config = loadConfig();
 
@@ -20,6 +21,7 @@ export interface AccountMFA {
 }
 
 export const AccountMFASettings = () => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const {
     data: accountMfa,
@@ -83,7 +85,7 @@ export const AccountMFASettings = () => {
     } for your account`;
 
     notify({
-      title: "Multi-Factor Authentication (MFA)",
+      title: t("common.mfa"),
       description:
         rememberBrowser != undefined
           ? rememberBrowserDescription
@@ -109,7 +111,7 @@ export const AccountMFASettings = () => {
           setIsLoading(false);
           clearTimeout(timer);
         }),
-      loadingMessage: "Updating MFA settings...",
+      loadingMessage: t("mfa.updatingMFASettings"),
     });
   };
   const handleModalConfirm = () => {
@@ -149,7 +151,7 @@ export const AccountMFASettings = () => {
         >
           <div className={"flex gap-2 items-center justify-center"}>
             <Loader2Icon size={15} className={"animate-spin"} />
-            Updating MFA settings...
+            {t("mfa.updatingMFASettings")}
           </div>
         </div>
         <FancyToggleSwitch
@@ -161,13 +163,14 @@ export const AccountMFASettings = () => {
           label={
             <>
               <ShieldCheckIcon size={15} />
-              Multi-Factor Authentication (MFA)
+              {t("common.mfa")}
             </>
           }
           helpText={
             <>
-              Enable NetBird MFA if not configured in your IdP. <br />
-              This setting is global and applies to all users.
+              {t.rich("mfa.enableNetBirdMFAIfNotConfiguredInYourIdPThis", {
+                part0: () => <br />,
+              })}
             </>
           }
         />
@@ -192,13 +195,12 @@ export const AccountMFASettings = () => {
           />
           <div>
             <div className={"font-medium text-sm text-nb-gray-200"}>
-              Remember Browser for MFA
+              {t("mfa.rememberBrowserForMFA")}
             </div>
             <div className={"text-xs"}>
-              When enabled, users will have the option to remember their browser
-              for 30 days.
-              <br className={"hidden lg:block"} /> MFA will not be required for
-              that browser during this period.
+              {t.rich("mfa.whenEnabledUsersWillHaveTheOptionToRememberTheir", {
+                part0: () => <br className={"hidden lg:block"} />,
+              })}
             </div>
           </div>
         </label>

@@ -6,6 +6,7 @@ import { GRPC_API_ORIGIN, pkgsDownloadUrl } from "@utils/netbird";
 import { DownloadIcon, PackageOpenIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
   ManagementUrlStep,
@@ -28,6 +29,7 @@ export default function WindowsTab({
   showSetupKeyInfo,
   hostname,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const [windowsUrl, setWindowsUrl] = useState(pkgsDownloadUrl("windows/x64"));
   // The CLI-run branch is required for the server flow (setupKeyContent
   // present) even before a key is generated — the placeholder keeps the
@@ -42,17 +44,17 @@ export default function WindowsTab({
       <TabsContentPadding>
         <p className={"font-medium flex gap-3 items-center text-base"}>
           <PackageOpenIcon size={16} />
-          Install on Windows
+          {t("setupNetbirdModal.installOnWindows")}
         </p>
         <Steps>
           <Steps.Step step={1}>
-            <p>Download and run Windows Installer</p>
+            <p>{t("setupNetbirdModal.downloadWindowsInstaller")}</p>
             <div className={"flex gap-4 mt-1"}>
               <SelectDropdown
                 value={windowsUrl}
                 className={"w-[170px]"}
                 onChange={setWindowsUrl}
-                placeholder={"Select architecture"}
+                placeholder={t("setupNetbirdModal.selectArchitecture")}
                 options={[
                   {
                     label: "64-Bit",
@@ -80,7 +82,7 @@ export default function WindowsTab({
               >
                 <Button variant={"primary"}>
                   <DownloadIcon size={14} />
-                  Download NetBird
+                  {t("setupNetbirdModal.downloadNetBird")}
                 </Button>
               </Link>
             </div>
@@ -99,7 +101,7 @@ export default function WindowsTab({
           {useCliRun ? (
             <Steps.Step step={runStep} line={false}>
               <p>
-                Open Command-line and run NetBird{" "}
+                {t("setupNetbirdModal.openCmdAndRun")}{" "}
                 {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
               </p>
 
@@ -115,11 +117,11 @@ export default function WindowsTab({
               <Steps.Step step={runStep}>
                 <p>
                   {/* eslint-disable-next-line react/no-unescaped-entities */}
-                  Click on "Connect" from the NetBird icon in your system tray
+                  {t("setupNetbirdModal.clickConnectTray")}
                 </p>
               </Steps.Step>
               <Steps.Step step={runStep + 1} line={false}>
-                <p>Sign up using your email address</p>
+                <p>{t("setupNetbirdModal.signUpWithEmail")}</p>
               </Steps.Step>
             </>
           )}

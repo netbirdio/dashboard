@@ -73,11 +73,13 @@ export function CheckboxListPicker<V extends string | number>({
 export function formatCheckboxChip<V>(
   value: V[] | undefined,
   options: CheckboxOption<V>[],
-  plural: string,
+  multiple: string | ((count: number) => string),
 ): string | null {
   if (!value || value.length === 0) return null;
   if (value.length === 1) {
     return options.find((o) => o.value === value[0])?.label ?? String(value[0]);
   }
-  return `${value.length} ${plural}`;
+  return typeof multiple === "function"
+    ? multiple(value.length)
+    : `${value.length} ${multiple}`;
 }

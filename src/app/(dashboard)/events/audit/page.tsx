@@ -8,12 +8,14 @@ import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
 import React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
 import PageContainer from "@/layouts/PageContainer";
 import ActivityTable from "@/modules/activity/ActivityTable";
 import { EventStreamingCard } from "@/modules/integrations/event-streaming/EventStreamingCard";
 
 export default function Activity() {
+  const t = useTranslations();
   const { permission } = usePermissions();
 
   const { data: events, isLoading } =
@@ -25,20 +27,19 @@ export default function Activity() {
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
-        <h1 ref={headingRef}>Audit Events</h1>
+        <h1 ref={headingRef}>{t("common.auditEvents")}</h1>
         <Paragraph>
-          Audit configuration changes, access policy updates, and peer
-          registration and login events across your network.{" "}
+          {t("events.auditEventsDescription")}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/audit-events-logging"}
             target={"_blank"}
           >
-            Learn more
+            {t("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
       </div>
-      <RestrictedAccess page={"Activity"} hasAccess={permission.events.read}>
+      <RestrictedAccess page={t("events.title")} hasAccess={permission.events.read}>
         <EventStreamingCard />
         <ActivityTable
           events={events}

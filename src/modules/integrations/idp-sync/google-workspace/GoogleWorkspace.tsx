@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/google-workspace.png";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   AzureADIntegration,
   GoogleWorkspaceIntegration,
@@ -22,6 +23,7 @@ import { useIntegrations } from "@/modules/integrations/idp-sync/useIntegrations
 import { IntegrationCard } from "@/modules/integrations/IntegrationCard";
 
 export const GoogleWorkspace = () => {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const [setupModal, setSetupModal] = useState(false);
   const { permission } = usePermissions();
@@ -47,10 +49,13 @@ export const GoogleWorkspace = () => {
     if (!integration) return setSetupModal(true);
 
     notify({
-      title: "Google Workspace Integration",
-      description: `Google Workspace was successfully ${
-        state ? "enabled" : "disabled"
-      }`,
+      title: t("integrations.idpIntegrationTitle", {
+        name: t("integrations.idpGoogleWorkspace"),
+      }),
+      description: t("integrations.idpStateDescription", {
+        name: t("integrations.idpGoogleWorkspace"),
+        state: state ? t("common.enabled") : t("common.disabled"),
+      }),
       promise: googleRequest
         .put(
           {
@@ -62,7 +67,7 @@ export const GoogleWorkspace = () => {
           mutate("/integrations/google-idp");
           setEnabled(state);
         }),
-      loadingMessage: "Updating integration...",
+      loadingMessage: t("integrations.idpUpdatingLoading"),
     });
   };
 
@@ -71,8 +76,8 @@ export const GoogleWorkspace = () => {
   ) : (
     <>
       <IntegrationCard
-        name="Google Workspace"
-        description="A flexible, innovative solution for people and organizations to achieve more."
+        name={t("integrations.idpGoogleWorkspace")}
+        description={t("integrations.idpGoogleDescription")}
         url={{
           title: "workspace.google.com",
           href: "https://workspace.google.com/",
@@ -99,6 +104,7 @@ type ConfigurationProps = {
   config: GoogleWorkspaceIntegration;
 };
 const ConfigurationButton = ({ config }: ConfigurationProps) => {
+  const t = useTranslations();
   const { data: logs } = useFetchApi<IdentityProviderLog[]>(
     `/integrations/google-idp/${config.id}/logs`,
   );
@@ -111,9 +117,13 @@ const ConfigurationButton = ({ config }: ConfigurationProps) => {
 
   const forceSync = async () => {
     notify({
-      title: "Google Workspace Integration",
-      description: `Google Workspace was successfully synced`,
-      loadingMessage: "Syncing integration...",
+      title: t("integrations.idpIntegrationTitle", {
+        name: t("integrations.idpGoogleWorkspace"),
+      }),
+      description: t("integrations.idpSyncedDescription", {
+        name: t("integrations.idpGoogleWorkspace"),
+      }),
+      loadingMessage: t("integrations.idpSyncingLoading"),
       promise: syncRequest.post({}).then(() => {
         mutate(`/integrations/google-idp/${config.id}/logs`);
       }),
@@ -121,9 +131,11 @@ const ConfigurationButton = ({ config }: ConfigurationProps) => {
   };
 
   const lastSync = useMemo(() => {
-    if (isEmpty(logs)) return "Not synchronized";
-    return "Synced " + dayjs().to(logs?.[0]?.timestamp);
-  }, [logs]);
+    if (isEmpty(logs)) return t("integrations.idpNotSynchronized");
+    return t("integrations.idpSyncedAgo", {
+      time: dayjs().to(logs?.[0]?.timestamp),
+    });
+  }, [logs, t]);
 
   return (
     <>
@@ -131,7 +143,7 @@ const ConfigurationButton = ({ config }: ConfigurationProps) => {
         <FullTooltip
           content={
             <div className={"text-xs"}>
-              Force synchronization of users and groups
+              {t("integrations.idpForceSyncTooltip")}
             </div>
           }
           disabled={!config.enabled}

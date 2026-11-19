@@ -47,6 +47,7 @@ import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import NoResults from "@/components/ui/NoResults";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import type { Policy } from "@/interfaces/Policy";
 import AccessControlModal, {
   AccessControlUpdateModal,
@@ -71,7 +72,7 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     id: "name",
     accessorFn: (row) => removeAllSpaces(row?.name),
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.name" />;
     },
     sortingFn: "text",
     filterFn: "fuzzy",
@@ -94,9 +95,11 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     meta: { className: ENABLED_COLUMN_CLASS.xl, fit: true },
     header: ({ column }) => {
       return (
-        <DataTableHeader column={column} sorting={false}>
-          Active
-        </DataTableHeader>
+        <DataTableHeader
+          column={column}
+          sorting={false}
+          labelId="common.active"
+        />
       );
     },
     cell: ({ cell }) => <AccessControlActiveCell policy={cell.row.original} />,
@@ -113,7 +116,9 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     },
     sortingFn: "basic",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Sources</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} labelId="accessControl.sources" />
+      );
     },
     cell: ({ cell }) => <AccessControlSourcesCell policy={cell.row.original} />,
   },
@@ -129,7 +134,9 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     },
     sortingFn: "basic",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Direction</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} labelId="accessControl.direction" />
+      );
     },
     cell: ({ cell }) => (
       <AccessControlDirectionCell policy={cell.row.original} />
@@ -147,7 +154,9 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     },
     sortingFn: "basic",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Destinations</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} labelId="accessControl.destinations" />
+      );
     },
     cell: ({ cell }) => (
       <AccessControlDestinationsCell policy={cell.row.original} />
@@ -159,7 +168,12 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     accessorFn: (row) => row.rules?.[0]?.protocol || "",
     sortingFn: "text",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Proto & Ports</DataTableHeader>;
+      return (
+        <DataTableHeader
+          column={column}
+          labelId="accessControl.protocolAndPorts"
+        />
+      );
     },
     cell: ({ cell }) => (
       <AccessControlProtoPortsCell policy={cell.row.original} />
@@ -235,6 +249,7 @@ export default function AccessControlTable({
   headingTarget,
   isGroupPage,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { permission } = usePermissions();
@@ -296,11 +311,26 @@ export default function AccessControlTable({
   // Inactive ButtonGroup. Routed through the consolidated Filters UI.
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Enabled", dotClass: "bg-green-500" },
-      { value: false, label: "Disabled", dotClass: "bg-nb-gray-700" },
+      {
+        value: undefined,
+        id: "all",
+        label: translate("common.all"),
+        dotClass: "bg-nb-gray-500",
+      },
+      {
+        value: true,
+        id: "enabled",
+        label: translate("common.enabled"),
+        dotClass: "bg-green-500",
+      },
+      {
+        value: false,
+        id: "disabled",
+        label: translate("common.disabled"),
+        dotClass: "bg-nb-gray-700",
+      },
     ],
-    [],
+    [translate],
   );
 
   const protocolOptions = useMemo<CheckboxOption<string>[]>(
@@ -315,20 +345,32 @@ export default function AccessControlTable({
 
   const postureOptions = useMemo<RadioOption<string | undefined>[]>(
     () => [
-      { value: undefined, label: "All" },
-      { value: "with", label: "With" },
-      { value: "without", label: "Without" },
+      { value: undefined, id: "all", label: translate("common.all") },
+      {
+        value: "with",
+        id: "with",
+        label: translate("accessControl.withPosture"),
+      },
+      {
+        value: "without",
+        id: "without",
+        label: translate("accessControl.withoutPosture"),
+      },
     ],
-    [],
+    [translate],
   );
 
   const directionOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All" },
-      { value: true, label: "Bidirectional" },
-      { value: false, label: "One-way" },
+      { value: undefined, id: "all", label: translate("common.all") },
+      {
+        value: true,
+        id: "bidirectional",
+        label: translate("accessControl.bidirectional"),
+      },
+      { value: false, id: "one-way", label: translate("accessControl.oneWay") },
     ],
-    [],
+    [translate],
   );
 
   // Groups derived from the current policies' sources + destinations,
@@ -358,7 +400,7 @@ export default function AccessControlTable({
     () => [
       {
         id: "enabled",
-        label: "Status",
+        label: translate("common.status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -372,7 +414,7 @@ export default function AccessControlTable({
       },
       {
         id: "source_group_names",
-        label: "Sources",
+        label: translate("accessControl.sources"),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -381,11 +423,12 @@ export default function AccessControlTable({
             groups={tableGroups}
           />
         ),
-        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+        formatChip: (v) =>
+          formatGroupsChip(v as string[] | undefined, translate),
       },
       {
         id: "destination_group_names",
-        label: "Destinations",
+        label: translate("accessControl.destinations"),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -394,11 +437,12 @@ export default function AccessControlTable({
             groups={tableGroups}
           />
         ),
-        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+        formatChip: (v) =>
+          formatGroupsChip(v as string[] | undefined, translate),
       },
       {
         id: "direction_filter",
-        label: "Direction",
+        label: translate("accessControl.direction"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -412,7 +456,7 @@ export default function AccessControlTable({
       },
       {
         id: "protocol_filter",
-        label: "Protocol",
+        label: translate("common.protocol"),
         renderPicker: (p) => (
           <CheckboxListPicker
             value={p.value as string[] | undefined}
@@ -425,25 +469,25 @@ export default function AccessControlTable({
           formatCheckboxChip(
             v as string[] | undefined,
             protocolOptions,
-            "protocols",
+            (count) => translate("tables.protocolCount", { count }),
           ),
       },
       {
         id: "ports_filter",
-        label: "Port",
+        label: translate("common.port"),
         renderPicker: (p) => (
           <TextInputPicker
             value={p.value as string | undefined}
             onChange={p.onChange}
             close={p.close}
-            placeholder={"e.g. 443"}
+            placeholder={translate("accessControl.portExample")}
           />
         ),
         formatChip: (v) => formatTextChip(v as string | undefined),
       },
       {
         id: "has_posture_checks",
-        label: "Posture Checks",
+        label: translate("common.postureChecks"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as string | undefined}
@@ -462,6 +506,7 @@ export default function AccessControlTable({
       postureOptions,
       directionOptions,
       tableGroups,
+      translate,
     ],
   );
 
@@ -496,7 +541,7 @@ export default function AccessControlTable({
               ]
             : undefined
         }
-        text={"Access Control Policies"}
+        text={translate("accessControl.tableHeading")}
         sorting={sorting}
         setSorting={setSorting}
         initialPageSize={25}
@@ -524,15 +569,17 @@ export default function AccessControlTable({
           setEditModal(true);
           setCurrentCellClicked(cell);
         }}
-        searchPlaceholder={"Search by name and description..."}
+        searchPlaceholder={translate(
+          "accessControl.searchByNameAndDescription",
+        )}
         getStartedCard={
           isGroupPage ? (
             <NoResults
               className={"py-4"}
-              title={"This group is not used within any policies yet"}
-              description={
-                "Assign this group as either a source or destination inside a policy to see them listed here."
-              }
+              title={translate("accessControl.noPoliciesForGroup")}
+              description={translate(
+                "accessControl.noPoliciesForGroupDescription",
+              )}
               icon={
                 <AccessControlIcon size={20} className={"fill-nb-gray-300"} />
               }
@@ -545,7 +592,7 @@ export default function AccessControlTable({
                     disabled={!permission.policies.create}
                   >
                     <PlusCircle size={16} />
-                    Add Policy
+                    {translate("common.addPolicy")}
                   </Button>
                 </AccessControlModal>
               </div>
@@ -564,10 +611,10 @@ export default function AccessControlTable({
                   size={"large"}
                 />
               }
-              title={"Create New Policy"}
-              description={
-                "It looks like you don't have any policies yet. Policies can allow connections by specific protocol and ports."
-              }
+              title={translate("accessControl.createNewPolicy")}
+              description={translate(
+                "accessControl.createNewPolicyDescription",
+              )}
               button={
                 <div className={"flex gap-4 items-center justify-center"}>
                   <AccessControlModal>
@@ -576,7 +623,7 @@ export default function AccessControlTable({
                       disabled={!permission.policies.create}
                     >
                       <PlusCircle size={16} />
-                      Add Policy
+                      {translate("common.addPolicy")}
                     </Button>
                   </AccessControlModal>
                 </div>
@@ -590,7 +637,7 @@ export default function AccessControlTable({
                     }
                     target={"_blank"}
                   >
-                    Access Controls
+                    {translate("accessControl.accessControls")}
                     <ExternalLinkIcon size={12} />
                   </InlineLink>
                 </>
@@ -610,7 +657,7 @@ export default function AccessControlTable({
                     data-testid="open-add-policy"
                   >
                     <PlusCircle size={16} />
-                    Add Policy
+                    {translate("common.addPolicy")}
                   </Button>
                 </AccessControlModal>
               </div>
@@ -631,9 +678,7 @@ export default function AccessControlTable({
                 <FullTooltip
                   content={
                     <div className={"max-w-sm text-xs"}>
-                      Show temporary policies created by the NetBird browser
-                      client. These policies are ephemeral and will be deleted
-                      automatically after a short period of time.
+                      {translate("accessControl.temporaryPoliciesTooltip")}
                     </div>
                   }
                 >

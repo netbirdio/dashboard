@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import integrationImage from "@/assets/integrations/okta.png";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DomainValidationStatus } from "@/interfaces/Account";
 import { EstimatedSetupTime } from "@/modules/integrations/EstimatedSetupTime";
 import { IntegrationModalHeader } from "@/modules/integrations/IntegrationModalHeader";
@@ -32,6 +33,7 @@ type Props = {
 };
 
 export default function OktaSSOSetup({ open, onOpenChange }: Props) {
+  const translate = useTranslations();
   const { createOrUpdateConnection, verifyDomain, mutate } =
     useEnterpriseConnections();
   const [step, setStep] = useState(0);
@@ -52,9 +54,9 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
     if (isLoading) return;
     setIsLoading(true);
     notify({
-      title: "Okta SSO Integration",
-      description: "Okta SSO was successfully connected",
-      loadingMessage: "Connecting Okta SSO...",
+      title: translate("integrations.ssoIntegrationTitle"),
+      description: translate("integrations.ssoConnectedDescription"),
+      loadingMessage: translate("integrations.ssoConnectingLoading"),
       promise: createOrUpdateConnection({
         domain: oktaDomain,
         client_id: clientId,
@@ -71,16 +73,16 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
           );
           if (!oktaConnection) {
             notify({
-              title: "Okta SSO Integration",
-              description: "Failed to connect Okta SSO",
+              title: translate("integrations.ssoIntegrationTitle"),
+              description: translate("integrations.ssoFailedToConnect"),
             });
             return;
           }
           const domain = oktaConnection.domains?.[0] || undefined;
           if (!domain) {
             notify({
-              title: "Okta SSO Integration",
-              description: "Failed to connect Okta SSO",
+              title: translate("integrations.ssoIntegrationTitle"),
+              description: translate("integrations.ssoFailedToConnect"),
             });
             return;
           }
@@ -135,10 +137,12 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
 
           <IntegrationModalHeader
             image={integrationImage}
-            title={"Connect NetBird with Okta SSO"}
-            description={
-              "Use Okta as a Single Sign-On provider to authenticate users. Follow the steps below to get started."
-            }
+            title={translate("integrations.ssoConnectTitle", {
+              name: "Okta SSO",
+            })}
+            description={translate("integrations.ssoConnectDescription", {
+              name: "Okta",
+            })}
           />
 
           {step == 0 && (
@@ -153,21 +157,24 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                 }
               >
                 <Shield size={16} />
-                Required Permissions
+                {translate("common.requiredPermissions")}
               </div>
               <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
-                Ensure that you have an{" "}
-                <span className={"text-nb-gray-100 font-semibold"}>
-                  Okta user account
-                </span>{" "}
-                with the following{" "}
-                <span className={"text-nb-gray-100 font-semibold"}>
-                  permissions
-                </span>
-                .{" "}
-                {
-                  "If you don't have the required permissions, ask your Okta administrator to grant them to you."
-                }
+                {translate.rich("integrations.idpPermissionsIntro", {
+                  account: () => (
+                    <span className={"text-nb-gray-100 font-semibold"}>
+                      {translate("integrations.idpOktaUserAccount")}
+                    </span>
+                  ),
+                  requirement: () => (
+                    <span className={"text-nb-gray-100 font-semibold"}>
+                      {translate("integrations.idpPermissionsWord")}
+                    </span>
+                  ),
+                  followup: translate("integrations.idpPermissionsMissing", {
+                    administrator: translate("integrations.idpOkta"),
+                  }),
+                })}
               </p>
               <div
                 className={
@@ -180,7 +187,7 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                   }
                 >
                   <PlusCircle size={14} className={"text-sky-500"} />
-                  Add Okta applications
+                  {translate("integrations.idpOktaAddApps")}
                 </div>
                 <div
                   className={
@@ -188,7 +195,7 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                   }
                 >
                   <Settings2 size={14} className={"text-sky-500"} />
-                  Configure Okta applications
+                  {translate("integrations.idpOktaConfigApps")}
                 </div>
               </div>
             </div>
@@ -198,33 +205,41 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
             <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
               <p className={"font-medium flex gap-3 items-center text-base"}>
                 <Box size={20} />
-                Install NetBird application for Okta
+                {translate("integrations.idpSsoInstallApp")}
               </p>
               <Steps>
                 <Steps.Step step={1}>
                   <p>
-                    Navigate to{" "}
-                    <InlineLink
-                      className={"inline"}
-                      target={"_blank"}
-                      href={"https://www.okta.com/integrations/netbird"}
-                    >
-                      Okta Integration Network
-                    </InlineLink>
+                    {translate.rich("integrations.idpOktaNavigateTo", {
+                      link: (chunks) => (
+                        <InlineLink
+                          className={"inline"}
+                          target={"_blank"}
+                          href={"https://www.okta.com/integrations/netbird"}
+                        >
+                          {chunks}
+                        </InlineLink>
+                      ),
+                    })}
                   </p>
                 </Steps.Step>
                 <Steps.Step step={2}>
                   <p className={"font-normal"}>
-                    Click <Mark>+ Add Integration</Mark> and then{" "}
-                    <Mark>Done</Mark>
+                    {translate.rich("integrations.idpOktaInstallDone", {
+                      add: (chunks) => <Mark>{chunks}</Mark>,
+                      done: (chunks) => <Mark>{chunks}</Mark>,
+                    })}
                   </p>
                 </Steps.Step>
                 <Steps.Step step={3} line={false}>
                   <p>
-                    After installing the application go to the{" "}
-                    <Mark>Assignments</Mark> tab, select the <Mark>Assign</Mark>{" "}
-                    and click <Mark>Assign to People</Mark> and assign your user
-                    to the application
+                    {translate.rich("integrations.idpOktaAssignPeople", {
+                      assignments: (chunks) => <Mark>{chunks}</Mark>,
+                      assign: () => <Mark>{translate("common.assign")}</Mark>,
+                      people: () => (
+                        <Mark>{translate("integrations.idpAssignToPeople")}</Mark>
+                      ),
+                    })}
                   </p>
                 </Steps.Step>
               </Steps>
@@ -235,17 +250,18 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
             <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
               <p className={"font-medium flex gap-3 items-center text-base"}>
                 <KeyRoundIcon size={20} />
-                Enter your Okta details
+                {translate("integrations.ssoEnterOktaDetails")}
               </p>
               <Steps>
                 <Steps.Step step={1}>
                   <p className={"font-normal"}>
-                    Click on the <Mark>{"Sign On"}</Mark> tab and enter your
-                    client credentials
+                    {translate.rich("integrations.ssoOktaEnterCredentials", {
+                      signOn: (chunks) => <Mark>{chunks}</Mark>,
+                    })}
                   </p>
                   <Input
                     customPrefix={
-                      <span className={"min-w-[90px]"}>Client ID</span>
+                      <span className={"min-w-[90px]"}>{translate("integrations.idpClientId")}</span>
                     }
                     placeholder={"0obflxtwxoVQcur0z3f3"}
                     value={clientId}
@@ -253,7 +269,7 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                   />
                   <Input
                     customPrefix={
-                      <span className={"min-w-[90px]"}>Client Secret</span>
+                      <span className={"min-w-[90px]"}>{translate("integrations.idpClientSecret")}</span>
                     }
                     placeholder={
                       "jfgbU1Wu3XWAKhGUF4d-PX54DSm3pAQCyNtpxp7Nu8Ij22stSz8_6KnWbO4nQBIb"
@@ -264,8 +280,9 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                 </Steps.Step>
                 <Steps.Step step={2}>
                   <p className={"font-normal"}>
-                    Under your user profile, enter your{" "}
-                    <Mark>Okta account domain</Mark>
+                    {translate.rich("integrations.ssoOktaEnterDomain", {
+                      domain: (chunks) => <Mark>{chunks}</Mark>,
+                    })}
                   </p>
                   <Input
                     customPrefix={<GlobeIcon size={16} />}
@@ -276,9 +293,9 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                 </Steps.Step>
                 <Steps.Step step={3} line={false}>
                   <p className={"font-normal"}>
-                    Enter your
-                    <Mark>Primary E-Mail Domain</Mark> which will later be used
-                    to log in to NetBird.
+                    {translate.rich("integrations.ssoPrimaryEmailDomain", {
+                      domain: (chunks) => <Mark>{chunks}</Mark>,
+                    })}
                   </p>
                   <Input
                     customPrefix={<GlobeIcon size={16} />}
@@ -299,7 +316,7 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                 onClick={() => setStep(step - 1)}
               >
                 <IconArrowLeft size={16} />
-                Back
+                {translate("common.back")}
               </Button>
             )}
             {step >= 0 && step < maxSteps && (
@@ -308,7 +325,9 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                 className={"w-full"}
                 onClick={() => setStep(step + 1)}
               >
-                {step == 0 ? "Get Started" : "Continue"}
+                {step == 0
+                  ? translate("integrations.idpGetStarted")
+                  : translate("common.continue")}
                 <IconArrowRight size={16} />
               </Button>
             )}
@@ -324,7 +343,7 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                 ) : (
                   <Repeat size={16} />
                 )}
-                Connect
+                {translate("integrations.connect")}
               </Button>
             )}
           </ModalFooter>

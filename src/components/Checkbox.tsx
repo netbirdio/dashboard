@@ -5,6 +5,8 @@ import { cn } from "@utils/helpers";
 import { cva, VariantProps } from "class-variance-authority";
 import { Check, Minus } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import type { MessageId } from "@/i18n/translate";
 
 type CheckboxVariants = VariantProps<typeof variants>;
 
@@ -28,38 +30,42 @@ const variants = cva([], {
 const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root> &
-    CheckboxVariants
->(({ className, variant = "default", ...props }, ref) => (
-  <div className={"h-5 w-5"}>
-    <CheckboxPrimitive.Root
-      ref={ref}
-      className={cn(
-        variants({ variant }),
-        "border-nb-gray-700",
-        "peer h-5 w-5 shrink-0 rounded-[4px] border",
-        "ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2",
-        "disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-netbird data-[state=checked]:border-netbird data-[state=checked]:text-neutral-50 ",
-        "disabled:data-[state=unchecked]:border-dashed dark:disabled:data-[state=unchecked]:border-nb-gray-700",
-        "data-[state=indeterminate]:bg-netbird data-[state=indeterminate]:border-netbird data-[state=indeterminate]:text-neutral-50",
-        className,
-      )}
-      {...props}
-    >
-      <CheckboxPrimitive.Indicator
-        className={"group flex items-center justify-center"}
+    CheckboxVariants & { ariaLabelId?: MessageId }
+>(({ className, variant = "default", ariaLabelId, ...props }, ref) => {
+  const t = useTranslations();
+  return (
+    <div className={"h-5 w-5"}>
+      <CheckboxPrimitive.Root
+        ref={ref}
+        className={cn(
+          variants({ variant }),
+          "border-nb-gray-700",
+          "peer h-5 w-5 shrink-0 rounded-[4px] border",
+          "ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2",
+          "disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-netbird data-[state=checked]:border-netbird data-[state=checked]:text-neutral-50 ",
+          "disabled:data-[state=unchecked]:border-dashed dark:disabled:data-[state=unchecked]:border-nb-gray-700",
+          "data-[state=indeterminate]:bg-netbird data-[state=indeterminate]:border-netbird data-[state=indeterminate]:text-neutral-50",
+          className,
+        )}
+        {...props}
+        aria-label={ariaLabelId ? t(ariaLabelId) : props["aria-label"]}
       >
-        <Check
-          size={14}
-          className={"group-data-[state=indeterminate]:hidden"}
-        />
-        <Minus
-          size={14}
-          className={"hidden group-data-[state=indeterminate]:block"}
-        />
-      </CheckboxPrimitive.Indicator>
-    </CheckboxPrimitive.Root>
-  </div>
-));
+        <CheckboxPrimitive.Indicator
+          className={"group flex items-center justify-center"}
+        >
+          <Check
+            size={14}
+            className={"group-data-[state=indeterminate]:hidden"}
+          />
+          <Minus
+            size={14}
+            className={"hidden group-data-[state=indeterminate]:block"}
+          />
+        </CheckboxPrimitive.Indicator>
+      </CheckboxPrimitive.Root>
+    </div>
+  );
+});
 Checkbox.displayName = CheckboxPrimitive.Root.displayName;
 
 export { Checkbox };

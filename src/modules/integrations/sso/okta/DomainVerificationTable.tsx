@@ -5,6 +5,7 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import * as React from "react";
 import { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { EnterpriseConnectionDomain } from "@/interfaces/IdentityProvider";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
 
@@ -12,27 +13,36 @@ export const DomainTableColumns: ColumnDef<EnterpriseConnectionDomain>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Domain</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} labelId="common.domain" />
+      );
     },
     sortingFn: "text",
   },
   {
     accessorKey: "validation_status",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Status</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} labelId="common.status" />
+      );
     },
     sortingFn: "text",
   },
   {
     accessorKey: "validation_last_updated",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Last Check</DataTableHeader>;
+      return (
+        <DataTableHeader
+          column={column}
+          labelId="integrations.ssoLastCheck"
+        />
+      );
     },
     sortingFn: "text",
     cell: ({ row }) => (
       <LastTimeRow
         date={dayjs(row.original.validation_last_updated).toDate()}
-        text={"Last checked on"}
+        textId="tables.lastCheckedOn"
       />
     ),
   },
@@ -42,6 +52,7 @@ type Props = {
   domains: EnterpriseConnectionDomain[];
 };
 export const DomainVerificationTable = ({ domains }: Props) => {
+  const t = useTranslations();
   const [sorting, setSorting] = useState<SortingState>([
     {
       id: "is_current",
@@ -60,7 +71,7 @@ export const DomainVerificationTable = ({ domains }: Props) => {
         tableClassName={"w-full mt-0"}
         minimal={true}
         showSearchAndFilters={false}
-        text={"Domains"}
+        text={t("common.domains")}
         sorting={sorting}
         setSorting={setSorting}
         columns={DomainTableColumns}

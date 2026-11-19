@@ -17,6 +17,7 @@ import { useState } from "react";
 import { useSWRConfig } from "swr";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import PeerAddressCell from "@/modules/peers/PeerAddressCell";
 import PeerLastSeenCell from "@/modules/peers/PeerLastSeenCell";
@@ -40,7 +41,7 @@ const MinimalPeersTableColumns: ColumnDef<Peer>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.name" />;
     },
     sortingFn: "text",
     cell: ({ row }) => <PeerNameCell peer={row.original} />,
@@ -65,14 +66,14 @@ const MinimalPeersTableColumns: ColumnDef<Peer>[] = [
   {
     accessorKey: "dns_label",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Address</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="common.address" />;
     },
     cell: ({ row }) => <PeerAddressCell peer={row.original} />,
   },
   {
     accessorKey: "last_seen",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Last seen</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="tables.lastSeen" />;
     },
     sortingFn: "datetime",
     cell: ({ row }) => <PeerLastSeenCell peer={row.original} />,
@@ -80,7 +81,9 @@ const MinimalPeersTableColumns: ColumnDef<Peer>[] = [
   {
     accessorKey: "os",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>OS</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} labelId="tables.operatingSystem" />
+      );
     },
     cell: ({ row }) => <PeerOSCell os={row.original.os} />,
   },
@@ -98,6 +101,7 @@ export default function MinimalPeersTable({
   onRowClick,
   getStartedCard,
 }: Props) {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
 
@@ -132,20 +136,18 @@ export default function MinimalPeersTable({
       showSearchAndFilters={true}
       inset={false}
       tableClassName={"mt-0"}
-      text={"Peers"}
+      text={t("common.peers")}
       columns={columns}
       keepStateInLocalStorage={false}
       data={peers}
-      searchPlaceholder={"Search by name, IP, owner or group..."}
+      searchPlaceholder={t("peers.searchByIdentity")}
       isLoading={isLoading}
       getStartedCard={
         !getStartedCard ? (
           <NoResults
             className={"py-4"}
-            title={"This peer has no accessible peers"}
-            description={
-              "Add more peers to your network or check your access control policies."
-            }
+            title={t("peer.noAccessiblePeersTitle")}
+            description={t("peer.noAccessiblePeersDescription")}
             icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
           />
         ) : (
@@ -182,7 +184,7 @@ export default function MinimalPeersTable({
                   : "secondary"
               }
             >
-              All
+              {t("common.all")}
             </ButtonGroup.Button>
             <ButtonGroup.Button
               onClick={() => {
@@ -201,7 +203,7 @@ export default function MinimalPeersTable({
                   : "secondary"
               }
             >
-              Online
+              {t("common.online")}
             </ButtonGroup.Button>
             <ButtonGroup.Button
               onClick={() => {
@@ -220,7 +222,7 @@ export default function MinimalPeersTable({
                   : "secondary"
               }
             >
-              Offline
+              {t("common.offline")}
             </ButtonGroup.Button>
           </ButtonGroup>
 

@@ -13,6 +13,7 @@ import * as React from "react";
 import { useState } from "react";
 import { useTenants } from "@/cloud/msp/contexts/TenantsProvider";
 import { Tenant } from "@/cloud/msp/interfaces/Tenant";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   open: boolean;
@@ -31,6 +32,7 @@ export const MSPDomainVerificationModal = ({
   onSuccess,
   onCancel,
 }: Props) => {
+  const translate = useTranslations();
   const { verifyDomain } = useTenants();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -56,7 +58,7 @@ export const MSPDomainVerificationModal = ({
         <GradientFadedBackground />
         <ModalHeader
           icon={<GlobeIcon size={20} />}
-          title={"Verify Domain Ownership"}
+          title={translate("msp.verifyDomainOwnership")}
           description={domain}
           color={"netbird"}
         />
@@ -64,14 +66,15 @@ export const MSPDomainVerificationModal = ({
           <Steps className={"pt-0"}>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                Sign in to your domain name provider (e.g. cloudflare.com or
-                godaddy.com)
+                {translate("msp.signInToYourDomainNameProviderEGCloudflare")}
               </p>
             </Steps.Step>
             <Steps.Step step={2} line={false}>
               <p className={"font-normal"}>
-                Copy the <Mark>TXT record</Mark> below and add it to your DNS
-                configuration for <Mark>{domain}</Mark>
+                {translate("msp.copyThe")}{" "}
+                <Mark>{translate("msp.tXTRecord")}</Mark>{" "}
+                {translate("msp.belowAndAddItToYourDNSConfigurationFor")}{" "}
+                <Mark>{domain}</Mark>
               </p>
             </Steps.Step>
           </Steps>
@@ -80,22 +83,20 @@ export const MSPDomainVerificationModal = ({
               <Card.ListItem
                 copy
                 copyText={"TXT Host"}
-                label={"Host"}
+                label={translate("common.host")}
                 value={domain}
               />
               <Card.ListItem
                 copy
                 copyText={"TXT Value"}
-                label={"Value"}
+                label={translate("msp.headerValue")}
                 value={`nb-verification=${token}`}
               />
             </Card.List>
           </Card>
 
           <Paragraph className={"text-sm mt-4"}>
-            {
-              "Note: DNS changes may take some time to apply. If NetBird doesn't find the record immediately, please wait a day and try again."
-            }
+            {translate("msp.noteDNSChangesMayTakeSomeTimeToApplyIf")}
           </Paragraph>
 
           <div
@@ -103,34 +104,34 @@ export const MSPDomainVerificationModal = ({
               "bg-nb-gray-900/70 px-4 py-3 rounded-md border border-nb-gray-800/70 my-6 !text-nb-gray-300 text-sm"
             }
           >
-            If you do not have access to your DNS configuration, you can also
-            verify your domain by sending us an email to{" "}
-            <InlineLink
-              href={"mailto:support@netbird.io"}
-              className={"inline font-medium"}
-            >
-              {" "}
-              support@netbird.io
-            </InlineLink>
-            . The email should be sent from the domain you are trying to verify.
+            {translate.rich("msp.ifYouDoNotHaveAccessToYourDNSConfiguration", {
+              part0: (chunks) => (
+                <InlineLink
+                  href={"mailto:support@netbird.io"}
+                  className={"inline font-medium"}
+                >
+                  {chunks}
+                </InlineLink>
+              ),
+            })}
           </div>
         </div>
         <ModalFooter className={"items-center"}>
           <div className={"w-full"}>
             <Paragraph className={"text-sm mt-auto"}>
-              Learn more about
+              {translate("trafficEvents.learnMoreAbout")}
               <InlineLink href={"#"} target={"_blank"}>
-                Domain Verification
+                {translate("msp.domainVerification")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
           </div>
           <div className={"flex gap-3 w-full justify-end"}>
             <Button variant={"secondary"} onClick={onCancel}>
-              Verify Later
+              {translate("msp.verifyLater")}
             </Button>
             <Button variant={"primary"} onClick={verify} disabled={isLoading}>
-              Start Verification
+              {translate("msp.startVerification")}
             </Button>
           </div>
         </ModalFooter>

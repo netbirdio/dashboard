@@ -12,6 +12,7 @@ import React, {
 } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import {
@@ -86,6 +87,7 @@ export function ControlCenterPolicyProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const translate = useTranslations();
   const { policies, peers, networkResources, networks, groups } =
     useControlCenterData();
   const { nodes, refreshLiveViewRef } = useCanvasState();
@@ -119,23 +121,22 @@ export function ControlCenterPolicyProvider({
   // Live edits apply to the account immediately, so confirm before the PUT.
   const confirmLivePolicySave = () =>
     confirm({
-      title: "Save policy changes?",
-      description:
-        "You are in live mode. Saving your changes will apply them to your account immediately.",
-      confirmText: "Save",
-      cancelText: "Cancel",
+      title: translate("controlCenter.savePolicyChanges"),
+      description: translate("controlCenter.youAreInLiveModeSavingYourChanges"),
+      confirmText: translate("common.save"),
+      cancelText: translate("common.cancel"),
       type: "warning",
       dismissOnOutsideClick: true,
     });
 
   const confirmLiveAgentSave = () =>
     confirm({
-      title: "Save changes?",
+      title: translate("controlCenter.saveChanges"),
       description: isDraft
-        ? "Agent Network changes aren't part of the draft. Saving applies them to your account immediately."
-        : "You are in live mode. Saving your changes will apply them to your account immediately.",
-      confirmText: "Save",
-      cancelText: "Cancel",
+        ? translate("controlCenter.agentNetworkChangesArenTPartOfThe")
+        : translate("controlCenter.youAreInLiveModeSavingYourChanges"),
+      confirmText: translate("common.save"),
+      cancelText: translate("common.cancel"),
       type: "warning",
       dismissOnOutsideClick: true,
     });
@@ -948,14 +949,13 @@ export function ControlCenterPolicyProvider({
       return;
     }
     void confirm({
-      title: "Replace current source group?",
-      description: `Are you sure you want to replace “${groupNameForRef(
-        current,
-      )}” with “${groupNameForRef(groupRef)}”? “${groupNameForRef(
-        current,
-      )}” will no longer have access to this policy's providers.`,
-      confirmText: "Replace",
-      cancelText: "Cancel",
+      title: translate("controlCenter.replaceCurrentSourceGroup"),
+      description: translate("controlCenter.areYouSureYouWantToReplaceWith", {
+        groupNameForRefCurrent: groupNameForRef(current),
+        groupNameForRefGroupRef: groupNameForRef(groupRef),
+      }),
+      confirmText: translate("controlCenter.replace"),
+      cancelText: translate("common.cancel"),
       type: "warning",
     }).then((ok) => ok && apply());
   };

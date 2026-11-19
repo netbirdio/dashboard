@@ -4,6 +4,7 @@ import ModalHeader from "@components/modal/ModalHeader";
 import PinCodeInput from "@components/PinCodeInput";
 import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
 import React, { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   open: boolean;
@@ -22,6 +23,7 @@ export default function AuthPinModal({
   onSave,
   onRemove,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const [pin, setPin] = useState(currentPin);
   const [isMasked, setIsMasked] = useState(isEnabled && currentPin === "");
   const isEditing = isEnabled;
@@ -43,8 +45,8 @@ export default function AuthPinModal({
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent maxWidthClass="max-w-md">
         <ModalHeader
-          title="PIN Code"
-          description="Require a numeric PIN code to access this service."
+          title={t("reverseProxy.pinCode")}
+          description={t("reverseProxy.pinCodeDescription")}
         />
 
         <GradientFadedBackground />
@@ -68,19 +70,23 @@ export default function AuthPinModal({
           <div className="flex gap-3 w-full justify-between mt-6">
             {isEditing ? (
               <>
-                <Button variant="danger-text" data-testid="remove-pin" onClick={handleRemove}>
-                  Remove
+                <Button
+                  variant="danger-text"
+                  data-testid="remove-pin"
+                  onClick={handleRemove}
+                >
+                  {t("common.remove")}
                 </Button>
                 <div className="flex gap-3">
                   <ModalClose asChild>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{t("common.cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant="primary"
                     onClick={handleSave}
                     disabled={pin.length !== 6}
                   >
-                    Save
+                    {t("common.save")}
                   </Button>
                 </div>
               </>
@@ -89,7 +95,7 @@ export default function AuthPinModal({
                 <div />
                 <div className="flex gap-3">
                   <ModalClose asChild>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{t("common.cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant="primary"
@@ -97,7 +103,7 @@ export default function AuthPinModal({
                     disabled={pin.length !== 6}
                     data-testid="submit-pin"
                   >
-                    Add PIN
+                    {t("reverseProxy.addPIN")}
                   </Button>
                 </div>
               </>

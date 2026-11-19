@@ -4,6 +4,7 @@ import { cn } from "@utils/helpers";
 import { FilterX } from "lucide-react";
 import React from "react";
 import Skeleton from "react-loading-skeleton";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   icon?: React.ReactNode;
@@ -15,11 +16,15 @@ type Props = {
 
 export default function NoResultsCard({
   icon,
-  title = "Could not find any results",
-  description = "We couldn't find any results. Please try a different search term or change your filters.",
+  title: titleProp,
+  description: descriptionProp,
   children,
   className,
 }: Readonly<Props>) {
+  const t = useTranslations();
+  const title = titleProp ?? t("components.noResults");
+  const description = descriptionProp ?? t("components.noResultsDescription");
+
   return (
     <div className={cn("px-8 mt-8", className)}>
       <Card className={"w-full relative overflow-hidden"}>

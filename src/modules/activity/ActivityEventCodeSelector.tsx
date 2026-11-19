@@ -10,6 +10,7 @@ import { ChevronsUpDown, Layers, SearchIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
 import ActivityTypeIcon from "@/modules/activity/ActivityTypeIcon";
 
@@ -27,6 +28,7 @@ export function ActivityEventCodeSelector({
   popoverWidth = 400,
   events,
 }: MultiSelectProps) {
+  const translate = useTranslations();
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
   const [search, setSearch] = useState("");
@@ -81,9 +83,11 @@ export function ActivityEventCodeSelector({
           <Layers size={16} className={"shrink-0"} />
           <div className={"w-full flex justify-between"}>
             {values.length > 0 ? (
-              <div>{values.length} Event(s)</div>
+              <div>
+                {translate("activity.eventCounter", { count: values.length })}
+              </div>
             ) : (
-              "All Event Types"
+              translate("activity.allEventTypes")
             )}
             <div className={"pl-2"}>
               <ChevronsUpDown size={18} className={"shrink-0"} />
@@ -122,7 +126,7 @@ export function ActivityEventCodeSelector({
                 ref={searchRef}
                 value={search}
                 onValueChange={setSearch}
-                placeholder={"Search event..."}
+                placeholder={translate("activity.searchEvent")}
               />
               <div
                 className={

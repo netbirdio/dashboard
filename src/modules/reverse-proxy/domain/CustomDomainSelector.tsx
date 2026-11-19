@@ -3,14 +3,15 @@ import {
   SelectOption,
 } from "@components/select/SelectDropdown";
 import { SmallBadge } from "@components/ui/SmallBadge";
+import TruncatedText from "@components/ui/TruncatedText";
+import { isNetBirdCloud } from "@utils/netbird";
 import { ArrowUpRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useMemo } from "react";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { ReverseProxyDomainType } from "@/interfaces/ReverseProxy";
-import { isNetBirdCloud } from "@utils/netbird";
-import TruncatedText from "@components/ui/TruncatedText";
 
 interface DomainSelectorProps {
   value: string;
@@ -27,6 +28,7 @@ export function CustomDomainSelector({
   className,
   "data-testid": dataTestId,
 }: DomainSelectorProps) {
+  const t = useTranslations();
   const router = useRouter();
   const { domains, isSelfHostedCluster } = useReverseProxies();
 
@@ -49,11 +51,23 @@ export function CustomDomainSelector({
                 <TruncatedText text={`.${domain.domain}`} maxWidth={"260px"} />
               </div>
               {isAccountCluster ? (
-                <SmallBadge text="Account" variant="sky" size="md" />
+                <SmallBadge
+                  text={t("common.account")}
+                  variant="sky"
+                  size="md"
+                />
               ) : isNetBirdCloud() ? (
-                <SmallBadge text="Free" variant="green" size="md" />
+                <SmallBadge
+                  text={t("reverseProxy.free")}
+                  variant="green"
+                  size="md"
+                />
               ) : (
-                <SmallBadge text="Shared" variant="green" size="md" />
+                <SmallBadge
+                  text={t("reverseProxy.shared")}
+                  variant="green"
+                  size="md"
+                />
               )}
             </div>
           ),
@@ -70,7 +84,11 @@ export function CustomDomainSelector({
           renderItem: () => (
             <div className="flex items-center gap-2 w-full text-sm justify-between">
               <span>.{domain.domain}</span>
-              <SmallBadge text="Custom" variant="sky" size="md" />
+              <SmallBadge
+                text={t("reverseProxy.custom")}
+                variant="sky"
+                size="md"
+              />
             </div>
           ),
         });
@@ -79,11 +97,11 @@ export function CustomDomainSelector({
     // Add "Add Custom Domain" option
     opts.push({
       value: "add_custom",
-      label: "Add Custom Domain",
+      label: t("reverseProxy.addCustomDomain"),
       renderItem: () => (
         <div className="flex items-center justify-between gap-2 text-netbird text-sm w-full">
           <div className={"flex items-center gap-2"}>
-            <span>Add Custom Domain</span>
+            <span>{t("reverseProxy.addCustomDomain")}</span>
           </div>
           <ArrowUpRight size={16} />
         </div>
@@ -91,7 +109,7 @@ export function CustomDomainSelector({
     });
 
     return opts;
-  }, [domains, isSelfHostedCluster]);
+  }, [domains, isSelfHostedCluster, t]);
 
   const handleChange = (selectedValue: string) => {
     if (selectedValue === "add_custom") {
@@ -108,9 +126,9 @@ export function CustomDomainSelector({
       options={options}
       popoverWidth={380}
       showSearch={true}
-      searchPlaceholder="Search domains..."
+      searchPlaceholder={t("reverseProxy.searchDomains")}
       disabled={disabled}
-      placeholder="Select domain..."
+      placeholder={t("reverseProxy.selectDomain")}
       className={className}
       data-testid={dataTestId}
     />

@@ -6,6 +6,7 @@ import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import IntegrationIcon from "@/assets/icons/IntegrationIcon";
 import { NotificationEventType } from "@/interfaces/NotificationChannel";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type EventTypeMeta = {
   key: NotificationEventType;
@@ -13,78 +14,6 @@ type EventTypeMeta = {
   helpText: string;
   group: "peer" | "user" | "integration";
 };
-
-const EVENT_TYPE_METADATA: EventTypeMeta[] = [
-  {
-    key: NotificationEventType.PeerPendingApproval,
-    label: "Pending Approval",
-    helpText: "Notify when a peer is waiting for approval to join the network",
-    group: "peer",
-  },
-  {
-    key: NotificationEventType.PeerAdd,
-    label: "Peer Added",
-    helpText: "Notify when a new peer is added to the network",
-    group: "peer",
-  },
-  {
-    key: NotificationEventType.RoutingPeerDisconnect,
-    label: "Routing Peer Disconnected",
-    helpText: "Notify when a routing peer loses its connection",
-    group: "peer",
-  },
-  {
-    key: NotificationEventType.RoutingPeerDelete,
-    label: "Routing Peer Deleted",
-    helpText: "Notify when a routing peer is deleted from the network",
-    group: "peer",
-  },
-  {
-    key: NotificationEventType.UserPendingApproval,
-    label: "User Pending Approval",
-    helpText: "Notify when a user is waiting for approval to join the network",
-    group: "user",
-  },
-  {
-    key: NotificationEventType.UserJoin,
-    label: "User Joined",
-    helpText: "Notify when a new user joins the account",
-    group: "user",
-  },
-  {
-    key: NotificationEventType.ServiceUserCreate,
-    label: "Service User Created",
-    helpText: "Notify when a new service user is created",
-    group: "user",
-  },
-  {
-    key: NotificationEventType.IdpSyncTokenExpire,
-    label: "IdP Sync Token Expired",
-    helpText: "Notify when the IdP sync token has expired and needs renewal",
-    group: "integration",
-  },
-  {
-    key: NotificationEventType.EdrSyncTokenExpire,
-    label: "EDR Sync Token Expired",
-    helpText: "Notify when the EDR sync token has expired and needs renewal",
-    group: "integration",
-  },
-];
-
-const GROUP_CONFIG = {
-  peer: {
-    label: "Peer Notifications",
-    icon: <PeerIcon size={12} />,
-  },
-  user: {
-    label: "User Notifications",
-    icon: <TeamIcon size={12} />,
-  },
-  integration: {
-    label: "Integration Notifications",
-    icon: <IntegrationIcon size={12} />,
-  },
-} as const;
 
 const GROUPS: Array<"peer" | "user" | "integration"> = [
   "peer",
@@ -98,7 +27,85 @@ type Props = {
   disabled?: boolean;
 };
 
-export const NotificationEventTypes = ({ event_types, onToggle, disabled }: Props) => {
+export const NotificationEventTypes = ({
+  event_types,
+  onToggle,
+  disabled,
+}: Props) => {
+  const t = useTranslations();
+
+  const GROUP_CONFIG = {
+    peer: {
+      label: t("notifications.peerNotifications"),
+      icon: <PeerIcon size={12} />,
+    },
+    user: {
+      label: t("notifications.userNotifications"),
+      icon: <TeamIcon size={12} />,
+    },
+    integration: {
+      label: t("notifications.integrationNotifications"),
+      icon: <IntegrationIcon size={12} />,
+    },
+  } as const;
+  const EVENT_TYPE_METADATA: EventTypeMeta[] = [
+    {
+      key: NotificationEventType.PeerPendingApproval,
+      label: t("users.pendingApproval"),
+      helpText: t("notifications.notifyWhenAPeerIsWaitingForApprovalToJoin"),
+      group: "peer",
+    },
+    {
+      key: NotificationEventType.PeerAdd,
+      label: t("notifications.peerAdded"),
+      helpText: t("notifications.notifyWhenANewPeerIsAddedToTheNetwork"),
+      group: "peer",
+    },
+    {
+      key: NotificationEventType.RoutingPeerDisconnect,
+      label: t("notifications.routingPeerDisconnected"),
+      helpText: t("notifications.notifyWhenARoutingPeerLosesItsConnection"),
+      group: "peer",
+    },
+    {
+      key: NotificationEventType.RoutingPeerDelete,
+      label: t("notifications.routingPeerDeleted"),
+      helpText: t(
+        "notifications.notifyWhenARoutingPeerIsDeletedFromTheNetwork",
+      ),
+      group: "peer",
+    },
+    {
+      key: NotificationEventType.UserPendingApproval,
+      label: t("notifications.userPendingApproval"),
+      helpText: t("notifications.notifyWhenAUserIsWaitingForApprovalToJoin"),
+      group: "user",
+    },
+    {
+      key: NotificationEventType.UserJoin,
+      label: t("notifications.userJoined"),
+      helpText: t("notifications.notifyWhenANewUserJoinsTheAccount"),
+      group: "user",
+    },
+    {
+      key: NotificationEventType.ServiceUserCreate,
+      label: t("notifications.serviceUserCreated"),
+      helpText: t("notifications.notifyWhenANewServiceUserIsCreated"),
+      group: "user",
+    },
+    {
+      key: NotificationEventType.IdpSyncTokenExpire,
+      label: t("notifications.idPSyncTokenExpired"),
+      helpText: t("notifications.notifyWhenTheIdPSyncTokenHasExpiredAndNeeds"),
+      group: "integration",
+    },
+    {
+      key: NotificationEventType.EdrSyncTokenExpire,
+      label: t("notifications.eDRSyncTokenExpired"),
+      helpText: t("notifications.notifyWhenTheEDRSyncTokenHasExpiredAndNeeds"),
+      group: "integration",
+    },
+  ];
   return (
     <>
       {GROUPS.map((group) => {

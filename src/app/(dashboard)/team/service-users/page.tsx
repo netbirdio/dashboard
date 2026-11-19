@@ -9,6 +9,7 @@ import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
 import UsersTabs from "@/modules/users/UsersTabs";
@@ -18,6 +19,7 @@ const ServiceUsersTable = lazy(
 );
 
 export default function ServiceUsers() {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { data: users, isLoading } = useFetchApi<User[]>(
     "/users?service_user=true",
@@ -29,22 +31,21 @@ export default function ServiceUsers() {
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
-        <h1 ref={headingRef}>Service Users</h1>
+        <h1 ref={headingRef}>{t("common.serviceUsers")}</h1>
         <Paragraph>
-          Use service users to create API tokens and avoid losing automated
-          access.{" "}
+          {t("team.serviceUsersDescription")}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/access-netbird-public-api"}
             target={"_blank"}
           >
-            Learn more
+            {t("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
       </div>
       <UsersTabs current={"service-users"} />
       <RestrictedAccess
-        page={"Service Users"}
+        page={t("common.serviceUsers")}
         hasAccess={permission.users.read}
       >
         <Suspense fallback={<SkeletonTable />}>

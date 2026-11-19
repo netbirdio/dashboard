@@ -3,6 +3,7 @@ import SkeletonTable, {
 } from "@components/skeletons/SkeletonTable";
 import * as React from "react";
 import { Suspense } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { NetworkResource } from "@/interfaces/Network";
 import ResourcesTable from "@/modules/networks/resources/ResourcesTable";
 import Paragraph from "@components/Paragraph";
@@ -18,6 +19,7 @@ export const ResourcesTabContent = ({
   data,
   isLoading,
 }: ResourcesSectionProps) => {
+  const t = useTranslations();
   return (
     <div className={"px-8"}>
       <div className={"flex justify-between items-center mb-5"}>
@@ -28,7 +30,7 @@ export const ResourcesTabContent = ({
               href={"https://docs.netbird.io/how-to/networks#resources"}
               target={"_blank"}
             >
-              Learn more
+              {t("common.learnMore")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>

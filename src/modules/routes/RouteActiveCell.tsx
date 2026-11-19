@@ -3,12 +3,14 @@ import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useRoutes } from "@/contexts/RoutesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Route } from "@/interfaces/Route";
 
 type Props = {
   route: Route;
 };
 export default function RouteActiveCell({ route }: Readonly<Props>) {
+  const t = useTranslations();
   const { permission } = usePermissions();
 
   const { updateRoute } = useRoutes();
@@ -21,9 +23,7 @@ export default function RouteActiveCell({ route }: Readonly<Props>) {
       () => {
         mutate("/routes");
       },
-      enabled
-        ? "The network route was successfully enabled"
-        : "The network route was successfully disabled",
+      enabled ? t("peer.routeEnabled") : t("peer.routeDisabled"),
     );
   };
 

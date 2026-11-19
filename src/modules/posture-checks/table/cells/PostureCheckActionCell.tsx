@@ -7,12 +7,14 @@ import * as React from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 
 type Props = {
   check: PostureCheck;
 };
 export const PostureCheckActionCell = ({ check }: Props) => {
+  const t = useTranslations();
   const { permission } = usePermissions();
 
   const deleteRequest = useApiCall("/posture-checks");
@@ -21,21 +23,21 @@ export const PostureCheckActionCell = ({ check }: Props) => {
 
   const handleDelete = async () => {
     const choice = await confirm({
-      title: `Delete '${check.name}'?`,
+      title: t("postureChecks.deleteNamedTitle", { name: check.name }),
       description:
-        "Are you sure you want to delete this posture check? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+        t("postureChecks.confirmDeleteDescription"),
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (choice) {
       notify({
         title: check.name,
-        description: "Posture check was successfully deleted",
+        description: t("postureChecks.postureCheckDeleted"),
         promise: deleteRequest.del({}, `/${check.id}`).then(() => {
           mutate("/posture-checks").then();
         }),
-        loadingMessage: "Deleting posture check...",
+        loadingMessage: t("postureChecks.deletingPostureCheck"),
       });
     }
   };
@@ -48,9 +50,7 @@ export const PostureCheckActionCell = ({ check }: Props) => {
         disabled={!hasPolicies}
         content={
           <div className={"text-xs max-w-xs"}>
-            This posture check is assigned to a policy and cannot be deleted.
-            Please remove the posture check from all policies before deleting
-            it.
+            {t("postureChecks.assignedToPolicyCannotDelete")}
           </div>
         }
         interactive={false}
@@ -62,7 +62,7 @@ export const PostureCheckActionCell = ({ check }: Props) => {
           disabled={hasPolicies || !permission.policies.delete}
         >
           <Trash2 size={16} />
-          Delete
+          {t("common.delete")}
         </Button>
       </FullTooltip>
     </div>

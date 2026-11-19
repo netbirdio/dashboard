@@ -5,6 +5,7 @@ import FullTooltip from "@components/FullTooltip";
 import { AlertTriangle } from "lucide-react";
 import InlineLink from "@components/InlineLink";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 export function TerminatedProxiesProvider() {
   const { reverseProxies } = useReverseProxies();
@@ -46,25 +47,30 @@ function enableElement(el: HTMLElement) {
   el.removeEventListener("click", blockEvent, true);
 }
 
-const terminatedBadge = (
-  <FullTooltip
-    content={
-      <div className={"text-xs max-w-xs"}>
-        This service has been terminated by the NetBird team as it violates the
-        Terms of Service. For questions, please contact{" "}
-        <InlineLink href="mailto:support@netbird.io?subject=Request%20for%20Assistance%3A%20Terminated%20Service">
-          support@netbird.io
-        </InlineLink>
-      </div>
-    }
-    interactive={true}
-  >
-    <Badge variant={"red"}>
-      <AlertTriangle size={12} />
-      Terminated
-    </Badge>
-  </FullTooltip>
-);
+const TerminatedBadge = () => {
+  const t = useTranslations();
+  return (
+    <FullTooltip
+      content={
+        <div className={"text-xs max-w-xs"}>
+          {t.rich("events.thisServiceHasBeenTerminatedByTheNetBirdTeamAs", {
+            part0: (chunks) => (
+              <InlineLink href="mailto:support@netbird.io?subject=Request%20for%20Assistance%3A%20Terminated%20Service">
+                {chunks}
+              </InlineLink>
+            ),
+          })}
+        </div>
+      }
+      interactive={true}
+    >
+      <Badge variant={"red"}>
+        <AlertTriangle size={12} />
+        {t("events.terminated")}
+      </Badge>
+    </FullTooltip>
+  );
+};
 
 function findAndDisableAll(proxyId: string) {
   const disabled: HTMLElement[] = [];
@@ -73,9 +79,7 @@ function findAndDisableAll(proxyId: string) {
   let actionTd: HTMLElement | null = null;
 
   try {
-    row = document.querySelector<HTMLElement>(
-      `[data-row-id="${proxyId}"]`,
-    );
+    row = document.querySelector<HTMLElement>(`[data-row-id="${proxyId}"]`);
 
     if (row) {
       row.style.pointerEvents = "none";
@@ -93,7 +97,8 @@ function findAndDisableAll(proxyId: string) {
       }
     }
 
-    const mainStatusCell = row?.querySelector<HTMLElement>("[data-status-cell]");
+    const mainStatusCell =
+      row?.querySelector<HTMLElement>("[data-status-cell]");
     if (mainStatusCell) {
       statusCells.push(mainStatusCell);
       mainStatusCell.style.pointerEvents = "auto";
@@ -178,6 +183,6 @@ function TerminatedPortal({ proxyId }: { proxyId: string }) {
   if (statusTargets.length === 0) return null;
 
   return statusTargets.map((target, i) =>
-    createPortal(terminatedBadge, target, `${proxyId}-${i}`),
+    createPortal(<TerminatedBadge />, target, `${proxyId}-${i}`),
   );
 }

@@ -11,6 +11,8 @@ import { MoreVertical, Power, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import { AIProvider } from "@/modules/agent-network/data/mockData";
 
@@ -19,6 +21,8 @@ type Props = {
 };
 
 export default function AgentProviderActionCell({ provider }: Readonly<Props>) {
+  const t = useTranslations();
+  const { tr } = useAgentNetworkText();
   const { confirm } = useDialog();
   const { policies, toggleProvider, deleteProvider, openProviderEdit } =
     useAIProviders();
@@ -35,11 +39,10 @@ export default function AgentProviderActionCell({ provider }: Readonly<Props>) {
 
   const handleDelete = async () => {
     const ok = await confirm({
-      title: `Delete '${provider.name}'?`,
-      description:
-        "Are you sure you want to delete this provider? The reverse-proxy service that fronts it will also be removed. This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      title: tr("agentNetwork.deleteNamed", { name: provider.name }),
+      description: tr("agentNetwork.deleteProviderDesc"),
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!ok) return;
@@ -73,7 +76,7 @@ export default function AgentProviderActionCell({ provider }: Readonly<Props>) {
             >
               <div className={"flex gap-3 items-center"}>
                 <SquarePenIcon size={14} className={"shrink-0"} />
-                Edit
+                {t("common.edit")}
               </div>
             </DropdownMenuItem>
           )}
@@ -82,7 +85,7 @@ export default function AgentProviderActionCell({ provider }: Readonly<Props>) {
             <DropdownMenuItem onClick={() => toggleProvider(provider.id)}>
               <div className={"flex gap-3 items-center"}>
                 <Power size={14} className={"shrink-0"} />
-                {provider.enabled ? "Disable" : "Enable"}
+                {provider.enabled ? t("common.disable") : t("common.enable")}
               </div>
             </DropdownMenuItem>
           )}
@@ -95,11 +98,9 @@ export default function AgentProviderActionCell({ provider }: Readonly<Props>) {
               interactive={false}
               content={
                 <div className={"text-xs max-w-xs"}>
-                  This provider is referenced by{" "}
-                  {referencingPolicies.length === 1
-                    ? "1 policy"
-                    : `${referencingPolicies.length} policies`}{" "}
-                  and cannot be deleted. Detach it from the policy first.
+                  {tr("agentNetwork.providerInUse", {
+                    count: referencingPolicies.length,
+                  })}
                 </div>
               }
             >
@@ -116,7 +117,7 @@ export default function AgentProviderActionCell({ provider }: Readonly<Props>) {
               >
                 <div className={"flex gap-3 items-center"}>
                   <Trash2 size={14} className={"shrink-0"} />
-                  Delete
+                  {t("common.delete")}
                 </div>
               </DropdownMenuItem>
             </FullTooltip>

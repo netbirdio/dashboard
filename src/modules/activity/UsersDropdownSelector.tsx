@@ -13,6 +13,7 @@ import { ChevronsUpDown, Cog, UserCircle2 } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
 interface Props {
@@ -49,11 +50,12 @@ export function UsersDropdownSelector({
   popoverWidth = 250,
   options,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const [filteredItems, search, setSearch] = useSearch(
     options.concat({
       id: "all-users",
-      name: "All Users",
-      email: "Include all users",
+      name: t("activity.allUsers"),
+      email: t("activity.includeAllUsers"),
     }),
     searchPredicate,
     { filter: true, debounce: 150 },
@@ -108,7 +110,7 @@ export function UsersDropdownSelector({
             {!selectedUser ? (
               <React.Fragment>
                 <UserCircle2 size={16} />
-                All Users
+                {t("activity.allUsers")}
               </React.Fragment>
             ) : (
               <React.Fragment>
@@ -134,7 +136,7 @@ export function UsersDropdownSelector({
                   <TextWithTooltip
                     text={
                       selectedUser?.email === "NetBird"
-                        ? "System"
+                        ? t("activity.system")
                         : selectedUser?.name
                     }
                     maxChars={20}
@@ -163,14 +165,14 @@ export function UsersDropdownSelector({
           <DropdownInput
             value={search}
             onChange={setSearch}
-            placeholder={"Search user..."}
+            placeholder={t("activity.searchUser")}
             hideEnterIcon={true}
           />
 
           {options.length == 0 && !search && (
             <div className={"max-w-xs mx-auto"}>
               <DropdownInfoText>
-                {"No users available to select."}
+                {t("activity.noUsersAvailable")}
               </DropdownInfoText>
             </div>
           )}
@@ -178,7 +180,7 @@ export function UsersDropdownSelector({
           {filteredItems.length == 0 && search != "" && (
             <div className={"px-10"}>
               <DropdownInfoText>
-                There are no users matching your search.
+                {t("activity.noUsersMatching")}
               </DropdownInfoText>
             </div>
           )}
@@ -225,7 +227,9 @@ export function UsersDropdownSelector({
                       >
                         <TextWithTooltip
                           text={
-                            isSystemUser ? "System" : user?.name || user?.id
+                            isSystemUser
+                              ? t("activity.system")
+                              : user?.name || user?.id
                           }
                           maxChars={20}
                         />
@@ -244,7 +248,7 @@ export function UsersDropdownSelector({
                     {user.external && (
                       <span className={"flex items-center ml-auto relative"}>
                         <SmallBadge
-                          text={"External"}
+                          text={t("activity.external")}
                           variant={"sky"}
                           className={
                             "text-[8.5px] py-[0.15rem] px-[.32rem] leading-none rounded-full -top-0"

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
+import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import { AgentGuardrail } from "@/modules/agent-network/data/mockData";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import AgentGuardrailModal from "@/modules/agent-network/AgentGuardrailModal";
@@ -43,6 +44,7 @@ export default function AgentPolicyGuardrailsTab({
   setGuardrailIds,
   destinationProviderIds,
 }: Readonly<Props>) {
+  const { tr } = useAgentNetworkText();
   const { guardrails } = useAIProviders();
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -96,11 +98,10 @@ export default function AgentPolicyGuardrailsTab({
             <div>
               <Label>
                 {attached.length}{" "}
-                {attached.length === 1 ? "Guardrail" : "Guardrails"}
+                {tr("agentNetwork.guardrailCount", { count: attached.length })}
               </Label>
               <HelpText className={"mb-0"}>
-                Guardrails enforce model allowlists and prompt capture per
-                request.
+                {tr("agentNetwork.guardrailsHelp")}
               </HelpText>
             </div>
             <div className={"flex items-center justify-center gap-4"}>
@@ -110,7 +111,7 @@ export default function AgentPolicyGuardrailsTab({
                 onClick={() => setBrowseOpen(true)}
               >
                 <FolderSearch size={14} />
-                Browse Guardrails
+                {tr("agentNetwork.browseGuardrails")}
               </Button>
               <Button
                 variant={"primary"}
@@ -121,7 +122,7 @@ export default function AgentPolicyGuardrailsTab({
                 }}
               >
                 <PlusCircle size={14} />
-                New Guardrail
+                {tr("agentNetwork.newGuardrail")}
               </Button>
             </div>
           </div>
@@ -169,13 +170,13 @@ export default function AgentPolicyGuardrailsTab({
                       >
                         <div className={"flex gap-3 items-center"}>
                           <Edit size={14} className={"shrink-0"} />
-                          Edit Guardrail
+                          {tr("agentNetwork.editGuardrail")}
                         </div>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => removeAttached(g.id)}>
                         <div className={"flex gap-3 items-center"}>
                           <MinusCircleIcon size={14} className={"shrink-0"} />
-                          Detach
+                          {tr("agentNetwork.detach")}
                         </div>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -225,6 +226,7 @@ function NoGuardrailsInfo({
   onAddClick: () => void;
   onBrowseClick: () => void;
 }) {
+  const { tr } = useAgentNetworkText();
   return (
     <div>
       <div
@@ -233,11 +235,10 @@ function NoGuardrailsInfo({
         }
       >
         <h2 className={"text-lg my-0 leading-[1.5 text-center]"}>
-          {"You haven't added any guardrails yet"}
+          {tr("agentNetwork.noGuardrailsYet")}
         </h2>
         <Paragraph className={cn("text-sm text-center max-w-md mt-1")}>
-          Add guardrails to enforce model allowlists and prompt capture per
-          request.
+          {tr("agentNetwork.noGuardrailsYetDesc")}
         </Paragraph>
       </div>
       <div className={"flex items-center justify-center gap-4 mt-5"}>
@@ -248,11 +249,11 @@ function NoGuardrailsInfo({
           onClick={onBrowseClick}
         >
           <FolderSearch size={14} />
-          Browse Guardrails
+          {tr("agentNetwork.browseGuardrails")}
         </Button>
         <Button variant={"primary"} size={"xs"} onClick={onAddClick}>
           <IconCirclePlus size={14} />
-          New Guardrail
+          {tr("agentNetwork.newGuardrail")}
         </Button>
       </div>
     </div>

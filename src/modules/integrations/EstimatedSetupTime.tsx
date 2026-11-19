@@ -1,10 +1,12 @@
 import { Clock4 } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   minutes?: number;
 };
 export const EstimatedSetupTime = ({ minutes = 5 }: Props) => {
+  const t = useTranslations();
   return (
     <div
       className={
@@ -13,8 +15,11 @@ export const EstimatedSetupTime = ({ minutes = 5 }: Props) => {
     >
       <Clock4 size={12} />
       <div>
-        Estimated setup time:
-        <span className={"font-medium"}> {minutes} Minutes</span>
+        {t("integrations.edrEstimatedSetupTime")}
+        <span className={"font-medium"}>
+          {" "}
+          {t("integrations.edrSetupDuration", { duration: minutes })}
+        </span>
       </div>
     </div>
   );

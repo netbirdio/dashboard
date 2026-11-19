@@ -4,22 +4,21 @@ import { SkeletonIntegration } from "@components/skeletons/SkeletonIntegration";
 import * as Tabs from "@radix-ui/react-tabs";
 import { ExternalLinkIcon } from "lucide-react";
 import React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useAccount } from "@/modules/account/useAccount";
 import { LockedFeatureInfoCard } from "@/modules/billing/locked-feature/LockedFeatureInfoCard";
 import { LockedFeatureOverlay } from "@/modules/billing/locked-feature/LockedFeatureOverlay";
 import { OktaSSOIntegrationCard } from "@/modules/integrations/sso/okta/OktaSSOIntegrationCard";
 
 export default function SSOTab() {
+  const t = useTranslations();
   const account = useAccount();
 
   return (
     <Tabs.Content value={"sso"}>
       <div className={"p-default py-6"}>
-        <h1>Single Sign-On</h1>
-        <Paragraph>
-          Configure your preferred Identity Provider (IdP) to enable Single
-          Sign-On (SSO) for your team.
-        </Paragraph>
+        <h1>{t("common.singleSignOn")}</h1>
+        <Paragraph>{t("integrations.ssoTabDescription")}</Paragraph>
         <Paragraph>
           <InlineLink
             href={
@@ -27,7 +26,7 @@ export default function SSOTab() {
             }
             target={"_blank"}
           >
-            Learn more
+            {t("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>

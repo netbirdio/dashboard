@@ -5,6 +5,7 @@ import * as React from "react";
 import { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
@@ -17,6 +18,7 @@ export const ResourceEnabledCell = ({
   resource,
   mutateAllResourcesOnUpdate,
 }: Props) => {
+  const t = useTranslations();
   const { permission } = usePermissions();
 
   const { mutate } = useSWRConfig();
@@ -28,11 +30,14 @@ export const ResourceEnabledCell = ({
 
   const toggle = async (enabled: boolean) => {
     notify({
-      title: `Update Resource`,
-      description: `'${resource?.name}' is now ${
-        enabled ? "enabled" : "disabled"
-      }`,
-      loadingMessage: "Updating resource...",
+      title: t("networks.updateResource"),
+      description: t(
+        enabled
+          ? "networks.resourceNowEnabled"
+          : "networks.resourceNowDisabled",
+        { name: resource?.name ?? "" },
+      ),
+      loadingMessage: t("networks.updatingResource"),
       duration: 1200,
       promise: update({
         ...resource,

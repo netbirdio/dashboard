@@ -1,30 +1,26 @@
 import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
-import {
-  type Node,
-  Position,
-  useConnection,
-  useStore,
-} from "@xyflow/react";
+import { type Node, Position, useConnection, useStore } from "@xyflow/react";
 import { GlobeIcon } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
+import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { AllHandles } from "@/modules/control-center/handles/AllHandles";
+import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import {
   RESOURCE_TYPE_ICONS,
   StandaloneResourceNode,
 } from "@/modules/control-center/nodes/StandaloneResourceNode";
-import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   DraftNetworkRef,
   getDraftResource,
   getResourceNodeEnabled,
   useAnySourceGroupEnabled,
 } from "@/modules/control-center/utils/helpers";
-import { AllHandles } from "@/modules/control-center/handles/AllHandles";
-import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 
 type ResourceNode = Node<
   {
@@ -43,6 +39,7 @@ type ResourceNode = Node<
 >;
 
 export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
+  const t = useTranslations();
   const { enabled, resource, peer, showHandles = false, className } = data;
   const sourceGroupEnabled = useAnySourceGroupEnabled(
     id,
@@ -53,9 +50,7 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
   // Dragging FROM a framed resource is drill-down-only; dropping onto it isn't.
   const isFramed = !!parentId?.startsWith("network-");
   const handlesActive = !isFramed || drillDownNetworkNodeId === parentId;
-  const isTarget = useConnection(
-    (c) => c.inProgress && c.fromNode.id !== id,
-  );
+  const isTarget = useConnection((c) => c.inProgress && c.fromNode.id !== id);
   const showHalo = useIsContextMenuTarget(id);
 
   const isDraftResource = id.startsWith("resource-new-");
@@ -131,7 +126,7 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
                 "font-normal text-sm text-nb-gray-500 relative -top-[0.1rem]"
               }
             >
-              {cardResource.address || "IP, CIDR or Domain"}
+              {cardResource.address || t("controlCenter.addressPlaceholder")}
             </span>
           </div>
         </div>

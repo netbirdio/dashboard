@@ -27,6 +27,7 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/crowdstrike.png";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import { CrowdstrikeIntegration } from "@/interfaces/EDR";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -77,6 +78,7 @@ type ModalProps = {
 };
 
 export function SetupContent({ onSuccess, account }: ModalProps) {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const [step, setStep] = useState(0);
   const maxSteps = 2;
@@ -130,8 +132,10 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
     const score = parseInt(ztaScore);
 
     notify({
-      title: "CrowdStrike Integration",
-      description: `CrowdStrike was successfully connected to NetBird.`,
+      title: t("integrations.edrIntegrationTitle", { name: "CrowdStrike" }),
+      description: t("integrations.edrConnectedDescription", {
+        name: "CrowdStrike",
+      }),
       promise: falconRequest({
         client_id: clientId,
         secret: secret,
@@ -145,13 +149,13 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
         mutate("/integrations/edr/falcon");
         onSuccess();
       }),
-      loadingMessage: "Setting up integration...",
+      loadingMessage: t("integrations.edrSettingUpLoading"),
     });
   };
 
   const ztaError =
     ztaEnabled && (parseInt(ztaScore) <= 0 || parseInt(ztaScore) > 100)
-      ? "Score should be between 1 and 100"
+      ? t("integrations.edrScoreRangeError")
       : undefined;
 
   const hasZtaError = ztaError != undefined;
@@ -187,21 +191,18 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
 
       <IntegrationModalHeader
         image={integrationImage}
-        title={"Connect NetBird with CrowdStrike"}
-        description={
-          "Restrict network access only to devices managed by the company's IT department"
-        }
+        title={t("integrations.edrConnectTitle", { name: "CrowdStrike" })}
+        description={t("integrations.edrCrowdStrikeConnectDescription")}
       />
 
       {step == 0 && (
         <div className={"px-8 py-3 flex flex-col mt-4 z-0"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <GlobeIcon size={16} />
-            Select your CrowdStrike region
+            {t("integrations.edrSelectCrowdStrikeRegion")}
           </p>
           <p className={"mb-3 mt-2"}>
-            To identify which region you are on check your CrowdStrike dashboard
-            url.
+            {t("integrations.edrCrowdStrikeRegionHelp")}
           </p>
           <SelectDropdown
             value={selectedRegion}
@@ -217,31 +218,33 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4 z-0"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <KeyRound size={16} />
-            Get your API Credentials
+            {t("integrations.edrGetApiCredentials")}
           </p>
           <Steps>
             <Steps.Step step={1}>
-              <p>{"Navigate to the CrowdStrike's API Clients & Keys page"}</p>
+              <p>{t("integrations.edrNavigateCrowdStrikeApi")}</p>
               <div className={"flex gap-4"}>
                 <Link href={apiPageUrl} passHref target={"_blank"}>
                   <Button variant={"primary"} size={"xs"}>
                     <ExternalLinkIcon size={14} />
-                    API Clients & Keys
+                    {t("integrations.edrApiClientsAndKeys")}
                   </Button>
                 </Link>
               </div>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Click <Mark>Create API client</Mark> and enter
-                <Mark copy>NetBird</Mark>
-                as the client name and select <Mark>Hosts (Read)</Mark> and{" "}
-                <Mark>Zero Trust Assessment (Read)</Mark> as the scope
+                {t.rich("integrations.edrCreateApiClient", {
+                  mark: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                Click <Mark>Create</Mark> and enter your credentials
+                {t.rich("integrations.edrClickCreateCredentials", {
+                  create: t("common.create"),
+                  mark: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
           </Steps>
@@ -249,7 +252,7 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
             <Input
               type={"text"}
               className={"w-full"}
-              customPrefix={<div className={"min-w-[60px]"}>Client ID</div>}
+              customPrefix={<div className={"min-w-[60px]"}>{t("integrations.idpClientId")}</div>}
               placeholder={"9f6c80ac8a384e1d88a1fd1f279541d0"}
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
@@ -257,7 +260,9 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
             <Input
               type={"text"}
               className={"w-full"}
-              customPrefix={<div className={"min-w-[60px]"}>Secret</div>}
+              customPrefix={
+                <div className={"min-w-[60px]"}>{t("integrations.edrSecret")}</div>
+              }
               placeholder={"qF41DKYkQJBS53w0XPVyO6v9AtZ8WMbHp72eIdml"}
               value={secret}
               onChange={(e) => setSecret(e.target.value)}
@@ -270,13 +275,13 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <IconDevicesCheck size={20} />
-            Peer Approval
+            {t("common.peerApproval")}
           </p>
 
           <div className={"flex flex-col gap-6"}>
             <div>
               <HelpText className={"max-w-lg mt-2"}>
-                Select groups you want to apply the CrowdStrike integration to
+                {t("integrations.edrSelectGroupsFor", { name: "CrowdStrike" })}
               </HelpText>
 
               <PeerGroupSelector values={groups} onChange={setGroups} />
@@ -310,7 +315,7 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
             onClick={() => setStep(step - 1)}
           >
             <IconArrowLeft size={16} />
-            Back
+            {t("common.back")}
           </Button>
         )}
         {step >= 0 && step < maxSteps && (
@@ -320,7 +325,7 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
             onClick={() => setStep(step + 1)}
             disabled={isDisabled}
           >
-            {step == 0 ? "Get Started" : "Continue"}
+            {step == 0 ? t("integrations.edrGetStarted") : t("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -332,7 +337,7 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
             disabled={isDisabled || hasZtaError}
           >
             <Repeat size={16} />
-            Connect
+            {t("integrations.connect")}
           </Button>
         )}
       </ModalFooter>
@@ -344,8 +349,11 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
         >
           <Clock4 size={12} />
           <div>
-            Estimated setup time:
-            <span className={"font-medium"}> 5-10 Minutes</span>
+            {t("integrations.edrEstimatedSetupTime")}
+            <span className={"font-medium"}>
+              {" "}
+              {t("integrations.edrSetupDuration", { duration: "5-10" })}
+            </span>
           </div>
         </div>
       )}

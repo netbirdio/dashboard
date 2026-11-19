@@ -6,6 +6,7 @@ import {
   isResourceTargetType,
   useReverseProxies,
 } from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export const ResourceExposeServiceCell = ({ resource }: Props) => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { openModal, reverseProxies } = useReverseProxies();
   const { network } = useNetworksContext();
@@ -73,7 +75,7 @@ export const ResourceExposeServiceCell = ({ resource }: Props) => {
         disabled={!permission.services?.create}
       >
         <CirclePlusIcon size={12} />
-        Expose
+        {t("networks.expose")}
       </Button>
     </div>
   );

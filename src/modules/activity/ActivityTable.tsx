@@ -27,6 +27,7 @@ import { DateRange } from "react-day-picker";
 import { useSWRConfig } from "swr";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
 import { ActivityEntryRow } from "@/modules/activity/ActivityEntryRow";
 import {
@@ -44,7 +45,7 @@ const ActivityFeedColumnsTable: ColumnDef<ActivityEvent>[] = [
   {
     accessorKey: "activity_code",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Code</DataTableHeader>;
+      return <DataTableHeader column={column} labelId="activity.code" />;
     },
     sortingFn: "text",
     filterFn: "arrIncludesSomeExact",
@@ -90,6 +91,7 @@ export default function ActivityTable({
   isLoading,
   headingTarget,
 }: Props) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const path = usePathname();
 
@@ -129,7 +131,7 @@ export default function ActivityTable({
     () => [
       {
         id: "activity_code",
-        label: "Type",
+        label: translate("common.type"),
         renderPicker: (p) => (
           <ActivityTypePicker
             value={p.value as string[] | undefined}
@@ -142,7 +144,7 @@ export default function ActivityTable({
       },
       {
         id: "initiator_email",
-        label: "Initiator",
+        label: translate("activity.initiator"),
         renderPicker: (p) => (
           <UsersPicker
             value={p.value as string | undefined}
@@ -155,7 +157,7 @@ export default function ActivityTable({
           formatUsersChip(v as string | undefined, userOptions),
       },
     ],
-    [events, userOptions],
+    [events, userOptions, translate],
   );
 
   return (
@@ -163,7 +165,7 @@ export default function ActivityTable({
       headingTarget={headingTarget}
       paginationClassName={"max-w-[800px]"}
       as={"div"}
-      text={"Audit Events"}
+      text={translate("common.auditEvents")}
       sorting={sorting}
       setSorting={setSorting}
       initialPageSize={25}
@@ -172,7 +174,7 @@ export default function ActivityTable({
       tableClassName={"px-8 pt-4"}
       columns={ActivityFeedColumnsTable}
       data={events}
-      searchPlaceholder={"Search by audit name, user, peer, meta..."}
+      searchPlaceholder={translate("activity.searchByAuditNameUserPeerMeta")}
       isLoading={isLoading}
       aboveTable={(table) => (
         <TableFilterChips table={table} filters={filterDefs} />
@@ -192,20 +194,17 @@ export default function ActivityTable({
               size={"large"}
             />
           }
-          title={"Get Started with NetBird"}
-          description={
-            "It looks like you don't have any connected machines.\n" +
-            "Get started by adding one to your network."
-          }
+          title={translate("activity.getStarted")}
+          description={translate("components.noConnectedMachines")}
           button={<AddPeerButton />}
           learnMore={
             <>
-              Learn more in our{" "}
+              {translate("activity.learnMoreInOur")}{" "}
               <InlineLink
                 href={"https://docs.netbird.io/how-to/getting-started"}
                 target={"_blank"}
               >
-                Getting Started Guide
+                {translate("activity.gettingStartedGuide")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </>

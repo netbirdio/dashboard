@@ -2,6 +2,7 @@ import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
 import { useCallback, useSyncExternalStore } from "react";
 import { mutate } from "swr";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { SetupKey } from "@/interfaces/SetupKey";
 
@@ -55,6 +56,7 @@ const setupKeyUpdateBody = (
 });
 
 export function usePlaceholderArtifacts() {
+  const t = useTranslations();
   const groupRequest = useApiCall<Group>("/groups", true);
   const keyRequest = useApiCall<SetupKey>("/setup-keys", true);
 
@@ -100,7 +102,11 @@ export function usePlaceholderArtifacts() {
         // has to act on. Only a key that is still live is worth a toast.
         if (!salvaged) {
           keyUsable = true;
-          failed.push(`setup key “${key?.name ?? setupKeyId}”`);
+          failed.push(
+            t("controlCenter.namedSetupKey", {
+              keySetupKeyId: key?.name ?? setupKeyId,
+            }),
+          );
         }
       }
 
@@ -118,19 +124,24 @@ export function usePlaceholderArtifacts() {
           .del("", `/${boundGroupId}`)
           .then(() => true)
           .catch(() => false);
-        if (!ok) failed.push(`group “${group?.name ?? boundGroupId}”`);
+        if (!ok)
+          failed.push(
+            t("controlCenter.namedGroup", {
+              groupBoundGroupId: group?.name ?? boundGroupId,
+            }),
+          );
       }
 
       if (failed.length > 0) {
         notify({
-          title: "Draft cleanup",
-          description: `Could not delete the temporary ${failed.join(
-            " and ",
-          )}. Remove it manually.${
-            keyUsable
-              ? " The setup key could not be revoked either, so it stays usable until it expires."
-              : ""
-          }`,
+          title: t("controlCenter.draftCleanup"),
+          description: t(
+            "controlCenter.couldNotDeleteTheTemporaryRemoveItManually",
+            {
+              failedAnd: failed.join(" and "),
+              keyUsable: keyUsable ? "true" : "false",
+            },
+          ),
           backgroundColor: "bg-red-500",
         });
       }
@@ -139,7 +150,7 @@ export function usePlaceholderArtifacts() {
       void mutate("/peers");
       void mutate("/groups");
     },
-    [groupRequest, keyRequest],
+    [t, groupRequest, keyRequest],
   );
 
   const registerArtifacts = useCallback(
@@ -221,12 +232,10 @@ export function usePlaceholderArtifacts() {
           ? { boundGroupId: extra.boundGroupId }
           : {}),
       };
-      const targets = hasArtifacts(leftover)
-        ? [...entries, leftover]
-        : entries;
+      const targets = hasArtifacts(leftover) ? [...entries, leftover] : entries;
       targets.forEach((t) => hasArtifacts(t) && void deleteNow(t));
     },
-    [deleteNow],
+    [t, deleteNow],
   );
 
   // Artifacts stay registered so undo can bring the node back, but the KEY is a live
@@ -235,7 +244,9 @@ export function usePlaceholderArtifacts() {
     (setupKeyId?: string) => {
       if (!setupKeyId) return;
       void (async () => {
-        const key = await keyRequest.get(`/${setupKeyId}`).catch(() => undefined);
+        const key = await keyRequest
+          .get(`/${setupKeyId}`)
+          .catch(() => undefined);
         if (!key || key.revoked) return;
         await keyRequest
           .put(setupKeyUpdateBody(key, { revoked: true }), `/${setupKeyId}`)
@@ -247,16 +258,17 @@ export function usePlaceholderArtifacts() {
               .catch(() => undefined);
             if (!still || still.revoked) return;
             notify({
-              title: "Draft cleanup",
-              description: `Could not revoke the temporary setup key “${
-                still.name ?? key.name ?? setupKeyId
-              }”. It stays usable until the draft is closed.`,
+              title: t("controlCenter.draftCleanup"),
+              description: t(
+                "controlCenter.couldNotRevokeTheTemporarySetupKeyIt",
+                { keySetupKeyId: still.name ?? key.name ?? setupKeyId },
+              ),
               backgroundColor: "bg-red-500",
             });
           });
       })();
     },
-    [keyRequest],
+    [t, keyRequest],
   );
 
   // Leaving draft: everything still registered is garbage.

@@ -8,6 +8,7 @@ import { StaticImport } from "next/dist/shared/lib/get-img-props";
 import Image from "next/image";
 import * as React from "react";
 import { useMemo } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props<T> = {
   image: StaticImport | string;
@@ -41,6 +42,7 @@ export function IntegrationCard<T>({
   hideSwitch = false,
   customButton,
 }: Props<T>) {
+  const t = useTranslations();
   const IntegrationButton = useMemo(
     () =>
       customButton ? (
@@ -54,11 +56,11 @@ export function IntegrationCard<T>({
             onClick={onSetup}
           >
             <Repeat size={13} />
-            Connect {name}
+            {t("integrations.edrConnectName", { name })}
           </Button>
         </div>
       ),
-    [customButton, name],
+    [customButton, name, t],
   );
 
   return (

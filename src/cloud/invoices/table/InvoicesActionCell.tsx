@@ -11,12 +11,14 @@ import { DownloadIcon, MoreVertical } from "lucide-react";
 import React from "react";
 import { useDistributor } from "@/cloud/distributor/contexts/DistributorProvider";
 import { Invoice, InvoicePDF } from "@/cloud/msp/interfaces/Invoice";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   invoice: Invoice;
 };
 
 export default function InvoicesActionCell({ invoice }: Readonly<Props>) {
+  const t = useTranslations();
   const { isActive: isDistributor } = useDistributor();
   const apiRequestPath = isDistributor
     ? "/integrations/msp/reseller/invoices"
@@ -49,9 +51,9 @@ export default function InvoicesActionCell({ invoice }: Readonly<Props>) {
       });
 
     notify({
-      title: `Download Invoice (CSV)`,
-      description: `Downloading ${invoice.id}.csv...`,
-      loadingMessage: `Getting invoice for this billing period...`,
+      title: t("invoices.downloadInvoiceCSV"),
+      description: t("invoices.downloadingIdCsv", { id: invoice.id }),
+      loadingMessage: t("invoices.gettingInvoice"),
       promise,
     });
     return promise;
@@ -60,9 +62,9 @@ export default function InvoicesActionCell({ invoice }: Readonly<Props>) {
   const redirectToStripe = async () => {
     let promise = pdfInvoiceRequest.get(`/${invoice?.id}/pdf`);
     notify({
-      title: `Download Invoice (PDF)`,
-      description: `Redirecting to Stripe to download the invoice...`,
-      loadingMessage: `Getting invoice for this billing period...`,
+      title: t("invoices.downloadInvoicePDF"),
+      description: t("invoices.redirectingToStripe"),
+      loadingMessage: t("invoices.gettingInvoice"),
       promise,
     });
     return promise;
@@ -92,14 +94,14 @@ export default function InvoicesActionCell({ invoice }: Readonly<Props>) {
           >
             <div className={"flex gap-3 items-center justify-center pr-3"}>
               <DownloadIcon size={12} />
-              Download as PDF
+              {t("invoices.downloadPDF")}
             </div>
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={downloadCSV}>
             <div className={"flex gap-3 items-center justify-center pr-3"}>
               <DownloadIcon size={12} />
-              Download as CSV
+              {t("invoices.downloadCSV")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

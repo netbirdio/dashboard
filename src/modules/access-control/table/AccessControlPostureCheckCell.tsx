@@ -3,12 +3,14 @@ import { IconCirclePlus } from "@tabler/icons-react";
 import { ShieldCheck } from "lucide-react";
 import React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Policy } from "@/interfaces/Policy";
 
 type Props = {
   policy: Policy;
 };
 export default function AccessControlPostureCheckCell({ policy }: Props) {
+  const t = useTranslations();
   const { permission } = usePermissions();
 
   const isDisabled = !permission.policies.create || !permission.policies.update;
@@ -32,7 +34,7 @@ export default function AccessControlPostureCheckCell({ policy }: Props) {
         disabled={isDisabled}
       >
         <IconCirclePlus size={14} />
-        Add Posture Check
+        {t("accessControl.addPostureCheck")}
       </Badge>
     </div>
   );

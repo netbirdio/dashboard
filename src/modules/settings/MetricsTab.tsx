@@ -8,6 +8,7 @@ import { ChartNoAxesCombined, ExternalLinkIcon } from "lucide-react";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 
 type Props = {
@@ -15,6 +16,7 @@ type Props = {
 };
 
 export default function MetricsTab({ account }: Readonly<Props>) {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const saveRequest = useApiCall<Account>("/accounts/" + account.id, true);
@@ -25,10 +27,12 @@ export default function MetricsTab({ account }: Readonly<Props>) {
 
   const toggleMetricsPush = async (toggle: boolean) => {
     notify({
-      title: "Metrics",
-      description: `Metrics push successfully ${
-        toggle ? "enabled" : "disabled"
-      }.`,
+      title: t("common.metrics"),
+      description: t(
+        toggle
+          ? "settings.metricsStateEnabled"
+          : "settings.metricsStateDisabled",
+      ),
       promise: saveRequest
         .put({
           id: account.id,
@@ -41,7 +45,7 @@ export default function MetricsTab({ account }: Readonly<Props>) {
           setMetricsPushEnabled(toggle);
           mutate("/accounts");
         }),
-      loadingMessage: "Updating metrics setting...",
+      loadingMessage: t("settings.metricsUpdating"),
     });
   };
 
@@ -49,14 +53,14 @@ export default function MetricsTab({ account }: Readonly<Props>) {
     <Tabs.Content value={"metrics"}>
       <div className={"p-default py-6 max-w-2xl"}>
         <div>
-          <h1>Metrics</h1>
+          <h1>{t("common.metrics")}</h1>
           <Paragraph className={"block"}>
-            Share client performance metrics to help us improve NetBird.{" "}
+            {t("settings.metricsDescription")}{" "}
             <InlineLink
               href={"https://docs.netbird.io/manage/client-metrics"}
               target={"_blank"}
             >
-              Learn more
+              {t("common.learnMore")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
@@ -69,12 +73,10 @@ export default function MetricsTab({ account }: Readonly<Props>) {
           label={
             <>
               <ChartNoAxesCombined size={15} />
-              Share performance metrics
+              {t("settings.shareMetrics")}
             </>
           }
-          helpText={
-            "When enabled, clients will periodically send performance data to help us identify and fix issues."
-          }
+          helpText={t("settings.shareMetricsHelp")}
           disabled={!permission.settings.update}
         />
       </div>

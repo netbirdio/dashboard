@@ -37,6 +37,7 @@ import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/huntress.png";
 import HelpText from "@/components/HelpText";
 import { PeerGroupSelector } from "@/components/PeerGroupSelector";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import {
   DEFAULT_HUNTRESS_MATCH_ATTRIBUTES,
@@ -87,6 +88,7 @@ type ModalProps = {
 };
 
 export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const huntressRequest = useApiCall<HuntressIntegration>(
     "/integrations/edr/huntress",
@@ -137,8 +139,10 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
     const savedGroups = await saveGroups();
 
     notify({
-      title: "Huntress Integration",
-      description: `Huntress was successfully connected to NetBird.`,
+      title: translate("integrations.edrIntegrationTitle", { name: "Huntress" }),
+      description: translate("integrations.edrConnectedDescription", {
+        name: "Huntress",
+      }),
       promise: huntressRequest
         .post({
           api_key: apiKey,
@@ -153,7 +157,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
           mutate("/integrations/edr/huntress");
           onSuccess();
         }),
-      loadingMessage: "Setting up integration...",
+      loadingMessage: translate("integrations.edrSettingUpLoading"),
     });
   };
 
@@ -195,10 +199,8 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
 
       <IntegrationModalHeader
         image={integrationImage}
-        title={"Connect NetBird with Huntress"}
-        description={
-          "Restrict network access to devices managed by Huntress based on their security posture."
-        }
+        title={translate("integrations.edrConnectTitle", { name: "Huntress" })}
+        description={translate("integrations.edrHuntressConnectDescription")}
       />
 
       {step === 0 && (
@@ -213,21 +215,14 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             }
           >
             <Shield size={16} />
-            Required Permissions
+            {translate("common.requiredPermissions")}
           </div>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
-            Ensure that you have an{" "}
-            <span className={"text-nb-gray-100 font-semibold"}>
-              Huntress account
-            </span>{" "}
-            with the following{" "}
-            <span className={"text-nb-gray-100 font-semibold"}>
-              permissions
-            </span>
-            .{" "}
-            {
-              "If you don't have the required permissions, ask your administrator to grant them to you."
-            }
+            {translate.rich("integrations.edrPermissionsIntro", {
+              account: translate("integrations.edrHuntressAccount"),
+              requirement: translate("integrations.edrPermissionsWord"),
+              followup: translate("integrations.edrPermissionsMissingAdmin"),
+            })}
           </p>
           <div
             className={
@@ -240,7 +235,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
               }
             >
               <PlusCircle size={14} className={"text-sky-500"} />
-              Create API Keys
+              {translate("integrations.edrCreateApiKeys")}
             </div>
             <div
               className={
@@ -248,7 +243,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
               }
             >
               <Settings2 size={14} className={"text-sky-500"} />
-              Manage API Keys
+              {translate("integrations.edrManageApiKeys")}
             </div>
           </div>
         </div>
@@ -258,41 +253,47 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <KeyRound size={18} />
-            Get Huntress API Credentials
+            {translate("integrations.edrGetHuntressCredentials")}
           </p>
 
           <Steps>
             <Steps.Step step={1}>
               <p>
-                Navigate to your{" "}
-                <InlineLink
-                  className={"inline"}
-                  target={"_blank"}
-                  href={"https://huntress.io/login"}
-                >
-                  Huntress Management Console
-                </InlineLink>{" "}
-                then open the menu at the top right and click{" "}
-                <Mark>API Credentials</Mark>
+                {translate.rich("integrations.edrNavigateHuntressConsole", {
+                  link: (chunks) => (
+                    <InlineLink
+                      className={"inline"}
+                      target={"_blank"}
+                      href={"https://huntress.io/login"}
+                    >
+                      {chunks}
+                    </InlineLink>
+                  ),
+                  mark: (chunks) => <Mark>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
 
             <Steps.Step step={2}>
               <p>
-                Under User API Credentials click <Mark>+ Add</Mark> then select
-                your user and add
-                <Mark copy={true}>NetBird</Mark> as the description
+                {translate.rich("integrations.edrAddHuntressCredential", {
+                  mark: (chunks) => <Mark copy={true}>{chunks}</Mark>,
+                })}
               </p>
             </Steps.Step>
             <Steps.Step step={3} line={false}>
-              <p>Enter your API Credentials</p>
+              <p>{translate("integrations.edrEnterApiCredentials")}</p>
             </Steps.Step>
           </Steps>
           <div className={"mb-4 flex-col gap-4 flex"}>
             <Input
               type={"text"}
               className={"w-full"}
-              customPrefix={<div className={"min-w-[80px]"}>API Key</div>}
+              customPrefix={
+                <div className={"min-w-[80px]"}>
+                  {translate("integrations.edrApiKey")}
+                </div>
+              }
               placeholder={"hk_30813a372c41f72f1892"}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
@@ -300,7 +301,11 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             <Input
               type={"text"}
               className={"w-full"}
-              customPrefix={<div className={"min-w-[80px]"}>API Secret</div>}
+              customPrefix={
+                <div className={"min-w-[80px]"}>
+                  {translate("integrations.edrApiSecret")}
+                </div>
+              }
               placeholder={"hs_3b80d8e463aeb037ac211fafb7fc59c1"}
               value={apiSecret}
               onChange={(e) => setApiSecret(e.target.value)}
@@ -313,11 +318,11 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4 mb-3"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <FolderGit2 size={16} />
-            Peer Approval
+            {translate("common.peerApproval")}
           </p>
 
           <HelpText className={"max-w-lg mt-2"}>
-            Select groups you want to apply the Huntress integration to
+            {translate("integrations.edrSelectGroupsFor", { name: "Huntress" })}
           </HelpText>
 
           <PeerGroupSelector values={groups} onChange={setGroups} />
@@ -328,16 +333,17 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4 mb-3"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <ShieldCheckIcon size={16} />
-            Compliance Requirements
+            {translate("integrations.edrComplianceRequirements")}
           </p>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
-            Set the specific requirements that devices must meet to be
-            considered compliant. Learn more in the{" "}
-            <InlineLink href={HUNTRESS_DOCUMENTATION_URL} target={"_blank"}>
-              Huntress Documentation
-              <ExternalLinkIcon size={12} />
-            </InlineLink>{" "}
-            about the different statuses.
+            {translate.rich("integrations.edrHuntressComplianceHelp", {
+              link: (chunks) => (
+                <InlineLink href={HUNTRESS_DOCUMENTATION_URL} target={"_blank"}>
+                  {chunks}
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              ),
+            })}
           </p>
 
           <HuntressMatchSettings
@@ -351,23 +357,21 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4 mb-3"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <RefreshCcw size={16} />
-            Huntress Sync Window
+            {translate("integrations.edrSyncWindowTitle", { name: "Huntress" })}
           </p>
           <div className={"mt-2 flex flex-row gap-3"}>
             <FullTooltip
               interactive={false}
               content={
                 <div className={"max-w-xs text-xs"}>
-                  Example: This property is set to 24 hours. Jane&apos;s laptop
-                  hasn&apos;t synced with Huntress for 27 hours. Even though
-                  it&apos;s marked as Compliant in Huntress, it will still be
-                  blocked from network access.
+                  {translate("integrations.edrSyncWindowExample", {
+                    name: "Huntress",
+                  })}
                 </div>
               }
             >
               <HelpText className={"max-w-lg"}>
-                Devices not synced with Huntress in this time won&apos;t have
-                network access.
+                {translate("integrations.edrSyncWindowHelp", { name: "Huntress" })}
                 <IconInfoCircle
                   size={14}
                   className={"relative inline ml-1 -top-[1px]"}
@@ -382,7 +386,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
               value={lastSyncedInterval}
               type={"number"}
               onChange={(e) => setLastSyncedInterval(e.target.value)}
-              customSuffix={"Hours"}
+              customSuffix={translate("integrations.edrHours")}
             />
           </div>
           <EDRSyncIntervalInput
@@ -402,7 +406,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             onClick={() => setStep(step - 1)}
           >
             <IconArrowLeft size={16} />
-            Back
+            {translate("common.back")}
           </Button>
         )}
         {step >= 0 && step < maxSteps && (
@@ -412,7 +416,9 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             disabled={isDisabled}
             onClick={() => setStep(step + 1)}
           >
-            {step === 0 ? "Get Started" : "Continue"}
+            {step === 0
+              ? translate("integrations.edrGetStarted")
+              : translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -424,7 +430,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             onClick={connect}
           >
             <Repeat size={16} />
-            Connect
+            {translate("integrations.connect")}
           </Button>
         )}
       </ModalFooter>
@@ -436,8 +442,11 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         >
           <Clock4 size={12} />
           <div>
-            Estimated setup time:
-            <span className={"font-medium"}> 10-20 Minutes</span>
+            {translate("integrations.edrEstimatedSetupTime")}
+            <span className={"font-medium"}>
+              {" "}
+              {translate("integrations.edrSetupDuration", { duration: "10-20" })}
+            </span>
           </div>
         </div>
       )}

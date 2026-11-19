@@ -8,6 +8,8 @@ import {
   ChevronsRight,
 } from "lucide-react";
 
+import { useTranslations } from "@/i18n/LocaleProvider";
+
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
   text?: string;
@@ -17,10 +19,11 @@ interface DataTablePaginationProps<TData> {
 
 export function DataTablePagination<TData>({
   table,
-  text = "rows",
+  text,
   paginationPadding = "px-8 py-8",
   totalRecords,
 }: DataTablePaginationProps<TData>) {
+  const t = useTranslations();
   const rowsPerPage = table.getState().pagination.pageSize;
   const currentPage = table.getState().pagination.pageIndex + 1;
   const pageCount = table.getPageCount();
@@ -39,24 +42,32 @@ export function DataTablePagination<TData>({
         className={cn("flex items-center justify-between", paginationPadding)}
       >
         <div className="text-nb-gray-400">
-          Showing{" "}
-          <span className={"font-medium text-nb-gray-100 dark:text-white"}>
-            {showingFrom} to {showingTo}
-          </span>{" "}
-          of <span className={"font-medium text-nb-gray-100 dark:text-white"}>{totalRows}</span>{" "}
-          {text}
+          {t.rich("tables.paginationRange", {
+            from: showingFrom,
+            to: showingTo,
+            count: totalRows,
+            items: text ?? t("tables.rows"),
+            range: (chunks) => (
+              <span className="font-medium text-nb-gray-100 dark:text-white">{chunks}</span>
+            ),
+            total: (chunks) => (
+              <span className="font-medium text-nb-gray-100 dark:text-white">{chunks}</span>
+            ),
+          })}
         </div>
         {pageCount > 1 && (
           <div className={"flex items-center gap-3"}>
             <div className="flex items-center space-x-2">
               <ButtonGroup>
                 <ButtonGroup.Button
+                  aria-label={t("tables.firstPage")}
                   onClick={() => table.setPageIndex(0)}
                   disabled={!table.getCanPreviousPage()}
                 >
                   <ChevronsLeft size={16} />
                 </ButtonGroup.Button>
                 <ButtonGroup.Button
+                  aria-label={t("tables.previousPage")}
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}
                 >
@@ -64,16 +75,21 @@ export function DataTablePagination<TData>({
                 </ButtonGroup.Button>
                 <ButtonGroup.Button>
                   <div>
-                    {currentPage} of {pageCount}
+                    {t("tables.paginationPage", {
+                      current: currentPage,
+                      total: pageCount,
+                    })}
                   </div>
                 </ButtonGroup.Button>
                 <ButtonGroup.Button
+                  aria-label={t("tables.nextPage")}
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
                 >
                   <ChevronRight size={18} />
                 </ButtonGroup.Button>
                 <ButtonGroup.Button
+                  aria-label={t("tables.lastPage")}
                   onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                   disabled={!table.getCanNextPage()}
                 >

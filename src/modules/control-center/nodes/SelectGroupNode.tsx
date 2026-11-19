@@ -8,6 +8,7 @@ import { Handle, type Node, Position } from "@xyflow/react";
 import { sortBy } from "lodash";
 import { ChevronsUpDown } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { useCanvasUI } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
@@ -22,6 +23,7 @@ type NodeProps = Node<
 >;
 
 export const SelectGroupNode = ({ data, id }: NodeProps) => {
+  const t = useTranslations();
   const { data: groups, isLoading: isGroupsLoading } =
     useFetchApi<Group[]>("/groups");
 
@@ -45,6 +47,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
   const countLabel = getGroupCountLabel(
     group,
     group ? groupUserCounts.get(group.id ?? group.name) : 0,
+    t,
   );
 
   const [open, setOpen] = React.useState(false);
@@ -63,7 +66,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
         onChange={data.onChange}
         options={groupOptions}
         showSearch={true}
-        searchPlaceholder={"Search groups..."}
+        searchPlaceholder={t("controlCenter.searchPlaceholder")}
         open={open}
         onOpenChange={setOpen}
         popoverWidth={280}

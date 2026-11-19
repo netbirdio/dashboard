@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { useGroupContext } from "@/contexts/GroupProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { GROUP_TOOLTIP_TEXT } from "@/interfaces/Group";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { GroupUsage } from "@/modules/groups/useGroupsUsage";
 
 type Props = {
@@ -22,6 +22,7 @@ type Props = {
 };
 
 export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const router = useRouter();
 
@@ -64,7 +65,7 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
             >
               <div className="flex gap-3 items-center">
                 <FolderIcon size={14} className="shrink-0" />
-                View Details
+                {t("groups.viewDetails")}
               </div>
             </DropdownMenuItem>
 
@@ -75,8 +76,8 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
                   content={
                     <div className={"text-xs max-w-xs"}>
                       {isJWTGroup
-                        ? GROUP_TOOLTIP_TEXT.RENAME.JWT
-                        : GROUP_TOOLTIP_TEXT.RENAME.INTEGRATION}
+                        ? t("groups.cannotRenameJwt")
+                        : t("groups.cannotRenameIntegration")}
                     </div>
                   }
                   interactive={false}
@@ -90,7 +91,7 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
                   >
                     <div className="flex gap-3 items-center">
                       <Pencil size={14} className="shrink-0" />
-                      Rename
+                      {t("groups.rename")}
                     </div>
                   </DropdownMenuItem>
                 </FullTooltip>
@@ -101,8 +102,8 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
                 content={
                   <div className={"text-xs max-w-xs"}>
                     {isIntegrationGroup
-                      ? GROUP_TOOLTIP_TEXT.DELETE.INTEGRATION
-                      : GROUP_TOOLTIP_TEXT.IN_USE}
+                      ? t("groups.cannotDeleteIntegration")
+                      : t("groups.removeDependenciesToDelete")}
                   </div>
                 }
                 interactive={false}
@@ -117,7 +118,7 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
                 >
                   <div className="flex gap-3 items-center">
                     <Trash2 size={14} className="shrink-0" />
-                    Delete
+                    {t("common.delete")}
                   </div>
                 </DropdownMenuItem>
               </FullTooltip>

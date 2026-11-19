@@ -19,6 +19,7 @@ import {
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { useMatomoEvent } from "@/cloud/analytics/MatomoProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import type {
   APIAgentNetworkAccessLog,
   APIAgentNetworkAccessLogsResponse,
@@ -55,6 +56,7 @@ export const OnboardingAgentEnd = ({
   onBack,
   onFinish,
 }: Props) => {
+  const t = useTranslations();
   const outcome = useTestRequest(userId);
   useMatomoEvent(outcome.kind !== "waiting" && "test_request", outcome.kind);
 
@@ -66,18 +68,21 @@ export const OnboardingAgentEnd = ({
     <div className={"relative flex flex-col h-full gap-4"}>
       <div>
         <h1 className={"text-xl text-center max-w-sm mx-auto"}>
-          Send a test request
+          {t("onboarding.sendATestRequest")}
         </h1>
         <div
           className={
             "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
           }
         >
-          Run your agent, or the cURL command from the previous step, on{" "}
-          <span className={"text-nb-gray-100 whitespace-nowrap"}>
-            {deviceName || "your device"}
-          </span>
-          . The request shows up here once NetBird logs it.
+          {t.rich("onboarding.runYourAgentOrTheCURLCommandFromThePrevious", {
+            part0: (chunks) => (
+              <span className={"text-nb-gray-100 whitespace-nowrap"}>
+                {chunks}
+              </span>
+            ),
+            part1: () => deviceName || t("onboarding.yourDevice"),
+          })}
         </div>
       </div>
 
@@ -85,10 +90,10 @@ export const OnboardingAgentEnd = ({
 
       <div className={"flex items-center justify-center mt-4 gap-3"}>
         <Button variant={"secondary"} onClick={onBack}>
-          Go Back
+          {t("onboarding.goBack")}
         </Button>
         <Button variant={"secondaryLighter"} onClick={onFinish}>
-          Skip
+          {t("onboarding.skip")}
         </Button>
       </div>
     </div>
@@ -96,48 +101,6 @@ export const OnboardingAgentEnd = ({
 };
 
 // The dashboard's Agent Network sections, one line each.
-const SECTIONS: { icon: LucideIcon; title: string; description: string }[] = [
-  {
-    icon: KeyRoundIcon,
-    title: "Providers",
-    description: "Connect providers and pick models.",
-  },
-  {
-    icon: ShieldCheckIcon,
-    title: "Policies",
-    description: "Choose who can use each provider.",
-  },
-  {
-    icon: ListChecksIcon,
-    title: "Guardrails",
-    description: "Limit models and capture prompts.",
-  },
-  {
-    icon: GaugeIcon,
-    title: "Budgets and limits",
-    description: "Cap token use and spend.",
-  },
-  {
-    icon: ChartColumnIcon,
-    title: "Usage",
-    description: "Track tokens and spend over time.",
-  },
-  {
-    icon: ScrollTextIcon,
-    title: "Access Logs",
-    description: "See every request and who sent it.",
-  },
-  {
-    icon: DatabaseIcon,
-    title: "Log retention",
-    description: "Choose how long logs are kept.",
-  },
-  {
-    icon: SquareTerminalIcon,
-    title: "Agent setup",
-    description: "Configure Claude Code and Codex.",
-  },
-];
 
 // AllSet is where a passed test request ends the onboarding: it confirms the
 // request and lists what the dashboard offers from here.
@@ -149,47 +112,96 @@ const AllSet = ({
   entry: APIAgentNetworkAccessLog;
   onBack: () => void;
   onFinish: () => void;
-}) => (
-  <div className={"relative flex flex-col h-full gap-4"}>
-    <div>
-      <h1 className={"text-xl text-center max-w-sm mx-auto"}>
-        You&apos;re all set!
-      </h1>
-      <PassedRequest entry={entry} />
-    </div>
+}) => {
+  const t = useTranslations();
 
-    <ul
-      className={"mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5 text-sm"}
-      data-testid={"agent-network-sections"}
-    >
-      {SECTIONS.map(({ icon: Icon, title, description }) => (
-        <li key={title} className={"flex items-start gap-3"}>
-          <Icon size={16} className={"text-nb-gray-400 shrink-0 mt-0.5"} />
-          <div>
-            <div className={"text-nb-gray-100"}>{title}</div>
-            <div className={"text-nb-gray-400 font-light mt-0.5"}>
-              {description}
+  const SECTIONS: { icon: LucideIcon; title: string; description: string }[] = [
+    {
+      icon: KeyRoundIcon,
+      title: t("common.providers"),
+      description: t("onboarding.connectProvidersAndPickModels"),
+    },
+    {
+      icon: ShieldCheckIcon,
+      title: t("common.policies"),
+      description: t("onboarding.chooseWhoCanUseEachProvider"),
+    },
+    {
+      icon: ListChecksIcon,
+      title: t("onboarding.guardrails"),
+      description: t("onboarding.limitModelsAndCapturePrompts"),
+    },
+    {
+      icon: GaugeIcon,
+      title: t("onboarding.budgetsAndLimits"),
+      description: t("onboarding.capTokenUseAndSpend"),
+    },
+    {
+      icon: ChartColumnIcon,
+      title: t("agentNetwork.usage"),
+      description: t("onboarding.trackTokensAndSpendOverTime"),
+    },
+    {
+      icon: ScrollTextIcon,
+      title: t("common.accessLogs"),
+      description: t("onboarding.seeEveryRequestAndWhoSentIt"),
+    },
+    {
+      icon: DatabaseIcon,
+      title: t("onboarding.logRetention"),
+      description: t("onboarding.chooseHowLongLogsAreKept"),
+    },
+    {
+      icon: SquareTerminalIcon,
+      title: t("onboarding.agentSetup"),
+      description: t("onboarding.configureClaudeCodeAndCodex"),
+    },
+  ];
+  return (
+    <div className={"relative flex flex-col h-full gap-4"}>
+      <div>
+        <h1 className={"text-xl text-center max-w-sm mx-auto"}>
+          {t("onboarding.youReAllSet")}
+        </h1>
+        <PassedRequest entry={entry} />
+      </div>
+
+      <ul
+        className={
+          "mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5 text-sm"
+        }
+        data-testid={"agent-network-sections"}
+      >
+        {SECTIONS.map(({ icon: Icon, title, description }) => (
+          <li key={title} className={"flex items-start gap-3"}>
+            <Icon size={16} className={"text-nb-gray-400 shrink-0 mt-0.5"} />
+            <div>
+              <div className={"text-nb-gray-100"}>{title}</div>
+              <div className={"text-nb-gray-400 font-light mt-0.5"}>
+                {description}
+              </div>
             </div>
-          </div>
-        </li>
-      ))}
-    </ul>
+          </li>
+        ))}
+      </ul>
 
-    <div className={"flex items-center justify-center mt-4 gap-3"}>
-      <Button variant={"secondary"} onClick={onBack}>
-        Go Back
-      </Button>
-      <Button variant={"primary"} onClick={onFinish}>
-        Finish
-        <CheckIcon size={16} />
-      </Button>
+      <div className={"flex items-center justify-center mt-4 gap-3"}>
+        <Button variant={"secondary"} onClick={onBack}>
+          {t("components.goBack")}
+        </Button>
+        <Button variant={"primary"} onClick={onFinish}>
+          {t("onboarding.finish")}
+          <CheckIcon size={16} />
+        </Button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // PassedRequest is the step's subtitle: it names the provider the test
 // request was routed to when it is one of the account's.
 const PassedRequest = ({ entry }: { entry: APIAgentNetworkAccessLog }) => {
+  const t = useTranslations();
   const { providers } = useAIProviders();
   const provider = providers.find((p) => p.id === entry.resolved_provider_id);
 
@@ -200,7 +212,7 @@ const PassedRequest = ({ entry }: { entry: APIAgentNetworkAccessLog }) => {
       }
       data-testid={"agent-network-test-passed"}
     >
-      {passedSentence(entry, provider?.name)}
+      {passedSentence(t, entry, provider?.name)}
     </div>
   );
 };
@@ -208,16 +220,23 @@ const PassedRequest = ({ entry }: { entry: APIAgentNetworkAccessLog }) => {
 // passedSentence reads e.g. "Your request reached Anthropic and used 1,234
 // tokens.", naming the model when the provider is unknown.
 const passedSentence = (
+  t: ReturnType<typeof useTranslations>,
   entry: APIAgentNetworkAccessLog,
   providerName?: string,
 ) => {
   const target = providerName || entry.model;
-  const tokens =
-    entry.total_tokens > 0
-      ? ` and used ${entry.total_tokens.toLocaleString()} tokens`
-      : "";
-  if (!target) return `Your request went through${tokens}.`;
-  return `Your request reached ${target}${tokens}.`;
+  if (!target)
+    return entry.total_tokens > 0
+      ? t("onboarding.yourRequestWentThroughAndUsedCountNumberTokens", {
+          count: entry.total_tokens,
+        })
+      : t("onboarding.yourRequestWentThrough");
+  return entry.total_tokens > 0
+    ? t("onboarding.yourRequestReachedTargetAndUsedCountNumberTokens", {
+        target,
+        count: entry.total_tokens,
+      })
+    : t("onboarding.yourRequestReachedTarget", { target });
 };
 
 // TestRequestStatus shows what became of the latest request. onOpenLogs leaves
@@ -230,12 +249,17 @@ const TestRequestStatus = ({
   outcome: Exclude<TestRequestOutcome, { kind: "passed" }>;
   onOpenLogs: () => void;
 }) => {
+  const t = useTranslations();
   if (outcome.kind === "waiting") {
-    return <WaitingForDevice text={"Waiting for your first request"} />;
+    return (
+      <WaitingForDevice text={t("onboarding.waitingForYourFirstRequest")} />
+    );
   }
 
   const { entry } = outcome;
-  const forModel = entry.model ? `, for ${entry.model},` : "";
+  const forModel = entry.model
+    ? t("onboarding.forModel", { model: entry.model })
+    : "";
 
   return (
     <div className={"flex flex-col"}>
@@ -246,29 +270,35 @@ const TestRequestStatus = ({
       >
         <p>
           {outcome.kind === "denied"
-            ? `Your last request${forModel} was denied: ${
-                formatDenyReason(entry.deny_reason) || "no reason given"
-              }.`
-            : `Your last request${forModel} reached the provider and came back with status ${entry.status_code}.`}
+            ? t("onboarding.yourLastRequestForModelWasDeniedValue", {
+                forModel: forModel,
+                value:
+                  formatDenyReason(entry.deny_reason) ||
+                  t("onboarding.noReasonGiven"),
+              })
+            : t(
+                "onboarding.yourLastRequestForModelReachedTheProviderAndCameBack",
+                { forModel: forModel, status_code: entry.status_code },
+              )}
         </p>
         <p className={"mt-1"}>
-          Learn more in the{" "}
+          {t("onboarding.learnMoreInThe")}{" "}
           <InlineButtonLink variant={"dashed"} onClick={onOpenLogs}>
-            Access Logs
+            {t("common.accessLogs")}
           </InlineButtonLink>{" "}
-          or the{" "}
+          {t("onboarding.orThe")}{" "}
           <InlineLink
             variant={"dashed"}
             href={QUICKSTART_DOCS}
             target={"_blank"}
           >
-            docs
+            {t("onboarding.docs")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
           .
         </p>
       </Callout>
-      <WaitingForDevice text={"Waiting for your next request"} />
+      <WaitingForDevice text={t("onboarding.waitingForYourNextRequest")} />
     </div>
   );
 };

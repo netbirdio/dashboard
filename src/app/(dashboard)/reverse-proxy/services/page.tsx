@@ -1,24 +1,26 @@
 "use client";
 
+import { Callout } from "@components/Callout";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
+import { isNetBirdCloud } from "@utils/netbird";
 import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import ReverseProxiesProvider from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { REVERSE_PROXY_DOCS_LINK } from "@/interfaces/ReverseProxy";
 import PageContainer from "@/layouts/PageContainer";
-import { Callout } from "@components/Callout";
-import { isNetBirdCloud } from "@utils/netbird";
 
 const ReverseProxyTable = lazy(
   () => import("@/modules/reverse-proxy/table/ReverseProxyTable"),
 );
 
 export default function ReverseProxyServicesPage() {
+  const t = useTranslations();
   const { permission } = usePermissions();
 
   const { ref: headingRef, portalTarget } =
@@ -27,31 +29,34 @@ export default function ReverseProxyServicesPage() {
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
-        <h1 ref={headingRef}>Services</h1>
+        <h1 ref={headingRef}>{t("common.services")}</h1>
         <Paragraph>
-          Expose services securely through NetBird&apos;s reverse proxy.{" "}
+          {t("reverseProxy.exposeServicesSecurelyThroughNetBirdSReverseProxy")}{" "}
           <InlineLink href={REVERSE_PROXY_DOCS_LINK} target={"_blank"}>
-            Learn more
+            {t("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
 
         {isNetBirdCloud() ? (
           <Callout className={"max-w-xl mt-5"} variant={"info"}>
-            NetBird&apos;s Reverse Proxy is currently in beta and available at
-            no cost during this period. Features, functionality, and pricing are
-            subject to change upon release.
+            {t(
+              "reverseProxy.netBirdSReverseProxyIsCurrentlyInBetaAndAvailableAtNo",
+            )}
           </Callout>
         ) : (
           <Callout className={"max-w-xl mt-5"} variant={"info"}>
-            NetBird&apos;s Reverse Proxy is currently in beta. <br /> Features
-            and functionality are subject to change upon release.
+            {t("reverseProxy.netBirdSReverseProxyIsCurrentlyInBeta")}
+            <br />{" "}
+            {t(
+              "reverseProxy.featuresAndFunctionalityAreSubjectToChangeUponRelease",
+            )}
           </Callout>
         )}
       </div>
 
       <RestrictedAccess
-        page={"Services"}
+        page={t("common.services")}
         hasAccess={permission?.services?.read}
       >
         <ReverseProxiesProvider>

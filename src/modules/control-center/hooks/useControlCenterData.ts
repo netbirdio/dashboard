@@ -1,9 +1,10 @@
+import { SelectOption } from "@components/select/SelectDropdown";
 import useFetchApi from "@utils/api";
-import { useMemo } from "react";
 import { sortBy } from "lodash";
 import { LayoutGridIcon, NetworkIcon } from "lucide-react";
+import { useMemo } from "react";
 import React from "react";
-import { SelectOption } from "@components/select/SelectDropdown";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
@@ -11,6 +12,7 @@ import { Policy } from "@/interfaces/Policy";
 import { User } from "@/interfaces/User";
 
 export function useControlCenterData() {
+  const t = useTranslations();
   const { data: policies, isLoading: isPoliciesLoading } =
     useFetchApi<Policy[]>("/policies");
   const { data: peers, isLoading: isPeersLoading } =
@@ -54,11 +56,11 @@ export function useControlCenterData() {
     );
     allNetworks.unshift({
       value: "",
-      label: "All Networks",
+      label: t("controlCenter.allNetworks"),
       icon: () => React.createElement(LayoutGridIcon, { size: 14 }),
     } as SelectOption);
     return allNetworks;
-  }, [networks]);
+  }, [t, networks]);
 
   const isDataReady = (): boolean =>
     !!policies &&

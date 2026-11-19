@@ -4,12 +4,14 @@ import { MonitorSmartphoneIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { GroupedRoute } from "@/interfaces/Route";
 
 type Props = {
   groupedRoute: GroupedRoute;
 };
 export default function GroupedRouteTypeCell({ groupedRoute }: Props) {
+  const t = useTranslations();
   const { groups } = useGroups();
 
   const group = useMemo(() => {
@@ -26,7 +28,7 @@ export default function GroupedRouteTypeCell({ groupedRoute }: Props) {
         <GroupBadge group={group} />
       ) : (
         <Badge variant={"gray"} className={"min-w-[130px]"}>
-          <MonitorSmartphoneIcon size={14} /> Routing Peers
+          <MonitorSmartphoneIcon size={14} />{" " + t("common.routingPeers")}
         </Badge>
       )}
     </div>

@@ -13,6 +13,7 @@ import { ArrowUpCircleIcon, ChevronsUpDown, MapPin } from "lucide-react";
 import * as React from "react";
 import { memo, useEffect, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 
@@ -44,6 +45,7 @@ export function PeerSelector({
   disabledPeerReason,
   disabled = false,
 }: MultiSelectProps) {
+  const t = useTranslations();
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
@@ -130,7 +132,7 @@ export function PeerSelector({
                 </div>
               </div>
             ) : (
-              <span>Select a peer...</span>
+              <span>{t("components.selectPeer")}</span>
             )}
           </div>
 
@@ -151,20 +153,20 @@ export function PeerSelector({
           <DropdownInput
             value={search}
             onChange={setSearch}
-            placeholder={"Search for peers by name or ip..."}
+            placeholder={t("components.searchPeers")}
           />
 
           {unfilteredItems.length == 0 && !search && (
             <div className={"max-w-xs mx-auto"}>
               <DropdownInfoText>
-                {"No peers available to select."}
+                {t("components.noPeersAvailable")}
               </DropdownInfoText>
             </div>
           )}
 
           {filteredItems.length == 0 && search != "" && (
             <DropdownInfoText>
-              There are no peers matching your search.
+              {t("components.noMatchingPeers")}
             </DropdownInfoText>
           )}
 
@@ -207,9 +209,11 @@ export function PeerSelector({
                         </div>
                       ) : (
                         <div className={"max-w-[240px] text-xs"}>
-                          Please update NetBird to at least{" "}
-                          <span className={"text-netbird"}>v0.36.6</span> or
-                          later to use this peer as a routing peer.
+                          {t.rich("components.routingPeerVersion", {
+                            version: (chunks) => (
+                              <span className="text-netbird">{chunks}</span>
+                            ),
+                          })}
                         </div>
                       )
                     }

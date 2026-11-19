@@ -19,12 +19,14 @@ import {
   DistributorCustomer,
   DistributorCustomerStatus,
 } from "@/cloud/distributor/interfaces/Distributor";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   customer: DistributorCustomer;
 };
 
 export const CustomerActionCell = ({ customer }: Props) => {
+  const t = useTranslations();
   const { openEditCustomerModal, unlinkCustomer } = useCustomers();
   const isActive = customer.status === DistributorCustomerStatus.Active;
   const isInvited = customer.status === DistributorCustomerStatus.Invited;
@@ -35,13 +37,12 @@ export const CustomerActionCell = ({ customer }: Props) => {
         <FullTooltip
           content={
             <div className={"text-xs max-w-xs"}>
-              The customer account owner must log in to the dashboard to accept
-              or decline your invitation.
+              {t("distributor.theCustomerAccountOwnerMustLogInToTheDashboard")}
             </div>
           }
         >
           <Badge variant={"yellow"} className={"ml-6 cursor-help"}>
-            Pending invitation
+            {t("distributor.pendingInvitation")}
             <HelpCircle size={12} />
           </Badge>
         </FullTooltip>
@@ -55,7 +56,7 @@ export const CustomerActionCell = ({ customer }: Props) => {
         onClick={() => openEditCustomerModal(customer)}
       >
         <SquarePenIcon size={14} />
-        Edit
+        {t("common.edit")}
       </Button>
 
       <DropdownMenu modal={false}>
@@ -77,7 +78,7 @@ export const CustomerActionCell = ({ customer }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <UnlinkIcon size={14} className={"shrink-0"} />
-              Unlink
+              {t("common.unlink")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

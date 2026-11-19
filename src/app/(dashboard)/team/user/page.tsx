@@ -18,6 +18,8 @@ import useFetchApi, { useApiCall } from "@utils/api";
 import { getAvatarStyle } from "@utils/avatar";
 import { cn, generateColorFromString } from "@utils/helpers";
 import dayjs from "dayjs";
+import { formatDateTooltip, formatRelativeDate } from "@/i18n/date-time";
+import { useDashboardLocale } from "@/i18n/LocaleProvider";
 import {
   Ban,
   GalleryHorizontalEnd,
@@ -34,6 +36,7 @@ import { UserMfaListItem } from "@/cloud/mfa/UserMFAListItem";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Role, User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
@@ -47,6 +50,7 @@ import { UserPeersSection } from "@/modules/users/UserPeersSection";
 import { UserRoleSelector } from "@/modules/users/UserRoleSelector";
 
 export default function UserPage() {
+  const t = useTranslations();
   const queryParameter = useSearchParams();
   const userId = queryParameter.get("id");
   const { permission } = usePermissions();
@@ -67,7 +71,7 @@ export default function UserPage() {
   if (!permission.users.read) {
     return (
       <PageContainer>
-        <RestrictedAccess page={"User Information"} />
+        <RestrictedAccess page={t("users.informationPage")} />
       </PageContainer>
     );
   }
@@ -89,6 +93,7 @@ type Props = {
 };
 
 function UserOverview({ user, initialGroups }: Readonly<Props>) {
+  const translate = useTranslations();
   const router = useRouter();
   const userRequest = useApiCall<User>("/users");
   const isServiceUser = !!user?.is_service_user;
@@ -119,7 +124,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
 
     notify({
       title: user.name,
-      description: "Changes successfully saved.",
+      description: translate("users.changesSaved"),
       promise: userRequest
         .put(
           {
@@ -134,7 +139,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
           mutate(`/integrations/msp/switcher`);
           updateChangesRef([role, selectedGroups]);
         }),
-      loadingMessage: "Saving changes...",
+      loadingMessage: translate("users.savingChanges"),
     });
   };
 
@@ -155,7 +160,11 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={isServiceUser ? "/team/service-users" : "/team/users"}
-            label={isServiceUser ? "Service Users" : "Users"}
+            label={
+              isServiceUser
+                ? translate("common.serviceUsers")
+                : translate("common.users")
+            }
             disabled={!permission.users.read}
             icon={
               isServiceUser ? <IconSettings2 size={17} /> : <User2 size={16} />
@@ -204,7 +213,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                     : router.push("/team/users");
                 }}
               >
-                Cancel
+                {translate("common.cancel")}
               </Button>
 
               <Button
@@ -214,7 +223,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                 onClick={save}
                 data-testid={"save-changes"}
               >
-                Save Changes
+                {translate("common.saveChanges")}
               </Button>
             </div>
           )}
@@ -225,9 +234,9 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
           <div className={"flex flex-col gap-8 w-1/2 "}>
             {!isServiceUser && isOwnerOrAdmin && (
               <div>
-                <Label>Auto-assigned groups</Label>
+                <Label>{translate("common.autoAssignedGroups")}</Label>
                 <HelpText>
-                  Groups will be assigned to peers added by this user.
+                  {translate("team.autoAssignedGroupsHelp")}
                 </HelpText>
                 <PeerGroupSelector
                   disabled={isUser}
@@ -239,11 +248,11 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
               </div>
             )}
             <div>
-              <Label>User Role</Label>
+              <Label>{translate("team.userRole")}</Label>
               <HelpText>
                 {cannotChangeOwnerRole
-                  ? "Only the account owner can change the owner's role."
-                  : "Set a role for the user to assign access permissions."}
+                  ? translate("team.cannotChangeOwnerRole")
+                  : translate("team.userRoleHelp")}
               </HelpText>
               {/* 320px: enough for the longest role name and for the tab row
                   in the dropdown, without stretching across the column. */}
@@ -277,7 +286,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
           {showPeers && (
             <TabsTrigger value={"peers"} data-testid={"user-tab-peers"}>
               <MonitorSmartphoneIcon size={16} />
-              Peers
+              {translate("common.peers")}
             </TabsTrigger>
           )}
           {showAccessTokens && (
@@ -286,7 +295,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
               data-testid={"user-tab-access-tokens"}
             >
               <KeyRoundIcon size={16} />
-              Access Tokens
+              {translate("team.accessTokens")}
             </TabsTrigger>
           )}
         </TabsList>
@@ -301,9 +310,9 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
               <div className={"max-w-6xl"}>
                 <div className={"flex justify-between items-center"}>
                   <div>
-                    <h2>Access Tokens</h2>
+                    <h2>{translate("team.accessTokens")}</h2>
                     <Paragraph>
-                      Access tokens give access to NetBird API.
+                      {translate("team.accessTokensDescription")}
                     </Paragraph>
                   </div>
                   <div className={"inline-flex gap-4 justify-end"}>
@@ -315,7 +324,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                           disabled={!permission.pats.create}
                         >
                           <IconCirclePlus size={16} />
-                          Create Access Token
+                          {translate("accessTokens.createTitle")}
                         </Button>
                       </CreateAccessTokenModal>
                     </div>
@@ -332,6 +341,8 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
 }
 
 function UserInformationCard({ user }: Readonly<{ user: User }>) {
+  const t = useTranslations();
+  const { locale } = useDashboardLocale();
   const isServiceUser = user.is_service_user || false;
   const neverLoggedIn = dayjs(user.last_login).isBefore(
     dayjs().subtract(1000, "years"),
@@ -345,7 +356,7 @@ function UserInformationCard({ user }: Readonly<{ user: User }>) {
           label={
             <>
               <User2 size={16} />
-              {user.name ? "Name" : "User ID"}
+              {user.name ? t("common.name") : t("team.userId")}
             </>
           }
           value={user.name || user.id}
@@ -368,7 +379,7 @@ function UserInformationCard({ user }: Readonly<{ user: User }>) {
           label={
             <>
               <GalleryHorizontalEnd size={16} />
-              Status
+              {t("common.status")}
             </>
           }
           value={<UserStatusCell user={user} />}
@@ -386,7 +397,7 @@ function UserInformationCard({ user }: Readonly<{ user: User }>) {
                   label={
                     <>
                       <Ban size={16} />
-                      Block User
+                      {t("team.blockUser")}
                     </>
                   }
                   value={<UserBlockCell user={user} isUserPage={true} />}
@@ -397,16 +408,22 @@ function UserInformationCard({ user }: Readonly<{ user: User }>) {
               label={
                 <>
                   <History size={16} />
-                  Last login
+                  {t("users.lastLogin")}
                 </>
               }
               value={
-                neverLoggedIn
-                  ? "Never"
-                  : dayjs(user.last_login).format("D MMMM, YYYY [at] h:mm A") +
-                    " (" +
-                    dayjs().to(user.last_login) +
-                    ")"
+                neverLoggedIn || !user.last_login
+                  ? t("users.never")
+                  : t("peer.absoluteWithRelative", {
+                      absolute: formatDateTooltip(
+                        new Date(user.last_login),
+                        locale,
+                      ),
+                      relative: formatRelativeDate(
+                        new Date(user.last_login),
+                        locale,
+                      ),
+                    })
               }
             />
           </>

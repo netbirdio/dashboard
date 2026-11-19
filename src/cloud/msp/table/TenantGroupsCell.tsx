@@ -17,6 +17,7 @@ import {
 } from "@/cloud/msp/interfaces/Tenant";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
 import { UserRoles } from "@/modules/users/UserRoleSelector";
@@ -25,6 +26,7 @@ type Props = {
   tenant: Tenant;
 };
 export const TenantGroupsCell = ({ tenant }: Props) => {
+  const t = useTranslations();
   const { groups } = useGroups();
   const { openEditTenantModal } = useTenants();
   const isPending = tenant.status === TenantStatus.Pending;
@@ -51,7 +53,7 @@ export const TenantGroupsCell = ({ tenant }: Props) => {
         className={"max-h-[38px]"}
       >
         <IconCirclePlus size={14} />
-        Add Groups
+        {t("msp.addGroups")}
       </Button>
     );
 
@@ -141,6 +143,7 @@ const MultipleGroupsWithUser = ({
 };
 
 const GroupWithUserItem = ({ group }: { group: TenantGroup }) => {
+  const t = useTranslations();
   const { users } = useUsers();
   const usersOfGroup =
     users?.filter((user) => user.auto_groups.includes(group.id as string)) ||
@@ -163,7 +166,7 @@ const GroupWithUserItem = ({ group }: { group: TenantGroup }) => {
             }
           >
             <selectedRole.icon size={14} width={14} className={"shrink-0"} />
-            {selectedRole?.name}
+            {t(selectedRole.nameId)}
           </div>
         </div>
       )}
@@ -172,6 +175,7 @@ const GroupWithUserItem = ({ group }: { group: TenantGroup }) => {
 };
 
 const GroupSuffix = () => {
+  const t = useTranslations();
   const oneOrTwo = Math.random() > 0.5 ? 1 : 2;
   const selectedRole = UserRoles[oneOrTwo];
   return (
@@ -188,7 +192,7 @@ const GroupSuffix = () => {
         )}
       >
         <selectedRole.icon size={12} width={12} className={"shrink-0"} />
-        {selectedRole?.name}
+        {t(selectedRole.nameId)}
       </div>
     </div>
   );

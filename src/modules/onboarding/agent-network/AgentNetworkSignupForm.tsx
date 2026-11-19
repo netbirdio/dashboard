@@ -20,7 +20,8 @@ import {
 import React, { useMemo, useState } from "react";
 import { HubspotFormField } from "@/contexts/AnalyticsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
-import { countryOptions } from "@/modules/onboarding/countryOptions";
+import { useTranslations, useDashboardLocale } from "@/i18n/LocaleProvider";
+import { getCountryOptions } from "@/modules/onboarding/countryOptions";
 import {
   companySizes,
   referralSourceOptions,
@@ -44,12 +45,14 @@ type Props = {
 // domain field (self-hosted IdPs don't emit it) and asks Agent-Network use
 // cases.
 export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
+  const t = useTranslations();
+  const { locale } = useDashboardLocale();
   const { oidcUser: user } = useOidcUser();
   const { loggedInUser } = useLoggedInUser();
   const name = user?.given_name || user?.name || user?.preferred_username;
   const welcomeMessage = name
-    ? `Welcome to NetBird, ${name}!`
-    : "Welcome to NetBird!";
+    ? t("onboarding.welcomeToNetBirdName", { name })
+    : t("onboarding.welcomeToNetBird");
 
   // The email is already known from the authenticated user, so it's submitted
   // with the form silently — no field to fill or correct.
@@ -73,12 +76,35 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
         label: isBusiness
           ? "Employee access to LLMs"
           : "Personal access to LLMs",
+        labelId: isBusiness
+          ? ("onboarding.employeeAccessToLLMs" as const)
+          : ("onboarding.personalAccessToLLMs" as const),
         icon: <UsersIcon size={16} />,
       },
-      { key: "agent_access", label: "Autonomous agent access", icon: <BotIcon size={16} /> },
-      { key: "token_budget_limits", label: "Token & budget limits", icon: <GaugeIcon size={16} /> },
-      { key: "usage_cost_attribution", label: "Usage & cost attribution", icon: <CoinsIcon size={16} /> },
-      { key: "audit_access_logging", label: "Audit & access logging for AI", icon: <ScrollTextIcon size={16} /> },
+      {
+        key: "agent_access",
+        label: "Autonomous agent access",
+        labelId: "onboarding.autonomousAgentAccess" as const,
+        icon: <BotIcon size={16} />,
+      },
+      {
+        key: "token_budget_limits",
+        label: "Token & budget limits",
+        labelId: "onboarding.tokenBudgetLimits" as const,
+        icon: <GaugeIcon size={16} />,
+      },
+      {
+        key: "usage_cost_attribution",
+        label: "Usage & cost attribution",
+        labelId: "onboarding.usageCostAttribution" as const,
+        icon: <CoinsIcon size={16} />,
+      },
+      {
+        key: "audit_access_logging",
+        label: "Audit & access logging for AI",
+        labelId: "onboarding.auditAccessLoggingForAI" as const,
+        icon: <ScrollTextIcon size={16} />,
+      },
     ],
     [isBusiness],
   );
@@ -93,7 +119,8 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
   };
 
   const hasSelectedUseCase = useMemo(
-    () => useCases.some((u) => selected[u.key]) || (other && otherUseCase !== ""),
+    () =>
+      useCases.some((u) => selected[u.key]) || (other && otherUseCase !== ""),
     [useCases, selected, other, otherUseCase],
   );
 
@@ -145,8 +172,7 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
             "text-sm text-nb-gray-300 font-light mt-2 block text-center max-w-md mx-auto px-6"
           }
         >
-          Share a few details about your use case to help us get you started
-          smoothly.
+          {t("onboarding.shareAFewDetailsAboutYourUseCaseToHelp")}
         </div>
 
         <div className={"flex flex-col mt-8 z-0 gap-8"}>
@@ -157,11 +183,11 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
             <SegmentedTabs.List className={"rounded-lg border"}>
               <SegmentedTabs.Trigger value={"business"}>
                 <BriefcaseIcon size={16} />
-                Business
+                {t("onboarding.business")}
               </SegmentedTabs.Trigger>
               <SegmentedTabs.Trigger value={"personal"}>
                 <UserIcon size={16} />
-                Personal
+                {t("onboarding.personal")}
               </SegmentedTabs.Trigger>
             </SegmentedTabs.List>
           </SegmentedTabs>
@@ -169,7 +195,7 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
           {isBusiness && (
             <div className={"flex w-full flex-col gap-2"}>
               <Label>
-                How many people will use Agent Network?
+                {t("onboarding.howManyPeopleWillUseAgentNetwork")}
                 <RequiredAsterisk />
               </Label>
               <ButtonGroup>
@@ -191,31 +217,34 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
 
           <div className={"flex w-full flex-col gap-2"}>
             <Label>
-              Country
+              {t("common.country")}
               <RequiredAsterisk />
             </Label>
             <SelectDropdown
               value={country}
               onChange={setCountry}
-              options={countryOptions}
+              options={getCountryOptions(locale)}
               showSearch={true}
-              placeholder={"Select your country..."}
-              searchPlaceholder={"Search country..."}
+              placeholder={t("onboarding.selectYourCountry")}
+              searchPlaceholder={t("onboarding.searchCountry")}
               variant={"dropdown"}
             />
           </div>
 
           <div className={"flex w-full flex-col gap-2"}>
             <Label>
-              How did you hear about Agent Network?
+              {t("onboarding.howDidYouHearAboutAgentNetwork")}
               <RequiredAsterisk />
             </Label>
             <SelectDropdown
               value={referralSource}
               onChange={setReferralSource}
-              options={randomizedOptions}
+              options={randomizedOptions.map((option) => ({
+                ...option,
+                label: option.labelId ? t(option.labelId) : option.label,
+              }))}
               showValues={false}
-              placeholder={"Please select an option..."}
+              placeholder={t("onboarding.selectOption")}
               variant={"dropdown"}
             />
           </div>
@@ -223,11 +252,11 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
           <div className={"flex w-full flex-col gap-2"}>
             <div>
               <Label>
-                How do you plan to use Agent Network?
+                {t("onboarding.howDoYouPlanToUseAgentNetwork")}
                 <RequiredAsterisk />
               </Label>
               <HelpText className={"mt-1.5"}>
-                You can also select multiple use cases.
+                {t("onboarding.youCanAlsoSelectMultipleUseCases")}
               </HelpText>
             </div>
 
@@ -239,7 +268,7 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
                   setValue={() => toggle(u.key)}
                 >
                   {u.icon}
-                  {u.label}
+                  {t(u.labelId)}
                 </SignupCheckbox>
               ))}
 
@@ -260,15 +289,21 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
                     "flex items-center gap-1.5 whitespace-nowrap text-sm select-none"
                   }
                 >
-                  Other (Please specify)
+                  {t("onboarding.otherPleaseSpecify")}
                 </div>
               </label>
             </div>
 
-            <div className={cn(!other && "!h-0 opacity-0", "mt-2", other && "mb-3")}>
+            <div
+              className={cn(
+                !other && "!h-0 opacity-0",
+                "mt-2",
+                other && "mb-3",
+              )}
+            >
               <Input
                 ref={inputRef}
-                placeholder={"e.g. Internal RAG service, MCP tools"}
+                placeholder={t("onboarding.eGInternalRAGServiceMCPTools")}
                 value={otherUseCase}
                 onChange={(e) => setOtherUseCase(e.target.value)}
               />
@@ -283,7 +318,7 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
         onClick={submitForm}
         disabled={!canSubmit}
       >
-        Continue
+        {t("common.continue")}
       </Button>
     </>
   );

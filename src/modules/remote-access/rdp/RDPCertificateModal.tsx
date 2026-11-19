@@ -9,6 +9,7 @@ import Separator from "@components/Separator";
 import { LockIcon } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   CertificateInfo,
   CertificatePromptInfo,
@@ -27,6 +28,7 @@ export const RDPCertificateModal = ({
   onAccept,
   onReject,
 }: Props) => {
+  const t = useTranslations();
   const [rememberCertificate, setRememberCertificate] = useState(false);
   if (!certificateInfo) return null;
   const { hostname, certificate, isChange } = certificateInfo;
@@ -36,7 +38,7 @@ export const RDPCertificateModal = ({
       <ModalContent maxWidthClass={"max-w-2xl"} showClose={false}>
         <ModalHeader
           icon={<LockIcon size={18} />}
-          title={"RDP Certificate"}
+          title={t("remoteAccess.rdpCertificate")}
           description={hostname}
           color={"netbird"}
         />
@@ -45,17 +47,13 @@ export const RDPCertificateModal = ({
         <div className={"px-8 py-6 flex flex-col gap-6"}>
           {isChange && (
             <Callout variant={"warning"}>
-              Warning! Certificate has changed. Only proceed if you trust this
-              connection.
+              {t("remoteAccess.certificateChanged")}
             </Callout>
           )}
 
           <div>
-            <Label>Certificate Details</Label>
-            <HelpText>
-              Certificated could not be verified by a trusted authority. Review
-              the certificate information before proceeding with the connection.
-            </HelpText>
+            <Label>{t("remoteAccess.certificateDetails")}</Label>
+            <HelpText>{t("remoteAccess.certificateUnverified")}</HelpText>
             <CertificateDetailsList certificate={certificate} />
           </div>
 
@@ -69,14 +67,13 @@ export const RDPCertificateModal = ({
               }
             />
             <div className={"font-normal text-sm text-nb-gray-200"}>
-              Always trust{" "}
-              <span className={"text-nb-gray-100 dark:text-white font-medium"}>
-                {'"' + certificate?.issuer?.replace("CN=", "") + '"'}
-              </span>{" "}
-              when connecting to{" "}
-              <span className={"text-nb-gray-100 dark:text-white font-medium"}>
-                {'"' + hostname + '"'}
-              </span>
+              {t.rich("remoteAccess.alwaysTrust", {
+                issuer: certificate?.issuer?.replace("CN=", "") ?? "",
+                host: hostname,
+                name: (chunks) => (
+                  <span className={"text-nb-gray-100 dark:text-white font-medium"}>{chunks}</span>
+                ),
+              })}
             </div>
           </label>
         </div>
@@ -84,13 +81,13 @@ export const RDPCertificateModal = ({
         <ModalFooter className={"items-center"}>
           <div className={"flex gap-3 w-full justify-end"}>
             <Button variant={"secondary"} onClick={onReject}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant={"primary"}
               onClick={() => onAccept(rememberCertificate)}
             >
-              Accept & Continue
+              {t("remoteAccess.acceptAndContinue")}
             </Button>
           </div>
         </ModalFooter>
@@ -104,6 +101,7 @@ const CertificateDetailsList = ({
 }: {
   certificate: CertificateInfo;
 }) => {
+  const t = useTranslations();
   if (!certificate) return null;
 
   return (
@@ -113,40 +111,44 @@ const CertificateDetailsList = ({
       }
     >
       <CertificateDetailsListItem
-        label={"Issuer"}
-        value={certificate.issuer || "N/A"}
+        label={t("remoteAccess.issuer")}
+        value={certificate.issuer || t("remoteAccess.notAvailable")}
       />
       <CertificateDetailsListItem
-        label={"Subject"}
-        value={certificate.subject || "N/A"}
+        label={t("remoteAccess.subject")}
+        value={certificate.subject || t("remoteAccess.notAvailable")}
       />
       <CertificateDetailsListItem
-        label={"Valid From"}
+        label={t("remoteAccess.validFrom")}
         value={
           certificate.validFrom
             ? new Date(certificate.validFrom).toLocaleString()
-            : "N/A"
+            : t("remoteAccess.notAvailable")
         }
       />
       <CertificateDetailsListItem
-        label={"Valid To"}
+        label={t("remoteAccess.validTo")}
         value={
           certificate.validTo
             ? new Date(certificate.validTo).toLocaleString()
-            : "N/A"
+            : t("remoteAccess.notAvailable")
         }
       />
       <CertificateDetailsListItem
-        label={"Key Size"}
-        value={certificate.keySize ? `${certificate.keySize} bits` : "N/A"}
+        label={t("remoteAccess.keySize")}
+        value={
+          certificate.keySize
+            ? t("remoteAccess.keySizeBits", { size: certificate.keySize })
+            : t("remoteAccess.notAvailable")
+        }
       />
       <CertificateDetailsListItem
-        label={"Serial Number"}
-        value={certificate.serialNumber || "N/A"}
+        label={t("common.serialNumber")}
+        value={certificate.serialNumber || t("remoteAccess.notAvailable")}
       />
       <CertificateDetailsListItem
-        label={"Fingerprint"}
-        value={certificate.fingerprint || "N/A"}
+        label={t("remoteAccess.fingerprint")}
+        value={certificate.fingerprint || t("remoteAccess.notAvailable")}
       />
     </div>
   );

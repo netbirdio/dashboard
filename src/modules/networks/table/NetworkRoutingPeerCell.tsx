@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useMemo } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
@@ -14,6 +15,7 @@ type Props = {
   network: Network;
 };
 export default function NetworkRoutingPeerCell({ network }: Props) {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const router = useRouter();
   const disabledText = useMemo(
@@ -57,13 +59,11 @@ export default function NetworkRoutingPeerCell({ network }: Props) {
               {isHighlyAvailable ? enabledText : disabledText}
               {isHighlyAvailable ? (
                 <div className={"inline-flex mt-2"}>
-                  You can add more routing peers to increase the availability of
-                  this network.
+                  {t("networks.highAvailabilityHelpActive")}
                 </div>
               ) : (
                 <div className={"inline-flex mt-2"}>
-                  Go ahead and add more routing peers or groups with routing
-                  peers to enable high availability for this network.
+                  {t("networks.highAvailabilityHelpInactive")}
                 </div>
               )}
             </>
@@ -89,7 +89,7 @@ export default function NetworkRoutingPeerCell({ network }: Props) {
                 )}
               ></div>
               {network?.routing_peers_count && network.routing_peers_count}{" "}
-              Peer(s)
+              {t("networks.usageLimitSuffix")}
             </>
 
             <HelpCircle size={12} />
@@ -102,10 +102,10 @@ export default function NetworkRoutingPeerCell({ network }: Props) {
         className={"!px-3"}
         onClick={() => openAddRoutingPeerModal(network)}
         disabled={!permission.networks.update}
-        aria-label={"Add routing peer"}
+        aria-label={t("networks.addRoutingPeer")}
       >
         <PlusCircle size={12} />
-        Add
+        {t("common.add")}
       </Button>
     </div>
   );

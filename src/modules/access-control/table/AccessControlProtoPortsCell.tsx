@@ -8,6 +8,7 @@ import {
 } from "@components/Tooltip";
 import { Share2 } from "lucide-react";
 import React, { useMemo } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Policy } from "@/interfaces/Policy";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 import { parsePortsToStrings } from "@/modules/access-control/useAccessControl";
@@ -24,6 +25,7 @@ type Props = {
 export default function AccessControlProtoPortsCell({
   policy,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const rule = useMemo(() => {
     if (policy.rules.length > 0) return policy.rules[0];
     return undefined;
@@ -70,7 +72,7 @@ export default function AccessControlProtoPortsCell({
                   variant={"gray"}
                   className={"uppercase tracking-wider font-medium"}
                 >
-                  All
+                  {t("common.all")}
                 </Badge>
               )}
 
@@ -92,7 +94,7 @@ export default function AccessControlProtoPortsCell({
                     "px-3 whitespace-nowrap uppercase tracking-wider font-medium"
                   }
                 >
-                  {allPorts.length} Ports
+                  {allPorts.length}{" " + t("accessControl.ports")}
                 </Badge>
               )}
             </div>

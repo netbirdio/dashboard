@@ -7,6 +7,7 @@ import Skeleton from "react-loading-skeleton";
 import { useTenants } from "@/cloud/msp/contexts/TenantsProvider";
 import { useTenantPlan } from "@/cloud/msp/hooks/useTenantPlan";
 import { Tenant, TenantStatus } from "@/cloud/msp/interfaces/Tenant";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PlanTier } from "@/interfaces/Subscription";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 
@@ -15,6 +16,7 @@ type Props = {
 };
 
 export const TenantPlanCell = ({ tenant }: Props) => {
+  const t = useTranslations();
   const { openEditTenantModal } = useTenants();
 
   const { currentPlanTier, isLoading, trialDaysRemaining, isTrialExpired } =
@@ -35,7 +37,7 @@ export const TenantPlanCell = ({ tenant }: Props) => {
       <div className={"flex gap-3 items-center"}>
         <Badge variant={"yellow"} className={"h-[32px]"}>
           <CircleAlertIcon size={12} />
-          Trial Expired
+          {t("common.trialExpired")}
         </Badge>
         <Button
           size={"xs"}
@@ -44,7 +46,7 @@ export const TenantPlanCell = ({ tenant }: Props) => {
           onClick={() => openEditTenantModal(tenant, "plan")}
         >
           <CreditCardIcon size={12} />
-          Upgrade Plan
+          {t("common.upgradePlan")}
         </Button>
       </div>
     );
@@ -71,14 +73,18 @@ type RemainingTrialDaysProps = {
 };
 
 const RemainingTrialDays = ({ days }: RemainingTrialDaysProps) => {
-  if (days === undefined) return null;
-  if (days === 1) return ` (${days} day left)`;
-  if (days === 0) return ` (Trial has expired)`;
+  const t = useTranslations();
 
-  return ` (${days} days left)`;
+  if (days === undefined) return null;
+  if (days === 1) return t("distributor.daysDayLeft", { days });
+  if (days === 0) return t("distributor.trialHasExpired");
+
+  return t("distributor.daysDaysLeft", { days });
 };
 
 const CurrentPlan = ({ plan }: { plan: PlanTier }) => {
+  const t = useTranslations();
+
   return (
     <>
       <span
@@ -90,10 +96,10 @@ const CurrentPlan = ({ plan }: { plan: PlanTier }) => {
           plan == PlanTier.TRIAL && "bg-purple-400",
         )}
       ></span>
-      {plan == PlanTier.BUSINESS && "Business"}
-      {plan == PlanTier.TEAM && "Team"}
-      {plan == PlanTier.FREE && "Free"}
-      {plan == PlanTier.TRIAL && "Free Trial"}
+      {plan == PlanTier.BUSINESS && t("onboarding.business")}
+      {plan == PlanTier.TEAM && t("billing.team")}
+      {plan == PlanTier.FREE && t("distributor.free")}
+      {plan == PlanTier.TRIAL && t("billing.freeTrial")}
     </>
   );
 };

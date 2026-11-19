@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/Select";
 import Separator from "@/components/Separator";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Workload } from "@/interfaces/Job";
 import { useApiCall } from "@/utils/api";
 
@@ -37,6 +38,7 @@ type Props = {
 };
 
 export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
+  const t = useTranslations();
   const jobRequest = useApiCall<Workload>(`/peers/${peerID}/jobs`, true);
   const { mutate } = useSWRConfig();
 
@@ -78,9 +80,9 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
 
   const createDebugJob = async () => {
     notify({
-      title: "Create Debug Job",
-      description: "Debug job triggered successfully.",
-      loadingMessage: "Creating job...",
+      title: t("jobs.createDebugJob"),
+      description: t("jobs.debugJobTriggered"),
+      loadingMessage: t("jobs.creatingJob"),
       promise: jobRequest
         .post({
           workload: {
@@ -108,8 +110,8 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
     <ModalContent maxWidthClass="max-w-xl">
       <ModalHeader
         icon={<BugPlay size={20} />}
-        title="Debug Bundle"
-        description="Generate a debug bundle on this peer with logs and diagnostics. Useful for troubleshooting without CLI access."
+        title={t("jobs.debugBundle")}
+        description={t("jobs.debugBundleDescription")}
         color="netbird"
       />
 
@@ -118,11 +120,8 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
         {/* Log File Count */}
         <div className="flex justify-between gap-6">
           <div className={"max-w-[300px]"}>
-            <Label>Log File Count</Label>
-            <HelpText>
-              Sets the limit for how many individual log files will be included
-              in the debug bundle.
-            </HelpText>
+            <Label>{t("jobs.logFileCount")}</Label>
+            <HelpText>{t("jobs.logFileCountHelp")}</HelpText>
           </div>
 
           <Input
@@ -134,7 +133,7 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
             onChange={(e) => setLogFileCount(e.target.value)}
             maxWidthClass="w-[220px]"
             customPrefix={<FileText size={16} className="text-nb-gray-300" />}
-            customSuffix="File(s)"
+            customSuffix={t("jobs.filesSuffix")}
           />
         </div>
         {/* Bundle Duration */}
@@ -152,20 +151,17 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
             label={
               <>
                 <AlarmClock size={15} />
-                Enable Bundle Duration
+                {t("jobs.enableBundleDuration")}
               </>
             }
-            helpText="When enabled, allows you to specify a time period for log collection before generating the debug bundle."
+            helpText={t("jobs.bundleDurationHelp")}
           />
 
           {bundleForTimeEnabled && (
             <div className="flex justify-between gap-6 mt-6 mb-3">
               <div className={"max-w-[300px]"}>
-                <Label>Duration</Label>
-                <HelpText>
-                  Time period for which logs should be collected before creating
-                  the debug bundle.
-                </HelpText>
+                <Label>{t("jobs.duration")}</Label>
+                <HelpText>{t("jobs.durationHelp")}</HelpText>
               </div>
 
               <Input
@@ -179,7 +175,7 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
                 customPrefix={
                   <AlarmClock size={16} className="text-nb-gray-300" />
                 }
-                customSuffix="Minute(s)"
+                customSuffix={t("jobs.minutesSuffix")}
               />
             </div>
           )}
@@ -192,21 +188,18 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
           label={
             <>
               <Shield size={15} />
-              Anonymize Log Data
+              {t("jobs.anonymizeLogData")}
             </>
           }
-          helpText="Remove sensitive information (IP addresses, domains etc.) before creating the debug bundle."
+          helpText={t("jobs.anonymizeHelp")}
         />
 
         {/* Anonymization Level */}
         {anonymize && (
           <div className="flex justify-between gap-6">
             <div className={"max-w-[300px]"}>
-              <Label>Anonymization Level</Label>
-              <HelpText>
-                Default keeps internal (private) IP ranges readable; Strict also
-                anonymizes private, CGNAT and link-local addresses.
-              </HelpText>
+              <Label>{t("jobs.anonymizationLevel")}</Label>
+              <HelpText>{t("jobs.anonymizationLevelHelp")}</HelpText>
             </div>
 
             <Select
@@ -216,12 +209,12 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
               <SelectTrigger className="w-[220px]">
                 <div className="flex items-center gap-3">
                   <Shield size={15} className="text-nb-gray-300 shrink-0" />
-                  <SelectValue placeholder="Select level..." />
+                  <SelectValue placeholder={t("jobs.selectLevel")} />
                 </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="default">Default</SelectItem>
-                <SelectItem value="strict">Strict</SelectItem>
+                <SelectItem value="default">{t("jobs.levelDefault")}</SelectItem>
+                <SelectItem value="strict">{t("jobs.levelStrict")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -230,11 +223,8 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
         {/* Upload URL */}
         <div className="flex justify-between gap-6">
           <div className={"max-w-[300px]"}>
-            <Label>Upload URL (optional)</Label>
-            <HelpText>
-              Service the peer requests an upload URL from. Leave empty to use
-              the default upload server. Must be an https URL.
-            </HelpText>
+            <Label>{t("jobs.uploadUrl")}</Label>
+            <HelpText>{t("jobs.uploadUrlHelp")}</HelpText>
           </div>
 
           <Input
@@ -251,7 +241,7 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
       <ModalFooter className="items-center">
         <div className="flex gap-3 w-full justify-end">
           <ModalClose asChild>
-            <Button variant="secondary">Cancel</Button>
+            <Button variant="secondary">{t("common.cancel")}</Button>
           </ModalClose>
           <Button
             variant="primary"
@@ -259,7 +249,7 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
             onClick={createDebugJob}
           >
             <PlusCircle size={16} />
-            Create Debug Bundle
+            {t("jobs.createDebugBundle")}
           </Button>
         </div>
       </ModalFooter>

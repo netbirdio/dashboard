@@ -5,12 +5,7 @@ import Button from "@components/Button";
 import Card from "@components/Card";
 import TruncatedText from "@components/ui/TruncatedText";
 import { cn } from "@utils/helpers";
-import {
-  MessageSquareDot,
-  Link2Off,
-  MoreVertical,
-  Repeat,
-} from "lucide-react";
+import { MessageSquareDot, Link2Off, MoreVertical, Repeat } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +15,7 @@ import {
 import { notify } from "@components/Notification";
 import SlackIcon from "@/assets/icons/SlackIcon";
 import { NotificationEventTypes } from "@/cloud/notifications/NotificationEventTypes";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   NotificationChannel,
   NotificationEventType,
@@ -35,6 +31,7 @@ type Props = {
 };
 
 export const NotificationSlackChannel = ({ channel }: Props) => {
+  const t = useTranslations();
   const { updateChannel, toggleType } = useNotifications();
   const { confirm } = useDialog();
   const { permission } = usePermissions();
@@ -47,7 +44,7 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
   const handleSave = (newTarget: SlackTarget) => {
     const isNew = !isConnected;
     notify({
-      title: "Slack Notifications",
+      title: t("notifications.slackNotifications"),
       description: isNew
         ? "Slack has been successfully connected."
         : "Slack configuration has been successfully updated.",
@@ -58,23 +55,22 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
 
   const handleDisconnect = async () => {
     const choice = await confirm({
-      title: "Disconnect Slack",
-      description:
-        "Are you sure you want to disconnect Slack? You will no longer receive notifications in your Slack channel.",
-      confirmText: "Disconnect",
-      cancelText: "Cancel",
+      title: t("notifications.disconnectSlack"),
+      description: t("notifications.disconnectSlackConfirm"),
+      confirmText: t("notifications.disconnect"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
     notify({
-      title: "Slack Notifications",
-      description: "Slack has been successfully disconnected.",
+      title: t("notifications.slackNotifications"),
+      description: t("notifications.slackHasBeenSuccessfullyDisconnected"),
       promise: updateChannel({
         ...channel,
         enabled: false,
         target: undefined,
       }),
-      loadingMessage: "Disconnecting Slack...",
+      loadingMessage: t("notifications.disconnectingSlack"),
     });
   };
 
@@ -87,7 +83,7 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
       <Breadcrumbs>
         <Breadcrumbs.Item
           href={"/settings?tab=notifications"}
-          label={"Notifications"}
+          label={t("notifications.title")}
           icon={<MessageSquareDot size={14} />}
         />
         <Breadcrumbs.Item
@@ -137,7 +133,7 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
               />
             ) : (
               <span className={"text-xs text-nb-gray-300 mt-0.5"}>
-                Not Connected
+                {t("notifications.notConnected")}
               </span>
             )}
           </div>
@@ -165,7 +161,7 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
                 >
                   <div className={"flex gap-3 items-center"}>
                     <Link2Off size={14} className={"shrink-0"} />
-                    Disconnect
+                    {t("notifications.disconnect")}
                   </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -180,7 +176,7 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
               data-testid="slack-channel-connect"
             >
               <Repeat size={13} />
-              Connect
+              {t("notifications.connect")}
             </Button>
           )}
         </Card>

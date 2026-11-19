@@ -1,5 +1,6 @@
 import ButtonGroup from "@components/ButtonGroup";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   value?: string;
@@ -10,13 +11,14 @@ export const TrafficEventsConnectionTypeFilter = ({
   value,
   onChange,
 }: Props) => {
+  const t = useTranslations();
   return (
     <ButtonGroup>
       <ButtonGroup.Button
         onClick={() => onChange?.("")}
         variant={value == undefined || value == "" ? "tertiary" : "secondary"}
       >
-        All
+        {t("common.all")}
       </ButtonGroup.Button>
       <ButtonGroup.Button
         onClick={() => onChange?.("P2P")}
@@ -28,7 +30,7 @@ export const TrafficEventsConnectionTypeFilter = ({
         onClick={() => onChange?.("ROUTED")}
         variant={value === "ROUTED" ? "tertiary" : "secondary"}
       >
-        Routed
+        {t("trafficEvents.routed")}
       </ButtonGroup.Button>
     </ButtonGroup>
   );

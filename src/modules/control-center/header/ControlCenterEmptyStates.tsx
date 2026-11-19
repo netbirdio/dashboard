@@ -3,21 +3,23 @@ import InlineLink from "@components/InlineLink";
 import { NoPeersGettingStarted } from "@components/NoPeersGettingStarted";
 import SquareIcon from "@components/SquareIcon";
 import GetStartedTest from "@components/ui/GetStartedTest";
+import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { FlowView } from "@/modules/control-center/header/FlowSelector";
-import { ExternalLinkIcon, PlusCircle } from "lucide-react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { FlowView } from "@/modules/control-center/header/FlowSelector";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { useCanvasTransitionActive } from "@/modules/control-center/utils/canvas-transition";
+import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
 // Must stay a literal: Tailwind only emits classes it finds as static text.
 const EMPTY_STATE_REVEAL_IN =
   "animate-in fade-in zoom-in-[.97] duration-[700ms] ease-out fill-mode-both";
 
 export function ControlCenterEmptyStates() {
+  const translate = useTranslations();
   const { currentView, selectedNetwork, layoutInitialized, instantDrill } =
     useCanvasState();
   const { isDraft } = useDraftMode();
@@ -73,14 +75,10 @@ export function ControlCenterEmptyStates() {
                   size={"large"}
                 />
               }
-              title={"Create Resources"}
-              description={
-                "It looks like you don't have any resources. Add internal services like hosts, subnets or domains so your peers can reach them."
-              }
+              title={translate("controlCenter.createResources")}
+              description={translate("controlCenter.itLooksLikeYouDonTHaveAny")}
               button={
-                <div
-                  className={"gap-x-4 flex items-center justify-center"}
-                >
+                <div className={"gap-x-4 flex items-center justify-center"}>
                   <Button
                     variant={"primary"}
                     onClick={() =>
@@ -89,20 +87,25 @@ export function ControlCenterEmptyStates() {
                     disabled={!permission.networks.update}
                   >
                     <PlusCircle size={16} />
-                    Add Resource
+                    {translate("common.addResource")}
                   </Button>
                 </div>
               }
               learnMore={
                 <>
-                  Learn more about
-                  <InlineLink
-                    href={"https://docs.netbird.io/how-to/networks#resources"}
-                    target={"_blank"}
-                  >
-                    Resources
-                    <ExternalLinkIcon size={12} />
-                  </InlineLink>
+                  {translate.rich("controlCenter.learnAboutResources", {
+                    link: (chunks) => (
+                      <InlineLink
+                        href={
+                          "https://docs.netbird.io/how-to/networks#resources"
+                        }
+                        target={"_blank"}
+                      >
+                        {chunks}
+                        <ExternalLinkIcon size={12} />
+                      </InlineLink>
+                    ),
+                  })}
                 </>
               }
             />
@@ -128,34 +131,35 @@ export function ControlCenterEmptyStates() {
                   size={"large"}
                 />
               }
-              title={"Create New Network"}
-              description={
-                "It looks like you don't have any networks. Access internal resources in your LANs and VPC by adding a network."
-              }
+              title={translate("controlCenter.createNewNetwork")}
+              description={translate(
+                "controlCenter.itLooksLikeYouDonTHaveAny2",
+              )}
               button={
-                <div
-                  className={"gap-x-4 flex items-center justify-center"}
-                >
+                <div className={"gap-x-4 flex items-center justify-center"}>
                   <Button
                     variant={"primary"}
                     onClick={openCreateNetworkModal}
                     disabled={!permission.networks.create}
                   >
                     <PlusCircle size={16} />
-                    Add Network
+                    {translate("common.addNetwork")}
                   </Button>
                 </div>
               }
               learnMore={
                 <>
-                  Learn more about
-                  <InlineLink
-                    href={"https://docs.netbird.io/how-to/networks"}
-                    target={"_blank"}
-                  >
-                    Networks
-                    <ExternalLinkIcon size={12} />
-                  </InlineLink>
+                  {translate.rich("controlCenter.learnAboutNetworks", {
+                    link: (chunks) => (
+                      <InlineLink
+                        href={"https://docs.netbird.io/how-to/networks"}
+                        target={"_blank"}
+                      >
+                        {chunks}
+                        <ExternalLinkIcon size={12} />
+                      </InlineLink>
+                    ),
+                  })}
                 </>
               }
             />

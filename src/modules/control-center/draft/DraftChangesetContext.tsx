@@ -1,5 +1,6 @@
 "use client";
 
+import { e2eHooksEnabled } from "@utils/netbird";
 import React, {
   createContext,
   useCallback,
@@ -8,6 +9,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { englishTranslations } from "@/i18n/translate";
 import { Group } from "@/interfaces/Group";
 import { Permission } from "@/interfaces/Permission";
 import { Policy } from "@/interfaces/Policy";
@@ -19,9 +21,9 @@ import type { AgentPolicy } from "@/modules/agent-network/data/mockData";
 import {
   deletedGroupRefs,
   detachChangesFromDraftNetwork,
+  dropGroupIdsFromAgentPolicy,
   isEmptiedPolicy,
   isNoopGroupUpdate,
-  dropGroupIdsFromAgentPolicy,
   isPendingPolicyWrite,
   mergeAgentGroupDeletions,
   mergeGroupDeletions,
@@ -29,7 +31,6 @@ import {
   reduceRemoveChange,
 } from "@/modules/control-center/utils/change-cascade";
 import { draftUid } from "@/modules/control-center/utils/helpers";
-import { e2eHooksEnabled } from "@utils/netbird";
 
 export {
   isEmptiedPolicy,
@@ -399,51 +400,61 @@ export const getChangeApiCall = (change: DraftChange): string => {
 
 export const getChangeLabel = (
   change: DraftChange,
+  t: typeof englishTranslations = englishTranslations,
 ): { title: string; detail?: string } => {
   switch (change.type) {
     case "create-group": {
       const parts = [];
       if (change.peerIds.length > 0)
         parts.push(
-          `${change.peerIds.length} peer${
-            change.peerIds.length !== 1 ? "s" : ""
-          }`,
+          t("controlCenter.groupPeerMembers", {
+            changePeerIds: change.peerIds.length,
+          }),
         );
       if (change.resourceIds.length > 0)
         parts.push(
-          `${change.resourceIds.length} resource${
-            change.resourceIds.length !== 1 ? "s" : ""
-          }`,
+          t("controlCenter.groupResourceMembers", {
+            changeResourceIds: change.resourceIds.length,
+          }),
         );
       return {
-        title: `Create group “${change.name}”`,
-        detail: parts.length > 0 ? `with ${parts.join(", ")}` : undefined,
+        title: t("controlCenter.createGroup", { change: change.name }),
+        detail:
+          parts.length > 0
+            ? t("controlCenter.groupMembersDetail", { parts: parts.join(", ") })
+            : undefined,
       };
     }
     case "update-group": {
       const parts = [];
       if (change.name !== change.originalName)
-        parts.push(`renamed from “${change.originalName}”`);
+        parts.push(
+          t("controlCenter.renamedFrom", {
+            changeOriginalName: change.originalName,
+          }),
+        );
       const count = change.peerIds.length + change.resourceIds.length;
-      if (count > 0) parts.push(`+${count} member${count !== 1 ? "s" : ""}`);
+      if (count > 0)
+        parts.push(t("controlCenter.addedMembersCount", { count: count }));
       const removed =
         (change.removedPeerIds?.length ?? 0) +
         (change.removedResourceIds?.length ?? 0);
       if (removed > 0)
-        parts.push(`−${removed} member${removed !== 1 ? "s" : ""}`);
+        parts.push(t("controlCenter.removedMembersCount", { removed: removed }));
       return {
-        title: `Update group “${change.name}”`,
+        title: t("controlCenter.updateGroup", { change: change.name }),
         detail: parts.length > 0 ? parts.join(", ") : undefined,
       };
     }
     case "delete-group":
-      return { title: `Delete group “${change.name}”` };
+      return { title: t("controlCenter.deleteGroup", { change: change.name }) };
     case "update-policy": {
       if (change.origin === "toggle") {
         return {
-          title: `${change.policy.enabled ? "Enable" : "Disable"} policy “${
-            change.name
-          }”`,
+          title: t("controlCenter.togglePolicySummary", {
+            policyEnabled: change.policy.enabled ? "true" : "false",
+            change: change.name,
+          }),
         };
       }
     }
@@ -454,140 +465,175 @@ export const getChangeLabel = (
         ((groups as Group[]) ?? [])
           .map((g) => (typeof g === "string" ? g : g.name))
           .join(", ");
-      const source = rule?.sourceResource ? "Resource" : names(rule?.sources);
+      const source = rule?.sourceResource
+        ? t("common.resource")
+        : names(rule?.sources);
       const destination = rule?.destinationResource
-        ? "Resource"
+        ? t("common.resource")
         : names(rule?.destinations);
       return {
-        title: `${
-          change.type === "create-policy" ? "Create" : "Update"
-        } policy “${change.name}”`,
+        title: t("controlCenter.writePolicySummary", {
+          createPolicy: change.type === "create-policy" ? "true" : "false",
+          change: change.name,
+        }),
         detail:
           source || destination ? `${source} → ${destination}` : undefined,
       };
     }
     case "delete-policy":
-      return { title: `Delete policy “${change.name}”` };
+      return {
+        title: t("controlCenter.deletePolicySummary", { change: change.name }),
+      };
     case "create-network":
       return {
-        title: `Create network “${change.name}”`,
+        title: t("controlCenter.createNetwork", { change: change.name }),
         detail: change.description || undefined,
       };
     case "update-network": {
       const parts = [];
       if (change.name !== change.originalName)
-        parts.push(`renamed from “${change.originalName}”`);
+        parts.push(
+          t("controlCenter.renamedFrom", {
+            changeOriginalName: change.originalName,
+          }),
+        );
       if ((change.description ?? "") !== (change.originalDescription ?? ""))
-        parts.push("description changed");
+        parts.push(t("controlCenter.descriptionChanged"));
       return {
-        title: `Update network “${change.name}”`,
+        title: t("controlCenter.updateNetwork", { change: change.name }),
         detail: parts.length > 0 ? parts.join(", ") : undefined,
       };
     }
     case "create-resource":
       return {
         title: change.networkName
-          ? `Create resource “${change.name}” in “${change.networkName}”`
-          : `Create resource “${change.name}”`,
+          ? t("controlCenter.createResourceIn", {
+              change: change.name,
+              changeNetworkName: change.networkName,
+            })
+          : t("controlCenter.createResource", { change: change.name }),
         detail: change.address,
       };
     case "create-router":
       return {
         title: change.peerId
-          ? `Add routing peer “${change.peerName ?? change.peerId}” to “${
-              change.networkName
-            }”`
-          : `Add routing peer group “${
-              change.groupName ?? change.groupId
-            }” to “${change.networkName}”`,
+          ? t("controlCenter.addRoutingPeerTo", {
+              changePeerId: change.peerName ?? change.peerId ?? "",
+              changeNetworkName: change.networkName,
+            })
+          : t("controlCenter.addRoutingPeerGroupTo", {
+              changeGroupId: change.groupName ?? change.groupId ?? "",
+              changeNetworkName: change.networkName,
+            }),
       };
     case "update-router":
       return {
         title: change.peerId
-          ? `Update routing peer “${change.peerName ?? change.peerId}” in “${
-              change.networkName
-            }”`
-          : `Update routing peer group “${
-              change.groupName ?? change.groupId
-            }” in “${change.networkName}”`,
+          ? t("controlCenter.updateRoutingPeerIn", {
+              changePeerId: change.peerName ?? change.peerId ?? "",
+              changeNetworkName: change.networkName,
+            })
+          : t("controlCenter.updateRoutingPeerGroupIn", {
+              changeGroupId: change.groupName ?? change.groupId ?? "",
+              changeNetworkName: change.networkName,
+            }),
       };
     case "update-resource":
       return {
-        title: `${change.enabled ? "Enable" : "Disable"} resource “${
-          change.name
-        }” in “${change.networkName}”`,
+        title: t("controlCenter.toggleResourceSummary", {
+          changeEnabled: change.enabled ? "true" : "false",
+          change: change.name,
+          changeNetworkName: change.networkName,
+        }),
       };
     case "delete-resource":
       return {
-        title: `Delete resource “${change.name}” from “${change.networkName}”`,
+        title: t("controlCenter.deleteResourceFrom", {
+          change: change.name,
+          changeNetworkName: change.networkName,
+        }),
       };
     case "delete-network":
       return {
-        title: `Delete network “${change.name}”`,
-        detail: "its resources and routing peers are removed too",
+        title: t("controlCenter.deleteNetworkSummary", { change: change.name }),
+        detail: t("controlCenter.itsResourcesAndRoutingPeersAreRemovedToo2"),
       };
     case "create-provider":
       return {
-        title: `Connect provider “${change.name}”`,
+        title: t("controlCenter.connectProvider", { change: change.name }),
         detail: change.input.upstreamUrl || undefined,
       };
     case "update-provider":
       return {
         title:
           change.origin === "toggle"
-            ? `${change.updates.enabled ? "Enable" : "Disable"} provider “${
-                change.name
-              }”`
-            : `Update provider “${change.name}”`,
+            ? t("controlCenter.toggleProviderSummary", {
+                updatesEnabled: change.updates.enabled ? "true" : "false",
+                change: change.name,
+              })
+            : t("controlCenter.updateProvider", { change: change.name }),
       };
     case "delete-provider":
-      return { title: `Delete provider “${change.name}”` };
+      return {
+        title: t("controlCenter.deleteProvider", { change: change.name }),
+      };
     case "create-agent-policy":
       return {
-        title: `Create agent policy “${change.name}”`,
-        detail: `${change.policy.sourceGroups.length} group${
-          change.policy.sourceGroups.length !== 1 ? "s" : ""
-        } → ${change.policy.destinationProviderIds.length} provider${
-          change.policy.destinationProviderIds.length !== 1 ? "s" : ""
-        }`,
+        title: t("controlCenter.createAgentPolicy", { change: change.name }),
+        detail: t("controlCenter.agentPolicyDestinations", {
+          policySourceGroups: change.policy.sourceGroups.length,
+          policyDestinationProviderIds:
+            change.policy.destinationProviderIds.length,
+        }),
       };
     case "update-agent-policy":
       return {
         title:
           change.origin === "toggle"
-            ? `${change.policy.enabled ? "Enable" : "Disable"} agent policy “${
-                change.name
-              }”`
-            : `Update agent policy “${change.name}”`,
+            ? t("controlCenter.toggleAgentPolicySummary", {
+                policyEnabled: change.policy.enabled ? "true" : "false",
+                change: change.name,
+              })
+            : t("controlCenter.updateAgentPolicy", { change: change.name }),
       };
     case "delete-agent-policy":
-      return { title: `Delete agent policy “${change.name}”` };
+      return {
+        title: t("controlCenter.deleteAgentPolicy", { change: change.name }),
+      };
     case "update-user-groups": {
       const parts = [];
       if (change.addedGroupNames.length > 0) {
-        parts.push(`added to ${change.addedGroupNames.join(", ")}`);
+        parts.push(
+          t("controlCenter.addedTo", {
+            changeAddedGroupNames: change.addedGroupNames.join(", "),
+          }),
+        );
       }
       if (change.removedGroupNames.length > 0) {
-        parts.push(`removed from ${change.removedGroupNames.join(", ")}`);
+        parts.push(
+          t("controlCenter.removedFrom", {
+            changeRemovedGroupNames: change.removedGroupNames.join(", "),
+          }),
+        );
       }
       return {
-        title: `Update groups for “${change.name}”`,
+        title: t("controlCenter.updateGroupsFor", { change: change.name }),
         detail: parts.length > 0 ? parts.join(", ") : undefined,
       };
     }
     case "install-peer":
       if (change.installedPeerId) {
         return {
-          title: `Peer “${change.name}” installed`,
-          detail: "it joined your network — nothing left to deploy for it",
+          title: t("controlCenter.peerInstalled", { change: change.name }),
+          detail: t("controlCenter.itJoinedYourNetworkNothingLeftToDeploy"),
         };
       }
       return {
-        title: `Install peer “${change.name}”`,
+        title: t("controlCenter.installPeer", { change: change.name }),
         detail:
           change.kind === "user-device"
-            ? "select an existing peer or install a new one"
-            : "install to complete the draft changes that reference it",
+            ? t("controlCenter.selectAnExistingPeerOrInstallANew")
+            : t("controlCenter.installToCompleteTheDraftChangesThatReference"),
       };
   }
 };
@@ -608,21 +654,26 @@ export type ChangeIssue = {
 export const getChangeIssue = (
   change: DraftChange,
   changes: DraftChange[],
+  t: typeof englishTranslations = englishTranslations,
 ): ChangeIssue | undefined => {
   // Stripped bare by a group deletion; blocked here so the deploy never
   // refuses it mid-run.
   if (change.type === "create-policy" && isEmptiedPolicy(change.policy)) {
     return {
-      label: "Incomplete",
-      message: `Policy “${change.name}” lost a side to a group deletion. Give it a source and a destination, or remove it.`,
+      label: t("controlCenter.incomplete"),
+      message: t("controlCenter.policyLostASideToAGroupDeletion", {
+        change: change.name,
+      }),
       resolvable: true,
     };
   }
   // A canvas removal can leave a pending edit's policy one-sided.
   if (change.type === "update-policy" && isEmptiedPolicy(change.policy)) {
     return {
-      label: "Incomplete",
-      message: `Policy “${change.name}” is missing a source or a destination. Give it both, or remove this change to revert to the live policy.`,
+      label: t("controlCenter.incomplete"),
+      message: t("controlCenter.policyIsMissingASourceOrADestination", {
+        change: change.name,
+      }),
       resolvable: true,
     };
   }
@@ -632,8 +683,10 @@ export const getChangeIssue = (
     !change.networkClientId
   ) {
     return {
-      label: "No Network",
-      message: `Resource “${change.name}” has no network assigned. Assign it to a network before deploying.`,
+      label: t("controlCenter.noNetwork"),
+      message: t("controlCenter.resourceHasNoNetworkAssignedAssignItTo", {
+        change: change.name,
+      }),
       resolvable: true,
     };
   }
@@ -647,22 +700,24 @@ export const getChangeIssue = (
       .join(", ");
     const subject =
       change.type === "create-resource" || change.type === "update-resource"
-        ? `Resource “${change.name}”`
+        ? t("controlCenter.resourceSubject", { change: change.name })
         : change.type === "create-router" || change.type === "update-router"
-        ? `Routing peer in “${change.networkName}”`
+        ? t("controlCenter.routingPeerIn", {
+            changeNetworkName: change.networkName,
+          })
         : change.type === "update-user-groups"
         ? `“${change.name}”`
         : change.type === "create-agent-policy" ||
           change.type === "update-agent-policy"
-        ? `Agent policy “${change.name}”`
-        : "This change";
+        ? t("controlCenter.agentPolicySubject", { change: change.name })
+        : t("controlCenter.thisChange");
     return {
-      label: "Group deleted",
-      message: `${subject} references ${
-        deletedGroups.length === 1 ? "group" : "groups"
-      } ${list}, marked for deletion in this draft. The deletion is refused while anything references ${
-        deletedGroups.length === 1 ? "it" : "them"
-      } — take the group off this change, or discard the deletion.`,
+      label: t("controlCenter.groupDeleted"),
+      message: t("controlCenter.referencesOtherMarkedForDeletionInThisDraft", {
+        subject: subject,
+        deletedGroups: deletedGroups.length,
+        list: list,
+      }),
     };
   }
   if (
@@ -676,8 +731,10 @@ export const getChangeIssue = (
       (providers !== undefined && providers.length === 0)
     ) {
       return {
-        label: "Incomplete",
-        message: `Agent policy “${change.name}” needs at least one source group and one provider.`,
+        label: t("controlCenter.incomplete"),
+        message: t("controlCenter.agentPolicyNeedsAtLeastOneSourceGroup", {
+          change: change.name,
+        }),
         resolvable: true,
       };
     }
@@ -690,12 +747,11 @@ export const getChangeIssue = (
     if (named.length > 0) {
       const list = named.map((id) => `“${doomedProviders.get(id)}”`).join(", ");
       return {
-        label: "Provider deleted",
-        message: `Agent policy “${change.name}” references ${
-          named.length === 1 ? "provider" : "providers"
-        } ${list}, marked for deletion in this draft. Take ${
-          named.length === 1 ? "it" : "them"
-        } off the policy, or discard the deletion.`,
+        label: t("controlCenter.providerDeleted"),
+        message: t(
+          "controlCenter.agentPolicyReferencesOtherMarkedForDeletionIn",
+          { change: change.name, named: named.length, list: list },
+        ),
       };
     }
     const draftProviderIds = new Set(
@@ -708,8 +764,10 @@ export const getChangeIssue = (
     );
     if (orphaned.length > 0) {
       return {
-        label: "Provider missing",
-        message: `Agent policy “${change.name}” references a provider that is no longer in this draft. Pick another provider for it.`,
+        label: t("controlCenter.providerMissing"),
+        message: t("controlCenter.agentPolicyReferencesAProviderThatIsNo", {
+          change: change.name,
+        }),
       };
     }
   }
@@ -718,26 +776,34 @@ export const getChangeIssue = (
     // A peer waiting to register still blocks deploy until it upgrades.
     if (change.setupKeyId) {
       return {
-        label: "Waiting",
+        label: t("controlCenter.waiting"),
         waiting: true,
-        message: `Waiting for “${change.name}” to register after install.`,
+        message: t("controlCenter.waitingForToRegisterAfterInstall", {
+          change: change.name,
+        }),
         resolvable: true,
       };
     }
     return {
-      label: "Install",
+      label: t("controlCenter.install"),
       message:
         change.kind === "user-device"
-          ? `Peer “${change.name}” must be installed or selected before deploying.`
-          : `Peer “${change.name}” must be installed before deploying.`,
+          ? t("controlCenter.peerMustBeInstalledOrSelectedBeforeDeploying", {
+              change: change.name,
+            })
+          : t("controlCenter.peerMustBeInstalledBeforeDeploying", {
+              change: change.name,
+            }),
       resolvable: true,
     };
   }
   return undefined;
 };
 
-export const hasBlockingIssues = (changes: DraftChange[]): boolean =>
-  changes.some((c) => getChangeIssue(c, changes) !== undefined);
+export const hasBlockingIssues = (
+  changes: DraftChange[],
+  t: typeof englishTranslations = englishTranslations,
+): boolean => changes.some((c) => getChangeIssue(c, changes, t) !== undefined);
 
 // The permission each change type's request needs. Draft mode defers the write, it
 // does not exempt it; install-peer is the user's own manual step, not a deploy call.
@@ -821,6 +887,7 @@ export const getCanvasWarnings = (
     data?: Record<string, unknown>;
   }[],
   changes: DraftChange[],
+  t: typeof englishTranslations = englishTranslations,
 ): string[] => {
   const warnings: string[] = [];
   const trackedResourceIds = new Set(
@@ -842,9 +909,9 @@ export const getCanvasWarnings = (
       const refs = [rule.sourceResource, rule.destinationResource];
       if (refs.some((r) => r?.id?.startsWith("draft-"))) {
         warnings.push(
-          `Policy “${
-            policy?.name ?? "Policy"
-          }” references a peer that isn't installed yet and won't deploy until it is.`,
+          t("controlCenter.policyReferencesAPeerThatIsnTInstalled", {
+            policy_Policy: policy?.name ?? t("common.policy"),
+          }),
         );
       } else if (
         refs.some(
@@ -852,9 +919,9 @@ export const getCanvasWarnings = (
         )
       ) {
         warnings.push(
-          `Policy “${
-            policy?.name ?? "Policy"
-          }” references a resource without a network and won't deploy until it is assigned to one.`,
+          t("controlCenter.policyReferencesAResourceWithoutANetworkAnd", {
+            policy_Policy: policy?.name ?? t("common.policy"),
+          }),
         );
       }
     }
@@ -863,9 +930,9 @@ export const getCanvasWarnings = (
       if (!trackedResourceIds.has(clientId)) {
         const resource = n.data?.resource as { name?: string } | undefined;
         warnings.push(
-          `Resource “${
-            resource?.name ?? "Resource"
-          }” has no network assigned and won't deploy.`,
+          t("controlCenter.resourceHasNoNetworkAssignedAndWonT", {
+            resource_Resource: resource?.name ?? t("common.resource"),
+          }),
         );
       }
     }

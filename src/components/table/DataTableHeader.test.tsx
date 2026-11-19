@@ -4,9 +4,19 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import React, { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { setLocalePreference } from "@/i18n/locale-preference";
+import { LocaleProvider } from "@/i18n/LocaleProvider";
+import { localeStorageKey } from "@/i18n/locales";
+import type { MessageId } from "@/i18n/translate";
 import { DataTableInstanceProvider } from "./DataTableContext";
 import DataTableHeader from "./DataTableHeader";
 
@@ -24,6 +34,7 @@ vi.mock("@/contexts/ServerPaginationProvider", () => ({
 afterEach(() => {
   cleanup();
   setSort.mockClear();
+  localStorage.removeItem(localeStorageKey);
 });
 
 type Peer = { name: string; connected: boolean; last_seen: string };
@@ -56,10 +67,12 @@ function Harness({
   initialSorting,
   columnId,
   name,
+  labelId,
 }: {
   initialSorting: SortingState;
   columnId: string;
   name?: string;
+  labelId?: MessageId;
 }) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const table = useReactTable({
@@ -75,7 +88,11 @@ function Harness({
 
   return (
     <DataTableInstanceProvider table={table}>
-      <DataTableHeader column={table.getColumn(columnId)!} name={name}>
+      <DataTableHeader
+        column={table.getColumn(columnId)!}
+        name={name}
+        labelId={labelId}
+      >
         Header
       </DataTableHeader>
       <output data-testid={"sorting"}>{JSON.stringify(sorting)}</output>
@@ -152,5 +169,26 @@ describe("DataTableHeader sorting", () => {
 
     expect(sortingState()).toEqual([{ id: "name", desc: false }]);
     expect(setSort).toHaveBeenCalledWith("name", "asc");
+  });
+
+  it("switches the display label without changing the column or server sort key", () => {
+    render(
+      <LocaleProvider>
+        <Harness
+          initialSorting={[]}
+          columnId="name"
+          name="name"
+          labelId="common.name"
+        />
+      </LocaleProvider>,
+    );
+    expect(screen.getByText("Name")).toBeTruthy();
+
+    act(() => setLocalePreference("zh-Hans"));
+    fireEvent.click(screen.getByText("名称"));
+
+    expect(sortingState()).toEqual([{ id: "name", desc: false }]);
+    expect(setSort).toHaveBeenCalledWith("name", "asc");
+    expect(rowOrder()).toEqual(["alpha", "mike", "zulu"]);
   });
 });

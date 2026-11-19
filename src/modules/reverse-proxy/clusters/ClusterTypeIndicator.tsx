@@ -1,6 +1,7 @@
 import FullTooltip from "@components/FullTooltip";
 import { ServerIcon, UserCog } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   ReverseProxyCluster,
   ReverseProxyClusterType,
@@ -14,6 +15,7 @@ type Props = {
 // same pattern as EphemeralPeerIndicator — so the source of the
 // cluster is visible at a glance without a dedicated column.
 export const ClusterTypeIndicator = ({ cluster }: Props) => {
+  const t = useTranslations();
   // TODO(NET-1722): label a NetBird-managed gateway "Managed by NetBird"; it
   // is an account cluster but not self-hosted.
   if (cluster.type === ReverseProxyClusterType.ACCOUNT) {
@@ -21,9 +23,12 @@ export const ClusterTypeIndicator = ({ cluster }: Props) => {
       <FullTooltip
         content={
           <div className={"text-xs max-w-xs"}>
-            <span className={"font-medium text-nb-gray-100 dark:text-white"}>Account cluster.</span>{" "}
-            Self-hosted on your own infrastructure — you operate the proxy
-            nodes and control where traffic terminates.
+            <span className={"font-medium text-nb-gray-100 dark:text-white"}>
+              {t("reverseProxy.accountCluster")}
+            </span>{" "}
+            {t(
+              "reverseProxy.selfHostedOnYourOwnInfrastructureYouOperateTheProxyNodesAnd",
+            )}
           </div>
         }
       >
@@ -35,9 +40,12 @@ export const ClusterTypeIndicator = ({ cluster }: Props) => {
     <FullTooltip
       content={
         <div className={"text-xs max-w-xs"}>
-          <span className={"font-medium text-nb-gray-100 dark:text-white"}>Shared cluster.</span>{" "}
-          Deployed at the server level and available to every account on this
-          instance.
+          <span className={"font-medium text-nb-gray-100 dark:text-white"}>
+            {t("reverseProxy.sharedCluster")}
+          </span>{" "}
+          {t(
+            "reverseProxy.deployedAtTheServerLevelAndAvailableToEveryAccountOnThis",
+          )}
         </div>
       }
     >

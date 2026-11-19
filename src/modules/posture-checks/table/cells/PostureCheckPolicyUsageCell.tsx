@@ -8,6 +8,7 @@ import * as React from "react";
 import { useState } from "react";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import { usePolicies } from "@/contexts/PoliciesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Policy } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export const PostureCheckPolicyUsageCell = ({ check }: Props) => {
+  const t = useTranslations();
   const router = useRouter();
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const policyCount = check?.policies?.length || 0;
@@ -113,7 +115,7 @@ export const PostureCheckPolicyUsageCell = ({ check }: Props) => {
           onClick={() => router.push("/access-control")}
         >
           <>
-            Go to Policies
+            {t("postureChecks.goToPolicies")}
             <ArrowUpRightIcon size={12} />
           </>
         </Button>

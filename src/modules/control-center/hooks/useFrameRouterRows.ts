@@ -1,9 +1,10 @@
-import { useMemo } from "react";
-import { useStore } from "@xyflow/react";
 import useFetchApi from "@utils/api";
-import { NetworkRouter } from "@/interfaces/Network";
-import { usePeers } from "@/contexts/PeersProvider";
+import { useStore } from "@xyflow/react";
+import { useMemo } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { usePeers } from "@/contexts/PeersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
+import { NetworkRouter } from "@/interfaces/Network";
 import {
   UpdateRouterChange,
   useDraftChangeset,
@@ -20,6 +21,7 @@ export function useFrameRouterRows(
   networkNodeId: string | undefined,
   enabled: boolean,
 ) {
+  const t = useTranslations();
   const { changes } = useDraftChangeset();
   const { peers } = usePeers();
   const { groups } = useGroups();
@@ -48,13 +50,9 @@ export function useFrameRouterRows(
     [changes, clientId, networkId],
   );
 
-  const { data: apiRouters, isLoading: isApiLoading } =
-    useFetchApi<NetworkRouter[]>(
-      `/networks/${networkId}/routers`,
-      false,
-      false,
-      enabled && !!networkId,
-    );
+  const { data: apiRouters, isLoading: isApiLoading } = useFetchApi<
+    NetworkRouter[]
+  >(`/networks/${networkId}/routers`, false, false, enabled && !!networkId);
 
   const rows: RoutingPeerRow[] = useMemo(() => {
     if (!networkNodeId) return [];
@@ -75,7 +73,7 @@ export function useFrameRouterRows(
       list.push({
         key: `api-${r.id}`,
         peerOs: peer?.os,
-        name: peer?.name ?? group?.name ?? "Routing Peer",
+        name: peer?.name ?? group?.name ?? t("controlCenter.routingPeer"),
         isGroup: !peerId,
         peersCount: !peerId ? group?.peers_count ?? 0 : undefined,
         enabled,
@@ -84,16 +82,14 @@ export function useFrameRouterRows(
     });
     draftRouters.forEach((c) => {
       if (c.type !== "create-router") return;
-      const peer = c.peerId
-        ? peers?.find((p) => p.id === c.peerId)
-        : undefined;
+      const peer = c.peerId ? peers?.find((p) => p.id === c.peerId) : undefined;
       const group = c.groupId
         ? groups?.find((g) => g.id === c.groupId || g.name === c.groupId)
         : undefined;
       list.push({
         key: `draft-${c.id}`,
         peerOs: peer?.os,
-        name: c.peerName ?? c.groupName ?? "Routing Peer",
+        name: c.peerName ?? c.groupName ?? t("controlCenter.routingPeer"),
         isGroup: !c.peerId,
         peersCount: !c.peerId ? group?.peers_count ?? 0 : undefined,
         enabled: c.enabled ?? true,
@@ -103,6 +99,7 @@ export function useFrameRouterRows(
     });
     return sortRoutingPeerRows(list);
   }, [
+    t,
     apiRouters,
     draftRouters,
     changes,

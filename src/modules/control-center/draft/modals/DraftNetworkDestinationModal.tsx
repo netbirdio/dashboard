@@ -10,6 +10,7 @@ import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
@@ -49,6 +50,7 @@ const PickerContent = ({
   state: NetworkDestinationPickerState;
   onClose: () => void;
 }) => {
+  const translate = useTranslations();
   const { networkNodeId, policyNodeId } = state;
   const { nodes } = useCanvasState();
   const { groups: apiGroups, networkResources } = useControlCenterData();
@@ -94,10 +96,11 @@ const PickerContent = ({
     });
     // Existing-network cards: the groups of the network's API resources.
     if (ids.size === 0 && network?.id) {
-      resources.forEach((r) =>
-        (r.groups as (Group | string)[] | undefined)?.forEach((g) =>
-          ids.add(typeof g === "string" ? g : g.id ?? g.name),
-        ),
+      resources.forEach(
+        (r) =>
+          (r.groups as (Group | string)[] | undefined)?.forEach((g) =>
+            ids.add(typeof g === "string" ? g : g.id ?? g.name),
+          ),
       );
     }
     return Array.from(ids);
@@ -112,10 +115,10 @@ const PickerContent = ({
   const rule = policy?.rules?.[0];
   const existingDestinations = (rule?.destinations as (Group | string)[]) ?? [];
   const blockedReason = rule?.destinationResource
-    ? "This policy already has a resource destination. Remove it from the policy first."
+    ? translate("controlCenter.thisPolicyAlreadyHasAResourceDestinationRemove")
     : pickedResource && existingDestinations.length > 0
-      ? "This policy already has group destinations, and a resource can't be combined with them. Pick groups instead."
-      : null;
+    ? translate("controlCenter.thisPolicyAlreadyHasGroupDestinationsAndA")
+    : null;
 
   const onConnect = () => {
     if (!policy || !rule || blockedReason) return;
@@ -143,23 +146,25 @@ const PickerContent = ({
     <ModalContent maxWidthClass={"max-w-lg"}>
       <ModalHeader
         icon={<NetworkRoutesIcon className={"fill-current"} />}
-        title={"Select Destination"}
-        description={`Access ${network?.name ?? "this network"}${
-          policy?.name ? ` via "${policy.name}"` : ""
-        }`}
+        title={translate("controlCenter.selectDestinationTitle")}
+        description={translate("controlCenter.networkAccessDescription", {
+          thisNetwork: network?.name ?? translate("common.network"),
+          policy: policy?.name ? "true" : "false",
+          policy2: policy?.name ?? "",
+        })}
         color={"netbird"}
       />
       <div className={"p-default flex flex-col"}>
         {resources.length === 0 && groupIds.length === 0 ? (
           <div className={"text-sm text-nb-gray-400 text-center py-4"}>
-            This network has no resources yet.
+            {translate("controlCenter.thisNetworkHasNoResourcesYet")}
           </div>
         ) : (
           <div className={"w-full"}>
             <PeerGroupSelector
               data-testid={"network-destination-selector"}
               popoverWidth={480}
-              placeholder={"Select destination(s)..."}
+              placeholder={translate("controlCenter.selectDestination")}
               showResources={true}
               showResourceCounter={true}
               // Land on the tab that has content.
@@ -189,7 +194,7 @@ const PickerContent = ({
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
             <Button variant={"secondary"} className={"w-full"}>
-              Cancel
+              {translate("common.cancel")}
             </Button>
           </ModalClose>
           <Button
@@ -198,7 +203,7 @@ const PickerContent = ({
             onClick={onConnect}
             disabled={!hasPick || !!blockedReason}
           >
-            Connect
+            {translate("controlCenter.connect")}
           </Button>
         </div>
       </ModalFooter>

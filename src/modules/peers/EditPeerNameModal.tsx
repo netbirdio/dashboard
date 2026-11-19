@@ -13,6 +13,7 @@ import { trim } from "lodash";
 import { Globe } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toASCII } from "punycode";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 
 interface Props {
@@ -26,6 +27,7 @@ export function EditPeerNameModal({
   peer,
   initialName,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const [name, setName] = useState(initialName);
 
   const isDisabled = useMemo(() => {
@@ -52,15 +54,15 @@ export function EditPeerNameModal({
     <ModalContent maxWidthClass={"max-w-md"}>
       <form>
         <ModalHeader
-          title={"Edit Peer Name"}
-          description={"Set an easily identifiable name for your peer."}
+          title={t("peers.editPeerName")}
+          description={t("peers.editPeerNameDescription")}
           color={"blue"}
         />
 
         <div className={"p-default flex flex-col gap-4"}>
           <div>
             <Input
-              placeholder={"e.g., AWS Servers"}
+              placeholder={t("peers.peerNamePlaceholder")}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -68,11 +70,10 @@ export function EditPeerNameModal({
           <Card className={"w-full px-6 pt-5 pb-4"}>
             <Label>
               <Globe size={15} />
-              Domain Name Preview
+              {t("peers.domainNamePreview")}
             </Label>
             <HelpText className={"mt-2"}>
-              If the domain name already exists, we add an increment number
-              suffix to it.
+              {t("peers.domainNamePreviewHelp")}
             </HelpText>
             <div className={"text-netbird text-sm break-all whitespace-normal"}>
               {domainNamePreview}
@@ -84,7 +85,7 @@ export function EditPeerNameModal({
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
               <Button variant={"secondary"} className={"w-full"}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </ModalClose>
 
@@ -95,7 +96,7 @@ export function EditPeerNameModal({
               disabled={isDisabled}
               type={"submit"}
             >
-              Save
+              {t("common.save")}
             </Button>
           </div>
         </ModalFooter>

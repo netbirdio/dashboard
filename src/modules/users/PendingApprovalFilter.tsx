@@ -3,6 +3,7 @@ import { NotificationCountBadge } from "@components/ui/NotificationCountBadge";
 import { Table } from "@tanstack/react-table";
 import * as React from "react";
 import { useEffect } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props<T> = {
   table: Table<T>;
@@ -11,6 +12,7 @@ type Props<T> = {
 };
 
 export const PendingApprovalFilter = <T,>({ table, data, count }: Props<T>) => {
+  const t = useTranslations();
   // Reset filter if there are no pending approvals
   useEffect(() => {
     if (
@@ -45,7 +47,7 @@ export const PendingApprovalFilter = <T,>({ table, data, count }: Props<T>) => {
           : "secondary"
       }
     >
-      Pending Approval
+      {t("users.pendingApproval")}
       <NotificationCountBadge count={count} />
     </Button>
   );

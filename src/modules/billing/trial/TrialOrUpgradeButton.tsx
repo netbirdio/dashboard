@@ -12,6 +12,7 @@ import { useTrial } from "@/cloud/cloud-hooks/useTrial";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { PlanTier } from "@/interfaces/Subscription";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   plan?: PlanTier;
@@ -49,18 +50,22 @@ export const TrialOrUpgradeButton = ({
   };
 
   const RegularUserContent = () => {
+    const t = useTranslations();
+
     return (
       <div>
         <div>
           {isTrialAvailable && offerTrial
-            ? "Only the owner or an administrator can start a free trial."
-            : "Only the owner or an administrator can upgrade the plan."}
+            ? t("billing.onlyTheOwnerOrAnAdministratorCanStartAFree")
+            : t("billing.onlyTheOwnerOrAnAdministratorCanUpgradeThePlan")}
         </div>
       </div>
     );
   };
 
   const PlansAndBillingButton = () => {
+    const t = useTranslations();
+
     return (
       <div className={"relative top-1 min-w-[160px]"}>
         <Button
@@ -70,13 +75,15 @@ export const TrialOrUpgradeButton = ({
           className={cn("w-full h-[34px]")}
           disabled={!isOwnerOrAdmin}
         >
-          Go to Plans & Billing
+          {t("billing.goToPlansBilling")}
         </Button>
       </div>
     );
   };
 
   const TrialButton = () => {
+    const t = useTranslations();
+
     return (
       <div
         className={cn(
@@ -89,8 +96,7 @@ export const TrialOrUpgradeButton = ({
           disabled={canUpgrade}
           content={
             <div className={"text-xs max-w-sm"}>
-              Your plan was recently updated. Please wait for 48 hours from the
-              last update to change your plan again.
+              {t("billing.yourPlanWasRecentlyUpdatedPleaseWaitFor48Hours")}
             </div>
           }
         >
@@ -110,7 +116,7 @@ export const TrialOrUpgradeButton = ({
             {isLoading ? (
               <Loader2 size={15} className={"animate-spin"} />
             ) : (
-              "Start 14-Day Free Trial"
+              t("billing.start14DayFreeTrial")
             )}
             {!canUpgrade && (
               <IconHelpCircle size={13} className={"relative -top-[1px]"} />
@@ -125,7 +131,7 @@ export const TrialOrUpgradeButton = ({
             !isOwnerOrAdmin && "opacity-50",
           )}
         >
-          No credit card required
+          {t("billing.noCreditCardRequired")}
         </div>
       </div>
     );
@@ -144,6 +150,8 @@ export const SelfHostedUpgradeButton = ({
 }: {
   variant?: "primary" | "white";
 }) => {
+  const t = useTranslations();
+
   const { only: agentNetworkOnly } = useAgentNetworkMode();
   // Agent Network-only deployments point at the Agent Network pricing page
   // (tagged so the visit is attributable); the regular self-hosted product
@@ -165,7 +173,7 @@ export const SelfHostedUpgradeButton = ({
           className={cn("w-full h-[34px]")}
           data-testid={"self-hosted-upgrade-cta"}
         >
-          Get a License
+          {t("billing.getALicense")}
           <ExternalLinkIcon size={13} className={"shrink-0"} />
         </Button>
       </a>

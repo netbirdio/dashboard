@@ -21,6 +21,7 @@ import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { useRoutes } from "@/contexts/RoutesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import { GroupedRoute, Route } from "@/interfaces/Route";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -58,6 +59,7 @@ type ModalProps = {
 };
 
 function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
+  const t = useTranslations();
   const { createRoute } = useRoutes();
 
   const [routingPeer, setRoutingPeer] = useState<Peer | undefined>(
@@ -146,7 +148,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
         access_control_groups: accessControlGroupIds || undefined,
       },
       onSuccess,
-      "Peer was successfully added to the route",
+      t("routes.routingPeerAdded"),
     );
   };
 
@@ -164,10 +166,8 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
     <ModalContent flow="route_routing_peer" maxWidthClass={"max-w-2xl"}>
       <ModalHeader
         icon={<NetworkRoutesIcon className={"fill-current"} />}
-        title={"Add New Routing Peer"}
-        description={
-          "When you add multiple routing peers, NetBird enables high availability for this network."
-        }
+        title={t("routes.addNewRoutingPeer")}
+        description={t("routes.addRoutingPeerDescription")}
         color={"netbird"}
       />
 
@@ -175,9 +175,9 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
 
       <div className={"flex flex-col gap-6 px-8 py-6"}>
         <div>
-          <Label>Network Identifier</Label>
+          <Label>{t("routes.networkIdentifier")}</Label>
           <HelpText>
-            Network name and CIDR that you are adding the route to.
+            {t("routes.routeSelectorHelp")}
           </HelpText>
           <NetworkRouteSelector
             disabled={groupedRoute != undefined}
@@ -186,9 +186,9 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
           />
         </div>
         <div>
-          <Label>Routing Peer</Label>
+          <Label>{t("routes.routingPeer")}</Label>
           <HelpText>
-            Assign a single peer as a routing peer for the network route.
+            {t("routes.assignSinglePeerRoute")}
           </HelpText>
           <PeerSelector
             onChange={setRoutingPeer}
@@ -198,18 +198,16 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
           />
         </div>
         <div>
-          <Label>Distribution Groups</Label>
+          <Label>{t("routes.colDistributionGroups")}</Label>
           <HelpText>
-            Advertise this route to peers that belong to the following groups
+            {t("routes.advertiseRouteToGroups")}
           </HelpText>
           <PeerGroupSelector onChange={setGroups} values={groups} />
         </div>
         <div>
-          <Label>Access Control Groups (optional)</Label>
+          <Label>{t("routes.accessControlGroupsOptional")}</Label>
           <HelpText>
-            These groups offer a more granular control of internal services in
-            your network. They can be used in access control policies to limit
-            and control access of this route.
+            {t("routes.accessControlGroupsHelpUpdate")}
           </HelpText>
           <PeerGroupSelector
             onChange={setAccessControlGroups}
@@ -227,14 +225,14 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
               }
               target={"_blank"}
             >
-              Network Routes
+              {t("common.networkRoutes")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("common.cancel")}</Button>
           </ModalClose>
 
           <Button
@@ -243,7 +241,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
             onClick={createRouteHandler}
           >
             <PlusCircle size={16} />
-            Add Route
+            {t("common.addRoute")}
           </Button>
         </div>
       </ModalFooter>

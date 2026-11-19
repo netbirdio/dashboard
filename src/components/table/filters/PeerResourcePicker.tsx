@@ -6,8 +6,8 @@ import { Tabs, TabsContent, TabsTrigger } from "@components/Tabs";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import { useSearch } from "@hooks/useSearch";
-import { cn } from "@utils/helpers";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
+import { cn } from "@utils/helpers";
 import { sortBy } from "lodash";
 import {
   CheckIcon,
@@ -21,6 +21,7 @@ import {
 import * as React from "react";
 import { useState } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
 // PeerResourcePicker — single-select endpoint picker with two tabs (Peers /
@@ -98,6 +99,7 @@ function OptionList({
   onSelect: (item: PeerResourceOption) => void;
   emptyText: string;
 }) {
+  const t = useTranslations();
   const [filteredItems, search, setSearch] = useSearch(
     options,
     searchPredicate,
@@ -114,7 +116,7 @@ function OptionList({
       <DropdownInput
         value={search}
         onChange={setSearch}
-        placeholder={"Search..."}
+        placeholder={t("common.searchInput")}
         hideEnterIcon={true}
       />
 
@@ -126,7 +128,9 @@ function OptionList({
 
       {filteredItems.length === 0 && search !== "" && (
         <div className={"px-10"}>
-          <DropdownInfoText>No matching results.</DropdownInfoText>
+          <DropdownInfoText>
+            {t("components.noMatchingResults")}
+          </DropdownInfoText>
         </div>
       )}
 
@@ -192,6 +196,7 @@ export function PeerResourcePicker({
   resources,
   users,
 }: Props) {
+  const t = useTranslations();
   const [tab, setTab] = useState<string>(() => {
     if (value) {
       if (users?.some((u) => u.id === value)) return "users";
@@ -210,7 +215,9 @@ export function PeerResourcePicker({
     <div className={"w-full"}>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsPrimitive.List
-          className={"relative flex w-full text-neutral-500 dark:text-nb-gray-400"}
+          className={
+            "relative flex w-full text-neutral-500 dark:text-nb-gray-400"
+          }
         >
           {users && (
             <TabsTrigger
@@ -218,7 +225,7 @@ export function PeerResourcePicker({
               className={"flex-1 gap-1.5 px-1.5 text-xs"}
             >
               <UsersIcon size={13} className={"shrink-0"} />
-              Users
+              {t("common.users")}
             </TabsTrigger>
           )}
           <TabsTrigger
@@ -226,14 +233,14 @@ export function PeerResourcePicker({
             className={"flex-1 gap-1.5 px-1.5 text-xs"}
           >
             <PeerIcon size={13} className={"fill-current shrink-0"} />
-            Peers
+            {t("common.peers")}
           </TabsTrigger>
           <TabsTrigger
             value={"resources"}
             className={"flex-1 gap-1.5 px-1.5 text-xs"}
           >
             <Layers3Icon size={13} className={"shrink-0"} />
-            Resources
+            {t("common.resources")}
           </TabsTrigger>
         </TabsPrimitive.List>
         {users && (
@@ -242,7 +249,7 @@ export function PeerResourcePicker({
               options={users}
               value={value}
               onSelect={handleSelect}
-              emptyText={"No users available to select."}
+              emptyText={t("components.noUsersAvailable")}
             />
           </TabsContent>
         )}
@@ -251,7 +258,7 @@ export function PeerResourcePicker({
             options={peers}
             value={value}
             onSelect={handleSelect}
-            emptyText={"No peers available to select."}
+            emptyText={t("components.noPeersAvailable")}
           />
         </TabsContent>
         <TabsContent value={"resources"} className={"mt-0 pt-3"}>
@@ -259,7 +266,7 @@ export function PeerResourcePicker({
             options={resources}
             value={value}
             onSelect={handleSelect}
-            emptyText={"No resources available to select."}
+            emptyText={t("components.noResourcesAvailable")}
           />
         </TabsContent>
       </Tabs>
