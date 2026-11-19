@@ -10,6 +10,7 @@ import { isExpired } from "react-jwt";
 import useSWR from "swr";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { useErrorBoundary } from "@/contexts/ErrorBoundary";
+import { exitNodesMock } from "@/modules/exit-nodes/mock/handler";
 
 type Method = "GET" | "POST" | "PUT" | "DELETE";
 
@@ -39,6 +40,26 @@ type RequestOptions = {
 export type Params = Record<string, string | number | boolean>;
 
 async function apiRequest<T>(
+  oidcFetch: (input: RequestInfo, init?: RequestInit) => Promise<Response>,
+  method: Method,
+  url: string,
+  data?: any,
+  options?: RequestOptions,
+) {
+  // Exit nodes have no management API yet: the mock answers their requests
+  // (and the policies targeting them) in memory. Remove with the mock.
+  if (!options?.origin && !options?.blob) {
+    const mocked = exitNodesMock.handle(method, url, data, {
+      next: () => sendApiRequest(oidcFetch, method, url, data, options),
+      request: (m, path, body) =>
+        sendApiRequest(oidcFetch, m, path, body, options),
+    });
+    if (mocked) return mocked as Promise<T>;
+  }
+  return sendApiRequest<T>(oidcFetch, method, url, data, options);
+}
+
+async function sendApiRequest<T>(
   oidcFetch: (input: RequestInfo, init?: RequestInit) => Promise<Response>,
   method: Method,
   url: string,
