@@ -1,9 +1,9 @@
 "use client";
 
-import { DropdownInput } from "@components/DropdownInput";
 import { DropdownInfoText } from "@components/DropdownInfoText";
-import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
+import { DropdownInput } from "@components/DropdownInput";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
+import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import { useSearch } from "@hooks/useSearch";
 import { sortBy, uniqBy } from "lodash";
 import { UserCircle2 } from "lucide-react";
@@ -45,8 +45,8 @@ export function UsersPicker({ value, onChange, close, options }: Props) {
   const [filteredItems, search, setSearch] = useSearch(
     options.concat({
       id: ALL_USERS_ID,
-      name: "All Users",
-      email: "Include all users",
+      name: t("activity.allUsers"),
+      email: t("activity.includeAllUsers"),
     }),
     searchPredicate,
     { filter: true, debounce: 150 },
@@ -76,7 +76,9 @@ export function UsersPicker({ value, onChange, close, options }: Props) {
 
       {options.length === 0 && !search && (
         <div className={"max-w-xs mx-auto"}>
-          <DropdownInfoText>{"No users available to select."}</DropdownInfoText>
+          <DropdownInfoText>
+            {t("components.noUsersAvailable")}
+          </DropdownInfoText>
         </div>
       )}
 

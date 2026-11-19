@@ -23,8 +23,8 @@ type Props = {
 export default function NoResults({
   icon,
   hideIcon = false,
-  title = "Could not find any results",
-  description = "We couldn't find any results. Please try a different search term or change your filters.",
+  title: titleProp,
+  description: descriptionProp,
   children,
   className,
   hasFiltersApplied = false,
@@ -32,6 +32,9 @@ export default function NoResults({
   contentClassName,
 }: Props) {
   const t = useTranslations();
+  const title = titleProp ?? t("components.noResults");
+  const description = descriptionProp ?? t("components.noResultsDescription");
+
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -82,7 +85,11 @@ export default function NoResults({
           <div className={"flex items-center justify-center mb-6"}>
             <SquareIcon
               icon={
-                icon ? icon : <FilterX size={24} className={"text-nb-gray-200"} />
+                icon ? (
+                  icon
+                ) : (
+                  <FilterX size={24} className={"text-nb-gray-200"} />
+                )
               }
               color={"gray"}
               size={"large"}

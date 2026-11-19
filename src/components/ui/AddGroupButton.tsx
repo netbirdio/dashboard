@@ -35,7 +35,7 @@ export const AddGroupButton = () => {
   const createGroup = () => {
     notify({
       title: t("components.create"),
-      description: `Group '${name}' successfully created`,
+      description: t("components.groupCreated", { name }),
       loadingMessage: t("components.creating"),
       promise: create({ name }).then((g) => {
         setOpen(false);
@@ -71,9 +71,7 @@ export const AddGroupButton = () => {
           <div className={"px-8 flex-col flex gap-6 py-6"}>
             <div>
               <Label>{t("common.name")}</Label>
-              <HelpText>
-                {t("components.nameHelp")}
-              </HelpText>
+              <HelpText>{t("components.nameHelp")}</HelpText>
               <Input
                 tabIndex={0}
                 data-testid="group-name-input"
@@ -86,14 +84,17 @@ export const AddGroupButton = () => {
           <ModalFooter className={"items-center"}>
             <div className={"w-full"}>
               <Paragraph className={"text-sm mt-auto"}>
-                Learn more about
-                <InlineLink
-                  href={"https://docs.netbird.io/how-to/manage-network-access"}
-                  target={"_blank"}
-                >
-                  {t("common.groups")}
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
+                {t.rich("components.learnGroups", {
+                  link: (chunks) => (
+                    <InlineLink
+                      href="https://docs.netbird.io/how-to/manage-network-access"
+                      target="_blank"
+                    >
+                      {chunks}
+                      <ExternalLinkIcon size={12} />
+                    </InlineLink>
+                  ),
+                })}
               </Paragraph>
             </div>
             <div className={"flex gap-3 w-full justify-end"}>

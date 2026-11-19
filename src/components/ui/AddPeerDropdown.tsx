@@ -68,7 +68,7 @@ function AddPeerDropdown() {
             {t("components.server")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => openMode("agent")}>
-            Agent
+            {t("components.agent")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

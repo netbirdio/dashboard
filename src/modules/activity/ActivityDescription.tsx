@@ -273,8 +273,12 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "user.create")
     return (
       <div className={"inline"}>
-        <Value>{event.meta.username}</Value> <Value>{event.meta.email}</Value>{" "}
-        was created by <Value>{event?.initiator_name || "NetBird"}</Value>
+        {t.rich("activity.userCreate", {
+          Value: highlightValue,
+          username: m.username ?? "",
+          email: m.email ?? "",
+          initiator: event.initiator_name || "NetBird",
+        })}
       </div>
     );
 
@@ -480,13 +484,12 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "peer.login.expire") {
     return (
       <div className={"inline"}>
-        Login of the peer <Value>{m.name}</Value> expired
-        {m.reason && (
-          <>
-            {" "}
-            due to <Value>{m.reason}</Value>
-          </>
-        )}
+        {t.rich("activity.peerLoginExpire", {
+          Value: highlightValue,
+          name: m.name ?? "",
+          hasReason: m.reason ? "yes" : "no",
+          reason: m.reason ?? "",
+        })}
       </div>
     );
   }
@@ -618,7 +621,10 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "account.create")
     return (
       <div className={"inline"}>
-        <Value>{event.initiator_name}</Value> created an account
+        {t.rich("activity.accountCreate", {
+          Value: highlightValue,
+          initiator: event.initiator_name ?? "",
+        })}
       </div>
     );
 
@@ -719,67 +725,76 @@ export default function ActivityDescription({ event }: Props) {
    */
 
   if (event.activity_code == "integration.create") {
-    if (!event.meta.platform) return "Integration created";
+    if (!event.meta.platform) return t("activity.integrationCreatedFallback");
     return (
       <div className={"inline"}>
-        <Value className={"capitalize"}>{event.meta.platform}</Value>{" "}
-        integration created
+        {t.rich("activity.integrationCreated", {
+          platform: m.platform ?? "",
+          Value: (chunks) => <Value className="capitalize">{chunks}</Value>,
+        })}
       </div>
     );
   }
 
   if (event.activity_code == "integration.delete") {
-    if (!event.meta.platform) return "Integration deleted";
+    if (!event.meta.platform) return t("activity.integrationDeletedFallback");
     return (
       <div className={"inline"}>
-        <Value className={"capitalize"}>{event.meta.platform}</Value>{" "}
-        integration deleted
+        {t.rich("activity.integrationDeleted", {
+          platform: m.platform ?? "",
+          Value: (chunks) => <Value className="capitalize">{chunks}</Value>,
+        })}
       </div>
     );
   }
 
   if (event.activity_code == "integration.update") {
-    if (!event.meta.platform) return "Integration updated";
+    if (!event.meta.platform) return t("activity.integrationUpdatedFallback");
     return (
       <div className={"inline"}>
-        <Value className={"capitalize"}>{event.meta.platform}</Value>{" "}
-        integration updated
+        {t.rich("activity.integrationUpdated", {
+          platform: m.platform ?? "",
+          Value: (chunks) => <Value className="capitalize">{chunks}</Value>,
+        })}
       </div>
     );
   }
 
   if (event.activity_code == "integration.enable") {
-    if (!event.meta.platform) return "Integration enabled";
+    if (!event.meta.platform) return t("activity.integrationEnabledFallback");
     return (
       <div className={"inline"}>
-        <Value className={"capitalize"}>{event.meta.platform}</Value>{" "}
-        integration enabled
+        {t.rich("activity.integrationEnabled", {
+          platform: m.platform ?? "",
+          Value: (chunks) => <Value className="capitalize">{chunks}</Value>,
+        })}
       </div>
     );
   }
 
   if (event.activity_code == "integration.disable") {
-    if (!event.meta.platform) return "Integration disabled";
+    if (!event.meta.platform) return t("activity.integrationDisabledFallback");
     return (
       <div className={"inline"}>
-        <Value className={"capitalize"}>{event.meta.platform}</Value>{" "}
-        integration disabled
+        {t.rich("activity.integrationDisabled", {
+          platform: m.platform ?? "",
+          Value: (chunks) => <Value className="capitalize">{chunks}</Value>,
+        })}
       </div>
     );
   }
 
   if (event.activity_code == "integration.disable-by-system") {
-    if (!event.meta.platform) return "Integration disabled by system";
+    if (!event.meta.platform)
+      return t("activity.validatorDisabledSystemFallback");
     return (
       <div className={"inline"}>
-        <Value className={"capitalize"}>{event.meta.platform}</Value>{" "}
-        integration disabled by system
-        {event.meta.reason && (
-          <>
-            {" "}
-            due to <Value>{event.meta.reason}</Value>
-          </>
-        )}
+        {t.rich("activity.integrationDisabledSystem", {
+          Value: highlightValue,
+          platform: m.platform ?? "",
+          hasReason: m.reason ? "yes" : "no",
+          reason: m.reason ?? "",
+        })}
       </div>
     );
   }
@@ -815,21 +830,30 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "posture.check.updated")
     return (
       <div className={"inline"}>
-        Posture check <Value> {m.name}</Value> was updated
+        {t.rich("activity.postureCheckUpdated", {
+          Value: highlightValue,
+          name: m.name ?? "",
+        })}
       </div>
     );
 
   if (event.activity_code == "posture.check.created")
     return (
       <div className={"inline"}>
-        Posture check <Value> {m.name}</Value> was created
+        {t.rich("activity.postureCheckCreated", {
+          Value: highlightValue,
+          name: m.name ?? "",
+        })}
       </div>
     );
 
   if (event.activity_code == "posture.check.deleted")
     return (
       <div className={"inline"}>
-        Posture check <Value> {m.name}</Value> was deleted
+        {t.rich("activity.postureCheckDeleted", {
+          Value: highlightValue,
+          name: m.name ?? "",
+        })}
       </div>
     );
 
@@ -842,76 +866,96 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "integrated-validator.api.created")
     return (
       <div className={"inline"}>
-        <Value>{m?.platform}</Value> integration created
+        {t.rich("activity.integrationCreatedValidator", {
+          Value: highlightValue,
+          platform: m.platform ?? "",
+        })}
       </div>
     );
 
   if (event.activity_code == "integrated-validator.api.updated")
     return (
       <div className={"inline"}>
-        <Value>{m?.platform}</Value> integration updated
+        {t.rich("activity.integrationUpdatedValidator", {
+          Value: highlightValue,
+          platform: m.platform ?? "",
+        })}
       </div>
     );
 
   if (event.activity_code == "integrated-validator.api.deleted")
     return (
       <div className={"inline"}>
-        <Value>{m?.platform}</Value> integration deleted
+        {t.rich("activity.integrationDeletedValidator", {
+          Value: highlightValue,
+          platform: m.platform ?? "",
+        })}
       </div>
     );
 
   if (event.activity_code == "integrated-validator.api.enabled")
     return (
       <div className={"inline"}>
-        <Value>{m?.platform}</Value> integration enabled
+        {t.rich("activity.integrationEnabledValidator", {
+          Value: highlightValue,
+          platform: m.platform ?? "",
+        })}
       </div>
     );
 
   if (event.activity_code == "integrated-validator.api.disabled")
     return (
       <div className={"inline"}>
-        <Value>{m?.platform}</Value> integration disabled
+        {t.rich("activity.integrationDisabledValidator", {
+          Value: highlightValue,
+          platform: m.platform ?? "",
+        })}
       </div>
     );
 
   if (event.activity_code == "integrated-validator.api.disabled-by-system")
     return (
       <div className={"inline"}>
-        <Value>{m?.platform}</Value> integration disabled by system
-        {m?.reason && (
-          <>
-            {" "}
-            due to <Value>{m.reason}</Value>
-          </>
-        )}
+        {t.rich("activity.validatorDisabledSystem", {
+          Value: highlightValue,
+          platform: m.platform ?? "",
+          hasReason: m.reason ? "yes" : "no",
+          reason: m.reason ?? "",
+        })}
       </div>
     );
 
   if (event.activity_code == "integrated-validator.host-check.approved")
     return (
       <div className={"inline"}>
-        Peer approved by <Value>{m?.platform}</Value> integration
+        {t.rich("activity.validatorPeerApproved", {
+          Value: highlightValue,
+          platform: m.platform ?? "",
+        })}
       </div>
     );
 
   if (event.activity_code == "integrated-validator.host-check.denied")
     return (
       <div className={"inline"}>
-        Peer rejected by <Value>{m?.platform}</Value> integration
+        {t.rich("activity.validatorPeerRejected", {
+          Value: highlightValue,
+          platform: m.platform ?? "",
+        })}
       </div>
     );
 
   if (event.activity_code == "integrated-validator.peer.compliance-bypassed")
     return (
       <div className={"inline"}>
-        Peer <Value>{m?.name}</Value> with the NetBird IP <Value>{m?.ip}</Value>{" "}
-        compliance bypassed for <Value>{m?.platform}</Value> integration
-        {m?.original_reason && (
-          <>
-            {" "}
-            (original non-compliant reason: <Value>{m?.original_reason}</Value>)
-          </>
-        )}
+        {t.rich("activity.complianceBypassed", {
+          Value: highlightValue,
+          name: m.name ?? "",
+          ip: m.ip ?? "",
+          platform: m.platform ?? "",
+          hasReason: m.original_reason ? "yes" : "no",
+          reason: m.original_reason ?? "",
+        })}
       </div>
     );
 
@@ -920,8 +964,12 @@ export default function ActivityDescription({ event }: Props) {
   )
     return (
       <div className={"inline"}>
-        Peer <Value>{m?.name}</Value> with the NetBird IP <Value>{m?.ip}</Value>{" "}
-        compliance bypass revoked for <Value>{m?.platform}</Value> integration
+        {t.rich("activity.complianceBypassRevoked", {
+          Value: highlightValue,
+          name: m.name ?? "",
+          ip: m.ip ?? "",
+          platform: m.platform ?? "",
+        })}
       </div>
     );
 
@@ -957,9 +1005,12 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "service.peer.expose")
     return (
       <div className={"inline"}>
-        Peer <Value>{m.peer_name}</Value> exposed service{" "}
-        <Value>{m.domain}</Value> with auth{" "}
-        <Value>{m.auth ? "Enabled" : "Disabled"}</Value>
+        {t.rich("activity.servicePeerExpose", {
+          Value: highlightValue,
+          peer: m.peer_name ?? "",
+          domain: m.domain ?? "",
+          auth: m.auth ? t("common.enabled") : t("common.disabled"),
+        })}
       </div>
     );
 
@@ -1162,18 +1213,24 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "service.create")
     return (
       <div className={"inline"}>
-        Service <Value>{m.domain}</Value> in cluster{" "}
-        <Value>{m.proxy_cluster}</Value> was created with authentication{" "}
-        <Value>{m.auth ? "Enabled" : "Disabled"}</Value>
+        {t.rich("activity.serviceCreate", {
+          Value: highlightValue,
+          domain: m.domain ?? "",
+          cluster: m.proxy_cluster ?? "",
+          auth: m.auth ? t("common.enabled") : t("common.disabled"),
+        })}
       </div>
     );
 
   if (event.activity_code == "service.update")
     return (
       <div className={"inline"}>
-        Service <Value>{m.domain}</Value> in cluster{" "}
-        <Value>{m.proxy_cluster}</Value> was updated with authentication{" "}
-        <Value>{m.auth ? "Enabled" : "Disabled"}</Value>
+        {t.rich("activity.serviceUpdate", {
+          Value: highlightValue,
+          domain: m.domain ?? "",
+          cluster: m.proxy_cluster ?? "",
+          auth: m.auth ? t("common.enabled") : t("common.disabled"),
+        })}
       </div>
     );
 
@@ -1280,9 +1337,9 @@ export default function ActivityDescription({ event }: Props) {
         <FullTooltip
           content={
             <div className={"pb-1"}>
-              <Label className={"mb-3"}>Activity Code</Label>
+              <Label className={"mb-3"}>{t("activity.activityCode")}</Label>
               <Value>{event.activity_code}</Value>
-              <Label className={"my-3"}>Meta</Label>
+              <Label className={"my-3"}>{t("activity.meta")}</Label>
               {meta &&
                 meta.map((item) => (
                   <React.Fragment key={item?.key}>

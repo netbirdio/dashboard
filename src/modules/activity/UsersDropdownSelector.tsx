@@ -53,8 +53,8 @@ export function UsersDropdownSelector({
   const [filteredItems, search, setSearch] = useSearch(
     options.concat({
       id: "all-users",
-      name: "All Users",
-      email: "Include all users",
+      name: t("activity.allUsers"),
+      email: t("activity.includeAllUsers"),
     }),
     searchPredicate,
     { filter: true, debounce: 150 },
@@ -229,7 +229,9 @@ export function UsersDropdownSelector({
                       >
                         <TextWithTooltip
                           text={
-                            isSystemUser ? t("activity.system") : user?.name || user?.id
+                            isSystemUser
+                              ? t("activity.system")
+                              : user?.name || user?.id
                           }
                           maxChars={20}
                         />

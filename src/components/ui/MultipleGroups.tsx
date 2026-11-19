@@ -41,8 +41,8 @@ type Props = {
 
 export default function MultipleGroups({
   groups,
-  label = "Assigned Groups",
-  description = "Use groups to control what this peer can access",
+  label: labelProp,
+  description: descriptionProp,
   onClick,
   className,
   showResources = false,
@@ -53,6 +53,9 @@ export default function MultipleGroups({
   countThreshold = 1,
 }: Readonly<Props>) {
   const t = useTranslations();
+  const label = labelProp ?? t("components.assignedGroups");
+  const description = descriptionProp ?? t("components.assignedGroupsHelp");
+
   const { permission } = usePermissions();
 
   if (!groups || groups?.length === 0) return <EmptyRow />;
@@ -85,7 +88,8 @@ export default function MultipleGroups({
                   permission.groups.update ? "group-hover:bg-nb-gray-800" : "",
                 )}
               >
-                {orderedGroups.length}{" " + t("common.groups")}
+                {orderedGroups.length}
+                {" " + t("common.groups")}
               </Badge>
             ) : countOnly ? (
               <div className={"inline-flex items-center gap-2"}>

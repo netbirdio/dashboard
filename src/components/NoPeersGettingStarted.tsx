@@ -26,10 +26,7 @@ export const NoPeersGettingStarted = ({
         />
       }
       title={translate("components.getStarted")}
-      description={
-        "It looks like you don't have any connected machines.\n" +
-        "Get started by adding one to your network."
-      }
+      description={translate("components.noConnectedMachines")}
       button={<AddPeerDropdown />}
       learnMore={
         <>

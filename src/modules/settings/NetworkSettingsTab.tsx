@@ -69,10 +69,12 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 
   const toggleNetworkDNSSetting = async (toggle: boolean) => {
     notify({
-      title: "Routing Peer DNS Resolution",
-      description: `Routing Peer DNS Resolution successfully ${
-        toggle ? "enabled" : "disabled"
-      }.`,
+      title: translate("settings.routingDnsTitle"),
+      description: translate(
+        toggle
+          ? "settings.routingDnsStateEnabled"
+          : "settings.routingDnsStateDisabled",
+      ),
       promise: saveRequest
         .put({
           id: account.id,
@@ -85,7 +87,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
           setRoutingPeerDNSSetting(toggle);
           mutate("/accounts");
         }),
-      loadingMessage: "Updating routing peer DNS resolution setting...",
+      loadingMessage: translate("settings.routingDnsUpdating"),
     });
   };
 
@@ -126,8 +128,8 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
     }
 
     notify({
-      title: "Network Settings",
-      description: `Network settings successfully updated.`,
+      title: translate("settings.networkTitle"),
+      description: translate("settings.networkUpdated"),
       promise: saveRequest
         .put({
           id: account.id,
@@ -142,7 +144,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
             ipv6GroupNames,
           ]);
         }),
-      loadingMessage: "Updating network settings...",
+      loadingMessage: translate("settings.networkUpdating"),
     });
   };
 
@@ -154,14 +156,14 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
       preventLeadingAndTrailingDots: true,
     });
     if (!valid) {
-      return "Please enter a valid domain, e.g. internal, company.internal or intra.example.com";
+      return translate("settings.domainInvalid");
     }
-  }, [customDNSDomain]);
+  }, [customDNSDomain, translate]);
 
   const networkRangeError = useMemo(() => {
     if (networkRange == "") {
       if (account.settings.network_range) {
-        return "Network range cannot be empty";
+        return translate("settings.rangeRequired");
       }
       return "";
     }
@@ -169,23 +171,23 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
     try {
       const validCIDR = isValidCIDR(networkRange);
       if (!validCIDR) {
-        return "Please enter a valid IPv4 CIDR range, e.g. 100.64.0.0/16 or 192.168.1.0/24";
+        return translate("settings.ipv4RangeInvalid");
       }
     } catch (error) {
-      return "Please enter a valid IPv4 CIDR range, e.g. 100.64.0.0/16 or 192.168.1.0/24";
+      return translate("settings.ipv4RangeInvalid");
     }
-  }, [networkRange, account.settings.network_range]);
+  }, [networkRange, account.settings.network_range, translate]);
 
   const networkRangeV6Error = useMemo(() => {
     if (networkRangeV6 == "") return "";
     if (!networkRangeV6.includes(":") || !isValidCIDR(networkRangeV6)) {
-      return "Please enter a valid IPv6 CIDR range, e.g. fd00:1234::/64";
+      return translate("settings.ipv6RangeInvalid");
     }
     const prefixLen = parseInt(networkRangeV6.split("/")[1], 10);
     if (prefixLen < 48 || prefixLen > 112) {
-      return "Prefix length must be between /48 and /112";
+      return translate("settings.ipv6PrefixInvalid");
     }
-  }, [networkRangeV6]);
+  }, [networkRangeV6, translate]);
 
   return (
     <Tabs.Content value={"networks"}>
@@ -232,10 +234,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
             >
               <div className={"min-w-[330px]"}>
                 <Label>{translate("settings.dnsDomain")}</Label>
-                <HelpText>
-                  Specify a custom peer DNS domain for your network. This should
-                  not point to a valid domain to avoid overriding DNS results.
-                </HelpText>
+                <HelpText>{translate("settings.dnsDomainHelp")}</HelpText>
               </div>
               <div className={"w-full"}>
                 <Input
@@ -262,13 +261,11 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
             >
               <div className={"min-w-[330px]"}>
                 <Label>{translate("settings.networkRange")}</Label>
-                <HelpText>
-                  {translate("settings.networkRangeHelp")}
-                </HelpText>
+                <HelpText>{translate("settings.networkRangeHelp")}</HelpText>
               </div>
               <div className={"w-full"}>
                 <Input
-                  placeholder={"e.g. 100.64.0.0/16"}
+                  placeholder={translate("settings.ipv4RangePlaceholder")}
                   errorTooltip={true}
                   errorTooltipPosition={"top"}
                   error={networkRangeError}
@@ -295,7 +292,9 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
               </div>
               <div className={"w-full"}>
                 <Input
-                  placeholder={translate("settings.ipv6NetworkRangePlaceholder")}
+                  placeholder={translate(
+                    "settings.ipv6NetworkRangePlaceholder",
+                  )}
                   errorTooltip={true}
                   errorTooltipPosition={"top"}
                   error={networkRangeV6Error}
@@ -310,9 +309,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 
           <div>
             <Label>{translate("settings.ipv6EnabledGroups")}</Label>
-            <HelpText>
-              {translate("settings.ipv6EnabledGroupsHelp")}
-            </HelpText>
+            <HelpText>{translate("settings.ipv6EnabledGroupsHelp")}</HelpText>
             <PeerGroupSelector
               values={ipv6EnabledGroups}
               onChange={setIpv6EnabledGroups}
@@ -332,14 +329,12 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
             label={
               <>
                 <GlobeIcon size={15} />
-                Enable Routing Peer DNS Resolution
+                {translate("settings.enableRoutingDns")}
               </>
             }
             helpText={
               <>
-                Resolves DNS for routed domains on the routing peer instead of
-                on the client. Requires NetBird client v0.35 or higher. Changes
-                will only take effect after restarting the clients.{" "}
+                {translate("settings.routingDnsHelp")}{" "}
                 <InlineLink
                   href={
                     "https://docs.netbird.io/how-to/accessing-entire-domains-within-networks#enabling-dns-wildcard-routing"

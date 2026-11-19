@@ -69,9 +69,8 @@ function ActionCell({ provider, onEdit }: ActionCellProps) {
 
   const handleDelete = async () => {
     const choice = await confirm({
-      title: `Delete '${provider.name}'?`,
-      description:
-        "Are you sure you want to delete this identity provider? This action cannot be undone.",
+      title: t("settings.deleteProviderName", { name: provider.name }),
+      description: t("settings.idpDeleteConfirm"),
       confirmText: t("common.delete"),
       cancelText: t("common.cancel"),
       type: "danger",
@@ -80,12 +79,12 @@ function ActionCell({ provider, onEdit }: ActionCellProps) {
     if (!choice) return;
 
     notify({
-      title: "Delete Identity Provider",
-      description: "Identity provider was deleted successfully.",
+      title: t("settings.idpDeleteTitle"),
+      description: t("settings.idpDeleted"),
       promise: deleteRequest.del().then(() => {
         mutate("/identity-providers");
       }),
-      loadingMessage: "Deleting identity provider...",
+      loadingMessage: t("settings.idpDeleting"),
     });
   };
 
@@ -208,9 +207,7 @@ export default function IdentityProvidersTab() {
         <div className={"flex items-start justify-between -mt-1"}>
           <div>
             <h1>{t("common.identityProviders")}</h1>
-            <Paragraph>
-              {t("settings.configureIdpDescription")}
-            </Paragraph>
+            <Paragraph>{t("settings.configureIdpDescription")}</Paragraph>
           </div>
         </div>
       </div>
@@ -230,7 +227,7 @@ export default function IdentityProvidersTab() {
         columns={columns}
         data={providers}
         onRowClick={(row) => handleEdit(row.original)}
-        searchPlaceholder={"Search by name or type..."}
+        searchPlaceholder={t("settings.idpSearch")}
         getStartedCard={
           <GetStartedTest
             icon={
@@ -242,10 +239,8 @@ export default function IdentityProvidersTab() {
                 size={"large"}
               />
             }
-            title={"Add Identity Provider"}
-            description={
-              "Configure an identity provider to enable SSO authentication for your users."
-            }
+            title={t("settings.idpAdd")}
+            description={t("settings.idpEmptyDescription")}
             button={
               <Button
                 variant={"primary"}
@@ -253,7 +248,7 @@ export default function IdentityProvidersTab() {
                 disabled={!permission.identity_providers.create}
               >
                 <PlusCircle size={16} />
-                Add Identity Provider
+                {t("settings.idpAdd")}
               </Button>
             }
           />
@@ -268,7 +263,7 @@ export default function IdentityProvidersTab() {
                 disabled={!permission.identity_providers.create}
               >
                 <PlusCircle size={16} />
-                Add Identity Provider
+                {t("settings.idpAdd")}
               </Button>
             )}
           </>

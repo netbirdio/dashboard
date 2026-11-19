@@ -38,9 +38,13 @@ export const CitySelector = ({ value, onChange, country = "de" }: Props) => {
       } as SelectOption;
     }) as SelectOption[];
 
-    all.unshift({ label: "All Locations", value: "", icon: pinIcon });
+    all.unshift({
+      label: t("components.allLocations"),
+      value: "",
+      icon: pinIcon,
+    });
     return all;
-  }, [cities]);
+  }, [cities, t]);
 
   return (
     <div className={"block w-full"}>

@@ -5,19 +5,21 @@ import loadConfig from "@utils/config";
 import { ArrowRightIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
-import { useEffect, useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { useMatomoVirtualPage } from "@/cloud/analytics/MatomoProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 const config = loadConfig();
 
 export const OIDCError = () => {
+  const t = useTranslations();
+
   const { oidcUserLoadingState } = useOidcUser();
   const params = useSearchParams();
   const errorParam = params.get("error");
   const accessDenied = errorParam === "access_denied";
   const invalidRequest = errorParam === "invalid_request";
-  const [title, setTitle] = useState(params.get("error_description"));
+
   const errorDescription = params.get("error_description");
   useMatomoVirtualPage(
     !(accessDenied && errorDescription === "account linked successfully") &&
@@ -25,17 +27,11 @@ export const OIDCError = () => {
   );
   const { logout, login } = useOidc();
 
-  useEffect(() => {
-    if (accessDenied) {
-      if (title === "account linked successfully") {
-        setTitle(
-          "Your account has been linked successfully. Please log in again to complete the setup.",
-        );
-      }
-    } else {
-      setTitle("Oops, something went wrong");
-    }
-  }, [accessDenied, title]);
+  const title = accessDenied
+    ? errorDescription === "account linked successfully"
+      ? t("error.accountLinked")
+      : errorDescription
+    : t("error.unexpected");
 
   return (
     <div
@@ -55,7 +51,7 @@ export const OIDCError = () => {
       {accessDenied ? (
         <>
           <Paragraph className={"text-center mt-2"}>
-            Already verified your email address?
+            {t("error.emailVerified")}
           </Paragraph>
 
           <Button
@@ -64,7 +60,7 @@ export const OIDCError = () => {
             className={"mt-5"}
             onClick={() => logout("/", { client_id: config.clientId })}
           >
-            Continue
+            {t("common.continue")}
             <ArrowRightIcon size={16} />
           </Button>
 
@@ -74,14 +70,15 @@ export const OIDCError = () => {
             className={"mt-5"}
             onClick={() => logout("/", { client_id: config.clientId })}
           >
-            Trouble logging in? Try again.
+            {t("error.loginTrouble")}
           </Button>
         </>
       ) : (
         <>
           <Paragraph className={"text-center mt-2 block"}>
-            There was an error logging you in. <br />
-            Error:{" "}
+            {t("error.loginFailed")}
+            <br />
+            {t("error.prefix")}{" "}
             <span className={"inline capitalize"}>
               {invalidRequest && errorDescription
                 ? errorDescription
@@ -94,7 +91,7 @@ export const OIDCError = () => {
             className={"mt-5"}
             onClick={() => logout("/", { client_id: config.clientId })}
           >
-            Logout
+            {t("error.logout")}
           </Button>
         </>
       )}

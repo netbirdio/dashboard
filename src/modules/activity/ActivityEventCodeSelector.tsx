@@ -83,9 +83,11 @@ export function ActivityEventCodeSelector({
           <Layers size={16} className={"shrink-0"} />
           <div className={"w-full flex justify-between"}>
             {values.length > 0 ? (
-              <div>{values.length} Event(s)</div>
+              <div>
+                {translate("activity.eventCounter", { count: values.length })}
+              </div>
             ) : (
-              "All Event Types"
+              translate("activity.allEventTypes")
             )}
             <div className={"pl-2"}>
               <ChevronsUpDown size={18} className={"shrink-0"} />

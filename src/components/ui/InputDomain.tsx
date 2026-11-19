@@ -66,9 +66,9 @@ export default function InputDomain({
       preventLeadingAndTrailingDots,
     });
     if (!valid) {
-      return "Please enter a valid domain, e.g. example.com or intra.example.com";
+      return t("components.invalidDomain");
     }
-  }, [name]);
+  }, [name, t]);
 
   useEffect(() => {
     const hasError = domainError !== "" && domainError !== undefined;

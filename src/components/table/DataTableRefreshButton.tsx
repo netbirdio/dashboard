@@ -59,7 +59,7 @@ export default function DataTableRefreshButton({ onClick, isDisabled }: Props) {
         }}
       >
         <span className={"text-xs text-neutral-300"}>
-          {disabled ? "You can refresh it again in 5 seconds" : t("common.refresh")}
+          {disabled ? t("components.refreshCooldown") : t("common.refresh")}
         </span>
       </TooltipContent>
     </Tooltip>

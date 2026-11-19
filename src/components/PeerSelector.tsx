@@ -153,7 +153,7 @@ export function PeerSelector({
           <DropdownInput
             value={search}
             onChange={setSearch}
-            placeholder={"Search for peers by name or ip..."}
+            placeholder={t("components.searchPeers")}
           />
 
           {unfilteredItems.length == 0 && !search && (
@@ -166,7 +166,7 @@ export function PeerSelector({
 
           {filteredItems.length == 0 && search != "" && (
             <DropdownInfoText>
-              There are no peers matching your search.
+              {t("components.noMatchingPeers")}
             </DropdownInfoText>
           )}
 
@@ -209,9 +209,11 @@ export function PeerSelector({
                         </div>
                       ) : (
                         <div className={"max-w-[240px] text-xs"}>
-                          Please update NetBird to at least{" "}
-                          <span className={"text-netbird"}>v0.36.6</span> or
-                          later to use this peer as a routing peer.
+                          {t.rich("components.routingPeerVersion", {
+                            version: (chunks) => (
+                              <span className="text-netbird">{chunks}</span>
+                            ),
+                          })}
                         </div>
                       )
                     }

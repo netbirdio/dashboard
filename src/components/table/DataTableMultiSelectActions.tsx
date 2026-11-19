@@ -14,7 +14,9 @@ export default function DataTableMultiSelectActions<TData>({
     <div>
       <Button variant={"danger-outline"}>
         <Trash2 size={16} />
-        {t("tables.revoke") + " "}{table.getFilteredSelectedRowModel().rows.length} Key(s)
+        {t("tables.revokeKeys", {
+          count: table.getFilteredSelectedRowModel().rows.length,
+        })}
       </Button>
     </div>
   ) : null;

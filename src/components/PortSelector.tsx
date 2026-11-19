@@ -155,7 +155,9 @@ export function PortSelector({
                   />
                 </Badge>
               ))}
-              {ports.length == 0 && <span>Select ports...</span>}
+              {ports.length == 0 && (
+                <span>{translate("components.selectPorts")}</span>
+              )}
             </div>
 
             <ChevronsUpDown size={18} className={"shrink-0"} />
@@ -193,9 +195,7 @@ export function PortSelector({
                   ref={searchRef}
                   value={search}
                   onValueChange={setSearch}
-                  placeholder={
-                    'Add a port or a range e.g. 80 or 1-1023 and press "Enter" to add...'
-                  }
+                  placeholder={translate("components.portPlaceholder")}
                 />
                 <div
                   className={
@@ -232,9 +232,7 @@ export function PortSelector({
                 {!notFound && search && !portsInput.includes(search) && (
                   <div className={"text-sm"}>
                     <DropdownInfoText className={"mb-[18px] pt-[4px]"}>
-                      {
-                        "Please add a valid port or port range (e.g. 80, 443, 1-1023)"
-                      }
+                      {translate("components.invalidPort")}
                     </DropdownInfoText>
                   </div>
                 )}
@@ -266,10 +264,13 @@ export function PortSelector({
                         <div
                           className={"text-neutral-500 dark:text-nb-gray-300"}
                         >
-                          Add this port or range by pressing{" "}
-                          <span className={"font-bold text-netbird"}>
-                            {"'Enter'"}
-                          </span>
+                          {translate.rich("components.addPortEnter", {
+                            key: (chunks) => (
+                              <span className="font-bold text-netbird">
+                                {chunks}
+                              </span>
+                            ),
+                          })}
                         </div>
                       </CommandItem>
                     </div>
@@ -324,8 +325,11 @@ export function PortSelector({
       </Popover>
       {portRanges?.length > 0 && (
         <Callout variant={"info"} className={"mt-4"}>
-          Port ranges requires NetBird client{" "}
-          <span className={"text-white font-normal"}>v0.48</span> or higher.
+          {translate.rich("components.portRangeVersion", {
+            version: (chunks) => (
+              <span className="text-white font-normal">{chunks}</span>
+            ),
+          })}
         </Callout>
       )}
     </>

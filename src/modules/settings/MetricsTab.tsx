@@ -30,9 +30,11 @@ export default function MetricsTab({ account }: Readonly<Props>) {
   const toggleMetricsPush = async (toggle: boolean) => {
     notify({
       title: t("common.metrics"),
-      description: `Metrics push successfully ${
-        toggle ? "enabled" : "disabled"
-      }.`,
+      description: t(
+        toggle
+          ? "settings.metricsStateEnabled"
+          : "settings.metricsStateDisabled",
+      ),
       promise: saveRequest
         .put({
           id: account.id,
@@ -45,7 +47,7 @@ export default function MetricsTab({ account }: Readonly<Props>) {
           setMetricsPushEnabled(toggle);
           mutate("/accounts");
         }),
-      loadingMessage: "Updating metrics setting...",
+      loadingMessage: t("settings.metricsUpdating"),
     });
   };
 
@@ -68,7 +70,7 @@ export default function MetricsTab({ account }: Readonly<Props>) {
         <div>
           <h1>{t("common.metrics")}</h1>
           <Paragraph className={"block"}>
-            Share client performance metrics to help us improve NetBird.{" "}
+            {t("settings.metricsDescription")}{" "}
             <InlineLink
               href={"https://docs.netbird.io/manage/client-metrics"}
               target={"_blank"}
@@ -86,12 +88,10 @@ export default function MetricsTab({ account }: Readonly<Props>) {
           label={
             <>
               <ChartNoAxesCombined size={15} />
-              Share performance metrics
+              {t("settings.shareMetrics")}
             </>
           }
-          helpText={
-            "When enabled, clients will periodically send performance data to help us identify and fix issues."
-          }
+          helpText={t("settings.shareMetricsHelp")}
           disabled={!permission.settings.update}
         />
       </div>

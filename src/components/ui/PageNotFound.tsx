@@ -14,10 +14,13 @@ type Props = {
   description?: string;
 };
 export const PageNotFound = ({
-  title = "The requested page was not found",
-  description = "The page you are attempting to access cannot be found. Please verify the URL or return to the dashboard to continue browsing.",
+  title: titleProp,
+  description: descriptionProp,
 }: Props) => {
   const t = useTranslations();
+  const title = titleProp ?? t("components.pageNotFound");
+  const description = descriptionProp ?? t("components.pageNotFoundHelp");
+
   const router = useRouter();
 
   return (

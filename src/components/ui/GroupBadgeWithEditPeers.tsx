@@ -89,7 +89,7 @@ export default function GroupBadgeWithEditPeers({
                   "text-[7px] relative -top-[0px] leading-[0] bg-green-900 border border-green-500/20 py-1.5 px-1 rounded-[3px] text-green-400"
                 }
               >
-                NEW
+                {t("components.newBadge")}
               </span>
             )}
           </div>

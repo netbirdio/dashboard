@@ -139,11 +139,11 @@ const NavigationVersionInfoContent = () => {
           content={
             <div className="text-xs flex flex-col gap-1">
               <span>
-                Installed:{" "}
+                {translate("components.installedVersion")}{" "}
                 {formatVersion(versionInfo.management_current_version)}
               </span>
               <span>
-                Latest:{" "}
+                {translate("components.latestVersionLabel")}{" "}
                 {formatVersion(versionInfo.management_available_version)}
               </span>
             </div>
@@ -152,16 +152,22 @@ const NavigationVersionInfoContent = () => {
           className="w-full"
         >
           <div className="flex items-center justify-between w-full cursor-default gap-2">
-            <span className="shrink-0">Management</span>
+            <span className="shrink-0">
+              {translate("components.management")}
+            </span>
             <VersionValue version={versionInfo.management_current_version} />
           </div>
         </FullTooltip>
         <FullTooltip
           content={
             <div className="text-xs flex flex-col gap-1">
-              <span>Installed: {formatVersion(dashboardVersion)}</span>
               <span>
-                Latest: {formatVersion(versionInfo.dashboard_available_version)}
+                {translate("components.installedVersion")}{" "}
+                {formatVersion(dashboardVersion)}
+              </span>
+              <span>
+                {translate("components.latestVersionLabel")}{" "}
+                {formatVersion(versionInfo.dashboard_available_version)}
               </span>
             </div>
           }
@@ -169,7 +175,9 @@ const NavigationVersionInfoContent = () => {
           className="w-full"
         >
           <div className="flex items-center justify-between w-full cursor-default gap-2">
-            <span className="shrink-0">Dashboard</span>
+            <span className="shrink-0">
+              {translate("components.dashboard")}
+            </span>
             <VersionValue version={dashboardVersion} />
           </div>
         </FullTooltip>

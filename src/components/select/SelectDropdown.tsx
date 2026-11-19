@@ -1,5 +1,6 @@
 import Button, { ButtonVariants } from "@components/Button";
 import { CommandItem } from "@components/Command";
+import { DropdownInfoText } from "@components/DropdownInfoText";
 import Paragraph from "@components/Paragraph";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { ScrollArea } from "@components/ScrollArea";
@@ -14,7 +15,7 @@ import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { useElementSize } from "@/hooks/useElementSize";
-import { DropdownInfoText } from "@components/DropdownInfoText";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 export interface SelectOption {
   label: string | React.ReactNode;
@@ -74,8 +75,8 @@ export function SelectDropdown({
   options,
   showSearch = false,
   showValues = false,
-  placeholder = "Select...",
-  searchPlaceholder = "Search...",
+  placeholder: placeholderProp,
+  searchPlaceholder: searchPlaceholderProp,
   isLoading = false,
   variant = "input",
   className,
@@ -92,6 +93,10 @@ export function SelectDropdown({
   deferChange = false,
   "data-testid": dataTestId,
 }: Readonly<SelectDropdownProps>) {
+  const t = useTranslations();
+  const placeholder = placeholderProp ?? t("components.selectPlaceholder");
+  const searchPlaceholder = searchPlaceholderProp ?? t("common.searchInput");
+
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
   const toggle = (selectedValue: string) => {
@@ -264,8 +269,7 @@ export function SelectDropdown({
 
             {filteredItems.length == 0 && (
               <DropdownInfoText className={"max-w-sm mx-auto px-4"}>
-                There are no results matching your search. Please try a
-                different search term.
+                {t("components.noMatchingSearch")}
               </DropdownInfoText>
             )}
 
@@ -313,7 +317,12 @@ export function SelectDropdown({
                     </div>
                   ))
                 ) : (
-                  <div className={cn("grid grid-cols-1 gap-1 w-full", compact ? "pb-1" : "pb-2")}>
+                  <div
+                    className={cn(
+                      "grid grid-cols-1 gap-1 w-full",
+                      compact ? "pb-1" : "pb-2",
+                    )}
+                  >
                     {filteredItems.map((option) => (
                       <SelectDropdownItem
                         option={option}

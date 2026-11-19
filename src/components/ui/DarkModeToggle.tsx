@@ -59,7 +59,7 @@ export default function DarkModeToggle() {
           className={"flex gap-2"}
         >
           <MonitorIcon size={16} />
-          System
+          {t("components.systemTheme")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -6,8 +6,8 @@ import { Tabs, TabsContent, TabsTrigger } from "@components/Tabs";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import { useSearch } from "@hooks/useSearch";
-import { cn } from "@utils/helpers";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
+import { cn } from "@utils/helpers";
 import { sortBy } from "lodash";
 import {
   CheckIcon,
@@ -128,7 +128,9 @@ function OptionList({
 
       {filteredItems.length === 0 && search !== "" && (
         <div className={"px-10"}>
-          <DropdownInfoText>No matching results.</DropdownInfoText>
+          <DropdownInfoText>
+            {t("components.noMatchingResults")}
+          </DropdownInfoText>
         </div>
       )}
 
@@ -213,7 +215,9 @@ export function PeerResourcePicker({
     <div className={"w-full"}>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsPrimitive.List
-          className={"relative flex w-full text-neutral-500 dark:text-nb-gray-400"}
+          className={
+            "relative flex w-full text-neutral-500 dark:text-nb-gray-400"
+          }
         >
           {users && (
             <TabsTrigger
@@ -245,7 +249,7 @@ export function PeerResourcePicker({
               options={users}
               value={value}
               onSelect={handleSelect}
-              emptyText={"No users available to select."}
+              emptyText={t("components.noUsersAvailable")}
             />
           </TabsContent>
         )}
@@ -254,7 +258,7 @@ export function PeerResourcePicker({
             options={peers}
             value={value}
             onSelect={handleSelect}
-            emptyText={"No peers available to select."}
+            emptyText={t("components.noPeersAvailable")}
           />
         </TabsContent>
         <TabsContent value={"resources"} className={"mt-0 pt-3"}>
@@ -262,7 +266,7 @@ export function PeerResourcePicker({
             options={resources}
             value={value}
             onSelect={handleSelect}
-            emptyText={"No resources available to select."}
+            emptyText={t("components.noResourcesAvailable")}
           />
         </TabsContent>
       </Tabs>

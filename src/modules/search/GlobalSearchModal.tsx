@@ -74,6 +74,7 @@ export const GlobalSearchModal = ({ open, setOpen }: Props) => {
 };
 
 const GlobalSearchModalContent = ({ open, setOpen }: Props) => {
+  const t = useTranslations();
   const router = useRouter();
 
   const { data: networks, isLoading: isNetworksLoading } = useFetchApi<
@@ -188,9 +189,9 @@ const GlobalSearchModalContent = ({ open, setOpen }: Props) => {
                 return (
                   <div className={"text-xs text-nb-gray-400 px-4 py-2"}>
                     {item.type === SearchType.Network &&
-                      `Networks (${networksCount})`}
+                      t("search.networkCount", { count: networksCount })}
                     {item.type === SearchType.NetworkResource &&
-                      `Resources (${resourcesCount})`}
+                      t("search.resourceCount", { count: resourcesCount })}
                   </div>
                 );
               }}
@@ -235,7 +236,9 @@ const GlobalSearchModalContent = ({ open, setOpen }: Props) => {
                               size={12}
                               className={"relative -top-[1px]"}
                             />
-                            {item.data?.resources?.length} Resource(s)
+                            {t("search.resourceCounter", {
+                              count: item.data?.resources?.length ?? 0,
+                            })}
                           </div>
                         </div>
                       )}
@@ -286,6 +289,8 @@ const ResourceIcon = ({ type }: { type: NetworkResource["type"] }) => {
 };
 
 const BlankState = () => {
+  const t = useTranslations();
+
   return (
     <div className={"flex items-center justify-center pb-8"}>
       <div className={"text-center"}>
@@ -313,12 +318,11 @@ const BlankState = () => {
           </div>
         </div>
 
-        <div className={"text-nb-gray-100 mb-1"}>
-          Search for Networks and Resources
-        </div>
+        <div className={"text-nb-gray-100 mb-1"}>{t("search.heading")}</div>
         <div className={"text-sm text-nb-gray-350 font-light"}>
-          Quickly find networks and associated resources. <br />
-          Start typing to search by name, description or address.
+          {t("search.description")}
+          <br />
+          {t("search.searchHelp")}
         </div>
       </div>
     </div>
@@ -344,7 +348,7 @@ const NotFoundState = () => {
           {translate("search.noResultsCardTitle")}
         </div>
         <div className={"text-sm text-nb-gray-350 font-light max-w-xs"}>
-          {`We couldn't find any results. Please try a different search term.`}
+          {translate("search.noResultsDescription")}
         </div>
       </div>
     </div>
@@ -376,7 +380,7 @@ const KeyboardShortcutsFooter = () => {
         <Kbd variant={"darker"}>
           <ArrowDownIcon size={12} />
         </Kbd>
-        <div className={"ml-1"}>Navigate</div>
+        <div className={"ml-1"}>{translate("search.navigate")}</div>
       </div>
       <div className={"flex items-center gap-1.5"}>
         <Kbd variant={"darker"}>

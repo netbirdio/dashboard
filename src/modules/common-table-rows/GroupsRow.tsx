@@ -44,8 +44,8 @@ export default function GroupsRow({
   onSave,
   modal,
   setModal,
-  label = "Assigned Groups",
-  description = "Use groups to control what this peer can access",
+  label: labelProp,
+  description: descriptionProp,
   peer,
   showAddGroupButton = false,
   hideAllGroup = false,
@@ -53,6 +53,9 @@ export default function GroupsRow({
   countOnly = false,
 }: Readonly<Props>) {
   const t = useTranslations();
+  const label = labelProp ?? t("components.assignedGroups");
+  const description = descriptionProp ?? t("components.assignedGroupsHelp");
+
   const { groups: allGroups } = useGroups();
   const { permission } = usePermissions();
 
@@ -142,7 +145,7 @@ export function EditGroupsModal({
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
         icon={<FolderGit2 size={18} />}
-        title={label || "Assigned Groups"}
+        title={label || t("components.assignedGroups")}
         description={description}
         color={"blue"}
       />

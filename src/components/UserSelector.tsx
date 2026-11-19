@@ -40,9 +40,11 @@ export function UserSelector({
   value,
   disabled = false,
   options = [],
-  placeholder = "Select a user...",
+  placeholder: placeholderProp,
 }: MultiSelectProps) {
   const t = useTranslations();
+  const placeholder = placeholderProp ?? t("components.selectUser");
+
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
   const [filteredItems, search, setSearch] = useSearch(
@@ -134,7 +136,7 @@ export function UserSelector({
 
           {filteredItems.length == 0 && search != "" && (
             <DropdownInfoText>
-              There are no users matching your search.
+              {t("components.noMatchingUsers")}
             </DropdownInfoText>
           )}
 
@@ -170,6 +172,8 @@ export const UserListItem = ({
   className,
   variant,
 }: UserListItemProps) => {
+  const t = useTranslations();
+
   const isSystemUser = user?.email === "NetBird" || user?.email === "";
   const maxChars = variant === "selected" ? 30 : 20;
 
@@ -197,7 +201,9 @@ export const UserListItem = ({
           )}
         >
           <TextWithTooltip
-            text={isSystemUser ? "System" : user?.name || user?.id}
+            text={
+              isSystemUser ? t("tables.systemUser") : user?.name || user?.id
+            }
             maxChars={maxChars}
           />
         </span>

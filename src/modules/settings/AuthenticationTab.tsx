@@ -140,8 +140,8 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
     const expiration = convertToSeconds(expiresIn, expireInterval);
 
     notify({
-      title: "Save Authentication Settings",
-      description: "Authentication settings successfully saved.",
+      title: translate("settings.authSaveTitle"),
+      description: translate("settings.authSaved"),
       promise: saveRequest
         .put({
           id: account.id,
@@ -177,7 +177,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
             isLocalMFAEnabled,
           ]);
         }),
-      loadingMessage: "Saving the authentication settings...",
+      loadingMessage: translate("settings.authSaving"),
     });
   };
 
@@ -201,7 +201,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
           <div>
             <h1>{translate("common.authentication")}</h1>
             <Paragraph className={"block"}>
-              Control how peers and users authenticate.{" "}
+              {translate("settings.authDescription")}{" "}
               <InlineLink
                 href={
                   "https://docs.netbird.io/how-to/enforce-periodic-user-authentication"
@@ -231,16 +231,16 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
           <FullTooltip
             content={
               <div className={"text-xs max-w-sm"}>
-                Peer approval is disabled because the {activeIntegrationName}{" "}
-                integration is enabled. If you want to enable peer approval,
-                please disable first the {activeIntegrationName} integration.
+                {translate("settings.peerApprovalIntegration", {
+                  name: activeIntegrationName ?? "",
+                })}
               </div>
             }
             disabled={!isAnyIntegrationEnabled}
           >
             <div className={"w-full"} data-auth-setting={"peer-approval"}>
               <LockedFeatureBadge
-                featureText={"Peer approval"}
+                featureText={translate("settings.peerApprovalFeature")}
                 feature={"DEVICE_APPROVALS"}
                 disabled={peerApproval}
               >
@@ -257,7 +257,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                   disabled={
                     isAnyIntegrationEnabled || !permission.settings.update
                   }
-                  helpText={"Require peers to be approved by an administrator."}
+                  helpText={translate("settings.peerApprovalHelp")}
                 />
               </LockedFeatureBadge>
             </div>
@@ -276,8 +276,9 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
               }
               helpText={
                 <>
-                  Require manual approval for new users joining via <br />
-                  domain matching. Users will be blocked until approved.
+                  {translate.rich("settings.userApprovalHelp", {
+                    br: () => <br />,
+                  })}
                 </>
               }
               disabled={!permission.settings.update}
@@ -305,9 +306,9 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                 }
                 helpText={
                   <>
-                    Require multi-factor authentication for users
-                    <br />
-                    authenticating with local credentials.
+                    {translate.rich("settings.localMfaHelp", {
+                      br: () => <br />,
+                    })}
                   </>
                 }
                 disabled={!permission.settings.update}
@@ -334,8 +335,9 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
               }
               helpText={
                 <>
-                  Request periodic re-authentication of peers <br />
-                  registered with SSO.
+                  {translate.rich("settings.peerReauthHelp", {
+                    br: () => <br />,
+                  })}
                 </>
               }
               disabled={!permission.settings.update}
@@ -392,8 +394,12 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                     <SelectContent
                       data-testid={"peer-login-expiration-select-content"}
                     >
-                      <SelectItem value="days">{translate("settings.days")}</SelectItem>
-                      <SelectItem value="hours">{translate("settings.hours")}</SelectItem>
+                      <SelectItem value="days">
+                        {translate("settings.days")}
+                      </SelectItem>
+                      <SelectItem value="hours">
+                        {translate("settings.hours")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -405,11 +411,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                 data-testid={"peer-inactivity-expiration"}
                 label={<>{translate("settings.requireLoginAfterDisconnect")}</>}
                 disabled={!permission.settings.update}
-                helpText={
-                  <>
-                    {translate("settings.requireLoginHelp")}
-                  </>
-                }
+                helpText={<>{translate("settings.requireLoginHelp")}</>}
               />
             </div>
           </div>

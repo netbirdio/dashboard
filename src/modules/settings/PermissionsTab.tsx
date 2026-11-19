@@ -32,8 +32,8 @@ export default function PermissionsTab({ account }: Props) {
 
   const saveChanges = async () => {
     notify({
-      title: "Permission Settings",
-      description: "Permissions were updated successfully.",
+      title: t("settings.permissionsTitle"),
+      description: t("settings.permissionsUpdated"),
       promise: saveRequest
         .put({
           id: account.id,
@@ -46,7 +46,7 @@ export default function PermissionsTab({ account }: Props) {
           mutate("/accounts");
           updateRef([userViewBlocked]);
         }),
-      loadingMessage: "Updating permissions...",
+      loadingMessage: t("settings.permissionsUpdating"),
     });
   };
 
@@ -89,9 +89,7 @@ export default function PermissionsTab({ account }: Props) {
                 {t("settings.restrictDashboard")}
               </>
             }
-            helpText={
-              "Access to the dashboard will be limited and regular users will not be able to view any peers."
-            }
+            helpText={t("settings.restrictDashboardHelp")}
             disabled={!permission.settings.update}
           />
         </div>
