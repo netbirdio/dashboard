@@ -1,5 +1,8 @@
 "use client";
 
+import { useDashboardLocale } from "@/i18n/LocaleProvider";
+import { defaultLocale } from "@/i18n/locales";
+import { englishTranslations } from "@/i18n/translate";
 import Button from "@components/Button";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { AbsoluteDateTimeInput } from "@components/ui/AbsoluteDateTimeInput";
@@ -64,15 +67,23 @@ const isEqualDateRange = (a: DateRange | undefined, b: DateRange) => {
 // way as the picker's own button.
 export function dateRangePresetLabel(
   value: DateRange | undefined,
+  t = englishTranslations,
 ): string | null {
   if (!value?.from && !value?.to) return null;
-  if (isEqualDateRange(value, defaultRanges.allTime)) return "All Time";
-  if (isEqualDateRange(value, defaultRanges.lastMonth)) return "Last Month";
-  if (isEqualDateRange(value, defaultRanges.last14Days)) return "Last 14 Days";
-  if (isEqualDateRange(value, defaultRanges.last2Days)) return "Last 2 Days";
-  if (isEqualDateRange(value, defaultRanges.last7Days)) return "Last 7 Days";
-  if (isEqualDateRange(value, defaultRanges.yesterday)) return "Yesterday";
-  if (isEqualDateRange(value, defaultRanges.today)) return "Today";
+  if (isEqualDateRange(value, defaultRanges.allTime))
+    return t("components.allTime");
+  if (isEqualDateRange(value, defaultRanges.lastMonth))
+    return t("components.lastMonth");
+  if (isEqualDateRange(value, defaultRanges.last14Days))
+    return t("components.last14Days");
+  if (isEqualDateRange(value, defaultRanges.last2Days))
+    return t("components.last2Days");
+  if (isEqualDateRange(value, defaultRanges.last7Days))
+    return t("components.last7Days");
+  if (isEqualDateRange(value, defaultRanges.yesterday))
+    return t("components.yesterday");
+  if (isEqualDateRange(value, defaultRanges.today))
+    return t("components.today");
   return null;
 }
 
@@ -82,6 +93,7 @@ export function DatePickerWithRange({
   onChange,
   disabled = false,
 }: Readonly<Props>) {
+  const { locale, t } = useDashboardLocale();
   const isActive = useMemo(() => {
     return {
       today: isEqualDateRange(value, defaultRanges.today),
@@ -95,16 +107,23 @@ export function DatePickerWithRange({
   }, [value]);
 
   const displayDateValue = useMemo(() => {
-    if (!value) return "Select date range";
+    if (!value) return t("components.selectDateRange");
 
-    const preset = dateRangePresetLabel(value);
+    const preset = dateRangePresetLabel(value, t);
     if (preset) return preset;
 
-    if (!value.to) return dayjs(value.from).format("MMM DD, YYYY").toString();
-    return `${dayjs(value.from).format("MMM DD, YYYY")} - ${dayjs(
-      value.to,
-    ).format("MMM DD, YYYY")}`;
-  }, [value]);
+    const format = (date: Date) =>
+      locale === defaultLocale
+        ? dayjs(date).format("MMM DD, YYYY")
+        : new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(date);
+    if (!value.from)
+      return value.to ? format(value.to) : t("components.selectDateRange");
+    if (!value.to) return format(value.from);
+    return t("components.dateRange", {
+      from: format(value.from),
+      to: format(value.to),
+    });
+  }, [locale, t, value]);
 
   const [calendarOpen, setCalendarOpen] = useState(false);
 
@@ -159,7 +178,7 @@ export function DatePickerWithRange({
                 label={
                   <>
                     <CalendarIcon size={14} className={"shrink-0"} />
-                    All Time
+                    {t("components.allTime")}
                   </>
                 }
                 active={isActive.allTime}
@@ -168,22 +187,22 @@ export function DatePickerWithRange({
             </div>
             <div className={"flex gap-2 flex-wrap"}>
               <CalendarButton
-                label={"Last Month"}
+                label={t("components.lastMonth")}
                 active={isActive.lastMonth}
                 onClick={() => updateRangeAndClose(defaultRanges.lastMonth)}
               />
               <CalendarButton
-                label={"Last 14 Days"}
+                label={t("components.last14Days")}
                 active={isActive.last14Days}
                 onClick={() => updateRangeAndClose(defaultRanges.last14Days)}
               />
               <CalendarButton
-                label={"Yesterday"}
+                label={t("components.yesterday")}
                 active={isActive.yesterday}
                 onClick={() => updateRangeAndClose(defaultRanges.yesterday)}
               />
               <CalendarButton
-                label={"Today"}
+                label={t("components.today")}
                 active={isActive.today}
                 onClick={() => updateRangeAndClose(defaultRanges.today)}
               />

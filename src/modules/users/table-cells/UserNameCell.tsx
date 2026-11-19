@@ -2,6 +2,7 @@ import { cn, generateColorFromUser } from "@utils/helpers";
 import useFetchApi from "@utils/api";
 import { Ban, Clock, Cog } from "lucide-react";
 import React, { useMemo } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { User } from "@/interfaces/User";
 import { SSOIdentityProvider } from "@/interfaces/IdentityProvider";
 import { useAccount } from "@/modules/account/useAccount";
@@ -18,6 +19,7 @@ type Props = {
 };
 
 export default function UserNameCell({ user }: Readonly<Props>) {
+  const t = useTranslations();
   const account = useAccount();
   const embeddedIdpEnabled = account?.settings.embedded_idp_enabled;
 
@@ -105,7 +107,7 @@ export default function UserNameCell({ user }: Readonly<Props>) {
                 "bg-sky-900 border border-sky-700 text-sky-200 rounded-full text-[9px] uppercase tracking-wider px-2 py-2 leading-[0]"
               }
             >
-              You
+              {t("users.you")}
             </span>
           )}
         </span>

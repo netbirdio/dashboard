@@ -4,6 +4,7 @@ import { ArrowUpRightIcon } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import { usePeer } from "@/contexts/PeerProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   children?: React.ReactNode;
@@ -72,6 +73,7 @@ const SSHDisabledText = ({
 }: {
   setShowTooltip: (show: boolean) => void;
 }) => {
+  const t = useTranslations();
   const { setSSHInstructionsModal } = usePeer();
 
   return (
@@ -92,7 +94,7 @@ const SSHDisabledText = ({
           href={"#"}
           target={"_blank"}
         >
-          Enable SSH Access <ArrowUpRightIcon size={12} />
+          {t("remoteAccess.enableSSH") + " "}<ArrowUpRightIcon size={12} />
         </InlineLink>
       </div>
     </div>

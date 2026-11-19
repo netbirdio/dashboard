@@ -25,6 +25,7 @@ import { usePathname } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Policy } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { LockedFeatureInfoCard } from "@/modules/billing/locked-feature/LockedFeatureInfoCard";
@@ -84,6 +85,7 @@ export default function PostureCheckTable({
   isLoading,
   headingTarget,
 }: Props) {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { data: policies } = useFetchApi<Policy[]>("/policies");
   const { mutate } = useSWRConfig();
@@ -178,7 +180,7 @@ export default function PostureCheckTable({
           <DataTable
             headingTarget={headingTarget}
             isLoading={isLoading}
-            text={"Posture Check"}
+            text={t("postureChecks.postureCheck")}
             sorting={sorting}
             wrapperClassName={""}
             setSorting={setSorting}
@@ -198,7 +200,7 @@ export default function PostureCheckTable({
               setCurrentCellClicked(cell);
             }}
             data={data}
-            searchPlaceholder={"Search by name and description..."}
+            searchPlaceholder={t("postureChecks.searchByNameAndDescription")}
             rightSide={() => (
               <>
                 {data && data?.length > 0 && (
@@ -214,7 +216,7 @@ export default function PostureCheckTable({
                     }}
                   >
                     <IconCirclePlus size={16} />
-                    Add Posture Check
+                    {t("postureChecks.addPostureCheck")}
                   </Button>
                 )}
               </>
@@ -230,7 +232,7 @@ export default function PostureCheckTable({
                     size={"large"}
                   />
                 }
-                title={"Create Posture Check"}
+                title={t("postureChecks.createPostureCheck")}
                 description={
                   "Add posture checks to further restrict access in your network. E.g., only clients with a specific NetBird client version, operating system or location are allowed to connect."
                 }
@@ -244,7 +246,7 @@ export default function PostureCheckTable({
                     onClick={() => setPostureCheckModal(true)}
                   >
                     <IconCirclePlus size={16} />
-                    Create Posture Check
+                    {t("postureChecks.createPostureCheck")}
                   </Button>
                 }
                 learnMore={
@@ -256,7 +258,7 @@ export default function PostureCheckTable({
                       }
                       target={"_blank"}
                     >
-                      Posture Checks
+                      {t("common.postureChecks")}
                       <ExternalLinkIcon size={12} />
                     </InlineLink>
                   </>

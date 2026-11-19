@@ -9,6 +9,7 @@ import { ChevronsUpDown, MapPin } from "lucide-react";
 import * as React from "react";
 import { memo, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { User } from "@/interfaces/User";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
@@ -41,6 +42,7 @@ export function UserSelector({
   options = [],
   placeholder = "Select a user...",
 }: MultiSelectProps) {
+  const t = useTranslations();
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
   const [filteredItems, search, setSearch] = useSearch(
@@ -119,15 +121,13 @@ export function UserSelector({
             value={search}
             onChange={setSearch}
             hideEnterIcon={true}
-            placeholder={"Search for users by name or email..."}
+            placeholder={t("components.searchByNameOrEmail")}
           />
 
           {options.length == 0 && !search && (
             <div className={"max-w-xs mx-auto"}>
               <DropdownInfoText>
-                {
-                  "There are no users to select. Invite some users for this tenant before unlinking."
-                }
+                {t("components.noUsersToSelect")}
               </DropdownInfoText>
             </div>
           )}

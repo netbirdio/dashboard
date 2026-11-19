@@ -30,6 +30,7 @@ import AppleIcon from "@/assets/icons/AppleIcon";
 import IOSIcon from "@/assets/icons/IOSIcon";
 import { LinuxIcon } from "@/assets/icons/LinuxIcon";
 import WindowsIcon from "@/assets/icons/WindowsIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
   androidVersions,
@@ -51,6 +52,7 @@ export const PostureCheckOperatingSystem = ({
   onChange,
   disabled,
 }: Props) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
 
   return (
@@ -59,11 +61,9 @@ export const PostureCheckOperatingSystem = ({
       setOpen={setOpen}
       key={open ? 1 : 0}
       icon={<Disc3Icon size={16} />}
-      title={"Operating System"}
+      title={t("postureChecks.operatingSystem")}
       modalWidthClass={"max-w-xl"}
-      description={
-        "Restrict access in your network based on the operating system."
-      }
+      description={t("postureChecks.operatingSystemHelp")}
       iconClass={"bg-gradient-to-tr from-nb-gray-500 to-nb-gray-300"}
       active={value !== undefined}
       onReset={() => onChange(undefined)}
@@ -81,6 +81,7 @@ export const PostureCheckOperatingSystem = ({
 };
 
 const CheckContent = ({ value, onChange, disabled }: Props) => {
+  const t = useTranslations();
   const [tab] = useState(String(OperatingSystem.LINUX));
 
   const firstTimeCheck = value === undefined;
@@ -237,14 +238,14 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
               }
               target={"_blank"}
             >
-              Operating System Check
+              {t("postureChecks.operatingSystemCheck")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("common.cancel")}</Button>
           </ModalClose>
           <Button
             disabled={!!versionError}
@@ -275,7 +276,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
               }
             }}
           >
-            Save
+            {t("common.save")}
           </Button>
         </div>
       </ModalFooter>
@@ -313,6 +314,7 @@ export const OperatingSystemTab = ({
   onError,
   disabled,
 }: OperatingSystemTabProps) => {
+  const t = useTranslations();
   const [allow, setAllow] = useState(value == "-" ? "block" : "allow");
   const [allOrMin, setAllOrMin] = useState(
     value == "" || value == "-" || value == "0" ? "all" : "min",
@@ -372,19 +374,19 @@ export const OperatingSystemTab = ({
     <div className={""}>
       <div className={"flex justify-between items-start gap-10 "}>
         <div>
-          <Label>Allow or Block</Label>
+          <Label>{t("postureChecks.allowOrBlock")}</Label>
           <HelpText>
-            Choose whether you want to allow or block the operating system.
+            {t("postureChecks.allowOrBlockOSHelp")}
           </HelpText>
         </div>
         <RadioGroup value={allow} onChange={changeAllow}>
           <RadioGroupItem value={"allow"} variant={"green"}>
             <ShieldCheck size={14} />
-            Allow
+            {t("common.allow")}
           </RadioGroupItem>
           <RadioGroupItem value={"block"} variant={"red"}>
             <ShieldXIcon size={14} />
-            Block
+            {t("postureChecks.block")}
           </RadioGroupItem>
         </RadioGroup>
       </div>
@@ -399,7 +401,7 @@ export const OperatingSystemTab = ({
           <SelectDropdown
             value={value || "0"}
             showSearch={true}
-            placeholder={"Select version..."}
+            placeholder={t("postureChecks.selectVersion")}
             onChange={onChange}
             options={versionList}
             disabled={allOrMin === "all" || allow === "block" || disabled}
@@ -427,7 +429,7 @@ export const OperatingSystemTab = ({
             label={
               <>
                 <FileCog size={14} />
-                Use custom version number
+                {t("postureChecks.useCustomVersion")}
               </>
             }
             helpText={"Use a custom version number if you need more control."}

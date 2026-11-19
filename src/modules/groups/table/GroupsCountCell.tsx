@@ -3,6 +3,7 @@ import FullTooltip from "@components/FullTooltip";
 import { cn } from "@utils/helpers";
 import { useRouter } from "next/navigation";
 import React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   icon: React.ReactNode;
@@ -20,6 +21,7 @@ export default function GroupsCountCell({
   href,
   hidden = false,
 }: Props) {
+  const t = useTranslations();
   const router = useRouter();
 
   const handleClick = () => {
@@ -32,10 +34,17 @@ export default function GroupsCountCell({
         className={"w-full"}
         content={
           <div className={"text-xs"}>
-            Group{" "}
-            <span className={"text-netbird font-medium"}>{groupName}</span> is
-            used in <span className={"font-medium text-netbird"}>{count}</span>{" "}
-            {text}
+            {t.rich("groups.usageCount", {
+              name: groupName,
+              total: count,
+              items: text ?? "",
+              group: (chunks) => (
+                <span className="text-netbird font-medium">{chunks}</span>
+              ),
+              count: (chunks) => (
+                <span className="font-medium text-netbird">{chunks}</span>
+              ),
+            })}
           </div>
         }
         disabled={count === 0}

@@ -20,6 +20,7 @@ import {
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   REVERSE_PROXY_CLUSTERS_DOCS_LINK,
   ReverseProxyCluster,
@@ -396,6 +397,7 @@ const ManagedGateway = ({
   onBack,
   onNext,
 }: ManagedProps) => {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const { settings } = useAIProviders();
   const state = proxy?.state;
@@ -470,7 +472,7 @@ const ManagedGateway = ({
               ) : (
                 <RefreshCwIcon size={14} />
               )}
-              Retry
+              {t("common.retry")}
             </Button>
           )}
           <InlineButtonLink
@@ -749,6 +751,7 @@ const GatewayAddressStatus = ({
 }: {
   bootstrap: GatewayBootstrap;
 }) => {
+  const t = useTranslations();
   if (bootstrap.status === "failed") {
     return (
       <Callout
@@ -764,7 +767,7 @@ const GatewayAddressStatus = ({
           onClick={bootstrap.retry}
         >
           <RefreshCwIcon size={14} />
-          Retry
+          {t("common.retry")}
         </Button>
       </Callout>
     );

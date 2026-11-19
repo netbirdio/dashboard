@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import { AlertCircle, ArrowUpRight, Cog, PlusIcon, XIcon } from "lucide-react";
 import React, { useMemo } from "react";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
 import { User } from "@/interfaces/User";
 import ActivityDescription from "@/modules/activity/ActivityDescription";
@@ -22,6 +23,7 @@ const ActionIcons: Record<ActionColor, React.ReactNode> = {
 };
 
 export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
+  const t = useTranslations();
   const { users } = useUsers();
 
   const getActivityUser = () => {
@@ -105,7 +107,7 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
               {isExternal && (
                 <span className={"flex items-center"}>
                   <SmallBadge
-                    text={"External"}
+                    text={t("activity.external")}
                     variant={"sky"}
                     className={
                       "text-[10px] py-[0.2rem] px-1.5 rounded-full leading-none -top-0"

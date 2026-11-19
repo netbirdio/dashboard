@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useSignInDomains } from "@/cloud/sign-in-domains/useSignInDomains";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DomainValidationStatus, SignInDomain } from "@/interfaces/Account";
 import { DomainVerificationModal } from "@/modules/integrations/sso/DomainVerificationModal";
 
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export default function DomainActionCell({ domain }: Readonly<Props>) {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { verifyDomain, deleteDomain, mutate } = useSignInDomains();
   const { confirm } = useDialog();
@@ -44,8 +46,8 @@ export default function DomainActionCell({ domain }: Readonly<Props>) {
       title: `Remove ${domain.name}?`,
       description:
         "Users with an email address on this domain will no longer be matched to your account.",
-      confirmText: "Remove",
-      cancelText: "Cancel",
+      confirmText: t("common.remove"),
+      cancelText: t("common.cancel"),
       type: "danger",
       maxWidthClass: "max-w-md",
     });

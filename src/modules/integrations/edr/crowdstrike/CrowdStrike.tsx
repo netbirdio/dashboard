@@ -9,6 +9,7 @@ import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/crowdstrike.png";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import { CrowdstrikeIntegration } from "@/interfaces/EDR";
 import CrowdStrikeConfiguration from "@/modules/integrations/edr/crowdstrike/CrowdStrikeConfiguration";
@@ -21,6 +22,7 @@ type Props = {
 };
 
 export const CrowdStrike = ({ account }: Props) => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const [setupModal, setSetupModal] = useState(false);
@@ -52,8 +54,8 @@ export const CrowdStrike = ({ account }: Props) => {
           title: `Disable CrowdStrike?`,
           description:
             "Are you sure you want to disable the CrowdStrike integration?",
-          confirmText: "Disable",
-          cancelText: "Cancel",
+          confirmText: t("common.disable"),
+          cancelText: t("common.cancel"),
           type: "warning",
         })
       : true;
@@ -125,6 +127,7 @@ type ConfigurationProps = {
   config: CrowdstrikeIntegration;
 };
 const ConfigurationButton = ({ config }: ConfigurationProps) => {
+  const t = useTranslations();
   const [configModal, setConfigModal] = useState(false);
 
   return (
@@ -139,7 +142,7 @@ const ConfigurationButton = ({ config }: ConfigurationProps) => {
           }}
         >
           <Settings size={14} />
-          Settings
+          {t("common.settings")}
         </Button>
       </div>
       <CrowdStrikeConfiguration

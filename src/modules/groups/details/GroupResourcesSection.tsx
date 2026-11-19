@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResourceWithNetwork } from "@/interfaces/Network";
 import { GroupDetailsTableContainer } from "@/modules/groups/details/GroupDetailsTableContainer";
@@ -117,6 +118,7 @@ export const GroupResourcesSection = ({
   resources,
   isLoading = true,
 }: Props) => {
+  const t = useTranslations();
   const [sorting, setSorting] = useState<SortingState>([]);
   const { permission } = usePermissions();
   const router = useRouter();
@@ -145,18 +147,16 @@ export const GroupResourcesSection = ({
           )}
           inset={false}
           tableClassName={"mt-0"}
-          text={"Resources"}
+          text={t("common.resources")}
           columns={GroupResourcesColumns}
           keepStateInLocalStorage={false}
           data={resources}
-          searchPlaceholder={"Search by name, address or group..."}
+          searchPlaceholder={t("groups.searchResources")}
           getStartedCard={
             <NoResults
               className={"py-4"}
-              title={"This group has no assigned resources"}
-              description={
-                "Assign this group to your resources inside your networks to see them listed here."
-              }
+              title={t("groups.noAssignedResources")}
+              description={t("groups.noAssignedResourcesDesc")}
               icon={<Layers3Icon size={20} className={"text-nb-gray-300"} />}
             >
               {permission?.networks?.create && (
@@ -166,7 +166,7 @@ export const GroupResourcesSection = ({
                     className={"mt-4"}
                     onClick={() => router.push("/networks")}
                   >
-                    Go to Networks
+                    {t("groups.goToNetworks")}
                     <ArrowUpRightIcon size={16} />
                   </Button>
                 </>

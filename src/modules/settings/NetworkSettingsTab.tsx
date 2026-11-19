@@ -21,6 +21,7 @@ import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { TrafficEventSetting } from "@/cloud/traffic-events/TrafficEventSetting";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 
@@ -39,6 +40,7 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
 }
 
 function NetworkSettingsTabContent({ account }: Readonly<Props>) {
+  const translate = useTranslations();
   const { permission } = usePermissions();
 
   const { mutate } = useSWRConfig();
@@ -191,19 +193,19 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={translate("common.settings")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=networks"}
-            label={"Networks"}
+            label={translate("common.networks")}
             icon={<NetworkIcon size={14} />}
             active
           />
         </Breadcrumbs>
         <div className={"flex items-start justify-between -mt-1"}>
           <div>
-            <h1>Networks</h1>
+            <h1>{translate("common.networks")}</h1>
           </div>
           <Button
             variant={"primary"}
@@ -217,7 +219,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
             onClick={saveChanges}
             data-testid="save-network-settings"
           >
-            Save Changes
+            {translate("common.saveChanges")}
           </Button>
         </div>
 
@@ -229,7 +231,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
               }
             >
               <div className={"min-w-[330px]"}>
-                <Label>DNS Domain</Label>
+                <Label>{translate("settings.dnsDomain")}</Label>
                 <HelpText>
                   Specify a custom peer DNS domain for your network. This should
                   not point to a valid domain to avoid overriding DNS results.
@@ -259,10 +261,9 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
               }
             >
               <div className={"min-w-[330px]"}>
-                <Label>Network Range</Label>
+                <Label>{translate("settings.networkRange")}</Label>
                 <HelpText>
-                  Specify a custom IPv4 range for your network in CIDR format.
-                  All peer IPs will be re-allocated when changed.
+                  {translate("settings.networkRangeHelp")}
                 </HelpText>
               </div>
               <div className={"w-full"}>
@@ -287,15 +288,14 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
               }
             >
               <div className={"min-w-[330px]"}>
-                <Label>IPv6 Network Range</Label>
+                <Label>{translate("settings.ipv6NetworkRange")}</Label>
                 <HelpText>
-                  Specify a custom IPv6 range for your network in CIDR format.
-                  All peer IPv6 addresses will be re-allocated when changed.
+                  {translate("settings.ipv6NetworkRangeHelp")}
                 </HelpText>
               </div>
               <div className={"w-full"}>
                 <Input
-                  placeholder={"e.g. fd00:1234:5678::/64"}
+                  placeholder={translate("settings.ipv6NetworkRangePlaceholder")}
                   errorTooltip={true}
                   errorTooltipPosition={"top"}
                   error={networkRangeV6Error}
@@ -309,16 +309,14 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
           </div>
 
           <div>
-            <Label>IPv6 Enabled Groups</Label>
+            <Label>{translate("settings.ipv6EnabledGroups")}</Label>
             <HelpText>
-              Peers in the selected groups will receive IPv6 overlay addresses
-              (dual-stack). Remove all groups to disable IPv6. Changes apply on
-              save and will restart affected clients.
+              {translate("settings.ipv6EnabledGroupsHelp")}
             </HelpText>
             <PeerGroupSelector
               values={ipv6EnabledGroups}
               onChange={setIpv6EnabledGroups}
-              placeholder="Select groups to enable IPv6..."
+              placeholder={translate("settings.selectIpv6Groups")}
               showResourceCounter={false}
               disabled={!permission.settings.update}
               data-testid="ipv6-enabled-groups-selector"
@@ -349,7 +347,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
                   target={"_blank"}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  Learn more
+                  {translate("common.learnMore")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </>

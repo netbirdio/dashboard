@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useMatomoVirtualPage } from "@/cloud/analytics/MatomoProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 const parseApproverEmail = (message?: string): string =>
   message?.match(/[^\s@]+@[a-z0-9.-]+\.[a-z]{2,}/i)?.[0] ?? "";
@@ -45,6 +46,7 @@ type Props = {
 };
 
 export const PendingApproval = ({ error, onRefresh, onLogout }: Props) => {
+  const t = useTranslations();
   const owner = parseApproverEmail(error?.message);
   useMatomoVirtualPage("pending_approval");
 
@@ -102,7 +104,7 @@ export const PendingApproval = ({ error, onRefresh, onLogout }: Props) => {
         <div className={"flex flex-col sm:flex-row gap-3 justify-center"}>
           <Button variant={"secondary"} size={"sm"} onClick={onRefresh}>
             <RefreshCwIcon size={16} />
-            Refresh
+            {t("common.refresh")}
           </Button>
           <Button variant={"default-outline"} size={"sm"} onClick={onLogout}>
             <LogOut size={16} />

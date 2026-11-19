@@ -13,6 +13,7 @@ import IOSIcon from "@/assets/icons/IOSIcon";
 import AppleLogo from "@/assets/os-icons/apple.svg";
 import FreeBSDLogo from "@/assets/os-icons/FreeBSD.png";
 import { getOperatingSystem } from "@/hooks/useOperatingSystem";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 
 type Props = {
@@ -20,6 +21,7 @@ type Props = {
   serial?: string;
 };
 export function PeerOSCell({ os, serial }: Readonly<Props>) {
+  const t = useTranslations();
   return (
     <TooltipProvider>
       <Tooltip delayDuration={1}>
@@ -44,7 +46,7 @@ export function PeerOSCell({ os, serial }: Readonly<Props>) {
             {serial && serial !== "" && (
               <ListItem
                 icon={<Barcode size={14} />}
-                label={"Serial Number"}
+                label={t("common.serialNumber")}
                 value={serial}
               />
             )}

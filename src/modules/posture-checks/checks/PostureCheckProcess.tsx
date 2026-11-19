@@ -18,6 +18,7 @@ import * as React from "react";
 import { useMemo, useState } from "react";
 import AppleIcon from "@/assets/icons/AppleIcon";
 import WindowsIcon from "@/assets/icons/WindowsIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Process, ProcessCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
 
@@ -28,6 +29,7 @@ type Props = {
 };
 
 export const PostureCheckProcess = ({ value, onChange, disabled }: Props) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
 
   return (
@@ -36,10 +38,8 @@ export const PostureCheckProcess = ({ value, onChange, disabled }: Props) => {
       setOpen={setOpen}
       key={open ? 1 : 0}
       active={value?.processes && value?.processes?.length > 0}
-      title={"Process"}
-      description={
-        "Restrict access in your network based on running processes of a peer."
-      }
+      title={t("postureChecks.process")}
+      description={t("postureChecks.processHelp")}
       icon={<ServerCogIcon size={18} />}
       iconClass={"bg-gradient-to-tr from-nb-gray-500 to-nb-gray-300"}
       modalWidthClass={"max-w-xl"}
@@ -58,6 +58,7 @@ export const PostureCheckProcess = ({ value, onChange, disabled }: Props) => {
 };
 
 const CheckContent = ({ value, onChange, disabled }: Props) => {
+  const t = useTranslations();
   const [processes, setProcesses] = useState<Process[]>(
     value?.processes
       ? value.processes.map((p) => {
@@ -153,11 +154,9 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
       <div className={"flex flex-col px-8 gap-2 pb-6"}>
         <div className={"flex justify-between items-start gap-10 mt-2"}>
           <div>
-            <Label>Processes</Label>
+            <Label>{t("postureChecks.processes")}</Label>
             <HelpText className={""}>
-              Add the path of an executable file of the process. You can define
-              a path for Linux, macOS and Windows. Peers will only be allowed to
-              connect if the process is running on their system.
+              {t("postureChecks.processesHelp")}
             </HelpText>
           </div>
         </div>
@@ -268,7 +267,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
           disabled={disabled}
         >
           <PlusCircle size={16} />
-          Add Process
+          {t("postureChecks.addProcess")}
         </Button>
       </div>
       <ModalFooter className={"items-center"}>
@@ -281,14 +280,14 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
               }
               target={"_blank"}
             >
-              Process Check
+              {t("postureChecks.processCheck")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("common.cancel")}</Button>
           </ModalClose>
           <Button
             variant={"primary"}
@@ -308,7 +307,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
               }
             }}
           >
-            Save
+            {t("common.save")}
           </Button>
         </div>
       </ModalFooter>

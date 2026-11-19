@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import integrationImage from "@/assets/integrations/okta.png";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DomainValidationStatus } from "@/interfaces/Account";
 import { EstimatedSetupTime } from "@/modules/integrations/EstimatedSetupTime";
 import { IntegrationModalHeader } from "@/modules/integrations/IntegrationModalHeader";
@@ -32,6 +33,7 @@ type Props = {
 };
 
 export default function OktaSSOSetup({ open, onOpenChange }: Props) {
+  const translate = useTranslations();
   const { createOrUpdateConnection, verifyDomain, mutate } =
     useEnterpriseConnections();
   const [step, setStep] = useState(0);
@@ -153,7 +155,7 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                 }
               >
                 <Shield size={16} />
-                Required Permissions
+                {translate("common.requiredPermissions")}
               </div>
               <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
                 Ensure that you have an{" "}
@@ -222,7 +224,7 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                 <Steps.Step step={3} line={false}>
                   <p>
                     After installing the application go to the{" "}
-                    <Mark>Assignments</Mark> tab, select the <Mark>Assign</Mark>{" "}
+                    <Mark>Assignments</Mark> tab, select the <Mark>{translate("common.assign")}</Mark>{" "}
                     and click <Mark>Assign to People</Mark> and assign your user
                     to the application
                   </p>
@@ -245,7 +247,7 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                   </p>
                   <Input
                     customPrefix={
-                      <span className={"min-w-[90px]"}>Client ID</span>
+                      <span className={"min-w-[90px]"}>{translate("integrations.idpClientId")}</span>
                     }
                     placeholder={"0obflxtwxoVQcur0z3f3"}
                     value={clientId}
@@ -253,7 +255,7 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                   />
                   <Input
                     customPrefix={
-                      <span className={"min-w-[90px]"}>Client Secret</span>
+                      <span className={"min-w-[90px]"}>{translate("integrations.idpClientSecret")}</span>
                     }
                     placeholder={
                       "jfgbU1Wu3XWAKhGUF4d-PX54DSm3pAQCyNtpxp7Nu8Ij22stSz8_6KnWbO4nQBIb"
@@ -299,7 +301,7 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                 onClick={() => setStep(step - 1)}
               >
                 <IconArrowLeft size={16} />
-                Back
+                {translate("common.back")}
               </Button>
             )}
             {step >= 0 && step < maxSteps && (
@@ -308,7 +310,7 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                 className={"w-full"}
                 onClick={() => setStep(step + 1)}
               >
-                {step == 0 ? "Get Started" : "Continue"}
+                {step == 0 ? "Get Started" : translate("common.continue")}
                 <IconArrowRight size={16} />
               </Button>
             )}
@@ -324,7 +326,7 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                 ) : (
                   <Repeat size={16} />
                 )}
-                Connect
+                {translate("integrations.connect")}
               </Button>
             )}
           </ModalFooter>

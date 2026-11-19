@@ -7,6 +7,7 @@ import React, { useState } from "react";
 import CloudflareLogo from "@/assets/nameservers/cloudflare.svg";
 import GoogleLogo from "@/assets/nameservers/google.svg";
 import Quad9Logo from "@/assets/nameservers/quad9.svg";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { NameserverGroup, NameserverPresets } from "@/interfaces/Nameserver";
 import NameserverModal from "@/modules/dns/nameservers/NameserverModal";
@@ -63,6 +64,7 @@ type ModalProps = {
 export function NameserverTemplateModalContent({
   onePresetSelection,
 }: Readonly<ModalProps>) {
+  const t = useTranslations();
   return (
     <ModalContent maxWidthClass={"max-w-xl"} showClose={true}>
       <div className={"px-8 py-3 flex flex-col gap-6 mt-4"}>
@@ -100,10 +102,8 @@ export function NameserverTemplateModalContent({
           <NameserverTemplate
             onClick={() => onePresetSelection(NameserverPresets.Default)}
             icon={<GlobeIcon size={30} className={"text-netbird"} />}
-            title={"Custom DNS"}
-            description={
-              "Use custom nameservers to resolve domains in your network. You can either use a public DNS or your own nameservers."
-            }
+            title={t("dns.customDNS")}
+            description={t("dns.customDNSDescription")}
             data-testid="nameserver-preset-custom"
           />
         </div>

@@ -18,6 +18,7 @@ import * as React from "react";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { NetworkRouter } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
@@ -25,6 +26,7 @@ type Props = {
   router: NetworkRouter;
 };
 export const RoutingPeersActionCell = ({ router }: Props) => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { deleteRouter, network, openAddRoutingPeerModal } =
     useNetworksContext();
@@ -38,7 +40,7 @@ export const RoutingPeersActionCell = ({ router }: Props) => {
   const toggleEnabled = async () => {
     const nextEnabled = !router.enabled;
     notify({
-      title: "Network Routing Peer",
+      title: t("networks.networkRoutingPeer"),
       description: `Routing peer is now ${nextEnabled ? "enabled" : "disabled"}`,
       loadingMessage: "Updating routing peer...",
       duration: 1200,
@@ -83,7 +85,7 @@ export const RoutingPeersActionCell = ({ router }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
-              Edit
+              {t("common.edit")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -95,7 +97,7 @@ export const RoutingPeersActionCell = ({ router }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <PowerIcon size={14} className={"shrink-0"} />
-              {router.enabled ? "Disable" : "Enable"}
+              {router.enabled ? t("common.disable") : t("common.enable")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -109,7 +111,7 @@ export const RoutingPeersActionCell = ({ router }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Remove
+              {t("common.remove")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

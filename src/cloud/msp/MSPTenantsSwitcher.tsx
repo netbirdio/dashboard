@@ -18,6 +18,7 @@ import { useTenantSubscription } from "@/cloud/msp/hooks/useTenantSubscription";
 import { TenantListItem } from "@/cloud/msp/interfaces/Tenant";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { useBilling } from "@/contexts/BillingProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 export const MSPTenantsSwitcher = () => {
   const { isTrial, isFreePlan } = useBilling();
@@ -214,6 +215,7 @@ const TenantItem = ({
   onSelect,
   allowTrialExpiredInfo = false,
 }: TenantItemProps) => {
+  const t = useTranslations();
   const allowFetchSubscription = isMSP === undefined || !isMSP;
   const { isTrialExpired, isSubscriptionLoading } = useTenantSubscription({
     tenantId: tenant.id,
@@ -318,7 +320,7 @@ const TenantItem = ({
               className={"h-[25px] px-2 text-[0.7rem] !border-yellow-600"}
             >
               <CircleHelp size={12} />
-              Trial Expired
+              {t("common.trialExpired")}
             </Badge>
           </FullTooltip>
         </div>

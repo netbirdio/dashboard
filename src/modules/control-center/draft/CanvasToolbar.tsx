@@ -14,6 +14,7 @@ import {
   Undo2Icon,
 } from "lucide-react";
 import { useReactFlow } from "@xyflow/react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   CanvasTool,
   useDraftMode,
@@ -60,6 +61,7 @@ import { ToolbarDivider } from "@/modules/control-center/toolbar/ToolbarDivider"
 import { ToolbarGroup } from "@/modules/control-center/toolbar/ToolbarGroup";
 
 export const CanvasToolbar = () => {
+  const t = useTranslations();
   const {
     isDraft,
     activeTool,
@@ -184,7 +186,7 @@ export const CanvasToolbar = () => {
               "group-hover/add:rotate-90",
             )}
           />
-          Add
+          {t("common.add")}
         </ToolbarButton>
       </ToolbarGroup>
 

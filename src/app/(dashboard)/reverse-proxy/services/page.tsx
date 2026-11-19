@@ -11,6 +11,7 @@ import React, { lazy, Suspense } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import ReverseProxiesProvider from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { REVERSE_PROXY_DOCS_LINK } from "@/interfaces/ReverseProxy";
 import PageContainer from "@/layouts/PageContainer";
 import { Callout } from "@components/Callout";
@@ -21,6 +22,7 @@ const ReverseProxyTable = lazy(
 );
 
 export default function ReverseProxyServicesPage() {
+  const t = useTranslations();
   const { permission } = usePermissions();
 
   const { ref: headingRef, portalTarget } =
@@ -32,20 +34,20 @@ export default function ReverseProxyServicesPage() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/reverse-proxy/services"}
-            label={"Reverse Proxy"}
+            label={t("common.reverseProxy")}
             icon={<ReverseProxyIcon size={16} />}
           />
           <Breadcrumbs.Item
             href={"/reverse-proxy/services"}
-            label={"Services"}
+            label={t("common.services")}
             active={true}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Services</h1>
+        <h1 ref={headingRef}>{t("common.services")}</h1>
         <Paragraph>
           Expose services securely through NetBird&apos;s reverse proxy.{" "}
           <InlineLink href={REVERSE_PROXY_DOCS_LINK} target={"_blank"}>
-            Learn more
+            {t("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
@@ -65,7 +67,7 @@ export default function ReverseProxyServicesPage() {
       </div>
 
       <RestrictedAccess
-        page={"Services"}
+        page={t("common.services")}
         hasAccess={permission?.services?.read}
       >
         <ReverseProxiesProvider>

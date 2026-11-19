@@ -9,6 +9,7 @@ import { trim, uniqBy } from "lodash";
 import { SearchIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo, useRef } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
 import ActivityTypeIcon from "@/modules/activity/ActivityTypeIcon";
 
@@ -34,6 +35,7 @@ export function ActivityTypePicker({
   onChange,
   events,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const searchRef = useRef<HTMLInputElement>(null);
   const selected = value ?? [];
 
@@ -80,7 +82,7 @@ export function ActivityTypePicker({
               "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-9",
             )}
             ref={searchRef}
-            placeholder={"Search event..."}
+            placeholder={t("activity.searchEvent")}
           />
           <div
             className={

@@ -3,6 +3,7 @@ import { useApiCall } from "@utils/api";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { SetupKey } from "@/interfaces/SetupKey";
 import GroupsRow from "@/modules/common-table-rows/GroupsRow";
@@ -11,6 +12,7 @@ type Props = {
   setupKey: SetupKey;
 };
 export default function SetupKeyGroupsCell({ setupKey }: Readonly<Props>) {
+  const t = useTranslations();
   const [modal, setModal] = useState(false);
   const { permission } = usePermissions();
   const request = useApiCall<SetupKey>("/setup-keys/" + setupKey.id);
@@ -20,7 +22,7 @@ export default function SetupKeyGroupsCell({ setupKey }: Readonly<Props>) {
 
     notify({
       title: setupKey?.name || "Setup Key",
-      description: "Groups of the setup key were successfully saved",
+      description: t("setupKeys.groupsSavedDescription"),
       promise: request
         .put({
           name: setupKey?.name || "Setup Key",
@@ -37,17 +39,15 @@ export default function SetupKeyGroupsCell({ setupKey }: Readonly<Props>) {
           mutate("/setup-keys");
           mutate("/groups");
         }),
-      loadingMessage: "Saving the groups of the setup key...",
+      loadingMessage: t("setupKeys.groupsSaving"),
     });
   };
 
   return (
     permission.groups.read && (
       <GroupsRow
-        label={"Auto-assigned Groups"}
-        description={
-          "These groups will be automatically assigned to peers enrolled with this key"
-        }
+        label={t("setupKeys.autoAssignedGroups")}
+        description={t("setupKeys.autoAssignedGroupsDescription")}
         groups={setupKey.auto_groups || []}
         onSave={handleSave}
         hideAllGroup={true}

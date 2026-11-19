@@ -10,6 +10,7 @@ import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 
 type Props = {
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export default function PermissionsTab({ account }: Props) {
+  const t = useTranslations();
   const { permission } = usePermissions();
 
   const { mutate } = useSWRConfig();
@@ -54,25 +56,25 @@ export default function PermissionsTab({ account }: Props) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("common.settings")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=permissions"}
-            label={"Permissions"}
+            label={t("common.permissions")}
             icon={<LockIcon size={14} />}
             active
           />
         </Breadcrumbs>
         <div className={"flex items-start justify-between -mt-1"}>
-          <h1>Permissions</h1>
+          <h1>{t("common.permissions")}</h1>
           <Button
             variant={"primary"}
             disabled={!hasChanges || !permission.settings.update}
             onClick={saveChanges}
             data-testid="save-permissions-settings"
           >
-            Save Changes
+            {t("common.saveChanges")}
           </Button>
         </div>
 
@@ -84,7 +86,7 @@ export default function PermissionsTab({ account }: Props) {
             label={
               <>
                 <GaugeIcon size={15} />
-                Restrict dashboard for regular users
+                {t("settings.restrictDashboard")}
               </>
             }
             helpText={

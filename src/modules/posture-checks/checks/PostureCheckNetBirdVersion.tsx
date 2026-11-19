@@ -11,6 +11,7 @@ import { ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { NetBirdVersionCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
 
@@ -25,6 +26,7 @@ export const PostureCheckNetBirdVersion = ({
   onChange,
   disabled,
 }: Props) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
 
   return (
@@ -33,10 +35,8 @@ export const PostureCheckNetBirdVersion = ({
       setOpen={setOpen}
       key={open ? 1 : 0}
       active={value?.min_version !== undefined}
-      title={"NetBird Client Version"}
-      description={
-        "Restrict access to peers with a specific NetBird client version."
-      }
+      title={t("postureChecks.netBirdClientVersion")}
+      description={t("postureChecks.netBirdClientVersionHelp")}
       icon={<NetBirdIcon size={18} />}
       modalWidthClass={"max-w-lg"}
       onReset={() => onChange(undefined)}
@@ -54,6 +54,7 @@ export const PostureCheckNetBirdVersion = ({
 };
 
 const CheckContent = ({ value, onChange, disabled }: Props) => {
+  const t = useTranslations();
   const [version, setVersion] = useState(value?.min_version || "");
 
   const versionError = useMemo(() => {
@@ -76,10 +77,9 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
     <>
       <div className={"flex flex-col px-8 gap-3 pb-6"}>
         <div>
-          <Label>Minimum required version</Label>
+          <Label>{t("postureChecks.minimumRequiredVersion")}</Label>
           <HelpText>
-            Only peers with the minimum specified NetBird client version will
-            have access to the network.
+            {t("postureChecks.minimumRequiredVersionHelp")}
           </HelpText>
           <div>
             <Input
@@ -104,14 +104,14 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
               }
               target={"_blank"}
             >
-              Client Version Check
+              {t("postureChecks.netBirdClientVersionCheck")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("common.cancel")}</Button>
           </ModalClose>
           <Button
             variant={"primary"}
@@ -124,7 +124,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
               }
             }}
           >
-            Save
+            {t("common.save")}
           </Button>
         </div>
       </ModalFooter>

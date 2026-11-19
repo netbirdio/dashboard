@@ -3,6 +3,8 @@ import * as React from "react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { useTranslations } from "@/i18n/LocaleProvider";
+
 type Props<TData> = {
   table: Table<TData> | null;
   headingTarget?: HTMLHeadingElement | null;
@@ -90,13 +92,18 @@ const Heading = ({
   filteredItems,
   totalItems,
 }: HeadingProps) => {
+  const t = useTranslations();
   if (hasAnyFilterActive) {
     return (
       <>
-        <span className={"text-netbird"}>{filteredItems}</span> of {totalItems}{" "}
+        {t.rich("tables.filteredHeading", {
+          shown: filteredItems ?? "",
+          total: totalItems ?? "",
+          filtered: (chunks) => <span className="text-netbird">{chunks}</span>,
+        })}
       </>
     );
   }
 
-  return `${totalItems} `;
+  return t("tables.headingCount", { total: totalItems ?? "" });
 };

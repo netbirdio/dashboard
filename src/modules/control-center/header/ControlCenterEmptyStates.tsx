@@ -5,6 +5,7 @@ import SquareIcon from "@components/SquareIcon";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { FlowView } from "@/modules/control-center/header/FlowSelector";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
@@ -18,6 +19,7 @@ const EMPTY_STATE_REVEAL_IN =
   "animate-in fade-in zoom-in-[.97] duration-[700ms] ease-out fill-mode-both";
 
 export function ControlCenterEmptyStates() {
+  const translate = useTranslations();
   const { currentView, selectedNetwork, layoutInitialized, instantDrill } =
     useCanvasState();
   const { isDraft } = useDraftMode();
@@ -89,7 +91,7 @@ export function ControlCenterEmptyStates() {
                     disabled={!permission.networks.update}
                   >
                     <PlusCircle size={16} />
-                    Add Resource
+                    {translate("common.addResource")}
                   </Button>
                 </div>
               }
@@ -100,7 +102,7 @@ export function ControlCenterEmptyStates() {
                     href={"https://docs.netbird.io/how-to/networks#resources"}
                     target={"_blank"}
                   >
-                    Resources
+                    {translate("common.resources")}
                     <ExternalLinkIcon size={12} />
                   </InlineLink>
                 </>
@@ -142,7 +144,7 @@ export function ControlCenterEmptyStates() {
                     disabled={!permission.networks.create}
                   >
                     <PlusCircle size={16} />
-                    Add Network
+                    {translate("common.addNetwork")}
                   </Button>
                 </div>
               }
@@ -153,7 +155,7 @@ export function ControlCenterEmptyStates() {
                     href={"https://docs.netbird.io/how-to/networks"}
                     target={"_blank"}
                   >
-                    Networks
+                    {translate("common.networks")}
                     <ExternalLinkIcon size={12} />
                   </InlineLink>
                 </>

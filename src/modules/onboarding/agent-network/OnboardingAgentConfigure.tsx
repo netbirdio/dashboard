@@ -1,6 +1,7 @@
 import Button from "@components/Button";
 import { ArrowRightIcon } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   AgentConnectTabs,
   fromAccountProviders,
@@ -17,6 +18,7 @@ type Props = {
 // inline via AgentConnectTabs, with the endpoint pre-filled and the SDK and
 // cURL requests in the connected provider's API shape.
 export const OnboardingAgentConfigure = ({ onBack, onNext }: Props) => {
+  const t = useTranslations();
   const { settings, providers } = useAIProviders();
 
   // Open the tab that matches the connected provider: Anthropic and Kimi
@@ -64,10 +66,10 @@ export const OnboardingAgentConfigure = ({ onBack, onNext }: Props) => {
 
       <div className={"flex items-center justify-center mt-4 gap-3"}>
         <Button variant={"secondary"} onClick={onBack}>
-          Go Back
+          {t("onboarding.goBack")}
         </Button>
         <Button variant={"primary"} onClick={onNext}>
-          Continue
+          {t("common.continue")}
           <ArrowRightIcon size={16} />
         </Button>
       </div>

@@ -11,6 +11,7 @@ import {
   DistributorCustomerStatus,
 } from "@/cloud/distributor/interfaces/Distributor";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   children: React.ReactNode;
@@ -27,6 +28,7 @@ const CustomersContext = React.createContext(
 );
 
 export const CustomersProvider = ({ children }: Props) => {
+  const t = useTranslations();
   const { data: customers } = useFetchApi<DistributorCustomer[]>(
     "/integrations/msp/reseller/msps",
   );
@@ -48,8 +50,8 @@ export const CustomersProvider = ({ children }: Props) => {
       title: `Unlink '${customer.name}'?`,
       description:
         "Unlinking this customer will remove it from your distributor account. The account will continue to exist independently.",
-      confirmText: "Unlink",
-      cancelText: "Cancel",
+      confirmText: t("common.unlink"),
+      cancelText: t("common.cancel"),
       type: "danger",
       maxWidthClass: "max-w-[480px]",
     });

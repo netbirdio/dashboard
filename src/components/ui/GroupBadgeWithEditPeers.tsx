@@ -5,6 +5,7 @@ import { EyeIcon, FolderGit2, SquarePen } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { AssignPeerToGroupModal } from "@/modules/groups/AssignPeerToGroupModal";
 
@@ -24,6 +25,7 @@ export default function GroupBadgeWithEditPeers({
   useSave = true,
   onPeerAssignmentChange,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const isNew = !group?.id;
   const [editGroupPeersModal, setEditGroupPeersModal] = useState(false);
   const { dropdownOptions, addDropdownOptions, updateGroupDropdown } =
@@ -104,7 +106,7 @@ export default function GroupBadgeWithEditPeers({
               >
                 {peerCount}
               </span>{" "}
-              Peers{" "}
+              {t("common.peers")}{" "}
             </span>
             {isAllGroup ? (
               <EyeIcon size={11} className={"shrink-0"} />

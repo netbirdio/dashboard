@@ -20,6 +20,7 @@ import { useApiCall } from "@utils/api";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import React, { useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network } from "@/interfaces/Network";
 
 type Props = {
@@ -71,6 +72,7 @@ export const NetworkModalContent = ({
   useSave = true,
   onSaved,
 }: ContentProps) => {
+  const t = useTranslations();
   const [name, setName] = useState(network?.name || "");
   const [description, setDescription] = useState(network?.description || "");
   const create = useApiCall<Network>("/networks").post;
@@ -79,8 +81,8 @@ export const NetworkModalContent = ({
   const updateNetwork = async () => {
     notify({
       title: name,
-      description: "Network updated successfully.",
-      loadingMessage: "Updating network...",
+      description: t("networks.networkUpdated"),
+      loadingMessage: t("networks.networkUpdating"),
       promise: update({ name, description }, `/${network?.id}`).then((n) => {
         onUpdated?.(n);
       }),
@@ -90,8 +92,8 @@ export const NetworkModalContent = ({
   const createNetwork = async () => {
     notify({
       title: name,
-      description: "Network created successfully.",
-      loadingMessage: "Creating network...",
+      description: t("networks.networkCreated"),
+      loadingMessage: t("networks.networkCreating"),
       promise: create({ name, description }).then((n) => {
         onCreated?.(n);
       }),
@@ -105,35 +107,35 @@ export const NetworkModalContent = ({
     >
       <ModalHeader
         icon={<NetworkRoutesIcon className={"fill-netbird"} />}
-        title={network ? "Update Network" : "Add Network"}
+        title={network ? t("networks.updateNetwork") : t("common.addNetwork")}
         description={
           network
             ? network.name
-            : "Access internal resources in LANs and VPC by adding a network."
+            : t("networks.modalAccessDescription")
         }
         color={"netbird"}
       />
       <Separator />
       <div className={"px-8 flex-col flex gap-6 py-6"}>
         <div>
-          <Label>Network Name</Label>
-          <HelpText>Provide a unique name for the network.</HelpText>
+          <Label>{t("networks.networkName")}</Label>
+          <HelpText>{t("networks.networkNameHelp")}</HelpText>
           <Input
             tabIndex={0}
             data-testid="network-name-input"
-            placeholder={"e.g., Office Network"}
+            placeholder={t("networks.networkNameModalPlaceholder")}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
         </div>
         <div>
-          <Label>Description (optional)</Label>
+          <Label>{t("networks.networkDescriptionLabel")}</Label>
           <HelpText>
-            Write a short description to add more context to this network.
+            {t("networks.networkDescriptionHelp")}
           </HelpText>
           <Textarea
             data-testid="network-description-input"
-            placeholder={"e.g., Berlin, Münzstraße 12 "}
+            placeholder={t("networks.networkDescriptionPlaceholder") + " "}
             value={description}
             rows={3}
             onChange={(e) => setDescription(e.target.value)}
@@ -149,14 +151,14 @@ export const NetworkModalContent = ({
               href={"https://docs.netbird.io/how-to/networks"}
               target={"_blank"}
             >
-              Networks
+              {t("common.networks")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("common.cancel")}</Button>
           </ModalClose>
 
           <Button
@@ -176,7 +178,7 @@ export const NetworkModalContent = ({
             ) : (
               <>
                 <PlusCircle size={16} />
-                Add Network
+                {t("common.addNetwork")}
               </>
             )}
           </Button>

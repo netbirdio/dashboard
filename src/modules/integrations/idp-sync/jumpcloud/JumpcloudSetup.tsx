@@ -25,6 +25,7 @@ import { useEmbeddedIdentityProviders } from "@/hooks/useEmbeddedIdentityProvide
 import Skeleton from "react-loading-skeleton";
 import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/jumpcloud.png";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   IdentityProvider,
   ScimIntegration,
@@ -70,6 +71,7 @@ type ModalProps = {
 const maxWidthClasses = ["max-w-lg", "max-w-xl", "max-w-xl", "max-w-2xl"];
 
 export function SetupContent({ onSuccess, onClose }: ModalProps) {
+  const t = useTranslations();
   const { isEmbeddedIdPEnabled } = useEmbeddedIdentityProviders();
   const [step, setStep] = useState(isEmbeddedIdPEnabled ? -1 : 0);
   const [authToken, setAuthToken] = useState("");
@@ -217,7 +219,7 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
                 }
               >
                 <Shield size={16} />
-                Required Permissions
+                {t("common.requiredPermissions")}
               </div>
               <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
                 Ensure that you have an{" "}
@@ -285,7 +287,7 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <FolderGit2 size={20} />
-            Groups to be synchronized
+            {t("common.groupsToSync")}
           </p>
 
           <div className={"mb-4 flex flex-col gap-1"}>
@@ -304,7 +306,7 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <UserCircle size={18} />
-            Users to be synchronized
+            {t("common.usersToSync")}
           </p>
 
           <div className={"mb-4 flex flex-col gap-1"}>
@@ -406,7 +408,7 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
             onClick={() => setStep(step + 1)}
             disabled={!connectorId || connectorId === ""}
           >
-            Continue
+            {t("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -417,7 +419,7 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
             onClick={() => setStep(step - 1)}
           >
             <IconArrowLeft size={16} />
-            Back
+            {t("common.back")}
           </Button>
         )}
         {step >= 0 && step < maxSteps && (
@@ -427,7 +429,7 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
             disabled={!jumpCloudConnection && isAuth0()}
             onClick={() => setStep(step + 1)}
           >
-            {step == 0 ? "Get Started" : "Continue"}
+            {step == 0 ? "Get Started" : t("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -438,7 +440,7 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
             onClick={finishSetup}
             disabled={integrationId === "" || authToken === ""}
           >
-            Finish Setup
+            {t("common.finishSetup")}
           </Button>
         )}
       </ModalFooter>

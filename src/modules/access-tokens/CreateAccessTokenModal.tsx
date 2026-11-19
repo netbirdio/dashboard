@@ -29,6 +29,7 @@ import {
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { AccessToken } from "@/interfaces/AccessToken";
 import { User } from "@/interfaces/User";
 
@@ -41,6 +42,7 @@ export default function CreateAccessTokenModal({
   children,
   user,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const [modal, setModal] = useState(false);
   const [successModal, setSuccessModal] = useState(false);
   const [token, setToken] = useState<string>("");
@@ -103,7 +105,7 @@ export default function CreateAccessTokenModal({
                   tabIndex={-1}
                   data-testid={"access-token-copy-close"}
                 >
-                  Close
+                  {t("common.close")}
                 </Button>
               </ModalClose>
 
@@ -113,7 +115,7 @@ export default function CreateAccessTokenModal({
                 onClick={() => copy(copyMessage)}
               >
                 <CopyIcon size={14} />
-                Copy to clipboard
+                {t("common.copyToClipboard")}
               </Button>
             </div>
           </ModalFooter>
@@ -132,6 +134,7 @@ export function AccessTokenModalContent({
   onSuccess,
   user,
 }: Readonly<ModalProps>) {
+  const t = useTranslations();
   const tokenRequest = useApiCall<AccessToken>(`/users/${user.id}/tokens`);
   const { mutate } = useSWRConfig();
 
@@ -174,8 +177,8 @@ export function AccessTokenModalContent({
 
       <div className={"px-8 py-6 flex flex-col gap-8"}>
         <div>
-          <Label>Name</Label>
-          <HelpText>Set an easily identifiable name for your token</HelpText>
+          <Label>{t("common.name")}</Label>
+          <HelpText>{t("accessTokens.tokenNameHelp")}</HelpText>
           <Input
             data-testid={"access-token-name"}
             placeholder={"e.g., Infra token"}
@@ -186,7 +189,7 @@ export function AccessTokenModalContent({
 
         <div className={"flex justify-between"}>
           <div>
-            <Label>Expires in</Label>
+            <Label>{t("accessTokens.expiresIn")}</Label>
             <HelpText>Should be between 1 and 365 days.</HelpText>
           </div>
           <Input
@@ -214,14 +217,14 @@ export function AccessTokenModalContent({
               href={"https://docs.netbird.io/how-to/access-netbird-public-api"}
               target={"_blank"}
             >
-              Access Tokens
+              {t("accessTokens.accessTokens")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("common.cancel")}</Button>
           </ModalClose>
 
           <Button

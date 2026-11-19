@@ -20,6 +20,7 @@ import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import { LockedFeatureBadge } from "@/modules/billing/locked-feature/LockedFeatureBadge";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -32,6 +33,7 @@ export const TRAFFIC_EVENTS_DOC_LINK =
   "https://docs.netbird.io/how-to/traffic-events-logging";
 
 export const TrafficEventSetting = ({ account }: Props) => {
+  const translate = useTranslations();
   const { permission } = usePermissions();
   const { groups } = useGroups();
   const { mutate } = useSWRConfig();
@@ -52,7 +54,7 @@ export const TrafficEventSetting = ({ account }: Props) => {
       setTrafficPacketCounterEnabled(false);
     }
     notify({
-      title: "Traffic Events",
+      title: translate("common.trafficEvents"),
       description: `Traffic events successfully ${
         toggle ? "enabled" : "disabled"
       }.`,
@@ -85,8 +87,8 @@ export const TrafficEventSetting = ({ account }: Props) => {
         title: "Enable Traffic Reporting (Kernel)?",
         description:
           "Note: Enabling this setting will lead to a higher CPU usage than usual on the NetBird client.",
-        confirmText: "Enable",
-        cancelText: "Cancel",
+        confirmText: translate("common.enable"),
+        cancelText: translate("common.cancel"),
         type: "default",
       });
       if (!choice) return;
@@ -120,7 +122,7 @@ export const TrafficEventSetting = ({ account }: Props) => {
     <>
       <div className={"mt-4"}>
         <h2 className={"text-lg font-medium"}>
-          Experimental
+          {translate("trafficEvents.experimental")}
           <FlaskConicalIcon
             size={16}
             className={"inline ml-1.5 relative -top-[2px]"}
@@ -132,7 +134,7 @@ export const TrafficEventSetting = ({ account }: Props) => {
           Traffic events data retention is limited to 48 hours and capped at a
           maximum of 50,000 events.{" "}
           <InlineLink href={TRAFFIC_EVENTS_DOC_LINK} target={"_blank"}>
-            Learn more
+            {translate("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </div>
@@ -216,6 +218,7 @@ type TrafficEventGroupsSettingProps = {
 export const TrafficEventGroupsSetting = ({
   account,
 }: TrafficEventGroupsSettingProps) => {
+  const t = useTranslations();
   const saveRequest = useApiCall<Account>("/accounts/" + account.id);
   const { mutate } = useSWRConfig();
 
@@ -271,7 +274,7 @@ export const TrafficEventGroupsSetting = ({
         onClick={saveTrafficGroups}
         data-testid="save-traffic-groups"
       >
-        Save Groups
+        {t("trafficEvents.saveGroups")}
       </Button>
     </div>
   );

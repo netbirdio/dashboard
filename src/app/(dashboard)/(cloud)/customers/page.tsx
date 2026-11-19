@@ -13,6 +13,7 @@ import DistributorCustomersTable from "@/cloud/distributor/table/DistributorCust
 import { DistributorDocsLink } from "@/cloud/distributor/DistributorDocsLink";
 import { useDistributor } from "@/cloud/distributor/contexts/DistributorProvider";
 import { DistributorCustomer } from "@/cloud/distributor/interfaces/Distributor";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import PageContainer from "@/layouts/PageContainer";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -24,6 +25,7 @@ export default function CustomersPage() {
 }
 
 const CustomersPageContent = () => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { data: customers, isLoading } = useFetchApi<DistributorCustomer[]>(
     "/integrations/msp/reseller/msps",
@@ -37,21 +39,21 @@ const CustomersPageContent = () => {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/customers"}
-            label={"Customers"}
+            label={t("customers.customers")}
             icon={<MSPIcon size={15} />}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Customers</h1>
+        <h1 ref={headingRef}>{t("customers.customers")}</h1>
         <Paragraph>
           Use this view to manage customer accounts and their plans.
         </Paragraph>
         <Paragraph>
           <DistributorDocsLink />
-          in our documentation.
+          {t("customers.inOurDocumentation")}
         </Paragraph>
       </div>
       <RestrictedAccess
-        page={"Customers"}
+        page={t("customers.customers")}
         hasAccess={permission.tenants.create}
       >
         <Suspense fallback={<SkeletonTable />}>

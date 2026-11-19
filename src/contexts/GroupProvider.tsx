@@ -6,6 +6,7 @@ import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { User } from "@/interfaces/User";
@@ -41,6 +42,7 @@ export const GroupProvider = ({
   children,
   isDetailPage = true,
 }: Props) => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const [groupNameModal, setGroupNameModal] = useState(false);
   const { mutate } = useSWRConfig();
@@ -81,8 +83,8 @@ export const GroupProvider = ({
       title: `Delete '${group.name}'?`,
       description:
         "Are you sure you want to delete this group? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
@@ -123,8 +125,8 @@ export const GroupProvider = ({
       description: peer
         ? `Are you sure you want to remove this peer from the group? You can add it back later if needed.`
         : `Are you sure you want to remove these peers from the group? You can add them back later if needed.`,
-      confirmText: "Remove",
-      cancelText: "Cancel",
+      confirmText: t("common.remove"),
+      cancelText: t("common.cancel"),
       type: "warning",
       maxWidthClass: "max-w-lg",
     });
@@ -227,8 +229,8 @@ export const GroupProvider = ({
       description: user
         ? `Are you sure you want to remove this user from the group? You can add it back later if needed.`
         : `Are you sure you want to remove these users from the group? You can add them back later if needed.`,
-      confirmText: "Remove",
-      cancelText: "Cancel",
+      confirmText: t("common.remove"),
+      cancelText: t("common.cancel"),
       type: "warning",
       maxWidthClass: "max-w-lg",
     });

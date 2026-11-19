@@ -40,6 +40,7 @@ import {
 import { trim, uniqBy } from "lodash";
 import { AlertTriangle, MonitorDotIcon, ShieldCheck } from "lucide-react";
 import { useBypassedPeers } from "@/cloud/edr/useBypass";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
 import { usePathname } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -306,6 +307,7 @@ export default function PeersTable({
   kind,
   onKindChange,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
   const path = usePathname();
@@ -497,7 +499,7 @@ export default function PeersTable({
         rowSelection={selectedRows}
         setRowSelection={setSelectedRows}
         useRowId={true}
-        text={"Peers"}
+        text={translate("common.peers")}
         sorting={sorting}
         setSorting={setSorting}
         initialPageSize={25}
@@ -558,7 +560,7 @@ export default function PeersTable({
                   onKindChange?.(kind === "users" ? undefined : "users");
                 }}
               >
-                User Devices
+                {translate("peers.userDevices")}
               </ButtonGroup.Button>
               <ButtonGroup.Button
                 // Drop the left border so it doesn't stack with the first
@@ -570,7 +572,7 @@ export default function PeersTable({
                   onKindChange?.(kind === "servers" ? undefined : "servers");
                 }}
               >
-                Servers
+                {translate("peers.servers")}
               </ButtonGroup.Button>
             </ButtonGroup>
 
@@ -703,9 +705,7 @@ export default function PeersTable({
               <FullTooltip
                 content={
                   <div className={"max-w-sm text-xs"}>
-                    Show temporary peers created by the NetBird browser client.
-                    These peers are ephemeral and will be deleted automatically
-                    after a short period of time.
+                    {translate("peers.browserPeerTooltip")}
                   </div>
                 }
               >

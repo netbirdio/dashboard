@@ -2,6 +2,7 @@ import * as React from "react";
 import { useCallback, useMemo, useState } from "react";
 import { Modal, ModalContent, ModalFooter } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
@@ -40,6 +41,7 @@ export const RDPCredentialsModal = ({
   error,
   loading,
 }: Props) => {
+  const t = useTranslations();
   const defaultUsername =
     getOperatingSystem(peer?.os) === OperatingSystem.WINDOWS
       ? "Administrator"
@@ -130,7 +132,7 @@ export const RDPCredentialsModal = ({
                   "flex items-center gap-2 text-red-800 font-medium mb-1"
                 }
               >
-                Error
+                {t("common.error")}
               </div>
               <p className={"text-sm text-red-700"}>{error}</p>
             </div>
@@ -174,7 +176,7 @@ export const RDPCredentialsModal = ({
             </div>
           </div>
           <div>
-            <Label>Port</Label>
+            <Label>{t("common.port")}</Label>
             <HelpText>
               Specify the RDP port for your remote connection.
             </HelpText>
@@ -218,7 +220,7 @@ export const RDPCredentialsModal = ({
               onClick={handleConnect}
             >
               {loading && <IconLoader2 size={16} className={"animate-spin"} />}
-              Connect
+              {t("remoteAccess.connect")}
             </Button>
           </div>
         </ModalFooter>

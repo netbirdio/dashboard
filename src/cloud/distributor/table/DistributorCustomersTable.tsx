@@ -20,6 +20,7 @@ import { CustomerNameCell } from "@/cloud/distributor/table/CustomerNameCell";
 import { CustomerPlanCell } from "@/cloud/distributor/table/CustomerPlanCell";
 import { CustomerTenantsCell } from "@/cloud/distributor/table/CustomerTenantsCell";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 
 const CustomerPlanCellWithUpgrade = ({
@@ -101,6 +102,7 @@ export default function DistributorCustomersTable({
   isLoading,
   headingTarget,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const router = useRouter();
@@ -130,7 +132,7 @@ export default function DistributorCustomersTable({
     <DataTable
       headingTarget={headingTarget}
       useRowId={true}
-      text={"Customers"}
+      text={translate("distributor.customers")}
       sorting={sorting}
       setSorting={setSorting}
       columns={CustomersTableColumns}
@@ -166,7 +168,7 @@ export default function DistributorCustomersTable({
                 onClick={() => router.push("/settings?tab=invoices")}
               >
                 <ReceiptTextIcon size={16} />
-                Invoices
+                {translate("distributor.title")}
               </Button>
               <AddCustomerButton />
             </div>

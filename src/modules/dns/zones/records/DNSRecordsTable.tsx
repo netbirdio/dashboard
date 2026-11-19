@@ -2,6 +2,7 @@ import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import React, { createContext, useContext, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DNSRecord, DNSZone } from "@/interfaces/DNS";
 import { DNSRecordActionCell } from "@/modules/dns/zones/records/DNSRecordActionCell";
 import { DNSRecordContentCell } from "@/modules/dns/zones/records/DNSRecordContentCell";
@@ -52,6 +53,7 @@ export const DNSRecordsTableColumns: ColumnDef<DNSRecord>[] = [
 const ZoneContext = createContext({} as DNSZone);
 
 export default function DNSRecordsTable({ zone }: Props) {
+  const t = useTranslations();
   const [sorting, setSorting] = useState<SortingState>([]);
 
   return (
@@ -65,7 +67,7 @@ export default function DNSRecordsTable({ zone }: Props) {
         rowClassName={"last:pb-10"}
         className={"bg-nb-gray-960 py-2"}
         inset={true}
-        text={"DNS Records"}
+        text={t("dns.dnsRecords")}
         initialPageSize={zone?.records?.length}
         manualPagination={true}
         sorting={sorting}

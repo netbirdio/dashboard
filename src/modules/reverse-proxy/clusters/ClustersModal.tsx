@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useApiCall } from "@/utils/api";
 import { cn, validator } from "@utils/helpers";
 import { GRPC_API_ORIGIN, isNetBirdCloud } from "@/utils/netbird";
@@ -97,6 +98,7 @@ const renderHighlightedCommand = (command: string, highlights: string[]) => {
 };
 
 export const ClustersModal = ({ open, onOpenChange, onFinish }: Props) => {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const [tab, setTab] = useState("domain");
   const [domain, setDomain] = useState("");
@@ -347,7 +349,7 @@ spec:
           <TabsList justify={"start"} className={"px-8"}>
             <TabsTrigger value={"domain"}>
               <GlobeIcon size={14} />
-              Domain
+              {t("common.domain")}
             </TabsTrigger>
             {!isCloudDeploy && (
               <TabsTrigger
@@ -355,7 +357,7 @@ spec:
                 disabled={!domain.trim() || !!domainError}
               >
                 <ListIcon size={14} />
-                DNS Records
+                {t("reverseProxy.dnsRecords")}
               </TabsTrigger>
             )}
             <TabsTrigger
@@ -370,7 +372,7 @@ spec:
           <TabsContent value={"domain"} className={"pb-8"}>
             <div className={"px-8 flex flex-col gap-6"}>
               <div>
-                <Label>Domain</Label>
+                <Label>{t("common.domain")}</Label>
                 <HelpText>
                   Enter a domain name that will be used for your cluster.
                 </HelpText>
@@ -457,9 +459,9 @@ spec:
               </div>
               <CardTable>
                 <CardTable.Header>
-                  <CardTable.HeaderCell width={100}>Type</CardTable.HeaderCell>
-                  <CardTable.HeaderCell>Name</CardTable.HeaderCell>
-                  <CardTable.HeaderCell>Content</CardTable.HeaderCell>
+                  <CardTable.HeaderCell width={100}>{t("common.type")}</CardTable.HeaderCell>
+                  <CardTable.HeaderCell>{t("common.name")}</CardTable.HeaderCell>
+                  <CardTable.HeaderCell>{t("reverseProxy.contentColumn")}</CardTable.HeaderCell>
                 </CardTable.Header>
                 <CardTable.Body>
                   <CardTable.Row>
@@ -575,24 +577,24 @@ spec:
             {tab === "domain" && (
               <>
                 <ModalClose asChild={true}>
-                  <Button variant={"secondary"}>Cancel</Button>
+                  <Button variant={"secondary"}>{t("common.cancel")}</Button>
                 </ModalClose>
                 <Button
                   variant={"primary"}
                   onClick={() => (isCloudDeploy ? goToInstall() : setTab("dns"))}
                   disabled={!domain.trim() || !!domainError}
                 >
-                  Continue
+                  {t("common.continue")}
                 </Button>
               </>
             )}
             {tab === "dns" && (
               <>
                 <Button variant={"secondary"} onClick={() => setTab("domain")}>
-                  Back
+                  {t("common.back")}
                 </Button>
                 <Button variant={"primary"} onClick={goToInstall}>
-                  Continue
+                  {t("common.continue")}
                 </Button>
               </>
             )}
@@ -602,14 +604,14 @@ spec:
                   variant={"secondary"}
                   onClick={() => setTab(isCloudDeploy ? "domain" : "dns")}
                 >
-                  Back
+                  {t("common.back")}
                 </Button>
                 <Button
                   variant={"primary"}
                   onClick={finishSetup}
                   disabled={isCloudDeploy && !proxyRegistered}
                 >
-                  Finish Setup
+                  {t("common.finishSetup")}
                 </Button>
               </>
             )}

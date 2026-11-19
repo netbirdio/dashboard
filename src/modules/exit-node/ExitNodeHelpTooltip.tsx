@@ -2,6 +2,7 @@ import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import { ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   children: React.ReactNode;
@@ -11,6 +12,7 @@ export const ExitNodeHelpTooltip = ({
   children,
   hoverButton = false,
 }: Props) => {
+  const t = useTranslations();
   return (
     <div
       onClick={(e) => {
@@ -35,7 +37,7 @@ export const ExitNodeHelpTooltip = ({
                 Exit Nodes
                 <ExternalLinkIcon size={10} />
               </InlineLink>
-              in our documentation.
+              {t("exitNode.inOurDocumentation")}
             </div>
           </div>
         }

@@ -31,6 +31,7 @@ import React, { useMemo } from "react";
 import useUrlTab from "@/hooks/useUrlTab";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network, NetworkResource, NetworkRouter } from "@/interfaces/Network";
 import PageContainer from "@/layouts/PageContainer";
 import { NetworkInformationSquare } from "@/modules/networks/misc/NetworkInformationSquare";
@@ -71,6 +72,7 @@ export default function NetworkDetailPage() {
 }
 
 function NetworkOverview({ network }: Readonly<{ network: Network }>) {
+  const t = useTranslations();
   const { permission } = usePermissions();
 
   const { data: resources, isLoading: isResourcesLoading } = useFetchApi<
@@ -103,7 +105,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
             <Breadcrumbs>
               <Breadcrumbs.Item
                 href={"/networks"}
-                label={"Networks"}
+                label={t("common.networks")}
                 disabled={!permission.networks.read}
                 icon={<NetworkRoutesIcon size={13} />}
               />
@@ -202,6 +204,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
 }
 
 function NetworkActions() {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { deleteNetwork, openEditNetworkModal, network } = useNetworksContext();
   const router = useRouter();
@@ -229,7 +232,7 @@ function NetworkActions() {
         >
           <div className={"flex gap-3 items-center"}>
             <PencilLineIcon size={14} className={"shrink-0"} />
-            Rename
+            {t("network.rename")}
           </div>
         </DropdownMenuItem>
 
@@ -244,7 +247,7 @@ function NetworkActions() {
         >
           <div className={"flex gap-3 items-center"}>
             <Trash2 size={14} className={"shrink-0"} />
-            Delete
+            {t("common.delete")}
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -253,6 +256,7 @@ function NetworkActions() {
 }
 
 function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
+  const t = useTranslations();
   const isHighlyAvailable = !!(
     network?.routing_peers_count && network?.routing_peers_count >= 2
   );
@@ -289,7 +293,7 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
           label={
             <>
               <ServerIcon size={16} />
-              High Availability
+              {t("network.highAvailability")}
             </>
           }
           value={
@@ -300,13 +304,11 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
                   {isHighlyAvailable ? enabledText : disabledText}
                   {isHighlyAvailable ? (
                     <div className={"inline-flex mt-2"}>
-                      You can add more routing peers to increase the
-                      availability of this network.
+                      {t("network.highAvailabilityHelpActive")}
                     </div>
                   ) : (
                     <div className={"inline-flex mt-2"}>
-                      Go ahead and add more routing peers or groups with routing
-                      peers to enable high availability for this network.
+                      {t("network.highAvailabilityHelpInactive")}
                     </div>
                   )}
                 </div>
@@ -323,7 +325,7 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
                     !isHighlyAvailable ? "bg-yellow-400" : "bg-green-500",
                   )}
                 ></span>
-                {isHighlyAvailable ? "Active" : "Inactive"}
+                {isHighlyAvailable ? "Active" : t("common.inactive")}
                 <HelpCircle size={12} />
               </div>
             </FullTooltip>
@@ -341,14 +343,14 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
             ) : (
               <>
                 <ShieldXIcon size={16} className={"text-red-500"} />
-                No Active Policies
+                {t("network.noActivePolicies")}
               </>
             )
           }
           value={
             policyCount > 0 ? (
               <InlineLink href={"/access-control"}>
-                Go to Policies
+                {t("network.goToPolicies")}
                 <ArrowUpRightIcon size={14} />
               </InlineLink>
             ) : null

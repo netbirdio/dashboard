@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/generic-scim.png";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   IdentityProvider,
   IdentityProviderLog,
@@ -43,6 +44,7 @@ export const GenericSCIM = ({
   image = integrationImage,
   provider = IdentityProvider.GENERIC,
 }: GenericSCIMProps) => {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const [setupModal, setSetupModal] = useState(false);
   const { permission } = usePermissions();
@@ -111,7 +113,7 @@ export const GenericSCIM = ({
             onClick={() => setSetupModal(true)}
           >
             <Repeat size={13} />
-            Connect {name}
+            {t("integrations.connect") + " "}{name}
           </Button>
         }
       >

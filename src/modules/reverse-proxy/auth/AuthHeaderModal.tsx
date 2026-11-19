@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import React, { useMemo, useReducer, useRef } from "react";
 import { useHasChanges } from "@/hooks/useHasChanges";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import type { HeaderAuthConfig } from "@/interfaces/ReverseProxy";
 
 type HeaderType = "basic" | "bearer" | "custom";
@@ -201,6 +202,7 @@ export default function AuthHeaderModal({
   onSave,
   onRemove,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const [items, dispatch] = useReducer(
     headersReducer,
     currentHeaders,
@@ -234,8 +236,8 @@ export default function AuthHeaderModal({
         }}
       >
         <ModalHeader
-          title="HTTP Headers"
-          description="Require specific HTTP headers to access this service."
+          title={t("reverseProxy.httpHeaders")}
+          description={t("reverseProxy.httpHeadersDescription")}
         />
 
         <div className="px-8">
@@ -261,7 +263,7 @@ export default function AuthHeaderModal({
             onClick={() => dispatch({ type: "add" })}
           >
             <PlusIcon size={14} />
-            Add Header
+            {t("reverseProxy.addHeader")}
           </Button>
 
           {items.length > 1 && (
@@ -280,14 +282,14 @@ export default function AuthHeaderModal({
                 </Button>
                 <div className="flex gap-3">
                   <ModalClose asChild>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{t("common.cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant="primary"
                     onClick={handleSave}
                     disabled={!canSave || !hasChanges}
                   >
-                    Save
+                    {t("common.save")}
                   </Button>
                 </div>
               </>
@@ -296,7 +298,7 @@ export default function AuthHeaderModal({
                 <div />
                 <div className="flex gap-3">
                   <ModalClose asChild>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{t("common.cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant="primary"
@@ -331,6 +333,7 @@ function HeaderItemRow({
   onRemove,
   showRemove,
 }: Readonly<HeaderItemRowProps>) {
+  const t = useTranslations();
   const isMaskedRef = useRef(item.existingSecret);
 
   const handleHeaderTypeChange = (value: string) => {
@@ -357,14 +360,14 @@ function HeaderItemRow({
           {showRemove && (
             <Button variant="danger-text" size="xs" onClick={onRemove}>
               <MinusCircleIcon size={12} />
-              Remove
+              {t("common.remove")}
             </Button>
           )}
         </div>
         {item.existingSecret ? (
           <div>
             <Input
-              customPrefix={<span className="min-w-[38px]">Value</span>}
+              customPrefix={<span className="min-w-[38px]">{t("reverseProxy.headerValue")}</span>}
               type="password"
               showPasswordToggle={!isMaskedRef.current}
               value={isMaskedRef.current ? MASKED_VALUE : item.value}
@@ -395,7 +398,7 @@ function HeaderItemRow({
               <div className="flex flex-col gap-2">
                 <Input
                   customPrefix={<UserIcon size={16} />}
-                  placeholder="Username"
+                  placeholder={t("reverseProxy.username")}
                   maxWidthClass="w-full"
                   value={item.username}
                   onChange={(e) => onChange({ username: e.target.value })}
@@ -404,7 +407,7 @@ function HeaderItemRow({
                 />
                 <Input
                   customPrefix={<KeyRoundIcon size={16} />}
-                  placeholder="Password"
+                  placeholder={t("common.password")}
                   maxWidthClass="w-full"
                   value={item.password}
                   onChange={(e) => onChange({ password: e.target.value })}
@@ -432,7 +435,7 @@ function HeaderItemRow({
             {item.type === "custom" && (
               <div className="flex flex-col gap-2">
                 <Input
-                  customPrefix={<span className="min-w-[38px]">Name</span>}
+                  customPrefix={<span className="min-w-[38px]">{t("common.name")}</span>}
                   placeholder="e.g., X-API-Key"
                   maxWidthClass="w-full"
                   value={item.header}
@@ -440,7 +443,7 @@ function HeaderItemRow({
                   {...INPUT_PROPS}
                 />
                 <Input
-                  customPrefix={<span className="min-w-[38px]">Value</span>}
+                  customPrefix={<span className="min-w-[38px]">{t("reverseProxy.headerValue")}</span>}
                   placeholder="e.g., AIiaSyDaGmWKa4JsXZ-HjGw7ISLn_3namBGewQe"
                   maxWidthClass="w-full"
                   value={item.value}

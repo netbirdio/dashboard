@@ -11,9 +11,11 @@ import { useSWRConfig } from "swr";
 import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useAccount } from "@/modules/account/useAccount";
 
 export const DistributorTransferAccountModal = () => {
+  const t = useTranslations();
   const { mspInfo } = useMSP();
   const account = useAccount();
   const { confirm } = useDialog();
@@ -33,7 +35,7 @@ export const DistributorTransferAccountModal = () => {
       title: `Grant access to distributor?`,
       description: `Are you sure you want to grant access? This action cannot be undone.`,
       confirmText: "Grant Access",
-      cancelText: "Cancel",
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
@@ -109,7 +111,7 @@ export const DistributorTransferAccountModal = () => {
             </Paragraph>
             <div className={"flex gap-4 items-center mt-6 w-full"}>
               <Button className={"w-full"} variant={"secondary"} onClick={deny}>
-                Deny
+                {t("common.deny")}
               </Button>
               <Button
                 className={"w-full"}

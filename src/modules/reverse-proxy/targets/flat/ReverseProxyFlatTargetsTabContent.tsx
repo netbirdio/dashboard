@@ -6,6 +6,7 @@ import SkeletonTable, {
 import { ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
 import { Suspense } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   REVERSE_PROXY_DOCS_LINK,
   ReverseProxyFlatTarget,
@@ -27,6 +28,7 @@ export const ReverseProxyFlatTargetsTabContent = ({
   emptyTableTitle = "This network has no services",
   emptyTableDescription = "Create resources and expose services securely through NetBird's reverse proxy.",
 }: Props) => {
+  const t = useTranslations();
   return (
     <div className={"pb-10 px-8"}>
       <div className={"flex justify-between items-center mb-5"}>
@@ -34,7 +36,7 @@ export const ReverseProxyFlatTargetsTabContent = ({
           <Paragraph>
             Expose services securely through NetBird&apos;s reverse proxy.{" "}
             <InlineLink href={REVERSE_PROXY_DOCS_LINK} target={"_blank"}>
-              Learn more
+              {t("common.learnMore")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>

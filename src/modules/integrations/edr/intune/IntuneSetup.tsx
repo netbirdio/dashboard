@@ -34,6 +34,7 @@ import integrationImage from "@/assets/integrations/intune.png";
 import FullTooltip from "@/components/FullTooltip";
 import HelpText from "@/components/HelpText";
 import { PeerGroupSelector } from "@/components/PeerGroupSelector";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import { IntuneIntegration } from "@/interfaces/EDR";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -77,6 +78,7 @@ type ModalProps = {
 };
 
 export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const intuneRequest = useApiCall<IntuneIntegration>(
     "/integrations/edr/intune",
@@ -194,7 +196,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             }
           >
             <Shield size={16} />
-            Required Permissions
+            {translate("common.requiredPermissions")}
           </div>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
             Ensure that you have an{" "}
@@ -316,7 +318,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             <Steps.Step step={4} line={false}>
               <p className={"font-normal"}>
                 Click <Mark>Grant admin consent for Default Directory</Mark> and
-                click <Mark>Yes</Mark>
+                click <Mark>{translate("common.yes")}</Mark>
               </p>
               <Lightbox image={azureGrantAdmin} />
             </Steps.Step>
@@ -344,13 +346,13 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             </Steps.Step>
             <Steps.Step step={3}>
               <p className={"font-normal"}>
-                Add <Mark copy>NetBird</Mark> as the description and click{" "}
-                <Mark>Add</Mark>
+                {translate("common.add") + " "}<Mark copy>NetBird</Mark> as the description and click{" "}
+                <Mark>{translate("common.add")}</Mark>
               </p>
             </Steps.Step>
             <Steps.Step step={4} line={false}>
               <p className={"font-normal"}>
-                Copy the <Mark>Value</Mark> and paste it here
+                Copy the <Mark>{translate("integrations.headerValue")}</Mark> and paste it here
               </p>
             </Steps.Step>
           </Steps>
@@ -394,7 +396,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             </Steps.Step>
             <Steps.Step step={2} line={false}>
               <p className={"font-normal"}>
-                Select <Mark>NetBird</Mark> application in overview page and
+                {translate("common.select") + " "}<Mark>NetBird</Mark> application in overview page and
                 enter your <Mark>Application (client) ID</Mark> and{" "}
                 <Mark>Directory (tenant) ID</Mark>
               </p>
@@ -435,7 +437,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4 mb-3"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <FolderGit2 size={16} />
-            Peer Approval
+            {translate("common.peerApproval")}
           </p>
 
           <HelpText className={"max-w-lg mt-2"}>
@@ -501,7 +503,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             onClick={() => setStep(step - 1)}
           >
             <IconArrowLeft size={16} />
-            Back
+            {translate("common.back")}
           </Button>
         )}
         {step >= 0 && step < maxSteps && (
@@ -511,7 +513,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             disabled={isDisabled}
             onClick={() => setStep(step + 1)}
           >
-            {step == 0 ? "Get Started" : "Continue"}
+            {step == 0 ? "Get Started" : translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -523,7 +525,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             onClick={connect}
           >
             <Repeat size={16} />
-            Connect
+            {translate("integrations.connect")}
           </Button>
         )}
       </ModalFooter>

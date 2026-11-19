@@ -29,6 +29,7 @@ import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DNS_ZONE_DOCS_LINK, DNSZone } from "@/interfaces/DNS";
 import { useDNSZones } from "@/modules/dns/zones/DNSZonesProvider";
 import DNSRecordsTable from "@/modules/dns/zones/records/DNSRecordsTable";
@@ -116,6 +117,7 @@ export default function DNSZonesTable({
   isGroupPage = false,
   distributionGroups,
 }: Props) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { groups } = useGroups();
@@ -207,7 +209,7 @@ export default function DNSZonesTable({
     <DataTable
       headingTarget={headingTarget}
       isLoading={isLoading}
-      text={"DNS Zones"}
+      text={translate("dns.dnsZones")}
       sorting={sorting}
       setSorting={setSorting}
       columns={DNSZonesColumns}
@@ -222,7 +224,7 @@ export default function DNSZonesTable({
       keepStateInLocalStorage={!isGroupPage}
       initialPageSize={25}
       showResetFilterButton={false}
-      searchPlaceholder={"Search by domain, ip, content or group..."}
+      searchPlaceholder={translate("dns.searchZonePlaceholder")}
       aboveTable={(table) => (
         <TableFilterChips table={table} filters={filterDefs} />
       )}
@@ -247,10 +249,8 @@ export default function DNSZonesTable({
             icon={<DNSZoneIcon className={"fill-nb-gray-200"} size={24} />}
             className={"py-4"}
             contentClassName={"max-w-lg"}
-            title={"This group is not used within any zones yet"}
-            description={
-              "Assign this group as a distribution group in your zones to see them listed here."
-            }
+            title={translate("dns.noZonesGroupTitle")}
+            description={translate("dns.noZonesGroupDesc")}
           >
             <div className={"gap-x-4 flex items-center justify-center mt-4"}>
               <AddZoneButton distributionGroups={distributionGroups} />
@@ -266,9 +266,7 @@ export default function DNSZonesTable({
               />
             }
             title={"Create New Zone"}
-            description={
-              "It looks like you don't have any zones. Control domain name resolution for your network by adding a zone."
-            }
+            description={translate("dns.noZonesGetStartedDesc")}
             button={
               <div className={"gap-x-4 flex items-center justify-center"}>
                 <AddZoneButton distributionGroups={distributionGroups} />
@@ -278,7 +276,7 @@ export default function DNSZonesTable({
               <>
                 Learn more about
                 <InlineLink href={DNS_ZONE_DOCS_LINK} target={"_blank"}>
-                  DNS Zones
+                  {translate("dns.dnsZones")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </>
@@ -329,6 +327,7 @@ type AddZoneButtonProps = {
 };
 
 const AddZoneButton = ({ distributionGroups }: AddZoneButtonProps) => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { openZoneModal } = useDNSZones();
 
@@ -341,7 +340,7 @@ const AddZoneButton = ({ distributionGroups }: AddZoneButtonProps) => {
       data-testid="add-dns-zone"
     >
       <PlusCircle size={16} />
-      Add Zone
+      {t("dns.addZone")}
     </Button>
   );
 };

@@ -14,6 +14,7 @@ import { ExternalLinkIcon, GlobeIcon } from "lucide-react";
 import * as React from "react";
 import { Callout } from "@components/Callout";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   REVERSE_PROXY_CLUSTERS_DOCS_LINK,
   REVERSE_PROXY_DOMAIN_VERIFICATION_LINK,
@@ -39,6 +40,7 @@ export const CustomDomainVerificationModal = ({
   onStartVerification,
   targetCluster,
 }: Props) => {
+  const t = useTranslations();
   const { domains } = useReverseProxies();
 
   const handleStartVerification = () => {
@@ -59,7 +61,7 @@ export const CustomDomainVerificationModal = ({
         <GradientFadedBackground />
         <ModalHeader
           icon={<GlobeIcon size={20} />}
-          title={"Verify Domain"}
+          title={t("common.verifyDomain")}
           description={domain.domain}
           color={"netbird"}
         />

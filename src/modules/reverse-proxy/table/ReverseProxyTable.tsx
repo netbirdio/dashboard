@@ -30,6 +30,7 @@ import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   isL4Mode,
   REVERSE_PROXY_DOCS_LINK,
@@ -108,6 +109,7 @@ type Props = {
 };
 
 export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { permission } = usePermissions();
@@ -181,7 +183,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
       headingTarget={headingTarget}
       isLoading={isLoading}
       inset={false}
-      text={"Reverse Proxy"}
+      text={t("common.reverseProxy")}
       sorting={sorting}
       setSorting={setSorting}
       columns={ReverseProxyColumns}
@@ -230,14 +232,14 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
               data-testid={"add-service"}
             >
               <PlusCircle size={16} />
-              Add Service
+              {t("reverseProxy.addServiceBtn")}
             </Button>
           }
           learnMore={
             <>
               Learn more about
               <InlineLink href={REVERSE_PROXY_DOCS_LINK} target={"_blank"}>
-                Services
+                {t("common.services")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </>
@@ -255,7 +257,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
               data-testid={"add-service"}
             >
               <PlusCircle size={16} />
-              Add Service
+              {t("reverseProxy.addServiceBtn")}
             </Button>
           )}
         </>

@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { AccountMFAInfoModal } from "@/cloud/mfa/AccountMFAInfoModal";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 const config = loadConfig();
 
@@ -20,6 +21,7 @@ export interface AccountMFA {
 }
 
 export const AccountMFASettings = () => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const {
     data: accountMfa,
@@ -83,7 +85,7 @@ export const AccountMFASettings = () => {
     } for your account`;
 
     notify({
-      title: "Multi-Factor Authentication (MFA)",
+      title: t("common.mfa"),
       description:
         rememberBrowser != undefined
           ? rememberBrowserDescription
@@ -161,7 +163,7 @@ export const AccountMFASettings = () => {
           label={
             <>
               <ShieldCheckIcon size={15} />
-              Multi-Factor Authentication (MFA)
+              {t("common.mfa")}
             </>
           }
           helpText={

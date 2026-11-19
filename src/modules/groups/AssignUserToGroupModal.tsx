@@ -11,6 +11,7 @@ import * as React from "react";
 import { useMemo, useState } from "react";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { DataTable } from "@/components/table/DataTable";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { User } from "@/interfaces/User";
@@ -73,6 +74,7 @@ export const AssignUserToGroupModalContent = ({
   showClose = true,
   buttonText = "Assign Users",
 }: ContentProps) => {
+  const translate = useTranslations();
   const { data: users, isLoading } = useFetchApi<User[]>(
     "/users?service_user=false",
   );
@@ -103,7 +105,7 @@ export const AssignUserToGroupModalContent = ({
         rowSelection={selectedRows}
         setRowSelection={setSelectedRows}
         onRowClick={(row) => row.toggleSelected()}
-        text={"Users"}
+        text={translate("common.users")}
         resetRowSelectionOnSearch={false}
         uniqueKey={group?.id ?? group?.name}
         sorting={sorting}
@@ -113,7 +115,7 @@ export const AssignUserToGroupModalContent = ({
         data={data}
         isLoading={isLoading}
         tableCellClassName={"!py-1 scale-[95%]"}
-        searchPlaceholder={"Search by name, email or role..."}
+        searchPlaceholder={translate("groups.searchByNameEmailOrRole")}
         searchClassName={"w-[350px]"}
         minimal={false}
         columnVisibility={{}}

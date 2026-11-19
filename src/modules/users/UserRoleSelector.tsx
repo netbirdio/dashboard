@@ -25,6 +25,7 @@ import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Role, User } from "@/interfaces/User";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 
@@ -196,6 +197,7 @@ export function UserRoleSelector({
   side = "bottom",
   align = "start",
 }: Readonly<MultiSelectProps>) {
+  const translate = useTranslations();
   const [inputRef, { width }] = useElementSize<
     HTMLButtonElement | HTMLDivElement
   >();
@@ -205,13 +207,13 @@ export function UserRoleSelector({
   const toggle = async (item: Role) => {
     if (item === Role.Owner) {
       let ok = await confirm({
-        title: "Transfer Ownership?",
+        title: translate("users.transferOwnership"),
         type: "warning",
         description: (
           <div className={"inline-block"}>
-            This action will transfer the{" "}
-            <span className={"text-netbird inline font-medium"}>Owner</span>{" "}
-            role to{" "}
+            {translate("users.transferOwnershipPrefix")}{" "}
+            <span className={"text-netbird inline font-medium"}>{translate("users.owner")}</span>{" "}
+            {translate("users.transferOwnershipTo")}{" "}
             {currentUser ? (
               <span className={"text-netbird inline font-medium"}>
                 {currentUser.name}
@@ -219,10 +221,9 @@ export function UserRoleSelector({
             ) : (
               "this user"
             )}{" "}
-            and leave you with the{" "}
-            <span className={"text-netbird inline font-medium"}>Admin</span>{" "}
-            role. This action can only be undone if the new owner transfers the
-            role back to you.
+            {translate("users.transferOwnershipSuffix1")}{" "}
+            <span className={"text-netbird inline font-medium"}>{translate("users.admin")}</span>{" "}
+            {translate("users.transferOwnershipSuffix2")}
           </div>
         ),
       });

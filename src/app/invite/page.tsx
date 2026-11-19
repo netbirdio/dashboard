@@ -17,6 +17,7 @@ import dayjs from "dayjs";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { UserInviteInfo } from "@/interfaces/User";
 
 export default function InviteAcceptPage() {
@@ -28,6 +29,7 @@ export default function InviteAcceptPage() {
 }
 
 function InviteAcceptContent() {
+  const t = useTranslations();
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams?.get("token");
@@ -112,7 +114,7 @@ function InviteAcceptContent() {
               </div>
             </div>
             <h1 className="text-2xl font-semibold text-white mb-2">
-              Too Many Requests
+              {t("invite.tooManyRequests")}
             </h1>
             <Paragraph className="text-nb-gray-400 text-base">
               You&apos;ve made too many requests. Please wait a moment and try
@@ -123,7 +125,7 @@ function InviteAcceptContent() {
               className="mt-6"
               onClick={() => window.location.reload()}
             >
-              Try Again
+              {t("invite.tryAgain")}
             </Button>
           </div>
         </div>
@@ -150,7 +152,7 @@ function InviteAcceptContent() {
             className="mt-6"
             onClick={() => router.push("/")}
           >
-            Go to Login
+            {t("common.goToLogin")}
           </Button>
         </div>
       </div>
@@ -178,7 +180,7 @@ function InviteAcceptContent() {
             className="mt-6"
             onClick={() => router.push("/")}
           >
-            Go to Login
+            {t("common.goToLogin")}
           </Button>
         </div>
       </div>
@@ -206,7 +208,7 @@ function InviteAcceptContent() {
             className="mt-6"
             onClick={() => router.push("/")}
           >
-            Go to Login
+            {t("common.goToLogin")}
           </Button>
         </div>
       </div>
@@ -247,7 +249,7 @@ function InviteAcceptContent() {
             <div>
               <Input
                 type="password"
-                placeholder="Password"
+                placeholder={t("common.password")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 customPrefix={
@@ -268,7 +270,7 @@ function InviteAcceptContent() {
             <div>
               <Input
                 type="password"
-                placeholder="Confirm Password"
+                placeholder={t("common.confirmPassword")}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 customPrefix={
@@ -277,7 +279,7 @@ function InviteAcceptContent() {
               />
               {confirmPassword && !passwordsMatch && (
                 <p className="text-xs text-red-500 mt-1">
-                  Passwords do not match
+                  {t("invite.passwordsDoNotMatch")}
                 </p>
               )}
             </div>
@@ -294,7 +296,7 @@ function InviteAcceptContent() {
               className="w-full"
               disabled={!canSubmit}
             >
-              {submitting ? "Creating Account..." : "Create Account"}
+              {submitting ? "Creating Account..." : t("invite.createAccount")}
             </Button>
           </form>
         </div>

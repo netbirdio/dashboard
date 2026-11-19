@@ -9,6 +9,7 @@ import {
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { trim } from "lodash";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 
 type Props = {
@@ -24,6 +25,7 @@ export const CreateGroupNameModal = ({
   onSuccess,
   groups,
 }: Props) => {
+  const t = useTranslations();
   const [name, setName] = useState("");
   const [error, setError] = useState("");
 
@@ -58,13 +60,13 @@ export const CreateGroupNameModal = ({
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent maxWidthClass={"max-w-md"}>
         <ModalHeader
-          title={"Create Group"}
+          title={t("controlCenter.create")}
           description={"Set an easily identifiable name for your group."}
           color={"blue"}
         />
         <div className={"p-default flex flex-col gap-4"}>
           <Input
-            placeholder={"e.g., Developers"}
+            placeholder={t("controlCenter.namePlaceholder")}
             value={name}
             onChange={handleNameChange}
             error={error}
@@ -75,7 +77,7 @@ export const CreateGroupNameModal = ({
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
               <Button variant={"secondary"} className={"w-full"}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </ModalClose>
             <Button
@@ -85,7 +87,7 @@ export const CreateGroupNameModal = ({
               disabled={isDisabled}
               type={"submit"}
             >
-              Save
+              {t("common.save")}
             </Button>
           </div>
         </ModalFooter>

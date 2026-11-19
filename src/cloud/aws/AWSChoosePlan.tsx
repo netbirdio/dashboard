@@ -13,6 +13,7 @@ import Skeleton from "react-loading-skeleton";
 import AWSMarketplaceLogo from "@/assets/integrations/aws-marketplace.svg";
 import { useBilling } from "@/contexts/BillingProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Currency, Plan } from "@/interfaces/Plan";
 import { PlanTier } from "@/interfaces/Subscription";
 import { PlanCard, PlanLoadingSkeleton } from "@/modules/billing/PlanCard";
@@ -22,6 +23,7 @@ type Props = {
 };
 
 export const AWSChoosePlan = ({ onSuccess }: Props) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(true);
   const {
     plans,
@@ -142,16 +144,12 @@ export const AWSChoosePlan = ({ onSuccess }: Props) => {
                   >
                     {hasActiveStripePlan ? (
                       <>
-                        It seems you already have an active subscription with
-                        us. In order to use AWS as a billing provider, please
-                        contact our support team.
+                        {t("aws.activeStripePlan")}
                       </>
                     ) : (
                       <>
-                        With our flexible pricing, you are only billed for
-                        active users and active peers through your AWS account.
-                        Please choose the plan that fits your needs. <br />
-                        You can always change your plan later.
+                        {t("aws.flexiblePricing") + " "}<br />
+                        {t("aws.changePlanLater")}
                       </>
                     )}
                   </Paragraph>
@@ -195,7 +193,7 @@ export const AWSChoosePlan = ({ onSuccess }: Props) => {
                       >
                         <Button variant={"primary"} className={"w-full"}>
                           <MailIcon size={15} className={"shrink-0"} />
-                          Get Support
+                          {t("aws.getSupport")}
                         </Button>
                       </a>
                       <Button
@@ -203,7 +201,7 @@ export const AWSChoosePlan = ({ onSuccess }: Props) => {
                         className={"w-full"}
                         onClick={onSuccess}
                       >
-                        Continue to Dashboard
+                        {t("aws.continueDashboard")}
                       </Button>
                     </div>
                   )}

@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import * as React from "react";
 import { useBilling } from "@/contexts/BillingProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { AccountUsageStats } from "@/interfaces/AccountUsageStats";
 import { Currency, Plan, Price } from "@/interfaces/Plan";
 import { PlanIcon } from "@/modules/billing/PlanIcon";
@@ -40,6 +41,7 @@ export const PlanCurrentPlan = ({
   currentPlanPrice,
   aws = false,
 }: Props) => {
+  const translate = useTranslations();
   const { visitCustomerPortal } = useBilling();
 
   return (
@@ -141,7 +143,7 @@ export const PlanCurrentPlan = ({
               ) : (
                 <span className={"text-nb-gray-300"}>
                   {" "}
-                  {stats?.active_users == 1 ? "User" : "Users"}
+                  {stats?.active_users == 1 ? translate("billing.user") : translate("common.users")}
                 </span>
               )}
             </div>
@@ -156,7 +158,7 @@ export const PlanCurrentPlan = ({
 
               {isTrial ? (
                 <span className={"text-nb-gray-300"}>
-                  {stats?.active_peers == 1 ? ` Peer` : ` Peers`}
+                  {stats?.active_peers == 1 ? " " + translate("billing.peer") : " " + translate("common.peers")}
                 </span>
               ) : (
                 <span className={"text-nb-gray-300"}>

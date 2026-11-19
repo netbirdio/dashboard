@@ -18,6 +18,7 @@ import Separator from "@components/Separator";
 import { validator } from "@utils/helpers";
 import { ExternalLinkIcon, Power, ScanSearch } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DNS_ZONE_DOCS_LINK, DNSZone } from "@/interfaces/DNS";
 import { useDNSZones } from "@/modules/dns/zones/DNSZonesProvider";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -77,6 +78,7 @@ export function DNSZoneModalContent({
   zone,
   initialDistributionGroups,
 }: Readonly<ModalProps>) {
+  const t = useTranslations();
   const { createZone, updateZone } = useDNSZones();
   const [domain, setDomain] = useState(zone?.domain ?? "");
   const [enabled, setEnabled] = useState<boolean>(zone?.enabled ?? true);
@@ -130,10 +132,8 @@ export function DNSZoneModalContent({
     <ModalContent flow="dns_zone" maxWidthClass={"max-w-2xl"}>
       <ModalHeader
         icon={<DNSZoneIcon size={20} className={"fill-netbird"} />}
-        title={zone ? "Update DNS Zone" : "Add DNS Zone"}
-        description={
-          "Use a zone to control domain name resolution for your network."
-        }
+        title={zone ? t("dns.updateDNSZone") : t("dns.addDNSZone")}
+        description={t("dns.updateZoneDescription")}
         color={"netbird"}
       />
 
@@ -141,15 +141,14 @@ export function DNSZoneModalContent({
 
       <div className={"px-8 pt-6 pb-7 flex-col flex gap-6"}>
         <div>
-          <Label>Domain</Label>
+          <Label>{t("common.domain")}</Label>
           <HelpText>
-            Enter a domain for this zone (e.g., company.internal,
-            intra.example.com)
+            {t("dns.domainHelp")}
           </HelpText>
           <Input
             disabled={!!zone}
             readOnly={!!zone}
-            placeholder={"e.g., company.internal"}
+            placeholder={t("dns.domainPlaceholder")}
             errorTooltip={false}
             errorTooltipPosition={"top"}
             error={domainError}
@@ -159,10 +158,9 @@ export function DNSZoneModalContent({
           />
         </div>
         <div className={"mb-2"}>
-          <Label>Distribution Groups</Label>
+          <Label>{t("dns.distributionGroups")}</Label>
           <HelpText>
-            Advertise this zone and its records to peers that belong to the
-            following groups
+            {t("dns.zoneGroupsHelp")}
           </HelpText>
           <PeerGroupSelector
             onChange={setGroups}
@@ -180,7 +178,7 @@ export function DNSZoneModalContent({
           label={
             <>
               <ScanSearch size={15} />
-              Enable Search Domains
+              {t("dns.enableSearchDomains")}
             </>
           }
           helpText={
@@ -195,7 +193,7 @@ export function DNSZoneModalContent({
           label={
             <>
               <Power size={15} />
-              Enable DNS Zone
+              {t("dns.enableDNSZone")}
             </>
           }
           helpText={"Use this switch to enable or disable the dns zone."}
@@ -207,14 +205,14 @@ export function DNSZoneModalContent({
           <Paragraph className={"text-sm mt-auto"}>
             Learn more about
             <InlineLink href={DNS_ZONE_DOCS_LINK} target={"_blank"}>
-              DNS Zones
+              {t("dns.dnsZones")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("common.cancel")}</Button>
           </ModalClose>
           <Button
             variant={"primary"}
@@ -222,7 +220,7 @@ export function DNSZoneModalContent({
             disabled={!canUpdateOrCreate}
             data-testid="submit-dns-zone"
           >
-            {zone ? "Save Changes" : "Add Zone"}
+            {zone ? t("common.saveChanges") : t("dns.addZone")}
           </Button>
         </div>
       </ModalFooter>

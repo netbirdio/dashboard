@@ -13,6 +13,7 @@ import {
 import * as React from "react";
 import { TenantGroup } from "@/cloud/msp/interfaces/Tenant";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Role } from "@/interfaces/User";
 import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
@@ -31,6 +32,7 @@ export const MSPTenantPermissionsTab = ({
   tenantGroups,
   setTenantGroups,
 }: Props) => {
+  const t = useTranslations();
   const { users } = useUsers();
 
   const handleGroupRemove = (group: Group) => {
@@ -71,7 +73,7 @@ export const MSPTenantPermissionsTab = ({
                 className={"pl-3"}
               >
                 <PlusIcon size={14} />
-                Add Group
+                {t("common.addGroup")}
               </Button>
             }
             onChange={onGroupsChange}

@@ -3,6 +3,7 @@ import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { useRouter } from "next/navigation";
 import React from "react";
 import CircleIcon from "@/assets/icons/CircleIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 
 type Props = {
@@ -10,6 +11,7 @@ type Props = {
   group: Group;
 };
 export default function GroupsNameCell({ active, group }: Readonly<Props>) {
+  const t = useTranslations();
   const router = useRouter();
   return (
     <div className={""}>
@@ -25,7 +27,7 @@ export default function GroupsNameCell({ active, group }: Readonly<Props>) {
 
         <div
           className={"flex flex-col min-w-0 cursor-pointer"}
-          aria-label={`View details of group ${group.name}`}
+          aria-label={t("groups.viewGroupDetails", { name: group.name })}
         >
           <div className={"font-medium flex gap-2 items-center justify-center"}>
             <TextWithTooltip text={group?.name} maxChars={50} />

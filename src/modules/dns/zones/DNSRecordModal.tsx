@@ -24,6 +24,7 @@ import { validator } from "@utils/helpers";
 import { Address4, Address6 } from "ip-address";
 import { ClockIcon, ExternalLinkIcon, GlobeIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   DNS_RECORDS_DOCS_LINK,
   DNSRecord,
@@ -86,6 +87,7 @@ export function DNSRecordModalContent({
   zone,
   record,
 }: Readonly<ModalProps>) {
+  const t = useTranslations();
   const { addRecord, updateRecord } = useDNSZones();
 
   const getInitialDomain = () => {
@@ -169,7 +171,7 @@ export function DNSRecordModalContent({
   return (
     <ModalContent flow="dns_record" maxWidthClass={"max-w-xl"}>
       <ModalHeader
-        title={record ? "Update DNS Record" : "Add DNS Record"}
+        title={record ? t("dns.updateDNSRecord") : t("dns.addDNSRecord")}
         description={
           record
             ? `Update record of '${zone.domain}' zone`
@@ -181,9 +183,9 @@ export function DNSRecordModalContent({
       <div className={"px-8 py-6 flex flex-col gap-6"}>
         <div className={"flex items-center justify-between gap-10"}>
           <div>
-            <Label>Record Type</Label>
+            <Label>{t("dns.recordType")}</Label>
             <HelpText className={"max-w-sm"}>
-              Select the type of record you want to add
+              {t("dns.recordTypeHelp")}
             </HelpText>
           </div>
           <div className={"min-w-[130px]"}>
@@ -198,7 +200,7 @@ export function DNSRecordModalContent({
                 className="w-full pl-4"
                 data-testid={"dns-record-type-select"}
               >
-                <SelectValue placeholder="Select type..." />
+                <SelectValue placeholder={t("dns.selectType")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="A">A</SelectItem>
@@ -209,15 +211,14 @@ export function DNSRecordModalContent({
           </div>
         </div>
         <div className={"w-full mb-3"}>
-          <Label>Hostname</Label>
+          <Label>{t("common.hostname")}</Label>
           <HelpText>
-            Enter a subdomain, wildcard or leave empty to use the primary
-            domain.
+            {t("dns.hostnameHelp")}
           </HelpText>
           <div className={"flex w-full"}>
             <Input
               autoFocus={true}
-              placeholder={"E.g., dev, * or leave empty for primary domain"}
+              placeholder={t("dns.hostnamePlaceholder")}
               errorTooltip={true}
               errorTooltipPosition={"bottom"}
               error={domainError}
@@ -240,7 +241,7 @@ export function DNSRecordModalContent({
         <div className={"flex gap-4 items-start mb-3"}>
           {type === "A" && (
             <div className={"flex-1"}>
-              <Label>IPv4 Address</Label>
+              <Label>{t("dns.ipv4Address")}</Label>
               <Input
                 className={"mt-1.5 font-mono text-[0.82rem]"}
                 placeholder={"192.168.1.1"}
@@ -257,7 +258,7 @@ export function DNSRecordModalContent({
 
           {type === "AAAA" && (
             <div className={"flex-1"}>
-              <Label>IPv6 Address</Label>
+              <Label>{t("dns.ipv6Address")}</Label>
               <Input
                 className={"mt-1.5 font-mono text-[0.82rem]"}
                 placeholder={"2001:0db8:85a3::8a2e:0370:7334"}
@@ -274,10 +275,10 @@ export function DNSRecordModalContent({
 
           {type === "CNAME" && (
             <div className={"flex-1"}>
-              <Label>Target Domain</Label>
+              <Label>{t("dns.targetDomain")}</Label>
               <Input
                 className={"mt-1.5"}
-                placeholder={"e.g., example.com or intra.example.com"}
+                placeholder={t("dns.cnamePlaceholder")}
                 errorTooltip={false}
                 errorTooltipPosition={"top"}
                 error={cnameError}
@@ -290,7 +291,7 @@ export function DNSRecordModalContent({
           )}
 
           <div className={"min-w-[200px]"}>
-            <Label>TTL (Time to Live)</Label>
+            <Label>{t("dns.ttl")}</Label>
             <div className={"mt-2.5"}>
               <Select value={ttl} onValueChange={(v) => setTtl(v)}>
                 <SelectTrigger
@@ -299,7 +300,7 @@ export function DNSRecordModalContent({
                 >
                   <div className={"flex items-center gap-2"}>
                     <ClockIcon size={14} className={"text-nb-gray-300"} />
-                    <SelectValue placeholder="Select TTL..." />
+                    <SelectValue placeholder={t("dns.selectTTL")} />
                   </div>
                 </SelectTrigger>
                 <SelectContent>
@@ -325,7 +326,7 @@ export function DNSRecordModalContent({
           <Paragraph className={"text-sm mt-auto"}>
             Learn more about
             <InlineLink href={DNS_RECORDS_DOCS_LINK} target={"_blank"}>
-              DNS Records
+              {t("dns.dnsRecords")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
@@ -334,7 +335,7 @@ export function DNSRecordModalContent({
         <div className={"flex gap-3 w-full justify-end"}>
           <>
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>{t("common.cancel")}</Button>
             </ModalClose>
             <Button
               variant={"primary"}
@@ -342,7 +343,7 @@ export function DNSRecordModalContent({
               disabled={!canUpdateOrCreate}
               data-testid="submit-dns-record"
             >
-              {record ? "Save Changes" : "Add Record"}
+              {record ? t("common.saveChanges") : "Add Record"}
             </Button>
           </>
         </div>

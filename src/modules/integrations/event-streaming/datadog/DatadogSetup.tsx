@@ -26,6 +26,7 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import datadogLogo from "@/assets/integrations/datadog.png";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { EventStream } from "@/interfaces/EventStream";
 import {
   DatadogApiKeysPage,
@@ -61,6 +62,7 @@ type ModalProps = {
 };
 
 export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
 
   const integrationRequest = useApiCall<EventStream>(
@@ -203,7 +205,7 @@ export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
               <p className={"font-normal"}>
                 Give it a descriptive name like{" "}
                 <Mark copy>NetBird Activity Events</Mark>
-                and click <Mark>Create Key</Mark>
+                and click <Mark>{t("common.createKey")}</Mark>
                 <Tooltip>
                   <TooltipTrigger>
                     <InfoIcon
@@ -250,7 +252,7 @@ export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
             disabled={!apiUrlEntered}
             onClick={() => setStep(2)}
           >
-            Continue
+            {t("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -262,7 +264,7 @@ export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
               onClick={() => setStep(1)}
             >
               <IconArrowLeft size={16} />
-              Back
+              {t("common.back")}
             </Button>
             <Button
               variant={"primary"}
@@ -271,7 +273,7 @@ export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
               onClick={connect}
             >
               <Repeat size={16} />
-              Connect
+              {t("integrations.connect")}
             </Button>
           </>
         )}

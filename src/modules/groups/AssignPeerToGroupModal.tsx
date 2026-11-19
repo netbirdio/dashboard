@@ -16,6 +16,7 @@ import { useSWRConfig } from "swr";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { DataTable } from "@/components/table/DataTable";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group, GroupPeer } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { EditGroupNameModal } from "@/modules/groups/EditGroupNameModal";
@@ -90,6 +91,7 @@ export const AssignGroupToPeerModalContent = ({
   buttonText = "Confirm Changes",
   selectInitialPeers = true,
 }: ContentProps) => {
+  const translate = useTranslations();
   const { data: peers, isLoading } = useFetchApi<Peer[]>("/peers");
   const { users } = useUsers();
   const { mutate } = useSWRConfig();
@@ -187,7 +189,7 @@ export const AssignGroupToPeerModalContent = ({
           onSuccess && onSuccess(g);
         })
         .catch(() => {}),
-      loadingMessage: "Updating group...",
+      loadingMessage: translate("groups.groupUpdating"),
     });
   };
 
@@ -265,7 +267,7 @@ export const AssignGroupToPeerModalContent = ({
           rowSelection={selectedRows}
           setRowSelection={setSelectedRows}
           onRowClick={(row) => row.toggleSelected()}
-          text={"Peers"}
+          text={translate("common.peers")}
           resetRowSelectionOnSearch={false}
           uniqueKey={group?.id ?? group?.name}
           sorting={sorting}

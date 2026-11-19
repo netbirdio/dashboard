@@ -7,6 +7,7 @@ import { cn } from "@utils/helpers";
 import { ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { SetupModalContent } from "@/modules/setup-netbird-modal/SetupModal";
@@ -24,6 +25,7 @@ export const OnboardingTestResource = ({
   onNext,
   onTroubleshootingClick,
 }: Props) => {
+  const translate = useTranslations();
   const [open, setOpen] = useState(false);
 
   const isSubnet = resource?.type === "subnet";
@@ -95,7 +97,7 @@ export const OnboardingTestResource = ({
 
       <Modal open={open} onOpenChange={setOpen}>
         <ModalContent>
-          <SetupModalContent title={"Install NetBird"} />
+          <SetupModalContent title={translate("onboarding.installNetBird")} />
         </ModalContent>
       </Modal>
     </div>

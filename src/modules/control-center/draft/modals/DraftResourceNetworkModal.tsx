@@ -11,6 +11,7 @@ import { useReactFlow } from "@xyflow/react";
 import { NetworkIcon, PlusCircle } from "lucide-react";
 import * as React from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network } from "@/interfaces/Network";
 import { isFrameNode } from "@/modules/control-center/utils/helpers";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
@@ -49,6 +50,7 @@ const PickerContent = ({
   resourceNodeId: string;
   onClose: () => void;
 }) => {
+  const translate = useTranslations();
   const reactFlow = useReactFlow();
   const { networks } = useControlCenterData();
   const {
@@ -183,7 +185,7 @@ const PickerContent = ({
             onChange={setSelected}
             options={options}
             showSearch={true}
-            searchPlaceholder={"Search networks..."}
+            searchPlaceholder={translate("controlCenter.searchNetworks")}
             placeholder={"Select or create a network..."}
             maxHeight={190}
             // Pinned below the options so scroll or search can't hide it.
@@ -211,7 +213,7 @@ const PickerContent = ({
         <ModalFooter className={"items-center"} separator={false}>
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>{translate("common.cancel")}</Button>
             </ModalClose>
             <Button variant={"primary"} disabled={!selected} onClick={save}>
               Assign Network

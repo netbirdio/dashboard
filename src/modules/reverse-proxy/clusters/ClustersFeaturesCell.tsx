@@ -1,6 +1,7 @@
 import Badge from "@components/Badge";
 import FullTooltip from "@components/FullTooltip";
 import { Lock, ShieldAlert, SlidersHorizontal, Globe } from "lucide-react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { ReverseProxyCluster } from "@/interfaces/ReverseProxy";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 
@@ -20,6 +21,7 @@ type Feature = {
 // backend distinguishes "unsupported" from "not yet reported" via
 // nullable booleans, but visually both mean "not available here").
 export default function ClustersFeaturesCell({ cluster }: Readonly<Props>) {
+  const t = useTranslations();
   const features: Feature[] = [];
   if (cluster.supports_custom_ports) {
     features.push({
@@ -55,7 +57,7 @@ export default function ClustersFeaturesCell({ cluster }: Readonly<Props>) {
         <>
           Lets you publish services that are only reachable from peers in your
           NetBird network. Required for{" "}
-          <span className={"font-medium text-white"}>NetBird-Only Access</span>{" "}
+          <span className={"font-medium text-white"}>{t("reverseProxy.netBirdOnlyAccess")}</span>{" "}
           and{" "}
           <span className={"font-medium text-white"}>Proxy Cluster</span>{" "}
           target types.

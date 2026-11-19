@@ -22,6 +22,7 @@ import { useCallback, useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { ReverseProxyFlatTarget } from "@/interfaces/ReverseProxy";
 import ReverseProxyArrowCell from "@/modules/reverse-proxy/table/ReverseProxyArrowCell";
 import ReverseProxyAccessControlCell from "@/modules/reverse-proxy/table/ReverseProxyAccessControlCell";
@@ -156,6 +157,7 @@ export const ReverseProxyFlatTargetsTable = ({
   emptyTableTitle,
   emptyTableDescription,
 }: Props) => {
+  const t = useTranslations();
   const [sorting, setSorting] = useState<SortingState>([
     { id: "domain", desc: false },
   ]);
@@ -210,7 +212,7 @@ export const ReverseProxyFlatTargetsTable = ({
       minimal={true}
       showSearchAndFilters={true}
       tableClassName="mt-0"
-      text="Service"
+      text={t("reverseProxy.service")}
       sorting={sorting}
       setSorting={setSorting}
       columns={FlatTargetsTableColumns}
@@ -251,7 +253,7 @@ export const ReverseProxyFlatTargetsTable = ({
           disabled={!permission?.services?.create}
         >
           <PlusCircle size={16} />
-          Add
+          {t("common.add")}
         </Button>
       )}
     >

@@ -13,17 +13,19 @@ import {
   HeadersInput,
 } from "@/cloud/webhooks/WebhookHeadersInput";
 import { WebhookConfig } from "@/cloud/webhooks/useWebhookConfig";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   value: WebhookConfig;
 };
 
 export function WebhookHeadersTabContent({ value }: Readonly<Props>) {
+  const t = useTranslations();
   return (
     <TabsContent value={"headers"} className={"px-8"}>
-      <Label>HTTP Headers (optional)</Label>
+      <Label>{t("webhooks.httpHeaders")}</Label>
       <HelpText>
-        If your endpoint requires additional headers, you can add them here.
+        {t("webhooks.httpHeadersHelp")}
       </HelpText>
       {value.httpHeaders.length > 0 && (
         <div className={"flex gap-3 w-full mb-3"}>
@@ -59,7 +61,7 @@ export function WebhookHeadersTabContent({ value }: Readonly<Props>) {
         data-testid="webhook-add-header"
       >
         <PlusIcon size={14} />
-        Add Header
+        {t("webhooks.addHeader")}
       </Button>
 
       {value.authHeaderConflict && (
@@ -76,8 +78,8 @@ export function WebhookHeadersTabContent({ value }: Readonly<Props>) {
           override the{" "}
           <span className={"text-nb-gray-100 font-medium"}>
             {value.authenticationType === AuthType.Basic
-              ? "Basic Auth"
-              : "Bearer Token"}
+              ? t("webhooks.basicAuth")
+              : t("webhooks.bearerToken")}
           </span>{" "}
           authentication from the previous step. Please remove the{" "}
           {"'Authorization'"} header.

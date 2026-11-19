@@ -16,6 +16,7 @@ import { cn } from "@utils/helpers";
 import { ExternalLinkIcon, GlobeIcon, Repeat } from "lucide-react";
 import { StaticImport } from "next/dist/shared/lib/get-img-props";
 import React, { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DomainValidationStatus } from "@/interfaces/Account";
 import { IntegrationModalHeader } from "@/modules/integrations/IntegrationModalHeader";
 import { DomainVerificationModal } from "@/modules/integrations/sso/DomainVerificationModal";
@@ -36,6 +37,7 @@ export default function OidcSetupModal({
   logo,
   discoveryPlaceholder,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { createOrUpdateConnection, verifyDomain, mutate } =
     useEnterpriseConnections();
   const [step, setStep] = useState(0);
@@ -132,7 +134,7 @@ export default function OidcSetupModal({
                 </p>
                 <Input
                   customPrefix={
-                    <span className={"min-w-[90px]"}>Client ID</span>
+                    <span className={"min-w-[90px]"}>{t("integrations.idpClientId")}</span>
                   }
                   placeholder={"0obflxtwxoVQcur0z3f3"}
                   value={clientId}
@@ -140,7 +142,7 @@ export default function OidcSetupModal({
                 />
                 <Input
                   customPrefix={
-                    <span className={"min-w-[90px]"}>Client Secret</span>
+                    <span className={"min-w-[90px]"}>{t("integrations.idpClientSecret")}</span>
                   }
                   placeholder={
                     "jfgbU1Wu3XWAKhGUF4d-PX54DSm3pAQCyNtpxp7Nu8Ij22stSz8_6KnWbO4nQBIb"
@@ -203,12 +205,12 @@ export default function OidcSetupModal({
             </div>
             <div className={"flex gap-3 w-full justify-end"}>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{t("common.cancel")}</Button>
               </ModalClose>
 
               <Button variant={"primary"}>
                 <Repeat size={16} />
-                Connect
+                {t("integrations.connect")}
               </Button>
             </div>
           </ModalFooter>

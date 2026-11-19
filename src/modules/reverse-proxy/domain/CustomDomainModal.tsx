@@ -16,6 +16,7 @@ import { ExternalLinkIcon, GlobeIcon, ServerIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   REVERSE_PROXY_CLUSTERS_DOCS_LINK,
   REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK,
@@ -40,6 +41,7 @@ export const CustomDomainModal = ({
   onOpenChange,
   onDomainSubmit,
 }: Props) => {
+  const t = useTranslations();
   const { domains } = useReverseProxies();
   const [domain, setDomain] = useState("");
   const [selectedCluster, setSelectedCluster] = useState("");
@@ -136,7 +138,7 @@ export const CustomDomainModal = ({
           ) : (
             <>
               <div>
-                <Label>Domain</Label>
+                <Label>{t("common.domain")}</Label>
                 <Input
                   autoFocus
                   value={domain}
@@ -176,14 +178,14 @@ export const CustomDomainModal = ({
                 href={REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK}
                 target={"_blank"}
               >
-                Custom Domains
+                {t("common.customDomains")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
           </div>
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>{t("common.cancel")}</Button>
             </ModalClose>
 
             <Button
@@ -192,7 +194,7 @@ export const CustomDomainModal = ({
               disabled={!canSubmit}
               data-testid={"submit-custom-domain"}
             >
-              Add Domain
+              {t("reverseProxy.addDomain")}
             </Button>
           </div>
         </ModalFooter>

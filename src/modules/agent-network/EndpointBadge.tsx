@@ -5,6 +5,7 @@ import { HelpTooltip } from "@components/HelpTooltip";
 import useCopyToClipboard from "@hooks/useCopyToClipboard";
 import { CheckIcon, CopyIcon, GlobeIcon } from "lucide-react";
 import React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 // The tooltip is shared with the providers page's empty state, which shows the
 // same card before an endpoint exists.
@@ -33,6 +34,7 @@ export default function EndpointBadge({
   // shape the Connect Agent page wants, where the URL is the whole point.
   variant?: "default" | "plain";
 }) {
+  const t = useTranslations();
   const [, copy, copied] = useCopyToClipboard(`https://${endpoint}`);
 
   return (
@@ -58,7 +60,7 @@ export default function EndpointBadge({
           aria-label={"Copy endpoint"}
         >
           {copied ? <CheckIcon size={11} /> : <CopyIcon size={11} />}
-          Copy
+          {t("common.copy")}
         </button>
       }
       description={

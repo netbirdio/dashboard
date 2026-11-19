@@ -17,6 +17,7 @@ import InvoicesTable from "@/cloud/invoices/table/InvoicesTable";
 import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { Invoice } from "@/cloud/msp/interfaces/Invoice";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 export const InvoicesTab = () => {
   const { permission } = usePermissions();
@@ -28,6 +29,7 @@ export const InvoicesTab = () => {
 };
 
 export const InvoicesTabTrigger = () => {
+  const t = useTranslations();
   const { permission } = usePermissions();
 
   const { isAccountWithMSPParent } = useMSP();
@@ -41,13 +43,14 @@ export const InvoicesTabTrigger = () => {
         data-testid="settings-tab-invoices"
       >
         <ReceiptTextIcon size={14} />
-        Invoices
+        {t("invoices.title")}
       </VerticalTabs.Trigger>
     )
   );
 };
 
 const InvoicesTabContent = () => {
+  const t = useTranslations();
   const { isActive: isDistributor } = useDistributor();
   const apiPath = isDistributor
     ? "/integrations/msp/reseller/invoices"
@@ -72,12 +75,12 @@ const InvoicesTabContent = () => {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("common.settings")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=invoices"}
-            label={"Invoices"}
+            label={t("invoices.title")}
             icon={<ReceiptTextIcon size={14} />}
             active
           />
@@ -86,8 +89,8 @@ const InvoicesTabContent = () => {
         <div className={"max-w-3xl mb-4"}>
           <div className={"flex justify-between items-center mb-5"}>
             <div>
-              <h1 ref={headingRef}>Invoices</h1>
-              <Paragraph>View and export all your available invoices</Paragraph>
+              <h1 ref={headingRef}>{t("invoices.title")}</h1>
+              <Paragraph>{t("invoices.description")}</Paragraph>
             </div>
           </div>
           <Suspense

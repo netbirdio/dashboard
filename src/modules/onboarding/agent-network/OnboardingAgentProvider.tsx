@@ -3,6 +3,7 @@ import { ArrowRightIcon, CheckCircle2Icon, PlusIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useRef } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import AIProviderModal from "@/modules/agent-network/AIProviderModal";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import { EMPTY_POLICY_LIMITS } from "@/modules/agent-network/data/mockData";
@@ -22,6 +23,7 @@ export const OnboardingAgentProvider = ({
   onBack,
   onNext,
 }: Props) => {
+  const t = useTranslations();
   const { settings, providers, openWizard, closeWizard, isWizardOpen } =
     useAIProviders();
   const connected = !!settings && providers.length > 0;
@@ -63,10 +65,10 @@ export const OnboardingAgentProvider = ({
 
       <div className={"flex items-center justify-center mt-4 gap-3"}>
         <Button variant={"secondary"} onClick={onBack}>
-          Go Back
+          {t("onboarding.goBack")}
         </Button>
         <Button variant={"primary"} disabled={!connected} onClick={onNext}>
-          Continue
+          {t("common.continue")}
           <ArrowRightIcon size={16} />
         </Button>
       </div>

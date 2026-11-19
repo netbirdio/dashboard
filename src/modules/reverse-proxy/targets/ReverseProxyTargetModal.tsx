@@ -33,6 +33,7 @@ import {
   defaultPortForProtocol,
   isResourceTargetType,
 } from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
@@ -100,6 +101,7 @@ export default function ReverseProxyTargetModal({
   initialNetwork,
   onClusterPick,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   const existingTargets = reverseProxy.targets || [];
   const domain = reverseProxy.domain;
   const isHTTPService =
@@ -447,7 +449,7 @@ export default function ReverseProxyTargetModal({
                 </div>
                 <div className="w-[150px]">
                   <Label>
-                    Port
+                    {translate("common.port")}
                     <HelpTooltip
                       content={
                         "Enter the port where your service (e.g., webserver, app, API) is currently listening. If left empty, defaults to port 80 for HTTP or 443 for HTTPS."
@@ -506,7 +508,7 @@ export default function ReverseProxyTargetModal({
                   data-testid={"target-optional-settings"}
                 >
                   <span className={"relative top-[1px]"}>
-                    Optional Settings
+                    {translate("reverseProxy.optionalSettings")}
                   </span>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -548,7 +550,7 @@ export default function ReverseProxyTargetModal({
                     {reverseProxy.mode === ServiceMode.UDP && (
                       <div className={"flex items-center justify-between"}>
                         <div>
-                          <Label>Session Idle Timeout</Label>
+                          <Label>{translate("reverseProxy.sessionIdleTimeout")}</Label>
                           <HelpText className={"mb-0"}>
                             How long a UDP session stays alive without traffic
                             (e.g., 30s, 2m). <br /> Defaults to 30s when empty.
@@ -593,7 +595,7 @@ export default function ReverseProxyTargetModal({
             </div>
             <div className="flex gap-3 w-full justify-end">
               <Button variant="secondary" onClick={() => onOpenChange(false)}>
-                Cancel
+                {translate("common.cancel")}
               </Button>
               <Button
                 variant="primary"

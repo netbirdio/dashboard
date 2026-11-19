@@ -18,6 +18,7 @@ import FullTooltip from "@/components/FullTooltip";
 import { PeerGroupSelector } from "@/components/PeerGroupSelector";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { IntuneIntegration } from "@/interfaces/EDR";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import {
@@ -66,6 +67,7 @@ export function ConfigurationContent({
   onSuccess,
   config,
 }: Readonly<ModalProps>) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
 
@@ -99,8 +101,8 @@ export function ConfigurationContent({
     const choice = await confirm({
       title: `Delete integration?`,
       description: "Are you sure you want to delete this integration?",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      confirmText: translate("common.delete"),
+      cancelText: translate("common.cancel"),
       type: "danger",
     });
 
@@ -183,7 +185,7 @@ export function ConfigurationContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Peer Approval
+            {translate("common.peerApproval")}
           </TabsTrigger>
           <TabsTrigger value={"sync-window"}>
             <RefreshCcw
@@ -201,7 +203,7 @@ export function ConfigurationContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Settings
+            {translate("common.settings")}
           </TabsTrigger>
           <TabsTrigger value={"danger"}>
             <AlertOctagon
@@ -210,7 +212,7 @@ export function ConfigurationContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Danger Zone
+            {translate("common.dangerZoneTitle")}
           </TabsTrigger>
         </TabsList>
         <TabsContent value={"settings"} className={"px-8 text-sm"}>
@@ -253,7 +255,7 @@ export function ConfigurationContent({
               customPrefix={
                 <div className={"min-w-[165px] flex gap-2 items-center"}>
                   <KeyRound size={16} />
-                  Client Secret
+                  {translate("integrations.idpClientSecret")}
                 </div>
               }
               placeholder={"YdV7Q~JJ62Xl.LvYoBanxZR2sJA2va_3UbqvncY8"}
@@ -284,7 +286,7 @@ export function ConfigurationContent({
             <Label>
               <div className={"flex gap-2 items-center"}>
                 <FolderGit2 size={14} />
-                Groups
+                {translate("common.groups")}
               </div>
             </Label>
             <HelpText className={"max-w-lg mt-2"}>
@@ -335,7 +337,7 @@ export function ConfigurationContent({
             <Label>
               <div className={"flex gap-2 items-center"}>
                 <AlertOctagon size={16} />
-                Delete Integration
+                {translate("common.deleteIntegration")}
               </div>
             </Label>
             <HelpText className={"max-w-lg mt-2"}>
@@ -351,7 +353,7 @@ export function ConfigurationContent({
             className={"mt-3"}
             onClick={deleteIntegration}
           >
-            Delete Integration
+            {translate("common.deleteIntegration")}
           </Button>
         </TabsContent>
       </Tabs>
@@ -360,7 +362,7 @@ export function ConfigurationContent({
       <ModalFooter className={"items-center gap-4"}>
         <ModalClose asChild={true}>
           <Button variant={"secondary"} className={"w-full"}>
-            Cancel
+            {translate("common.cancel")}
           </Button>
         </ModalClose>
 
@@ -370,7 +372,7 @@ export function ConfigurationContent({
           disabled={!canSave}
           onClick={updateIntegration}
         >
-          Save
+          {translate("common.save")}
         </Button>
       </ModalFooter>
     </ModalContent>

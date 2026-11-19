@@ -3,6 +3,7 @@ import { ScrollArea } from "@components/ScrollArea";
 import useFetchApi from "@utils/api";
 import * as React from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Country } from "@/interfaces/Country";
 import { GeoLocationCheck } from "@/interfaces/PostureCheck";
 
@@ -11,6 +12,7 @@ type Props = {
   check?: GeoLocationCheck;
 };
 export const GeoLocationTooltip = ({ children, check }: Props) => {
+  const t = useTranslations();
   const { data: countries } = useFetchApi<Country[]>(`/locations/countries`);
 
   return check ? (
@@ -35,7 +37,7 @@ export const GeoLocationTooltip = ({ children, check }: Props) => {
               </span>
             ) : (
               <span>
-                <span className={"text-red-500 font-semibold"}>Block</span> the
+                <span className={"text-red-500 font-semibold"}>{t("postureChecks.block")}</span> the
                 following <br />
                 countries & regions
               </span>

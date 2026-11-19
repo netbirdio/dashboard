@@ -5,6 +5,7 @@ import Paragraph from "@/components/Paragraph";
 import SkeletonTable, {
   SkeletonTableHeader,
 } from "@/components/skeletons/SkeletonTable";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Job } from "@/interfaces/Job";
 import useFetchApi from "@/utils/api";
 
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export const PeerRemoteJobsSection = ({ peerID }: Props) => {
+  const t = useTranslations();
   const { data: jobs, isLoading } = useFetchApi<Job[]>(`/peers/${peerID}/jobs`);
 
   return (
@@ -24,13 +26,12 @@ export const PeerRemoteJobsSection = ({ peerID }: Props) => {
         <div className="flex justify-between items-center mb-5">
           <div>
             <Paragraph>
-              Remotely trigger actions such as debug bundles or other tasks on
-              this peer, without requiring CLI access.{" "}
+              {t("peer.remoteJobsDesc")}{" "}
               <InlineLink
                 href={"https://docs.netbird.io/manage/peers/remote-jobs"}
                 target={"_blank"}
               >
-                Learn more
+                {t("common.learnMore")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>

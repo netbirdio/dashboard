@@ -11,6 +11,7 @@ import { useAnalytics } from "@/contexts/AnalyticsProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { useBilling } from "@/contexts/BillingProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PlanIcon } from "@/modules/billing/PlanIcon";
 import { TrialNavigationInfoCard } from "@/modules/billing/trial/TrialNavigationInfoCard";
 
@@ -39,6 +40,7 @@ export const NavigationUsageInfo = () => {
 };
 
 const NavigationUsageInfoContent = () => {
+  const t = useTranslations();
   const {
     currentPlan: plan,
     stats,
@@ -100,8 +102,8 @@ const NavigationUsageInfoContent = () => {
                   <span className={"text-nb-gray-300"}>
                     {" "}
                     {stats?.active_peers && stats.active_peers > 1
-                      ? "Users"
-                      : "User"}
+                      ? t("common.users")
+                      : t("billing.user")}
                   </span>
                 )}
               </div>
@@ -113,7 +115,7 @@ const NavigationUsageInfoContent = () => {
                 <span className={"font-medium text-white"}>
                   {stats?.active_peers}
                 </span>
-                <span className={"text-nb-gray-300"}> of {maxPeers} Peers</span>
+                <span className={"text-nb-gray-300"}> of {maxPeers}{" " + t("common.peers")}</span>
               </div>
             </div>
           </div>
@@ -168,7 +170,7 @@ const NavigationUsageInfoContent = () => {
                   router.push("/settings?tab=plans-and-billing");
                 }}
               >
-                {isFreePlan ? "Upgrade Plan" : "Plans & Billing"}
+                {isFreePlan ? t("common.upgradePlan") : t("common.plansAndBilling")}
               </Button>
             </div>
           )}

@@ -11,6 +11,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import PageContainer from "@/layouts/PageContainer";
 import { useAccount } from "@/modules/account/useAccount";
 import EDRTab from "@/modules/integrations/edr/EDRTab";
@@ -20,6 +21,7 @@ import SSOTab from "@/modules/integrations/sso/SSOTab";
 import { isNetBirdCloud } from "@utils/netbird";
 
 export default function Integrations() {
+  const t = useTranslations();
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab");
   const [tab, setTab] = useState(currentTab || "identity-provider");
@@ -32,19 +34,19 @@ export default function Integrations() {
         <VerticalTabs.List>
           <VerticalTabs.Trigger value="identity-provider">
             <FingerprintIcon size={14} />
-            Identity Provider Sync
+            {t("common.identityProviderSync")}
           </VerticalTabs.Trigger>
 
           {isNetBirdCloud() && (
             <VerticalTabs.Trigger value="sso">
               <KeyRoundIcon size={14} />
-              Single Sign-On
+              {t("common.singleSignOn")}
             </VerticalTabs.Trigger>
           )}
 
           <VerticalTabs.Trigger value="event-streaming">
             <FileText size={14} />
-            Event Streaming
+            {t("common.eventStreaming")}
           </VerticalTabs.Trigger>
           <VerticalTabs.Trigger value="edr">
             <ShieldCheckIcon size={15} />
@@ -52,7 +54,7 @@ export default function Integrations() {
           </VerticalTabs.Trigger>
         </VerticalTabs.List>
         <RestrictedAccess
-          page={"Integrations"}
+          page={t("common.integrations")}
           hasAccess={
             permission?.edr?.read ||
             permission?.idp?.read ||

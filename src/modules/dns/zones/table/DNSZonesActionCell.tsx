@@ -10,6 +10,7 @@ import { MoreVertical, PowerIcon, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DNSZone } from "@/interfaces/DNS";
 import { useDNSZones } from "@/modules/dns/zones/DNSZonesProvider";
 
@@ -18,6 +19,7 @@ type Props = {
 };
 
 export const DNSZonesActionCell = ({ zone }: Props) => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { openZoneModal, deleteZone, updateZone } = useDNSZones();
   const [open, setOpen] = useState(false);
@@ -35,7 +37,7 @@ export const DNSZonesActionCell = ({ zone }: Props) => {
           <Button
             variant={"secondary"}
             className={"!px-3"}
-            aria-label={"Zone actions"}
+            aria-label={t("dns.zoneActionsAria")}
             data-testid="dns-zone-actions"
           >
             <MoreVertical size={16} className={"shrink-0"} />
@@ -48,7 +50,7 @@ export const DNSZonesActionCell = ({ zone }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
-              Edit
+              {t("common.edit")}
             </div>
           </DropdownMenuItem>
 
@@ -62,7 +64,7 @@ export const DNSZonesActionCell = ({ zone }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <PowerIcon size={14} className={"shrink-0"} />
-              {zone.enabled ? "Disable" : "Enable"}
+              {zone.enabled ? t("common.disable") : t("common.enable")}
             </div>
           </DropdownMenuItem>
 
@@ -76,7 +78,7 @@ export const DNSZonesActionCell = ({ zone }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {t("common.delete")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

@@ -11,6 +11,7 @@ import useFetchApi from "@utils/api";
 import { ChevronDown, PlusCircle } from "lucide-react";
 import React, { memo, useState } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 
@@ -24,6 +25,7 @@ type AddMode = "user" | "server" | "agent";
 // table: the operator picks what to add (User Device / Server / Autonomous
 // Agent) and the matching Install NetBird flow opens.
 function AddPeerDropdown() {
+  const t = useTranslations();
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const { oidcUser: user } = useOidcUser();
 
@@ -54,16 +56,16 @@ function AddPeerDropdown() {
             data-testid={"add-peer-button"}
           >
             <PlusCircle size={16} />
-            Add Peer
+            {t("common.addPeer")}
             <ChevronDown size={16} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align={"end"}>
           <DropdownMenuItem onClick={() => openMode("user")}>
-            User Device
+            {t("components.userDevice")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => openMode("server")}>
-            Server
+            {t("components.server")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => openMode("agent")}>
             Agent

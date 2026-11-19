@@ -9,6 +9,7 @@ import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/intune.png";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import { IntuneIntegration } from "@/interfaces/EDR";
 import IntuneConfiguration from "@/modules/integrations/edr/intune/IntuneConfiguration";
@@ -22,6 +23,7 @@ type Props = {
 };
 
 export const Intune = ({ account }: Props) => {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const [setupModal, setSetupModal] = useState(false);
   const { permission } = usePermissions();
@@ -51,8 +53,8 @@ export const Intune = ({ account }: Props) => {
           title: `Disable Intune?`,
           description:
             "Are you sure you want to disable the Intune integration?",
-          confirmText: "Disable",
-          cancelText: "Cancel",
+          confirmText: t("common.disable"),
+          cancelText: t("common.cancel"),
           type: "warning",
         })
       : true;
@@ -118,6 +120,7 @@ type ConfigurationProps = {
   config: IntuneIntegration;
 };
 const ConfigurationButton = ({ config }: ConfigurationProps) => {
+  const t = useTranslations();
   const [configModal, setConfigModal] = useState(false);
 
   return (
@@ -132,7 +135,7 @@ const ConfigurationButton = ({ config }: ConfigurationProps) => {
           }}
         >
           <Settings size={14} />
-          Settings
+          {t("common.settings")}
         </Button>
       </div>
       <IntuneConfiguration

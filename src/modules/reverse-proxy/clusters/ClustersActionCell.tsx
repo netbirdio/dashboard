@@ -6,6 +6,7 @@ import * as React from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   ReverseProxyCluster,
   ReverseProxyClusterType,
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export default function ClustersActionCell({ cluster }: Readonly<Props>) {
+  const t = useTranslations();
   const { confirm } = useDialog();
   const request = useApiCall<ReverseProxyCluster>("/reverse-proxies/clusters");
   const { mutate } = useSWRConfig();
@@ -35,8 +37,8 @@ export default function ClustersActionCell({ cluster }: Readonly<Props>) {
       title: `Delete '${cluster.address}'?`,
       description:
         "Are you sure you want to delete this proxy cluster? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
       maxWidthClass: "max-w-md",
     });
@@ -63,7 +65,7 @@ export default function ClustersActionCell({ cluster }: Readonly<Props>) {
         disabled={!permission?.services?.delete}
       >
         <Trash2 size={16} />
-        Delete
+        {t("common.delete")}
       </Button>
     </div>
   );

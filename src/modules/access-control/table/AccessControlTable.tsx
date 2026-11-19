@@ -47,6 +47,7 @@ import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import NoResults from "@/components/ui/NoResults";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import type { Policy } from "@/interfaces/Policy";
 import AccessControlModal, {
   AccessControlUpdateModal,
@@ -235,6 +236,7 @@ export default function AccessControlTable({
   headingTarget,
   isGroupPage,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { permission } = usePermissions();
@@ -496,7 +498,7 @@ export default function AccessControlTable({
               ]
             : undefined
         }
-        text={"Access Control Policies"}
+        text={translate("accessControl.tableHeading")}
         sorting={sorting}
         setSorting={setSorting}
         initialPageSize={25}
@@ -524,15 +526,13 @@ export default function AccessControlTable({
           setEditModal(true);
           setCurrentCellClicked(cell);
         }}
-        searchPlaceholder={"Search by name and description..."}
+        searchPlaceholder={translate("accessControl.searchByNameAndDescription")}
         getStartedCard={
           isGroupPage ? (
             <NoResults
               className={"py-4"}
-              title={"This group is not used within any policies yet"}
-              description={
-                "Assign this group as either a source or destination inside a policy to see them listed here."
-              }
+              title={translate("accessControl.noPoliciesForGroup")}
+              description={translate("accessControl.noPoliciesForGroupDescription")}
               icon={
                 <AccessControlIcon size={20} className={"fill-nb-gray-300"} />
               }
@@ -545,7 +545,7 @@ export default function AccessControlTable({
                     disabled={!permission.policies.create}
                   >
                     <PlusCircle size={16} />
-                    Add Policy
+                    {translate("common.addPolicy")}
                   </Button>
                 </AccessControlModal>
               </div>
@@ -564,10 +564,8 @@ export default function AccessControlTable({
                   size={"large"}
                 />
               }
-              title={"Create New Policy"}
-              description={
-                "It looks like you don't have any policies yet. Policies can allow connections by specific protocol and ports."
-              }
+              title={translate("accessControl.createNewPolicy")}
+              description={translate("accessControl.createNewPolicyDescription")}
               button={
                 <div className={"flex gap-4 items-center justify-center"}>
                   <AccessControlModal>
@@ -576,7 +574,7 @@ export default function AccessControlTable({
                       disabled={!permission.policies.create}
                     >
                       <PlusCircle size={16} />
-                      Add Policy
+                      {translate("common.addPolicy")}
                     </Button>
                   </AccessControlModal>
                 </div>
@@ -590,7 +588,7 @@ export default function AccessControlTable({
                     }
                     target={"_blank"}
                   >
-                    Access Controls
+                    {translate("accessControl.accessControls")}
                     <ExternalLinkIcon size={12} />
                   </InlineLink>
                 </>
@@ -610,7 +608,7 @@ export default function AccessControlTable({
                     data-testid="open-add-policy"
                   >
                     <PlusCircle size={16} />
-                    Add Policy
+                    {translate("common.addPolicy")}
                   </Button>
                 </AccessControlModal>
               </div>
@@ -631,9 +629,7 @@ export default function AccessControlTable({
                 <FullTooltip
                   content={
                     <div className={"max-w-sm text-xs"}>
-                      Show temporary policies created by the NetBird browser
-                      client. These policies are ephemeral and will be deleted
-                      automatically after a short period of time.
+                      {translate("accessControl.temporaryPoliciesTooltip")}
                     </div>
                   }
                 >

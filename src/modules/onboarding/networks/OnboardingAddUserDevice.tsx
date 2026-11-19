@@ -5,6 +5,7 @@ import { DownloadIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group, GroupPeer } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export const OnboardingAddUserDevice = ({ device, policy, onNext }: Props) => {
+  const t = useTranslations();
   const groupRequest = useApiCall<Group>("/groups", true);
   const { mutate } = useSWRConfig();
   const [open, setOpen] = useState(false);
@@ -81,13 +83,13 @@ export const OnboardingAddUserDevice = ({ device, policy, onNext }: Props) => {
       <div className={"flex items-center justify-center mt-3"}>
         <Button variant={"primary"} onClick={() => setOpen(true)}>
           <DownloadIcon size={16} />
-          Install NetBird
+          {t("onboarding.installNetBird")}
         </Button>
       </div>
 
       <Modal open={open} onOpenChange={setOpen}>
         <ModalContent>
-          <SetupModalContent title={"Install NetBird"} isUserDevice={true} />
+          <SetupModalContent title={t("onboarding.installNetBird")} isUserDevice={true} />
         </ModalContent>
       </Modal>
     </div>

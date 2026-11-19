@@ -42,6 +42,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import type { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
@@ -850,6 +851,7 @@ const TabTriggers = ({
   hideGroupsTab?: boolean;
   tabOrder?: PeerGroupSelectorTab[];
 }) => {
+  const t = useTranslations();
   const tabCount =
     (!hideGroupsTab ? 1 : 0) +
     (showResources ? 1 : 0) +
@@ -870,7 +872,7 @@ const TabTriggers = ({
         }
         size={14}
       />
-      Groups
+      {t("common.groups")}
     </TabsTrigger>
   );
 
@@ -887,7 +889,7 @@ const TabTriggers = ({
         }
         size={14}
       />
-      Resources
+      {t("common.resources")}
     </TabsTrigger>
   );
 
@@ -904,7 +906,7 @@ const TabTriggers = ({
         }
         size={14}
       />
-      Peers
+      {t("common.peers")}
     </TabsTrigger>
   );
 
@@ -992,6 +994,7 @@ const PeerCounter = ({
   group: Group;
   showResourceCounter?: boolean;
 }) => {
+  const t = useTranslations();
   const peerCount = group.peers?.length ?? group?.peers_count ?? 0;
   const resourcesCount = group?.resources_count ?? 0;
   const hidePeerCounter =
@@ -1005,7 +1008,7 @@ const PeerCounter = ({
       )}
     >
       <MonitorSmartphoneIcon size={14} className={"shrink-0"} />
-      {peerCount} Peer(s)
+      {peerCount}{" " + t("components.usageLimitSuffix")}
     </div>
   );
 };
@@ -1030,6 +1033,7 @@ const PolicyCounter = ({
   group: Group;
   policies: Policy[];
 }) => {
+  const t = useTranslations();
   const count = useMemo(() => {
     if (!group.id) return 0;
     return policies.filter((policy) => {
@@ -1051,7 +1055,7 @@ const PolicyCounter = ({
       }
     >
       <ShieldCheck size={14} className={"shrink-0"} />
-      {count} {count === 1 ? "Policy" : "Policies"}
+      {count} {count === 1 ? t("common.policy") : t("common.policies")}
     </div>
   );
 };
@@ -1075,6 +1079,7 @@ const ResourcesList = ({
   value?: PolicyRuleResource;
   onChange: (resource: NetworkResource) => void;
 }) => {
+  const t = useTranslations();
   const [filteredItems, _, setSearch] = useSearch(
     resources || [],
     resourcesSearchPredicate,
@@ -1109,7 +1114,7 @@ const ResourcesList = ({
     return (
       <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
         There are no resources available yet. <br />
-        Go to <InlineLink href={"/networks"}>Networks</InlineLink> to add some
+        Go to <InlineLink href={"/networks"}>{t("common.networks")}</InlineLink> to add some
         resources.
       </DropdownInfoText>
     );
@@ -1177,12 +1182,13 @@ const ClustersList = ({
   value?: string;
   onChange: (cluster?: ClusterOption) => void;
 }) => {
+  const t = useTranslations();
   if (clusters.length === 0) {
     return (
       <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
         No proxy clusters available. Go to{" "}
         <InlineLink href={"/reverse-proxy/custom-domains"}>
-          Custom Domains
+          {t("common.customDomains")}
         </InlineLink>{" "}
         to configure one that supports private services.
       </DropdownInfoText>
@@ -1249,6 +1255,7 @@ const PeersList = ({
   value?: PolicyRuleResource;
   onChange: (peer: Peer) => void;
 }) => {
+  const t = useTranslations();
   const [filteredItems, _, setSearch] = useSearch(
     peers || [],
     peersSearchPredicate,
@@ -1283,7 +1290,7 @@ const PeersList = ({
     return (
       <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
         There are no peers available yet. <br />
-        Go to <InlineLink href={"/peers"}>Peers</InlineLink> to add some peers.
+        Go to <InlineLink href={"/peers"}>{t("common.peers")}</InlineLink> to add some peers.
       </DropdownInfoText>
     );
   }

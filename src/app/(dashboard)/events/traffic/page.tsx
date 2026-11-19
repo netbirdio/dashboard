@@ -14,6 +14,7 @@ import TrafficEventsTable from "@/cloud/traffic-events/TrafficEventsTable";
 import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import ServerPaginationProvider from "@/contexts/ServerPaginationProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import PageContainer from "@/layouts/PageContainer";
 import { useAccount } from "@/modules/account/useAccount";
 import { LockedFeatureInfoCard } from "@/modules/billing/locked-feature/LockedFeatureInfoCard";
@@ -21,6 +22,7 @@ import { LockedFeatureOverlay } from "@/modules/billing/locked-feature/LockedFea
 import { EventStreamingCard } from "@/modules/integrations/event-streaming/EventStreamingCard";
 
 export default function NetworkTrafficPage() {
+  const t = useTranslations();
   const account = useAccount();
   const { permission } = usePermissions();
   const { ref: headingRef, portalTarget } =
@@ -43,12 +45,12 @@ export default function NetworkTrafficPage() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href="/events/traffic"
-            label="Traffic Events"
+            label={t("common.trafficEvents")}
             icon={<ArrowLeftRightIcon size={15} />}
           />
         </Breadcrumbs>
 
-        <h1 ref={headingRef}>Traffic Events</h1>
+        <h1 ref={headingRef}>{t("common.trafficEvents")}</h1>
 
         <Paragraph>
           Traffic events is an experimental feature. Functionality and behavior
@@ -58,14 +60,14 @@ export default function NetworkTrafficPage() {
         <Paragraph>
           Learn more about{" "}
           <InlineLink href={TRAFFIC_EVENTS_DOC_LINK} target="_blank">
-            Traffic Events <ExternalLinkIcon size={12} />
+            {t("common.trafficEvents") + " "}<ExternalLinkIcon size={12} />
           </InlineLink>{" "}
-          in our documentation.
+          {t("events.inOurDocumentation")}
         </Paragraph>
       </div>
 
       <RestrictedAccess
-        page="Traffic Events"
+        page={t("common.trafficEvents")}
         hasAccess={permission.events.read}
       >
         <div className={"p-default"}>

@@ -5,6 +5,7 @@ import { GradientFadedBackground } from "@components/ui/GradientFadedBackground"
 import { GlobeIcon } from "lucide-react";
 import * as React from "react";
 import { DistributorCustomer } from "@/cloud/distributor/interfaces/Distributor";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   open: boolean;
@@ -21,6 +22,7 @@ export const DistributorAccountExistsModal = ({
   onAccept,
   onCancel,
 }: Props) => {
+  const t = useTranslations();
   return (
     <Modal open={open} onOpenChange={setOpen}>
       <ModalContent
@@ -64,7 +66,7 @@ export const DistributorAccountExistsModal = ({
             variant={"secondary"}
             onClick={() => onCancel(customer)}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             autoFocus={true}
@@ -72,7 +74,7 @@ export const DistributorAccountExistsModal = ({
             variant={"primary"}
             onClick={() => onAccept(customer)}
           >
-            Request Access
+            {t("common.requestAccess")}
           </Button>
         </ModalFooter>
       </ModalContent>

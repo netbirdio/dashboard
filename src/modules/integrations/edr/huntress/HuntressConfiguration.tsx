@@ -33,6 +33,7 @@ import FullTooltip from "@/components/FullTooltip";
 import { PeerGroupSelector } from "@/components/PeerGroupSelector";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { HuntressIntegration } from "@/interfaces/EDR";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import {
@@ -87,6 +88,7 @@ export function ConfigurationContent({
   onSuccess,
   config,
 }: Readonly<ModalProps>) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
 
@@ -122,8 +124,8 @@ export function ConfigurationContent({
     const choice = await confirm({
       title: `Delete integration?`,
       description: "Are you sure you want to delete this integration?",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      confirmText: translate("common.delete"),
+      cancelText: translate("common.cancel"),
       type: "danger",
     });
 
@@ -205,7 +207,7 @@ export function ConfigurationContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Peer Approval
+            {translate("common.peerApproval")}
           </TabsTrigger>
           <TabsTrigger value={"compliance"}>
             <ShieldCheckIcon
@@ -223,7 +225,7 @@ export function ConfigurationContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Settings
+            {translate("common.settings")}
           </TabsTrigger>
           <TabsTrigger value={"danger"}>
             <AlertOctagon
@@ -232,7 +234,7 @@ export function ConfigurationContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Danger Zone
+            {translate("common.dangerZoneTitle")}
           </TabsTrigger>
         </TabsList>
 
@@ -241,7 +243,7 @@ export function ConfigurationContent({
             <Label>
               <div className={"flex gap-2 items-center"}>
                 <FolderGit2 size={14} />
-                Groups
+                {translate("common.groups")}
               </div>
             </Label>
             <HelpText className={"mt-2"}>
@@ -386,7 +388,7 @@ export function ConfigurationContent({
             <Label>
               <div className={"flex gap-2 items-center"}>
                 <AlertOctagon size={14} />
-                Delete Integration
+                {translate("common.deleteIntegration")}
               </div>
             </Label>
             <HelpText className={"max-w-lg mt-2"}>
@@ -402,7 +404,7 @@ export function ConfigurationContent({
             className={"mt-3"}
             onClick={deleteIntegration}
           >
-            Delete Integration
+            {translate("common.deleteIntegration")}
           </Button>
         </TabsContent>
       </Tabs>
@@ -424,7 +426,7 @@ export function ConfigurationContent({
         <div className={"flex gap-4"}>
           <ModalClose asChild={true}>
             <Button variant={"secondary"} className={"w-full"}>
-              Cancel
+              {translate("common.cancel")}
             </Button>
           </ModalClose>
 
@@ -434,7 +436,7 @@ export function ConfigurationContent({
             disabled={!canSave}
             onClick={updateIntegration}
           >
-            Save Changes
+            {translate("common.saveChanges")}
           </Button>
         </div>
       </ModalFooter>

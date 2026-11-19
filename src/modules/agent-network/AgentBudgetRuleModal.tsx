@@ -40,6 +40,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useUsers } from "@/contexts/UsersProvider";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { User } from "@/interfaces/User";
 import AgentPolicyLimitsTab from "@/modules/agent-network/AgentPolicyLimitsTab";
@@ -87,6 +88,7 @@ function AgentBudgetRuleModalContent({
   initialTab?: string;
   onSuccess: () => void;
 }) {
+  const t = useTranslations();
   const { addBudgetRule, updateBudgetRule } = useAIProviders();
   const { mutate } = useSWRConfig();
   const { users: allUsers } = useUsers();
@@ -170,7 +172,7 @@ function AgentBudgetRuleModalContent({
         <TabsList justify={"start"} className={"px-8"}>
           <TabsTrigger value={"rule"}>
             <SlidersHorizontal size={16} />
-            Rule
+            {t("agentNetwork.rule")}
           </TabsTrigger>
           <TabsTrigger value={"limits"}>
             <Gauge size={16} />
@@ -213,7 +215,7 @@ function AgentBudgetRuleModalContent({
                     <div className={"flex items-center gap-2"}>
                       <Badge className={"py-[3px]"} variant={"gray-ghost"}>
                         <CircleUser size={12} />
-                        All
+                        {t("common.all")}
                       </Badge>
                       Select target group(s)...
                     </div>
@@ -266,7 +268,7 @@ function AgentBudgetRuleModalContent({
               href={"https://docs.netbird.io/agent-network"}
               target={"_blank"}
             >
-              Agent Network
+              {t("common.agentNetwork")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
@@ -277,21 +279,21 @@ function AgentBudgetRuleModalContent({
               {tab === "rule" && (
                 <>
                   <ModalClose asChild>
-                    <Button variant={"secondary"}>Cancel</Button>
+                    <Button variant={"secondary"}>{t("common.cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant={"primary"}
                     onClick={() => setTab("limits")}
                     disabled={name.trim().length === 0}
                   >
-                    Continue
+                    {t("common.continue")}
                   </Button>
                 </>
               )}
               {tab === "limits" && (
                 <>
                   <Button variant={"secondary"} onClick={() => setTab("rule")}>
-                    Back
+                    {t("common.back")}
                   </Button>
                   <Button
                     variant={"primary"}
@@ -307,14 +309,14 @@ function AgentBudgetRuleModalContent({
           ) : (
             <>
               <ModalClose asChild>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{t("common.cancel")}</Button>
               </ModalClose>
               <Button
                 variant={"primary"}
                 onClick={handleSubmit}
                 disabled={submitDisabled}
               >
-                Save Changes
+                {t("common.saveChanges")}
               </Button>
             </>
           )}

@@ -14,6 +14,7 @@ import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { REVERSE_PROXY_CLUSTERS_DOCS_LINK } from "@/interfaces/ReverseProxy";
 import PageContainer from "@/layouts/PageContainer";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
@@ -34,6 +35,7 @@ const TAB_CLUSTERS = "clusters";
 // vertical-tab layout (and per-tab breadcrumb/heading/description) as the main
 // Settings page so it reads as "settings for the Agent Network".
 export default function AgentNetworkConfigurationPage() {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { only: agentNetworkOnly } = useAgentNetworkMode();
   const queryParams = useSearchParams();
@@ -67,21 +69,21 @@ export default function AgentNetworkConfigurationPage() {
         <VerticalTabs.List>
           <VerticalTabs.Trigger value={TAB_BUDGET_SETTINGS}>
             <Gauge size={14} />
-            Global Limits
+            {t("common.globalLimits")}
           </VerticalTabs.Trigger>
           <VerticalTabs.Trigger value={TAB_LOG_SETTINGS}>
             <ScrollText size={14} />
-            Log Collection
+            {t("common.logCollection")}
           </VerticalTabs.Trigger>
           {canReadClusters && (
             <VerticalTabs.Trigger value={TAB_CLUSTERS}>
               <ServerIcon size={14} />
-              Clusters
+              {t("common.clusters")}
             </VerticalTabs.Trigger>
           )}
         </VerticalTabs.List>
         <RestrictedAccess
-          page={"Configuration"}
+          page={t("common.configuration")}
           hasAccess={permission?.["agent_network.settings"]?.read}
         >
           <GroupsProvider>
@@ -93,7 +95,7 @@ export default function AgentNetworkConfigurationPage() {
                     className={"w-full"}
                   >
                     <ConfigTabHeader
-                      label={"Global Limits"}
+                      label={t("common.globalLimits")}
                       href={"/agent-network/configuration?tab=budget-settings"}
                     >
                       Account-wide caps on token usage and spend, applied across
@@ -118,7 +120,7 @@ export default function AgentNetworkConfigurationPage() {
                   {canReadClusters && (
                     <Tabs.Content value={TAB_CLUSTERS} className={"w-full"}>
                       <ConfigTabHeader
-                        label={"Clusters"}
+                        label={t("common.clusters")}
                         href={"/agent-network/configuration?tab=clusters"}
                       >
                         {agentNetworkOnly
@@ -128,7 +130,7 @@ export default function AgentNetworkConfigurationPage() {
                           href={REVERSE_PROXY_CLUSTERS_DOCS_LINK}
                           target={"_blank"}
                         >
-                          Learn more
+                          {t("common.learnMore")}
                           <ExternalLinkIcon size={12} />
                         </InlineLink>
                       </ConfigTabHeader>
@@ -158,12 +160,13 @@ function ConfigTabHeader({
   href: string;
   children?: React.ReactNode;
 }) {
+  const t = useTranslations();
   return (
     <div className={"p-default py-6"}>
       <Breadcrumbs>
         <Breadcrumbs.Item
           href={"/agent-network/providers"}
-          label={"Agent Network"}
+          label={t("common.agentNetwork")}
           icon={<AgentNetworkIcon size={16} />}
         />
         <Breadcrumbs.Item href={href} label={label} active />

@@ -4,6 +4,7 @@ import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { MinusCircleIcon, PlusIcon } from "lucide-react";
 import { useCallback, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 const HEADER_NAME_RE = /^[A-Za-z0-9!#$%&'*+\-.^_`|~]+$/;
 const BLOCKED_HEADERS = new Set([
@@ -130,9 +131,10 @@ export default function ReverseProxyTargetCustomHeaders({
   updateHeaderEntry,
   headerErrors,
 }: CustomHeadersProps) {
+  const t = useTranslations();
   return (
     <div>
-      <Label>Custom Headers</Label>
+      <Label>{t("reverseProxy.customHeaders")}</Label>
       <HelpText>
         Add additional headers to include when forwarding requests.
         <br />
@@ -170,7 +172,7 @@ export default function ReverseProxyTargetCustomHeaders({
                 variant="default-outline"
                 className="!px-2 shrink-0"
                 onClick={() => removeHeader(entry.id)}
-                aria-label="Remove header"
+                aria-label={t("reverseProxy.removeHeader")}
               >
                 <MinusCircleIcon size={14} />
               </Button>
@@ -186,7 +188,7 @@ export default function ReverseProxyTargetCustomHeaders({
         data-testid={"add-custom-header"}
       >
         <PlusIcon size={14} />
-        Add Header
+        {t("reverseProxy.addHeader")}
       </Button>
     </div>
   );

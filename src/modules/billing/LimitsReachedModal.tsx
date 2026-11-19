@@ -10,6 +10,7 @@ import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { useBilling } from "@/contexts/BillingProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 export const LimitsReachedModal = () => {
   const { isFreePlan, usagePercentage, isTrial, isLoading, currentPlan } =
@@ -35,6 +36,7 @@ export const LimitsReachedModal = () => {
 };
 
 const LimitReachedContent = () => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
 
   const [firstTimeOpen, setFirstTimeOpen] = useLocalStorage<Date | undefined>(
@@ -128,7 +130,7 @@ const LimitReachedContent = () => {
           >
             <Button className={"w-full"} variant={"secondary"}>
               <MailIcon size={15} className={"shrink-0"} />
-              Get Support
+              {t("billing.getSupport")}
             </Button>
           </a>
           <Button

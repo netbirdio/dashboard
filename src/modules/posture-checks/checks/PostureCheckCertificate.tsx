@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { CertificateCheck } from "@/interfaces/PostureCheck";
 import {
   isValidPEMCertificate,
@@ -76,6 +77,7 @@ const rowsFor = (pem: string) =>
   Math.min(Math.max(pem.split("\n").length + 1, 6), 32);
 
 const CheckContent = ({ value, onChange, disabled }: Props) => {
+  const t = useTranslations();
   const [certificates, setCertificates] = useState<CACertificate[]>(
     value?.ca_certificates?.length
       ? value.ca_certificates.map((pem) => newCertificate(pem))
@@ -198,7 +200,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("common.cancel")}</Button>
           </ModalClose>
           <Button
             variant={"primary"}
@@ -209,7 +211,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
               })
             }
           >
-            Save
+            {t("common.save")}
           </Button>
         </div>
       </ModalFooter>

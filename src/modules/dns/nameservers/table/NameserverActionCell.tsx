@@ -14,12 +14,14 @@ import { useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 
 type Props = {
   ns: NameserverGroup;
 };
 export default function NameserverActionCell({ ns }: Readonly<Props>) {
+  const t = useTranslations();
   const { confirm } = useDialog();
   const nsRequest = useApiCall<NameserverGroup>("/dns/nameservers");
   const { mutate } = useSWRConfig();
@@ -37,7 +39,7 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
         "Nameserver was successfully" +
         (enabled ? " enabled" : " disabled") +
         ".",
-      loadingMessage: "Updating your nameserver...",
+      loadingMessage: t("dns.updatingNameserver"),
       promise: nsRequest
         .put(
           {
@@ -61,11 +63,11 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
   const deleteRule = async () => {
     notify({
       title: "Nameserver " + ns.name,
-      description: "The nameserver was successfully removed.",
+      description: t("dns.nameserverDeletedSuccess"),
       promise: nsRequest.del("", `/${ns.id}`).then(() => {
         mutate("/dns/nameservers");
       }),
-      loadingMessage: "Deleting the nameserver...",
+      loadingMessage: t("dns.deletingNameserver"),
     });
   };
 
@@ -74,8 +76,8 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
       title: `Delete '${ns.name}'?`,
       description:
         "Are you sure you want to delete this nameserver? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
@@ -95,7 +97,7 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
           <Button
             variant={"secondary"}
             className={"!px-3"}
-            aria-label={"Nameserver actions"}
+            aria-label={t("dns.nameserverActionsAria")}
             data-testid={"nameserver-actions"}
           >
             <MoreVertical size={16} className={"shrink-0"} />
@@ -112,7 +114,7 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
           >
             <div className={"flex gap-3 items-center"}>
               <PowerIcon size={14} className={"shrink-0"} />
-              {ns.enabled ? "Disable" : "Enable"}
+              {ns.enabled ? t("common.disable") : t("common.enable")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -124,7 +126,7 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {t("common.delete")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

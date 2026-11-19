@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   PolicyBudgetLimit,
   PolicyLimits,
@@ -166,6 +167,7 @@ function LimitRow({
   onEdit: () => void;
   onDetach: () => void;
 }) {
+  const t = useTranslations();
   const isToken = kind === "token";
   const title = isToken ? "Token Limit" : "Budget Limit";
   const groupCap = isToken
@@ -198,7 +200,7 @@ function LimitRow({
         <div className={"flex flex-col gap-0.5 min-w-0"}>
           <div className={"text-sm text-nb-gray-100 truncate"}>{title}</div>
           <div className={"text-xs text-nb-gray-400 truncate"}>
-            Group {groupLabel} · Individual {userLabel} · resets every{" "}
+            {t("common.group") + " "}{groupLabel} · Individual {userLabel} · resets every{" "}
             {formatWindow(limit.windowSeconds)}
           </div>
         </div>
@@ -306,6 +308,7 @@ function LimitEditModal({
   onSave: (next: PolicyLimits) => void;
   onClose: () => void;
 }) {
+  const translate = useTranslations();
   const isToken = kind === "token";
   const initial = isToken ? limits.tokenLimit : limits.budgetLimit;
   // Track inputs as strings so the user can clear the field; an empty
@@ -462,13 +465,13 @@ function LimitEditModal({
                 <SelectTrigger className={"w-[135px] shrink-0"}>
                   <div className={"flex items-center gap-3"}>
                     <CalendarClock size={15} className={"text-nb-gray-300"} />
-                    <SelectValue placeholder={"Select interval..."} />
+                    <SelectValue placeholder={translate("agentNetwork.selectInterval")} />
                   </div>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={"m"}>Minutes</SelectItem>
-                  <SelectItem value={"h"}>Hours</SelectItem>
-                  <SelectItem value={"d"}>Days</SelectItem>
+                  <SelectItem value={"h"}>{translate("agentNetwork.hours")}</SelectItem>
+                  <SelectItem value={"d"}>{translate("agentNetwork.days")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -477,14 +480,14 @@ function LimitEditModal({
         <ModalFooter className={"items-center"}>
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>{translate("common.cancel")}</Button>
             </ModalClose>
             <Button
               variant={"primary"}
               disabled={!canSave}
               onClick={handleSave}
             >
-              Save
+              {translate("common.save")}
             </Button>
           </div>
         </ModalFooter>

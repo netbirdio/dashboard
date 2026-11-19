@@ -32,6 +32,7 @@ import { useSWRConfig } from "swr";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { SetupKey } from "@/interfaces/SetupKey";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
@@ -151,6 +152,7 @@ export default function SetupKeysTable({
   isGroupPage,
   groups,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { permission } = usePermissions();
@@ -269,7 +271,7 @@ export default function SetupKeysTable({
         inset={false}
         minimal={isGroupPage}
         keepStateInLocalStorage={!isGroupPage}
-        text={"Setup Keys"}
+        text={t("common.setupKeys")}
         sorting={sorting}
         setSorting={setSorting}
         initialPageSize={25}
@@ -291,10 +293,8 @@ export default function SetupKeysTable({
             <NoResults
               icon={<SetupKeysIcon className={"fill-nb-gray-200"} size={20} />}
               className={"py-4"}
-              title={"This group is not used within any setup keys yet"}
-              description={
-                "Assign this group when creating a new setup key to see them listed here."
-              }
+              title={t("setupKeys.groupNotUsedTitle")}
+              description={t("setupKeys.groupNotUsedDescription")}
             >
               <Button
                 variant={"primary"}
@@ -303,7 +303,7 @@ export default function SetupKeysTable({
                 disabled={!permission.setup_keys.create}
               >
                 <PlusCircle size={16} />
-                Create Key
+                {t("common.createKey")}
               </Button>
             </NoResults>
           ) : (
@@ -317,10 +317,8 @@ export default function SetupKeysTable({
                   size={"large"}
                 />
               }
-              title={"Create Setup Key"}
-              description={
-                "Add a setup key to register new machines in your network. The key links machines to your account during initial setup."
-              }
+              title={t("common.createSetupKey")}
+              description={t("setupKeys.getStartedDescription")}
               button={
                 <Button
                   variant={"primary"}
@@ -330,7 +328,7 @@ export default function SetupKeysTable({
                   data-testid="open-create-setup-key"
                 >
                   <PlusCircle size={16} />
-                  Create Key
+                  {t("common.createKey")}
                 </Button>
               }
               learnMore={
@@ -342,7 +340,7 @@ export default function SetupKeysTable({
                     }
                     target={"_blank"}
                   >
-                    Setup Keys
+                    {t("common.setupKeys")}
                     <ExternalLinkIcon size={12} />
                   </InlineLink>
                 </>
@@ -361,7 +359,7 @@ export default function SetupKeysTable({
                 data-testid="open-create-setup-key"
               >
                 <PlusCircle size={16} />
-                Create Key
+                {t("common.createKey")}
               </Button>
             )}
           </>

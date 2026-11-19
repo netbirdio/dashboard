@@ -33,6 +33,7 @@ import {
   DistributorCustomer,
   DistributorCustomerStatus,
 } from "@/cloud/distributor/interfaces/Distributor";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PlanCard, PlanLoadingSkeleton } from "@/modules/billing/PlanCard";
 
 type Props = {
@@ -73,6 +74,7 @@ const CustomerModalContent = ({
   initialTab,
   onCreated,
 }: Omit<Props, "open">) => {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const customerRequest = useApiCall<DistributorCustomer>(
     "/integrations/msp/reseller/msps",
@@ -166,7 +168,7 @@ const CustomerModalContent = ({
                   "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
                 }
               />
-              General
+              {t("distributor.general")}
             </TabsTrigger>
             {isActive && (
               <TabsTrigger value={"plan"}>
@@ -197,7 +199,7 @@ const CustomerModalContent = ({
                 />
               </div>
               <div>
-                <Label>Domain</Label>
+                <Label>{t("common.domain")}</Label>
                 <HelpText>
                   The domain associated with this customer account.
                 </HelpText>
@@ -254,7 +256,7 @@ const CustomerModalContent = ({
                 />
               </div>
               <div>
-                <Label>Domain</Label>
+                <Label>{t("common.domain")}</Label>
                 <HelpText>
                   The domain associated with this customer account.
                 </HelpText>
@@ -309,7 +311,7 @@ const CustomerModalContent = ({
           {!customer && (
             <>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{t("common.cancel")}</Button>
               </ModalClose>
               <Button
                 variant={"primary"}
@@ -324,14 +326,14 @@ const CustomerModalContent = ({
           {customer && (
             <>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{t("common.cancel")}</Button>
               </ModalClose>
               <Button
                 variant={"primary"}
                 onClick={saveCustomer}
                 disabled={!hasChanges || name === ""}
               >
-                Save
+                {t("common.save")}
               </Button>
             </>
           )}

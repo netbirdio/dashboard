@@ -25,6 +25,7 @@ import * as React from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { isL4Mode, ReverseProxy } from "@/interfaces/ReverseProxy";
 import FullTooltip from "@components/FullTooltip";
@@ -69,6 +70,7 @@ type Props = {
 export default function ReverseProxyAuthCell({
   reverseProxy,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { openModal } = useReverseProxies();
   const { groups } = useGroups();
@@ -161,8 +163,8 @@ export default function ReverseProxyAuthCell({
                       value={
                         <div className={"text-green-500"}>
                           {key === "bearer_auth" && ssoGroups.length === 0
-                            ? "All Users"
-                            : "Enabled"}
+                            ? t("reverseProxy.allUsers")
+                            : t("common.enabled")}
                         </div>
                       }
                     >
@@ -242,7 +244,7 @@ export default function ReverseProxyAuthCell({
             openModal({ proxy: reverseProxy, initialTab: "auth" });
           }}
           disabled={!permission?.services?.update}
-          aria-label="Configure authentication"
+          aria-label={t("reverseProxy.configureAuthentication")}
         >
           <Settings size={12} />
         </Button>

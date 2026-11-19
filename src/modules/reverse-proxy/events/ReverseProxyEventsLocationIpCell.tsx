@@ -7,6 +7,7 @@ import * as React from "react";
 import { useMemo } from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import { useCountries } from "@/contexts/CountryProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { ReverseProxyEvent } from "@/interfaces/ReverseProxy";
 import Skeleton from "react-loading-skeleton";
 import { ListItem } from "@components/ListItem";
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export const ReverseProxyEventsLocationIpCell = ({ event }: Props) => {
+  const t = useTranslations();
   const { getRegionText, isLoading } = useCountries();
 
   const region = useMemo(() => {
@@ -49,7 +51,7 @@ export const ReverseProxyEventsLocationIpCell = ({ event }: Props) => {
         >
           <ListItem
             icon={<FlagIcon size={14} />}
-            label={"Region"}
+            label={t("reverseProxy.region")}
             value={
               isLoading && !region ? (
                 <Skeleton width={100} />

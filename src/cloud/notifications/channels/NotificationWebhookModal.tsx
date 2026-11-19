@@ -15,6 +15,7 @@ import {
   Repeat,
   TextIcon,
 } from "lucide-react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   NOTIFICATION_CHANNELS_WEBHOOK_DOCS_LINK,
   NotificationChannel,
@@ -63,6 +64,7 @@ function NotificationWebhookModalContent({
   channel,
   onSave,
 }: Readonly<ModalContentProps>) {
+  const t = useTranslations();
   const target = channel.target as WebhookTarget | undefined;
 
   const config = useWebhookConfig({
@@ -87,11 +89,11 @@ function NotificationWebhookModalContent({
     <ModalContent maxWidthClass={modalWidth}>
       <ModalHeader
         icon={<GlobeIcon size={16} />}
-        title={config.isEditing ? "Webhook Configuration" : "Connect Webhook"}
+        title={config.isEditing ? t("notifications.webhookConfiguration") : t("notifications.connectWebhook")}
         description={
           config.isEditing
-            ? "Update your webhook endpoint and authentication settings."
-            : "Configure a webhook endpoint to receive notification events."
+            ? t("notifications.webhookUpdateDescription")
+            : t("notifications.webhookConnectDescription")
         }
       />
 
@@ -104,7 +106,7 @@ function NotificationWebhookModalContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            General
+            {t("notifications.general")}
           </TabsTrigger>
           <TabsTrigger
             value={"headers"}
@@ -117,7 +119,7 @@ function NotificationWebhookModalContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Headers
+            {t("notifications.headers")}
           </TabsTrigger>
         </TabsList>
 
@@ -138,7 +140,7 @@ function NotificationWebhookModalContent({
               href={NOTIFICATION_CHANNELS_WEBHOOK_DOCS_LINK}
               target={"_blank"}
             >
-              Webhook Notifications
+              {t("notifications.webhookNotifications")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
@@ -147,7 +149,7 @@ function NotificationWebhookModalContent({
           {config.isEditing ? (
             <>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{t("common.cancel")}</Button>
               </ModalClose>
               <Button
                 variant={"primary"}
@@ -155,7 +157,7 @@ function NotificationWebhookModalContent({
                 disabled={!config.canSave}
                 data-testid="webhook-save"
               >
-                Save Changes
+                {t("common.saveChanges")}
               </Button>
             </>
           ) : (
@@ -163,7 +165,7 @@ function NotificationWebhookModalContent({
               {tab === "general" && (
                 <>
                   <ModalClose asChild={true}>
-                    <Button variant={"secondary"}>Cancel</Button>
+                    <Button variant={"secondary"}>{t("common.cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant={"primary"}
@@ -171,7 +173,7 @@ function NotificationWebhookModalContent({
                     onClick={() => setTab("headers")}
                     data-testid="webhook-continue"
                   >
-                    Continue
+                    {t("common.continue")}
                   </Button>
                 </>
               )}
@@ -181,7 +183,7 @@ function NotificationWebhookModalContent({
                     variant={"secondary"}
                     onClick={() => setTab("general")}
                   >
-                    Back
+                    {t("common.back")}
                   </Button>
                   <Button
                     variant={"primary"}
@@ -190,7 +192,7 @@ function NotificationWebhookModalContent({
                     data-testid="webhook-save"
                   >
                     <Repeat size={16} />
-                    Connect
+                    {t("notifications.connect")}
                   </Button>
                 </>
               )}

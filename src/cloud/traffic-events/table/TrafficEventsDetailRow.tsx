@@ -7,6 +7,7 @@ import {
   TrafficEventType,
 } from "@/cloud/traffic-events/interfaces/TrafficEvent";
 import { TrafficEventDescription } from "@/cloud/traffic-events/table/TrafficEventDescription";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   event: TrafficEvent;
@@ -130,6 +131,7 @@ const PolicyListItem = ({
   policy?: { id: string; name: string };
   isBlocked: boolean;
 }) => {
+  const t = useTranslations();
   return (
     <ListItem
       topLine={true}
@@ -139,7 +141,7 @@ const PolicyListItem = ({
       <span
         className={"whitespace-nowrap leading-none flex items-center gap-2"}
       >
-        Policy
+        {t("common.policy")}
         <Link href={`/access-control?id=${policy?.id}`}>
           <span
             className={

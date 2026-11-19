@@ -18,6 +18,7 @@ import { cn } from "@utils/helpers";
 import { Clock, FileText, ScrollText } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 
 // Retention options for access-log rows. "0" keeps them indefinitely. Usage
@@ -32,6 +33,7 @@ const RETENTION_OPTIONS = [
 ];
 
 export default function AgentAccountControlsCard() {
+  const translate = useTranslations();
   const { settings, settingsLoading, updateAgentNetworkSettings } =
     useAIProviders();
 
@@ -87,19 +89,19 @@ export default function AgentAccountControlsCard() {
       <Breadcrumbs>
         <Breadcrumbs.Item
           href={"/agent-network/providers"}
-          label={"Agent Network"}
+          label={translate("common.agentNetwork")}
           icon={<AgentNetworkIcon size={16} />}
         />
         <Breadcrumbs.Item
           href={"/agent-network/configuration?tab=log-settings"}
-          label={"Log Collection"}
+          label={translate("common.logCollection")}
           icon={<ScrollText size={14} />}
           active
         />
       </Breadcrumbs>
 
       <div className={"flex items-start justify-between"}>
-        <h1>Log Collection</h1>
+        <h1>{translate("common.logCollection")}</h1>
 
         <Button
           variant={"primary"}
@@ -107,7 +109,7 @@ export default function AgentAccountControlsCard() {
           onClick={onSave}
           data-testid={"save-account-controls"}
         >
-          Save Changes
+          {translate("common.saveChanges")}
         </Button>
       </div>
 

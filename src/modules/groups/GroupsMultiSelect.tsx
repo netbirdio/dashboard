@@ -8,6 +8,7 @@ import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { GroupUsage } from "@/modules/groups/useGroupsUsage";
 
@@ -20,6 +21,7 @@ export const GroupsMultiSelect = ({
   selectedGroups = [],
   onCanceled,
 }: Readonly<Props>) => {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
   const { deleteGroupDropdownOption } = useGroups();
@@ -35,8 +37,8 @@ export const GroupsMultiSelect = ({
       description: `Are you sure you want to delete ${
         groupCount > 1 ? "these groups" : "this group"
       }? This action cannot be undone.`,
-      confirmText: "Delete All",
-      cancelText: "Cancel",
+      confirmText: t("groups.deleteAll"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
@@ -96,7 +98,7 @@ export const GroupsMultiSelect = ({
       onCanceled={onCanceled}
       icon={<FolderGit2 size={16} />}
       rightSide={
-        <FullTooltip content={<span className={"text-xs"}>Delete All</span>}>
+        <FullTooltip content={<span className={"text-xs"}>{t("groups.deleteAll")}</span>}>
           <Button
             variant={"danger-outline"}
             size={"xs"}

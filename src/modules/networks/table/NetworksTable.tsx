@@ -25,6 +25,7 @@ import { useSWRConfig } from "swr";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network } from "@/interfaces/Network";
 import { NetworkAccessControlProvider } from "@/modules/networks/NetworkAccessControlProvider";
 import {
@@ -96,6 +97,7 @@ export default function NetworksTable({
   data,
   headingTarget,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const [searchModal, setSearchModal] = useState(false);
@@ -148,14 +150,14 @@ export default function NetworksTable({
           <DataTable
             headingTarget={headingTarget}
             isLoading={isLoading}
-            text={"Networks"}
+            text={translate("common.networks")}
             sorting={sorting}
             setSorting={setSorting}
             columns={NetworkTableColumns}
             data={data}
             initialPageSize={25}
             showResetFilterButton={false}
-            searchPlaceholder={"Search by network name or description..."}
+            searchPlaceholder={translate("networks.searchByNameOrDescription")}
             columnVisibility={{
               description: false,
               active: false,
@@ -194,7 +196,7 @@ export default function NetworksTable({
                       href={"https://docs.netbird.io/how-to/networks"}
                       target={"_blank"}
                     >
-                      Networks
+                      {translate("common.networks")}
                       <ExternalLinkIcon size={12} />
                     </InlineLink>
                   </>
@@ -241,6 +243,7 @@ export default function NetworksTable({
 }
 
 const AddNetworkButton = () => {
+  const t = useTranslations();
   const { permission } = usePermissions();
 
   const { openCreateNetworkModal } = useNetworksContext();
@@ -252,7 +255,7 @@ const AddNetworkButton = () => {
       data-testid={"add-network"}
     >
       <PlusCircle size={16} />
-      Add Network
+      {t("common.addNetwork")}
     </Button>
   );
 };

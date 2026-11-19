@@ -5,12 +5,14 @@ import * as React from "react";
 import { useMemo } from "react";
 import Skeleton from "react-loading-skeleton";
 import { useCountries } from "@/contexts/CountryProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 
 type Props = {
   peer: Peer;
 };
 export const PeerAddressTooltipContent = ({ peer }: Props) => {
+  const t = useTranslations();
   const { isLoading, getRegionByPeer } = useCountries();
 
   const countryText = useMemo(() => {
@@ -55,7 +57,7 @@ export const PeerAddressTooltipContent = ({ peer }: Props) => {
       )}
       <ListItem
         icon={<NetworkIcon size={14} />}
-        label={"Public IP"}
+        label={t("peers.publicIp")}
         value={
           <CopyToClipboardText
             iconAlignment={"right"}
@@ -68,7 +70,7 @@ export const PeerAddressTooltipContent = ({ peer }: Props) => {
       />
       <ListItem
         icon={<GlobeIcon size={14} />}
-        label={"Domain"}
+        label={t("common.domain")}
         className={
           peer?.extra_dns_labels && peer.extra_dns_labels.length > 0
             ? "items-start"
@@ -101,7 +103,7 @@ export const PeerAddressTooltipContent = ({ peer }: Props) => {
       />
       <ListItem
         icon={<FlagIcon size={14} />}
-        label={"Region"}
+        label={t("peers.region")}
         value={
           isLoading && !countryText ? (
             <Skeleton width={100} />

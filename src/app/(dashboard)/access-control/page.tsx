@@ -13,6 +13,7 @@ import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Policy } from "@/interfaces/Policy";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -20,6 +21,7 @@ const AccessControlTable = lazy(
   () => import("@/modules/access-control/table/AccessControlTable"),
 );
 export default function AccessControlPage() {
+  const t = useTranslations();
   const { permission } = usePermissions();
 
   const { data: policies, isLoading } = useFetchApi<Policy[]>("/policies");
@@ -34,11 +36,11 @@ export default function AccessControlPage() {
           <Breadcrumbs>
             <Breadcrumbs.Item
               href={"/access-control"}
-              label={"Access Control"}
+              label={t("common.accessControl")}
               icon={<AccessControlIcon size={14} />}
             />
           </Breadcrumbs>
-          <h1 ref={headingRef}>Access Control Policies</h1>
+          <h1 ref={headingRef}>{t("accessControl.tableHeading")}</h1>
           <Paragraph>
             Policies connect users and agents to your network resources,
             controlling what each identity can reach.{" "}
@@ -46,14 +48,14 @@ export default function AccessControlPage() {
               href={"https://docs.netbird.io/how-to/manage-network-access"}
               target={"_blank"}
             >
-              Learn more
+              {t("common.learnMore")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
 
         <RestrictedAccess
-          page={"Access Control"}
+          page={t("common.accessControl")}
           hasAccess={permission.policies.read}
         >
           <PoliciesProvider>

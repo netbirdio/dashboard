@@ -9,6 +9,7 @@ import { ArrowUpRightIcon, ShareIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import { SetupKey } from "@/interfaces/SetupKey";
 import { SetupModalContent } from "@/modules/setup-netbird-modal/SetupModal";
@@ -19,6 +20,7 @@ type Props = {
 };
 
 export const OnboardingSecondDevice = ({ secondDevice, onFinish }: Props) => {
+  const t = useTranslations();
   const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
   const [setupKey, setSetupKey] = useState<SetupKey>();
   const { confirm } = useDialog();
@@ -48,8 +50,8 @@ export const OnboardingSecondDevice = ({ secondDevice, onFinish }: Props) => {
       title: `Create a Setup Key?`,
       description:
         "If you continue, a one-off setup key will be automatically created and you will be able to install NetBird.",
-      confirmText: "Continue",
-      cancelText: "Cancel",
+      confirmText: t("common.continue"),
+      cancelText: t("common.cancel"),
       type: "default",
     });
     if (!choice) return;
@@ -122,7 +124,7 @@ export const OnboardingSecondDevice = ({ secondDevice, onFinish }: Props) => {
         <Modal open={open} onOpenChange={setOpen}>
           <ModalContent>
             <SetupModalContent
-              title={"Install NetBird"}
+              title={t("onboarding.installNetBird")}
               setupKey={setupKey.key}
             />
           </ModalContent>

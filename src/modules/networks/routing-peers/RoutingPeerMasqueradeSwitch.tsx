@@ -7,6 +7,7 @@ import { cn } from "@utils/helpers";
 import { AlertCircleIcon, VenetianMask } from "lucide-react";
 import * as React from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { GroupPeer } from "@/interfaces/Group";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
@@ -62,11 +63,12 @@ export const RoutingPeerMasqueradeTooltip = ({
   show = false,
   children,
 }: RoutingPeerMasqueradeTooltipProps) => {
+  const t = useTranslations();
   return (
     <FullTooltip
       content={
         <div className={"text-xs"}>
-          Masquerade needs to be enabled for non-Linux routing peers.
+          {t("networks.masqueradeTooltip")}
         </div>
       }
       delayDuration={250}
@@ -84,6 +86,7 @@ const RoutingPeerGroupNonLinuxWarning = ({
 }: {
   routingPeerGroupId: string;
 }) => {
+  const t = useTranslations();
   const { groups } = useGroups();
   const { data: peers } = useFetchApi<Peer[]>("/peers", true);
   const group = groups?.find((g) => g.id === routingPeerGroupId);
@@ -112,7 +115,7 @@ const RoutingPeerGroupNonLinuxWarning = ({
           />
         }
       >
-        Group <span className={"text-netbird font-normal"}>{group?.name}</span>{" "}
+        {t("common.group") + " "}<span className={"text-netbird font-normal"}>{group?.name}</span>{" "}
         contains at least one non-Linux peer.
         <br /> Disabled Masquerade will have no effect on non-Linux routing
         peers.

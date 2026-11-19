@@ -30,6 +30,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { useEmbeddedIdentityProviders } from "@/hooks/useEmbeddedIdentityProviders";
 import integrationImage from "@/assets/integrations/okta.png";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { OktaIntegration } from "@/interfaces/IdentityProvider";
 import oktaGroupsAssignments from "@/modules/integrations/idp-sync/okta-scim/images/okta-groups-assignments.png";
 import oktaSCIMToApp from "@/modules/integrations/idp-sync/okta-scim/images/okta-scim-to-app-sync-enabled.png";
@@ -119,6 +120,7 @@ export function SetupContent({
   connectorId = "",
   onConnectorIdChange,
 }: ModalProps) {
+  const translate = useTranslations();
   const { isEmbeddedIdPEnabled } = useEmbeddedIdentityProviders();
   const [step, setStep] = useState(isEmbeddedIdPEnabled ? -1 : 0);
   const maxSteps = 5;
@@ -187,7 +189,7 @@ export function SetupContent({
             }
           >
             <Shield size={16} />
-            Required Permissions
+            {translate("common.requiredPermissions")}
           </div>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
             Ensure that you have an{" "}
@@ -245,14 +247,14 @@ export function SetupContent({
             <Steps.Step step={2}>
               <p className={"font-normal"}>
                 Go to <Mark>{"Sign On > Settings"}</Mark> and select{" "}
-                <Mark>Edit</Mark>
+                <Mark>{translate("common.edit")}</Mark>
               </p>
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
                 In the <Mark>Credentials Details</Mark> section, change the
-                <Mark>Application username format</Mark> to <Mark>Email</Mark>{" "}
-                and select <Mark>Save</Mark>
+                <Mark>Application username format</Mark> to <Mark>{translate("common.email")}</Mark>{" "}
+                and select <Mark>{translate("common.save")}</Mark>
               </p>
               <Lightbox image={oktaSSO} />
             </Steps.Step>
@@ -293,7 +295,7 @@ export function SetupContent({
             <Steps.Step step={4} line={false}>
               <p className={"font-normal"}>
                 Click <Mark>Test API Credentials</Mark> to verify the SCIM
-                connection, then select <Mark>Save</Mark>
+                connection, then select <Mark>{translate("common.save")}</Mark>
               </p>
             </Steps.Step>
           </Steps>
@@ -310,14 +312,14 @@ export function SetupContent({
             <Steps.Step step={1}>
               <p>
                 Go to the <Mark>{"Provisioning > Settings > To App"}</Mark> and
-                click <Mark>Edit</Mark>
+                click <Mark>{translate("common.edit")}</Mark>
               </p>
             </Steps.Step>
             <Steps.Step step={2} line={false}>
               <p className={"font-normal"}>
-                Enable <Mark>Create Users</Mark>,{" "}
+                {translate("common.enable") + " "}<Mark>Create Users</Mark>,{" "}
                 <Mark>Update User Attributes</Mark>, and{" "}
-                <Mark>Deactivate Users</Mark> and click <Mark>Save</Mark>
+                <Mark>Deactivate Users</Mark> and click <Mark>{translate("common.save")}</Mark>
               </p>
               <Lightbox image={oktaSCIMToApp} />
             </Steps.Step>
@@ -335,19 +337,19 @@ export function SetupContent({
             <Steps.Step step={1}>
               <p>
                 Go to the <Mark>Assignments</Mark> tab, select the{" "}
-                <Mark>Assign</Mark> and click <Mark>Assign to Groups</Mark>
+                <Mark>{translate("common.assign")}</Mark> and click <Mark>Assign to Groups</Mark>
               </p>
               <Lightbox image={oktaGroupsAssignments} />
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
                 Select the groups you want to provision, and then select{" "}
-                <Mark>Assign</Mark> and click <Mark>Save and Go Back</Mark>
+                <Mark>{translate("common.assign")}</Mark> and click <Mark>Save and Go Back</Mark>
               </p>
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                Select <Mark>Done</Mark> after you have finished assigning
+                {translate("common.select") + " "}<Mark>Done</Mark> after you have finished assigning
                 groups. At this point, all members of the groups assigned to the
                 application will be synced to NetBird.
               </p>
@@ -373,7 +375,7 @@ export function SetupContent({
             </Steps.Step>
             <Steps.Step step={2} line={false}>
               <p className={"font-normal"}>
-                Search groups to push and then click <Mark>Save</Mark>. The
+                Search groups to push and then click <Mark>{translate("common.save")}</Mark>. The
                 selected groups will then be synced to NetBird.
               </p>
             </Steps.Step>
@@ -389,7 +391,7 @@ export function SetupContent({
             onClick={() => setStep(step + 1)}
             disabled={!connectorId || connectorId === ""}
           >
-            Continue
+            {translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -400,7 +402,7 @@ export function SetupContent({
             onClick={() => setStep(step - 1)}
           >
             <IconArrowLeft size={16} />
-            Back
+            {translate("common.back")}
           </Button>
         )}
         {step >= 0 && step < maxSteps && (
@@ -409,7 +411,7 @@ export function SetupContent({
             className={"w-full"}
             onClick={() => setStep(step + 1)}
           >
-            {step == 0 ? "Get Started" : "Continue"}
+            {step == 0 ? "Get Started" : translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -421,7 +423,7 @@ export function SetupContent({
               onSuccess();
             }}
           >
-            Finish Setup
+            {translate("common.finishSetup")}
           </Button>
         )}
       </ModalFooter>
@@ -443,6 +445,7 @@ export function SetupContent({
 }
 
 export function SetupSSOContent() {
+  const translate = useTranslations();
   const [step, setStep] = useState(0);
   const maxSteps = 2;
 
@@ -491,7 +494,7 @@ export function SetupSSOContent() {
             }
           >
             <Shield size={16} />
-            Required Permissions
+            {translate("common.requiredPermissions")}
           </div>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
             Ensure that you have an{" "}
@@ -559,7 +562,7 @@ export function SetupSSOContent() {
             <Steps.Step step={3} line={false}>
               <p>
                 After installing the application go to the{" "}
-                <Mark>Assignments</Mark> tab, select the <Mark>Assign</Mark> and
+                <Mark>Assignments</Mark> tab, select the <Mark>{translate("common.assign")}</Mark> and
                 click <Mark>Assign to People</Mark> and assign your user to the
                 application
               </p>
@@ -578,7 +581,7 @@ export function SetupSSOContent() {
             <Steps.Step step={1}>
               <p className={"font-normal"}>
                 Click on the <Mark>{"Sign On"}</Mark> tab and take note <br />
-                of the <Mark>Client ID</Mark> and <Mark>Client secret</Mark>
+                of the <Mark>{translate("integrations.idpClientId")}</Mark> and <Mark>Client secret</Mark>
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
@@ -589,7 +592,7 @@ export function SetupSSOContent() {
             </Steps.Step>
             <Steps.Step step={3}>
               <p className={"font-normal"}>
-                Share your <Mark>Client ID</Mark> <Mark>Client secret</Mark>{" "}
+                Share your <Mark>{translate("integrations.idpClientId")}</Mark> <Mark>Client secret</Mark>{" "}
                 <Mark>Okta account domain</Mark> and your {"user's"}
                 <Mark>Primary email domain</Mark> with the NetBird team
               </p>
@@ -644,7 +647,7 @@ export function SetupSSOContent() {
             onClick={() => setStep(step - 1)}
           >
             <IconArrowLeft size={16} />
-            Back
+            {translate("common.back")}
           </Button>
         )}
         {step >= 0 && step < maxSteps && (
@@ -653,14 +656,14 @@ export function SetupSSOContent() {
             className={"w-full"}
             onClick={() => setStep(step + 1)}
           >
-            {step == 0 ? "Get Started" : "Continue"}
+            {step == 0 ? "Get Started" : translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
         {step == maxSteps && (
           <ModalClose asChild={true}>
             <Button variant={"primary"} className={"w-full"}>
-              Close
+              {translate("common.close")}
             </Button>
           </ModalClose>
         )}

@@ -23,6 +23,7 @@ import TeamIcon from "@/assets/icons/TeamIcon";
 import { GroupProvider, useGroupContext } from "@/contexts/GroupProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group, GROUP_TOOLTIP_TEXT } from "@/interfaces/Group";
 import PageContainer from "@/layouts/PageContainer";
 import { GroupDNSZonesSection } from "@/modules/groups/details/GroupDNSZonesSection";
@@ -36,6 +37,7 @@ import { GroupUsersSection } from "@/modules/groups/details/GroupUsersSection";
 import useGroupDetails from "@/modules/groups/details/useGroupDetails";
 
 export default function GroupPage() {
+  const t = useTranslations();
   const queryParameter = useSearchParams();
   const { isRestricted } = usePermissions();
   const groupId = queryParameter.get("id");
@@ -73,7 +75,7 @@ export default function GroupPage() {
             <Breadcrumbs>
               <Breadcrumbs.Item
                 href={"/groups"}
-                label={"Groups"}
+                label={t("common.groups")}
                 icon={<FolderGit2Icon size={14} />}
               />
               <Breadcrumbs.Item label={group.name} active />

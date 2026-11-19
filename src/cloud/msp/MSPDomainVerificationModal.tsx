@@ -13,6 +13,7 @@ import * as React from "react";
 import { useState } from "react";
 import { useTenants } from "@/cloud/msp/contexts/TenantsProvider";
 import { Tenant } from "@/cloud/msp/interfaces/Tenant";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   open: boolean;
@@ -31,6 +32,7 @@ export const MSPDomainVerificationModal = ({
   onSuccess,
   onCancel,
 }: Props) => {
+  const translate = useTranslations();
   const { verifyDomain } = useTenants();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -80,13 +82,13 @@ export const MSPDomainVerificationModal = ({
               <Card.ListItem
                 copy
                 copyText={"TXT Host"}
-                label={"Host"}
+                label={translate("common.host")}
                 value={domain}
               />
               <Card.ListItem
                 copy
                 copyText={"TXT Value"}
-                label={"Value"}
+                label={translate("msp.headerValue")}
                 value={`nb-verification=${token}`}
               />
             </Card.List>

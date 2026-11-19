@@ -32,6 +32,7 @@ import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import GroupRouteProvider from "@/contexts/GroupRouteProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { GroupedRoute, Route } from "@/interfaces/Route";
 import { AddExitNodeButton } from "@/modules/exit-node/AddExitNodeButton";
@@ -148,6 +149,7 @@ export default function NetworkRoutesTable({
   isGroupPage = false,
   distributionGroups,
 }: Props) {
+  const translate = useTranslations();
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const path = usePathname();
@@ -239,7 +241,7 @@ export default function NetworkRoutesTable({
       <DataTable
         headingTarget={headingTarget}
         isLoading={isLoading}
-        text={"Network Routes"}
+        text={translate("common.networkRoutes")}
         sorting={sorting}
         setSorting={setSorting}
         columns={GroupedRouteTableColumns}
@@ -253,7 +255,7 @@ export default function NetworkRoutesTable({
         keepStateInLocalStorage={!isGroupPage}
         initialPageSize={25}
         showResetFilterButton={false}
-        searchPlaceholder={"Search by network, range, name or groups..."}
+        searchPlaceholder={translate("routeGroup.searchRoutes")}
         aboveTable={(table) => (
           <TableFilterChips table={table} filters={filterDefs} />
         )}
@@ -282,10 +284,8 @@ export default function NetworkRoutesTable({
                 <NetworkRoutesIcon className={"fill-nb-gray-200"} size={20} />
               }
               className={"py-4"}
-              title={"This group is not used within any network routes yet"}
-              description={
-                "Assign this group when creating a new route to see them listed here."
-              }
+              title={translate("routeGroup.groupNoRoutesTitle")}
+              description={translate("routeGroup.groupNoRoutesDescription")}
             >
               <div className={"gap-x-4 flex items-center justify-center mt-4"}>
                 <AddExitNodeButton distributionGroups={distributionGroups} />
@@ -296,7 +296,7 @@ export default function NetworkRoutesTable({
                   disabled={!permission.routes.create}
                 >
                   <PlusCircle size={16} />
-                  Add Route
+                  {translate("common.addRoute")}
                 </Button>
               </div>
             </NoResults>
@@ -314,10 +314,8 @@ export default function NetworkRoutesTable({
                   size={"large"}
                 />
               }
-              title={"Create New Route"}
-              description={
-                "It looks like you don't have any routes. Access LANs and VPC by adding a network route."
-              }
+              title={translate("routeGroup.createNewRoute")}
+              description={translate("routeGroup.getStartedDescription")}
               button={
                 <div className={"gap-x-4 flex items-center justify-center"}>
                   <AddExitNodeButton distributionGroups={distributionGroups} />
@@ -329,7 +327,7 @@ export default function NetworkRoutesTable({
                     data-testid="open-add-route"
                   >
                     <PlusCircle size={16} />
-                    Add Route
+                    {translate("common.addRoute")}
                   </Button>
                 </div>
               }
@@ -342,7 +340,7 @@ export default function NetworkRoutesTable({
                     }
                     target={"_blank"}
                   >
-                    Network Routes
+                    {translate("common.networkRoutes")}
                     <ExternalLinkIcon size={12} />
                   </InlineLink>
                 </>
@@ -363,7 +361,7 @@ export default function NetworkRoutesTable({
                   data-testid="open-add-route"
                 >
                   <PlusCircle size={16} />
-                  Add Route
+                  {translate("common.addRoute")}
                 </Button>
               </div>
             )}

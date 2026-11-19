@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
@@ -42,6 +43,7 @@ const PoliciesContext = React.createContext(
 );
 
 export default function PoliciesProvider({ children }: Props) {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const request = useApiCall<Policy>("/policies");
   const { createOrUpdate: createOrUpdateGroup, groups } = useGroups();
@@ -190,7 +192,7 @@ export default function PoliciesProvider({ children }: Props) {
       title: "Access Control Policy " + policy.name,
       description: "The policy was successfully deleted.",
       promise,
-      loadingMessage: "Deleting policy...",
+      loadingMessage: t("accessControl.policyDeleteLoading"),
     });
     return promise;
   };

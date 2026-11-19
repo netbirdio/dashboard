@@ -22,6 +22,7 @@ import { useSWRConfig } from "swr";
 import { AccountMFA } from "@/cloud/mfa/AccountMFASettings";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 const config = loadConfig();
 
@@ -42,6 +43,7 @@ interface UserAuthMethods {
 }
 
 const ListItem = ({ userId }: Props) => {
+  const t = useTranslations();
   const { data: userMfa, isLoading: isUserMfaLoading } = useFetchApi<
     UserAuthMethods[]
   >(`/service/mfa/${userId}`, true, false, !!config.authServiceUrl, {
@@ -82,7 +84,7 @@ const ListItem = ({ userId }: Props) => {
                   }
                   target={"_blank"}
                 >
-                  Learn more
+                  {t("common.learnMore")}
                   <ExternalLinkIcon size={10} />
                 </InlineLink>
               </div>
@@ -158,6 +160,7 @@ const MFAStatus = ({
 };
 
 const ResetMFAButton = ({ userId }: Props) => {
+  const t = useTranslations();
   const mfaDeleteRequest = useApiCall(`/service/mfa/${userId}`, true, {
     origin: config.authServiceUrl,
   }).del;
@@ -170,8 +173,8 @@ const ResetMFAButton = ({ userId }: Props) => {
       title: `Reset Multi-factor Authentication?`,
       description:
         "Are you sure you want to reset the current MFA methods for this user? The user will be prompted to set up MFA again on their next login.",
-      confirmText: "Confirm",
-      cancelText: "Cancel",
+      confirmText: t("common.confirm"),
+      cancelText: t("common.cancel"),
       type: "warning",
     });
     if (!choice) return;

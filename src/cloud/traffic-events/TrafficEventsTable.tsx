@@ -41,6 +41,7 @@ import { parseAddressPort } from "@/cloud/traffic-events/utils/parseAddress";
 import { usePeers } from "@/contexts/PeersProvider";
 import { useServerPagination } from "@/contexts/ServerPaginationProvider";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { NetworkResource } from "@/interfaces/Network";
 
 export const getTrafficEventTypeText = (
@@ -222,6 +223,7 @@ export default function TrafficEventsTable({
   headingTarget,
   isSettingEnabled,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   const router = useRouter();
   const { users } = useUsers();
   const { peers } = usePeers();
@@ -434,7 +436,7 @@ export default function TrafficEventsTable({
           size={"large"}
         />
       }
-      title={"Traffic Events"}
+      title={translate("common.trafficEvents")}
       description={
         "Traffic Events help you understand the network activity in your organization. " +
         "You can see which machines are connecting to each other, and what kind of traffic is flowing between them."
@@ -451,7 +453,7 @@ export default function TrafficEventsTable({
         <>
           Learn more about
           <InlineLink href={TRAFFIC_EVENTS_DOC_LINK} target={"_blank"}>
-            Traffic Events
+            {translate("common.trafficEvents")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </>
@@ -474,7 +476,7 @@ export default function TrafficEventsTable({
         <>
           Learn more about
           <InlineLink href={TRAFFIC_EVENTS_DOC_LINK} target={"_blank"}>
-            Traffic Events
+            {translate("common.trafficEvents")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </>
@@ -492,7 +494,7 @@ export default function TrafficEventsTable({
       {...paginationProps}
       serverSidePagination={false}
       headingTarget={headingTarget}
-      text={"Traffic Events"}
+      text={translate("common.trafficEvents")}
       isLoading={isLoading}
       tableCellClassName={"py-2"}
       sorting={sorting}

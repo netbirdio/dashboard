@@ -20,8 +20,10 @@ import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { TenantDNSResponse, TenantStatus } from "@/cloud/msp/interfaces/Tenant";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 export const MSPTransferAccountModal = () => {
+  const t = useTranslations();
   const { mspInfo } = useMSP();
   const { confirm } = useDialog();
   const { isOwner } = useLoggedInUser();
@@ -44,7 +46,7 @@ export const MSPTransferAccountModal = () => {
       title: `Granting access to ${mspInfo?.parent_domain}?`,
       description: `Are you sure you want to grant access? This action cannot be undone.`,
       confirmText: "Grant Access",
-      cancelText: "Cancel",
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
@@ -175,7 +177,7 @@ export const MSPTransferAccountModal = () => {
             </div>
             <div className={"flex gap-4 items-center mt-6 w-full"}>
               <Button className={"w-full"} variant={"secondary"} onClick={deny}>
-                Deny
+                {t("common.deny")}
               </Button>
               <Button
                 className={"w-full"}

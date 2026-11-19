@@ -12,6 +12,7 @@ import { useAnalytics } from "@/contexts/AnalyticsProvider";
 import { Announcement, useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { AccountUsageStats } from "@/interfaces/AccountUsageStats";
 import type { Group } from "@/interfaces/Group";
 import { Currency, Plan, Price } from "@/interfaces/Plan";
@@ -102,6 +103,7 @@ export default function BillingProvider({ children }: Props) {
 }
 
 function BillingContextProvider({ children }: Readonly<Props>) {
+  const t = useTranslations();
   const baseURL = `${window.location.protocol}//${window.location.host}`;
   const router = useRouter();
   const currentPath = usePathname();
@@ -290,7 +292,7 @@ function BillingContextProvider({ children }: Readonly<Props>) {
         </div>
       ),
       confirmText: downgrade ? "Downgrade" : "Upgrade",
-      cancelText: "Cancel",
+      cancelText: t("common.cancel"),
       type: "default",
     });
     if (!choice) return;

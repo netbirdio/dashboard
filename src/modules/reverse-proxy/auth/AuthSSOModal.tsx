@@ -4,6 +4,7 @@ import ModalHeader from "@components/modal/ModalHeader";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
 import React, { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { useUsers } from "@/contexts/UsersProvider";
 import Badge from "@components/Badge";
@@ -26,6 +27,7 @@ export default function AuthSSOModal({
   onSave,
   onRemove,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { users } = useUsers();
   const [groups, setGroups] = useState<Group[]>(currentGroups);
   const isEditing = isEnabled;
@@ -45,8 +47,8 @@ export default function AuthSSOModal({
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent maxWidthClass="max-w-xl">
         <ModalHeader
-          title="SSO (Single Sign-On)"
-          description="Require users to authenticate via SSO to access this service."
+          title={t("reverseProxy.sso")}
+          description={t("reverseProxy.ssoDescription")}
         />
 
         <GradientFadedBackground />
@@ -59,7 +61,7 @@ export default function AuthSSOModal({
               <div className={"flex items-center gap-2"}>
                 <Badge className={"py-[3px]"} variant={"gray-ghost"}>
                   <CircleUser size={12} />
-                  All Users
+                  {t("reverseProxy.allUsers")}
                 </Badge>
                 Select user groups...
               </div>
@@ -71,14 +73,14 @@ export default function AuthSSOModal({
             {isEditing ? (
               <>
                 <Button variant="danger-text" data-testid="remove-sso" onClick={handleRemove}>
-                  Remove
+                  {t("common.remove")}
                 </Button>
                 <div className="flex gap-3">
                   <ModalClose asChild>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{t("common.cancel")}</Button>
                   </ModalClose>
                   <Button variant="primary" onClick={handleSave}>
-                    Save
+                    {t("common.save")}
                   </Button>
                 </div>
               </>
@@ -87,7 +89,7 @@ export default function AuthSSOModal({
                 <div />
                 <div className="flex gap-3">
                   <ModalClose asChild>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{t("common.cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant="primary"

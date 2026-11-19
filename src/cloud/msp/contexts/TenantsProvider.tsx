@@ -14,6 +14,7 @@ import { MSPSubscriptionModal } from "@/cloud/msp/MSPSubscriptionModal";
 import { MSPTenantModal } from "@/cloud/msp/MSPTenantModal";
 import { MSPUnlinkModal } from "@/cloud/msp/MSPUnlinkModal";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Currency, Plan } from "@/interfaces/Plan";
 import { User } from "@/interfaces/User";
 
@@ -43,6 +44,7 @@ const TenantsContext = React.createContext(
 );
 
 export const TenantsProvider = ({ children }: Props) => {
+  const translate = useTranslations();
   const { data: tenants } = useFetchApi<Tenant[]>("/integrations/msp/tenants");
   const { mutate } = useSWRConfig();
   const [accountModal, setAccountModal] = useState(false);
@@ -70,8 +72,8 @@ export const TenantsProvider = ({ children }: Props) => {
       title: `Delete '${tenant.name}'?`,
       description:
         "Deleting this tenant will permanently remove all of its associated data, including its peers, users, groups and everything else. Please be aware that this action is irreversible and cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      confirmText: translate("common.delete"),
+      cancelText: translate("common.cancel"),
       type: "danger",
       maxWidthClass: "max-w-[480px]",
     });

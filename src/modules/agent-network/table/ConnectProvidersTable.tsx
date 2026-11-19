@@ -14,6 +14,7 @@ import React from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import { AIProviderId } from "@/modules/agent-network/data/mockData";
 import { APIMeProvider } from "@/modules/agent-network/useMyAgentNetworkSetup";
@@ -140,6 +141,7 @@ type Props = {
 // rows come from the caller-scoped agent-config answer, so there is nothing
 // here to connect, edit, or delete.
 export default function ConnectProvidersTable({ providers }: Readonly<Props>) {
+  const translate = useTranslations();
   const path = usePathname();
   const router = useRouter();
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -163,7 +165,7 @@ export default function ConnectProvidersTable({ providers }: Readonly<Props>) {
       inset={false}
       tableClassName={"mt-0"}
       paginationPaddingClassName={"px-0 pt-8"}
-      text={"Providers"}
+      text={translate("common.providers")}
       sorting={sorting}
       setSorting={setSorting}
       columns={columns}
@@ -190,7 +192,7 @@ export default function ConnectProvidersTable({ providers }: Readonly<Props>) {
               className={"mt-4"}
               onClick={() => router.push("/agent-network/policies")}
             >
-              Go to Policies
+              {translate("agentNetwork.goToPolicies")}
             </Button>
           )}
         </NoResults>

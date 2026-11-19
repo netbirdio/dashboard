@@ -17,6 +17,7 @@ import {
   RocketIcon,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { isClusterConnected } from "@/interfaces/ReverseProxy";
 import { useProxyCluster } from "@/modules/reverse-proxy/clusters/useProxyCluster";
 
@@ -285,6 +286,7 @@ const DeploySuccess = ({
   onRegistered,
   children,
 }: DeploySuccessProps) => {
+  const t = useTranslations();
   return (
     <div className={"flex flex-col gap-4"}>
       <Callout variant={"info"}>
@@ -310,9 +312,9 @@ const DeploySuccess = ({
           </HelpText>
           <CardTable>
             <CardTable.Header>
-              <CardTable.HeaderCell width={100}>Type</CardTable.HeaderCell>
-              <CardTable.HeaderCell>Name</CardTable.HeaderCell>
-              <CardTable.HeaderCell>Content</CardTable.HeaderCell>
+              <CardTable.HeaderCell width={100}>{t("common.type")}</CardTable.HeaderCell>
+              <CardTable.HeaderCell>{t("common.name")}</CardTable.HeaderCell>
+              <CardTable.HeaderCell>{t("reverseProxy.contentColumn")}</CardTable.HeaderCell>
             </CardTable.Header>
             <CardTable.Body>
               <CardTable.Row>
@@ -350,6 +352,7 @@ const HetznerDeploy = ({
   isGeneratingToken,
   onRegistered,
 }: ProviderProps) => {
+  const translate = useTranslations();
   const [hetznerToken, setHetznerToken] = useState("");
   const [catalog, setCatalog] = useState<HetznerCatalog | null>(null);
   const [catalogError, setCatalogError] = useState("");
@@ -553,7 +556,7 @@ const HetznerDeploy = ({
         <>
           <div className={"flex gap-4"}>
             <div className={"w-1/2"}>
-              <Label>Location</Label>
+              <Label>{translate("reverseProxy.location")}</Label>
               <SelectDropdown
                 value={location}
                 onChange={(v) => setLocation(v as string)}
@@ -659,6 +662,7 @@ const DigitalOceanDeploy = ({
   isGeneratingToken,
   onRegistered,
 }: ProviderProps) => {
+  const t = useTranslations();
   const [rootPassword] = useState(generateRootPassword);
   const [doToken, setDoToken] = useState("");
   const [region, setRegion] = useState("fra1");
@@ -808,7 +812,7 @@ const DigitalOceanDeploy = ({
       </div>
       <div className={"flex gap-4"}>
         <div className={"w-1/2"}>
-          <Label>Region</Label>
+          <Label>{t("reverseProxy.region")}</Label>
           <SelectDropdown
             value={region}
             onChange={(v) => setRegion(v as string)}
@@ -855,6 +859,7 @@ const AWSDeploy = ({
   isGeneratingToken,
   onRegistered,
 }: ProviderProps) => {
+  const t = useTranslations();
   const [region, setRegion] = useState("eu-central-1");
   const [launched, setLaunched] = useState(false);
 
@@ -883,7 +888,7 @@ const AWSDeploy = ({
         </Code>
       </div>
       <div>
-        <Label>Region</Label>
+        <Label>{t("reverseProxy.region")}</Label>
         <SelectDropdown
           value={region}
           onChange={(v) => setRegion(v as string)}

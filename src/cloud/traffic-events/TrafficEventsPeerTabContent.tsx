@@ -33,12 +33,14 @@ import { TrafficEventsDetailRow } from "@/cloud/traffic-events/table/TrafficEven
 import { TrafficEventsInboundOutboundFilter } from "@/cloud/traffic-events/TrafficEventsInboundOutboundFilter";
 import { TrafficEventsTableColumns } from "@/cloud/traffic-events/TrafficEventsTable";
 import { usePeer } from "@/contexts/PeerProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Pagination } from "@/interfaces/Pagination";
 import { useAccount } from "@/modules/account/useAccount";
 import InlineLink from "@components/InlineLink";
 import { TRAFFIC_EVENTS_DOC_LINK } from "@/cloud/traffic-events/TrafficEventSetting";
 
 export const TrafficEventsPeerTabContent = () => {
+  const t = useTranslations();
   const account = useAccount();
   const { peer } = usePeer();
   const { mutate } = useSWRConfig();
@@ -207,9 +209,9 @@ export const TrafficEventsPeerTabContent = () => {
             <Paragraph>
               Learn more about{" "}
               <InlineLink href={TRAFFIC_EVENTS_DOC_LINK} target="_blank">
-                Traffic Events <ExternalLinkIcon size={12} />
+                {t("common.trafficEvents") + " "}<ExternalLinkIcon size={12} />
               </InlineLink>{" "}
-              in our documentation.
+              {t("trafficEvents.inOurDocumentation")}
             </Paragraph>
           </div>
         </div>
@@ -317,6 +319,7 @@ const TrafficEventsPeerDetailTable = ({
   defaultDateRange: DateRange;
   totalEvents?: number;
 }) => {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const router = useRouter();
 
@@ -399,7 +402,7 @@ const TrafficEventsPeerDetailTable = ({
                 variant={"primary"}
                 onClick={() => router.push("/settings?tab=networks")}
               >
-                Go to Settings
+                {translate("trafficEvents.goToSettings")}
                 <ArrowUpRightIcon size={16} />
               </Button>
             </div>
@@ -472,10 +475,11 @@ const TrafficEventsPeerDetailTable = ({
 };
 
 export const TrafficEventsPeerTabTrigger = () => {
+  const t = useTranslations();
   return (
     <TabsTrigger value={"traffic-events"}>
       <ArrowLeftRightIcon size={16} />
-      Traffic Events
+      {t("common.trafficEvents")}
     </TabsTrigger>
   );
 };

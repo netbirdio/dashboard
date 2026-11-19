@@ -18,6 +18,7 @@ import {
 } from "@components/DropdownMenu";
 import { notify } from "@components/Notification";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   DraftChange,
   getChangeApiCall,
@@ -64,6 +65,7 @@ export const ChangeAccordionItem = ({
   disabled,
   status,
 }: Props) => {
+  const translate = useTranslations();
   const apiCall = getChangeApiCall(change);
   const request = useMemo(
     () => buildChangeRequest(change, live),
@@ -107,8 +109,8 @@ export const ChangeAccordionItem = ({
           ))}
         </ul>
       ) : undefined,
-      confirmText: "Remove",
-      cancelText: "Cancel",
+      confirmText: translate("common.remove"),
+      cancelText: translate("common.cancel"),
       type: "danger",
       dismissOnOutsideClick: true,
     });
@@ -266,7 +268,7 @@ export const ChangeAccordionItem = ({
                 onClick={handleRemove}
               >
                 <Trash2Icon size={14} />
-                Remove
+                {translate("common.remove")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

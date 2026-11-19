@@ -11,6 +11,7 @@ import { trim } from "lodash";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   initialName: string;
@@ -24,6 +25,7 @@ export const EditGroupNameModal = ({
   open,
   onSuccess,
 }: Props) => {
+  const t = useTranslations();
   const [name, setName] = useState(initialName);
   const { groups } = useGroups();
   const [error, setError] = useState("");
@@ -59,7 +61,7 @@ export const EditGroupNameModal = ({
           <div>
             <Input
               data-testid="group-name-input"
-              placeholder={"e.g., Developers"}
+              placeholder={t("groups.namePlaceholder")}
               value={name}
               onChange={handleNameChange}
               error={error}
@@ -71,7 +73,7 @@ export const EditGroupNameModal = ({
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
               <Button variant={"secondary"} className={"w-full"}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </ModalClose>
 
@@ -83,7 +85,7 @@ export const EditGroupNameModal = ({
               disabled={isDisabled}
               type={"submit"}
             >
-              Save
+              {t("common.save")}
             </Button>
           </div>
         </ModalFooter>

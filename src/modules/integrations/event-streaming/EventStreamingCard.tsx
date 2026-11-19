@@ -10,6 +10,7 @@ import genericHttpLogo from "@/assets/integrations/generic-http.png";
 import s3Logo from "@/assets/integrations/s3.svg";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useIsLicensed } from "@/hooks/useIsLicensed";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { EventStream } from "@/interfaces/EventStream";
 
 type Platform = "datadog" | "s3" | "firehose" | "generic_http";
@@ -21,6 +22,7 @@ const platformImages: { [key in Platform]?: StaticImageData } = {
 };
 
 export const EventStreamingCard = () => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   // Event Streaming is a licensed feature; the endpoint is not served on
   // open-source deployments, so skip the call there entirely.
@@ -59,7 +61,7 @@ export const EventStreamingCard = () => {
             <FileText size={16} />
           )
         }
-        title={"Event Streaming"}
+        title={t("common.eventStreaming")}
         action={<FeatureCardStatus enabled={enabled} />}
         description={"Stream your activity events to third-party services."}
       />

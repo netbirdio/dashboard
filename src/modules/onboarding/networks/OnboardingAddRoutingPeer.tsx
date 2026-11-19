@@ -7,6 +7,7 @@ import { CopyIcon, DownloadIcon, KeyRoundIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkRouter } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
@@ -24,6 +25,7 @@ export const OnboardingAddRoutingPeer = ({
   peers,
   onRoutingPeerAdded,
 }: Props) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [setupKey, setSetupKey] = useState<SetupKey>();
   const { groups } = useGroups();
@@ -45,9 +47,9 @@ export const OnboardingAddRoutingPeer = ({
     }
 
     notify({
-      title: "Setup Key Created",
-      description: "Successfully copied to clipboard.",
-      loadingMessage: "Generating setup key...",
+      title: t("onboarding.setupKeyCreated"),
+      description: t("onboarding.setupKeyCopiedDescription"),
+      loadingMessage: t("onboarding.generatingSetupKey"),
       promise: setupKeyRequest
         .post({
           name: "Routing Peer (My First Network)",
@@ -100,8 +102,8 @@ export const OnboardingAddRoutingPeer = ({
       await navigator.clipboard.writeText(key || "");
       if (showMessage) {
         notify({
-          title: "Setup Key Copied",
-          description: "Successfully copied to clipboard.",
+          title: t("onboarding.setupKeyCopied"),
+          description: t("onboarding.setupKeyCopiedDescription"),
         });
       }
     } catch (e) {}
@@ -174,7 +176,7 @@ export const OnboardingAddRoutingPeer = ({
           <ModalContent>
             <SetupModalContent
               hostname={"routing-peer"}
-              title={"Install NetBird"}
+              title={t("onboarding.installNetBird")}
               setupKey={setupKey.key}
             />
           </ModalContent>

@@ -7,11 +7,13 @@ import { useDistributor } from "@/cloud/distributor/contexts/DistributorProvider
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { isNetBirdCloud } from "@utils/netbird";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Role } from "@/interfaces/User";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { USERS_ACTIVE_ROUTES } from "@/modules/navigation/sections";
 
 export const DistributorNavigation = () => {
+  const translate = useTranslations();
   const { isActive } = useDistributor();
   const { isOwnerOrAdmin, loggedInUser } = useLoggedInUser();
   const { permission, isRestricted } = usePermissions();
@@ -46,7 +48,7 @@ export const DistributorNavigation = () => {
           but user role has no other pages to navigate to */}
       <SidebarItem
         icon={<PeerIcon />}
-        label="Peers"
+        label={translate("common.peers")}
         href={"/peers"}
         visible={!isRestricted && loggedInUser?.role === Role.User}
       />
@@ -54,7 +56,7 @@ export const DistributorNavigation = () => {
       <SidebarItem
         icon={<MSPIcon size={17} />}
         visible={isOwnerOrAdmin}
-        label={"Customers"}
+        label={translate("distributor.customers")}
         href={"/customers"}
         exactPathMatch={true}
         labelClassName={"-left-[1.5px] relative"}
@@ -65,7 +67,7 @@ export const DistributorNavigation = () => {
       <SidebarItem
         icon={<TeamIcon />}
         visible={permission.users.read}
-        label={"Users"}
+        label={translate("common.users")}
         href={"/team/users"}
         activeRoutes={USERS_ACTIVE_ROUTES}
       />

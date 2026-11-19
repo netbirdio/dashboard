@@ -19,6 +19,7 @@ import {
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { useMatomoEvent } from "@/cloud/analytics/MatomoProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import type {
   APIAgentNetworkAccessLog,
   APIAgentNetworkAccessLogsResponse,
@@ -55,6 +56,7 @@ export const OnboardingAgentEnd = ({
   onBack,
   onFinish,
 }: Props) => {
+  const t = useTranslations();
   const outcome = useTestRequest(userId);
   useMatomoEvent(outcome.kind !== "waiting" && "test_request", outcome.kind);
 
@@ -85,7 +87,7 @@ export const OnboardingAgentEnd = ({
 
       <div className={"flex items-center justify-center mt-4 gap-3"}>
         <Button variant={"secondary"} onClick={onBack}>
-          Go Back
+          {t("onboarding.goBack")}
         </Button>
         <Button variant={"secondaryLighter"} onClick={onFinish}>
           Skip
@@ -230,6 +232,7 @@ const TestRequestStatus = ({
   outcome: Exclude<TestRequestOutcome, { kind: "passed" }>;
   onOpenLogs: () => void;
 }) => {
+  const t = useTranslations();
   if (outcome.kind === "waiting") {
     return <WaitingForDevice text={"Waiting for your first request"} />;
   }
@@ -254,7 +257,7 @@ const TestRequestStatus = ({
         <p className={"mt-1"}>
           Learn more in the{" "}
           <InlineButtonLink variant={"dashed"} onClick={onOpenLogs}>
-            Access Logs
+            {t("common.accessLogs")}
           </InlineButtonLink>{" "}
           or the{" "}
           <InlineLink

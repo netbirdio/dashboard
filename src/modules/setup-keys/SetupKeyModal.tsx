@@ -33,6 +33,7 @@ import {
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { SetupKey } from "@/interfaces/SetupKey";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -57,6 +58,7 @@ export default function SetupKeyModal({
   showOnlyRoutingPeerOS,
   groups,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const [successModal, setSuccessModal] = useState(false);
   const [setupKey, setSetupKey] = useState<SetupKey>();
   const [installModal, setInstallModal] = useState(false);
@@ -140,7 +142,7 @@ export default function SetupKeyModal({
                   tabIndex={-1}
                   data-testid={"setup-key-close"}
                 >
-                  Close
+                  {t("common.close")}
                 </Button>
               </ModalClose>
               <Button
@@ -149,7 +151,7 @@ export default function SetupKeyModal({
                 onClick={() => setInstallModal(true)}
               >
                 <DownloadIcon size={14} />
-                Install NetBird
+                {t("setupKeys.installNetBird")}
               </Button>
             </div>
           </ModalFooter>
@@ -170,6 +172,7 @@ export function SetupKeyModalContent({
   predefinedName = "",
   groups,
 }: Readonly<ModalProps>) {
+  const t = useTranslations();
   const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
   const { mutate } = useSWRConfig();
 
@@ -198,7 +201,7 @@ export function SetupKeyModalContent({
     if (!selectedGroups) return;
 
     notify({
-      title: "Create Setup Key",
+      title: t("common.createSetupKey"),
       description:
         "Setup key created successfully. You can now enroll peers with your new key.",
       promise: saveGroups().then(async (groups) => {
@@ -227,8 +230,8 @@ export function SetupKeyModalContent({
     <ModalContent flow="setup_key" maxWidthClass={"max-w-xl"}>
       <ModalHeader
         icon={<SetupKeysIcon className={"fill-netbird"} />}
-        title={"Create New Setup Key"}
-        description={"Use this key to register new machines in your network"}
+        title={t("setupKeys.createTitle")}
+        description={t("setupKeys.createDescription")}
         color={"netbird"}
       />
 
@@ -237,10 +240,10 @@ export function SetupKeyModalContent({
       <div className={"px-8 py-6 flex flex-col gap-8"}>
         {/* Name Field */}
         <div>
-          <Label>Name</Label>
-          <HelpText>Set an easily identifiable name for your key</HelpText>
+          <Label>{t("common.name")}</Label>
+          <HelpText>{t("setupKeys.nameHelp")}</HelpText>
           <Input
-            placeholder={"e.g., AWS Servers"}
+            placeholder={t("setupKeys.peerNamePlaceholder")}
             value={name}
             data-testid={"setup-key-name"}
             onChange={(e) => setName(e.target.value)}
@@ -267,7 +270,7 @@ export function SetupKeyModalContent({
           <div>
             <Label>Usage limit</Label>
             <HelpText className={"max-w-[200px]"}>
-              For example, set to 30 if you want to enroll 30 peers
+              {t("setupKeys.usageLimitHelp")}
             </HelpText>
           </div>
 
@@ -290,16 +293,16 @@ export function SetupKeyModalContent({
         {/* Expires in Days */}
         <div className={"flex justify-between"}>
           <div>
-            <Label>Expires in</Label>
+            <Label>{t("setupKeys.expiresIn")}</Label>
             <HelpText>
-              Days until the key expires.
+              {t("setupKeys.expiresInHelp")}
               <br />
-              Leave empty for no expiration.
+              {t("setupKeys.expiresInHelpEmpty")}
             </HelpText>
           </div>
           <Input
             maxWidthClass={"max-w-[202px]"}
-            placeholder={"Unlimited"}
+            placeholder={t("setupKeys.unlimited")}
             min={1}
             value={expiresIn}
             errorTooltip={true}
@@ -349,10 +352,9 @@ export function SetupKeyModalContent({
 
         {/* Auto-Assigned Groups */}
         <div>
-          <Label>Auto-assigned groups</Label>
+          <Label>{t("common.autoAssignedGroups")}</Label>
           <HelpText>
-            These groups will be automatically assigned to peers enrolled with
-            this key
+            {t("setupKeys.autoAssignedGroupsDescription")}
           </HelpText>
           <PeerGroupSelector
             onChange={setSelectedGroups}
@@ -373,14 +375,14 @@ export function SetupKeyModalContent({
               }
               target={"_blank"}
             >
-              Setup Keys
+              {t("common.setupKeys")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("common.cancel")}</Button>
           </ModalClose>
 
           <Button
@@ -390,7 +392,7 @@ export function SetupKeyModalContent({
             data-testid={"create-setup-key"}
           >
             <PlusCircle size={16} />
-            Create Setup Key
+            {t("common.createSetupKey")}
           </Button>
         </div>
       </ModalFooter>

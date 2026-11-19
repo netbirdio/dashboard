@@ -9,6 +9,7 @@ import {
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { trim } from "lodash";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   open: boolean;
@@ -34,6 +35,7 @@ export const GroupRenameModal = ({
   description = "Set an easily identifiable name for your group.",
   inputPlaceholder = "e.g., Developers",
 }: Props) => {
+  const t = useTranslations();
   const [name, setName] = useState(currentName);
   const [error, setError] = useState("");
 
@@ -83,7 +85,7 @@ export const GroupRenameModal = ({
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
               <Button variant={"secondary"} className={"w-full"}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </ModalClose>
             <Button
@@ -93,7 +95,7 @@ export const GroupRenameModal = ({
               onClick={submit}
               data-testid="cc-rename-submit"
             >
-              Rename
+              {t("controlCenter.rename")}
             </Button>
           </div>
         </ModalFooter>

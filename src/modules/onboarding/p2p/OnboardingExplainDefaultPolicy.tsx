@@ -1,5 +1,6 @@
 import Button from "@components/Button";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Policy } from "@/interfaces/Policy";
 import { OnboardingPolicy } from "@/modules/onboarding/OnboardingPolicy";
 
@@ -14,6 +15,7 @@ export const OnboardingExplainDefaultPolicy = ({
   onNext,
   onToggle,
 }: Props) => {
+  const t = useTranslations();
   return (
     <div className={"relative flex flex-col h-full gap-4"}>
       <div>
@@ -45,7 +47,7 @@ export const OnboardingExplainDefaultPolicy = ({
       </div>
 
       <Button variant={"primary"} onClick={onNext}>
-        Continue
+        {t("common.continue")}
       </Button>
     </div>
   );

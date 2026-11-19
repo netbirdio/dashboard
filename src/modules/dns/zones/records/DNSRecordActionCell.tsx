@@ -2,6 +2,7 @@ import Button from "@components/Button";
 import { PenSquare, Trash2 } from "lucide-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DNSRecord } from "@/interfaces/DNS";
 import { useDNSZones } from "@/modules/dns/zones/DNSZonesProvider";
 import { useDNSZone } from "@/modules/dns/zones/records/DNSRecordsTable";
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export const DNSRecordActionCell = ({ record }: Props) => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { deleteRecord, openRecordModal } = useDNSZones();
   const zone = useDNSZone();
@@ -25,7 +27,7 @@ export const DNSRecordActionCell = ({ record }: Props) => {
         data-testid="edit-dns-record"
       >
         <PenSquare size={16} />
-        Edit
+        {t("common.edit")}
       </Button>
       <Button
         variant={"danger-outline"}
@@ -35,7 +37,7 @@ export const DNSRecordActionCell = ({ record }: Props) => {
         data-testid="delete-dns-record"
       >
         <Trash2 size={16} />
-        Delete
+        {t("common.delete")}
       </Button>
     </div>
   );

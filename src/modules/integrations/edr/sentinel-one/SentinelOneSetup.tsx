@@ -35,6 +35,7 @@ import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/sentinelone.png";
 import HelpText from "@/components/HelpText";
 import { PeerGroupSelector } from "@/components/PeerGroupSelector";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import { DEFAULT_SENTINELONE_MATCH_ATTRIBUTES, SentinelOneIntegration } from "@/interfaces/EDR";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -80,6 +81,7 @@ type ModalProps = {
 };
 
 export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const sentinelOneRequest = useApiCall<SentinelOneIntegration>(
     "/integrations/edr/sentinelone",
@@ -232,7 +234,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             }
           >
             <Shield size={16} />
-            Required Permissions
+            {translate("common.requiredPermissions")}
           </div>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
             Ensure that you have an{" "}
@@ -324,20 +326,20 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             </Steps.Step>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                Click <Mark>Create Service User</Mark>
+                Click <Mark>{translate("integrations.create")}</Mark>
               </p>
             </Steps.Step>
             <Steps.Step step={3}>
               <p className={"font-normal"}>
                 Enter <Mark copy>NetBird Integration</Mark> as the name, a
                 optional description and select your preferred expiration date.
-                Click <Mark>Next</Mark>
+                Click <Mark>{translate("common.next")}</Mark>
               </p>
             </Steps.Step>
             <Steps.Step step={4} line={false}>
               <p className={"font-normal"}>
                 Select your Site and set the Scope to <Mark>Viewer</Mark>
-                <br /> Click <Mark>Create User</Mark>, copy your API Token and
+                <br /> Click <Mark>{translate("integrations.createUserTitle")}</Mark>, copy your API Token and
                 enter it below.
               </p>
             </Steps.Step>
@@ -366,7 +368,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4 mb-3"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <FolderGit2 size={16} />
-            Peer Approval
+            {translate("common.peerApproval")}
           </p>
 
           <HelpText className={"max-w-lg mt-2"}>
@@ -450,7 +452,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             onClick={() => setStep(step - 1)}
           >
             <IconArrowLeft size={16} />
-            Back
+            {translate("common.back")}
           </Button>
         )}
         {step >= 0 && step < maxSteps && (
@@ -460,7 +462,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             disabled={isDisabled}
             onClick={() => setStep(step + 1)}
           >
-            {step == 0 ? "Get Started" : "Continue"}
+            {step == 0 ? "Get Started" : translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -472,7 +474,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             onClick={connect}
           >
             <Repeat size={16} />
-            Connect
+            {translate("integrations.connect")}
           </Button>
         )}
       </ModalFooter>

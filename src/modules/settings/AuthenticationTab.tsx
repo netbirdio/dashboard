@@ -42,6 +42,7 @@ import {
 } from "@/cloud/sign-in-domains/SignInDomainsSettings";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import { LockedFeatureBadge } from "@/modules/billing/locked-feature/LockedFeatureBadge";
 import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
@@ -51,6 +52,7 @@ type Props = {
 };
 
 export default function AuthenticationTab({ account }: Readonly<Props>) {
+  const translate = useTranslations();
   const { permission } = usePermissions();
   const canViewSignInDomains = useCanViewSignInDomains();
 
@@ -185,19 +187,19 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={translate("common.settings")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Authentication"}
+            label={translate("common.authentication")}
             icon={<ShieldIcon size={14} />}
             active
           />
         </Breadcrumbs>
         <div className={"flex items-start justify-between -mt-1"}>
           <div>
-            <h1>Authentication</h1>
+            <h1>{translate("common.authentication")}</h1>
             <Paragraph className={"block"}>
               Control how peers and users authenticate.{" "}
               <InlineLink
@@ -206,7 +208,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                 }
                 target={"_blank"}
               >
-                Learn more
+                {translate("common.learnMore")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
@@ -218,7 +220,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
             onClick={saveChanges}
             data-testid={"save-authentication-settings"}
           >
-            Save Changes
+            {translate("common.saveChanges")}
           </Button>
         </div>
 
@@ -249,7 +251,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                   label={
                     <>
                       <IconDevicesCheck size={15} />
-                      Peer Approval
+                      {translate("common.peerApproval")}
                     </>
                   }
                   disabled={
@@ -269,7 +271,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
               label={
                 <>
                   <ShieldUserIcon size={15} />
-                  User Approval Required
+                  {translate("settings.userApprovalRequired")}
                 </>
               }
               helpText={
@@ -292,9 +294,9 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                 label={
                   <>
                     <KeyRound size={15} />
-                    Enable Local MFA
+                    {translate("settings.enableLocalMFA")}
                     <SmallBadge
-                      text={"Beta"}
+                      text={translate("common.beta")}
                       variant={"sky"}
                       className={"text-[9px] leading-none py-[3px] px-[5px]"}
                       textClassName={"top-0"}
@@ -327,7 +329,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
               label={
                 <>
                   <TimerResetIcon size={15} />
-                  Peer Session Expiration
+                  {translate("settings.peerSessionExpiration")}
                 </>
               }
               helpText={
@@ -349,10 +351,9 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
             >
               <div className={cn("flex justify-between gap-10 mt-2")}>
                 <div className={"w-full"}>
-                  <Label>Session Expiration</Label>
+                  <Label>{translate("settings.sessionExpiration")}</Label>
                   <HelpText>
-                    Time after which every peer added with SSO login will
-                    require re-authentication.
+                    {translate("settings.sessionExpirationHelp")}
                   </HelpText>
                 </div>
                 <div className={"w-full flex gap-3"}>
@@ -383,7 +384,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                           className={"text-nb-gray-300"}
                         />
                         <SelectValue
-                          placeholder="Select interval..."
+                          placeholder={translate("settings.selectInterval")}
                           data-testid={"peer-login-expiration-select-value"}
                         />
                       </div>
@@ -391,8 +392,8 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                     <SelectContent
                       data-testid={"peer-login-expiration-select-content"}
                     >
-                      <SelectItem value="days">Days</SelectItem>
-                      <SelectItem value="hours">Hours</SelectItem>
+                      <SelectItem value="days">{translate("settings.days")}</SelectItem>
+                      <SelectItem value="hours">{translate("settings.hours")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -402,12 +403,11 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                 value={peerInactivityExpirationEnabled}
                 onChange={setPeerInactivityExpirationEnabled}
                 data-testid={"peer-inactivity-expiration"}
-                label={<>Require login after disconnect</>}
+                label={<>{translate("settings.requireLoginAfterDisconnect")}</>}
                 disabled={!permission.settings.update}
                 helpText={
                   <>
-                    Enable to require authentication after users disconnect from
-                    management for 10 minutes.
+                    {translate("settings.requireLoginHelp")}
                   </>
                 }
               />

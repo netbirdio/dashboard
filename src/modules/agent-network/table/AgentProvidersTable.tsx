@@ -16,6 +16,7 @@ import React from "react";
 import AIAccessIcon from "@/assets/icons/AgentNetworkIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import AIProviderModal from "@/modules/agent-network/AIProviderModal";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
@@ -123,6 +124,7 @@ type Props = {
 export default function AgentProvidersTable({
   headingTarget,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   const path = usePathname();
   const {
     providers,
@@ -156,7 +158,7 @@ export default function AgentProvidersTable({
       <DataTable
         headingTarget={headingTarget}
         isLoading={isLoading}
-        text={"Providers"}
+        text={translate("common.providers")}
         sorting={sorting}
         setSorting={setSorting}
         columns={columns}

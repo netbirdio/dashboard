@@ -5,6 +5,7 @@ import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import React from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import PageContainer from "@/layouts/PageContainer";
 import {
   AgentConnectTabs,
@@ -23,6 +24,7 @@ import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetwor
 // still gets it, with an empty provider list carrying the explanation. The caller's own usage lives on the regular Usage & Logs page,
 // which the server scopes to them.
 export default function ConnectAgentPage() {
+  const t = useTranslations();
   const { setup, isLoading } = useMyAgentNetworkSetup();
   const providers = setup?.providers ?? [];
   // EndpointBadge builds https:// URLs from a bare host.
@@ -40,12 +42,12 @@ export default function ConnectAgentPage() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/agent-network/connect"}
-            label={"Agent Network"}
+            label={t("common.agentNetwork")}
             icon={<AgentNetworkIcon size={16} />}
           />
           <Breadcrumbs.Item
             href={"/agent-network/connect"}
-            label={"Connect Agent"}
+            label={t("common.connectAgent")}
             active
           />
         </Breadcrumbs>

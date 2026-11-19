@@ -14,6 +14,7 @@ import { ArrowRightIcon, ArrowUpCircleIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 import FullTooltip from "@components/FullTooltip";
@@ -30,6 +31,7 @@ export default function PeerVersionCell({
   serial,
   ephemeral,
 }: Props) {
+  const t = useTranslations();
   const { latestVersion, latestUrl } = useApplicationContext();
 
   const updateAvailable = useMemo(() => {
@@ -85,15 +87,14 @@ export default function PeerVersionCell({
                 <ArrowRightIcon size={16} className={"text-netbird"} />
                 <span className={"text-netbird"}>{latestVersion}</span>
               </div>
-              <p className={"font-medium"}>Update available </p>
+              <p className={"font-medium"}>{t("peers.updateAvailable") + " "}</p>
 
               <div
                 className={
                   "text-neutral-300 flex flex-col gap-1 max-w-[300px] text-xs mt-1"
                 }
               >
-                A new version of Netbird is available. Please update your client
-                to get the latest features and bug fixes.
+                {t("peers.updateDescription")}
               </div>
               <InlineLink
                 onClick={(e) => e.stopPropagation()}
@@ -101,7 +102,7 @@ export default function PeerVersionCell({
                 target={"_blank"}
                 className={"mt-2 mb-2 text-xs"}
               >
-                Download & Changelog
+                {t("peers.downloadChangelog")}
               </InlineLink>
             </TooltipContent>
           </Tooltip>

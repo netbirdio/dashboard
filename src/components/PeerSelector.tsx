@@ -13,6 +13,7 @@ import { ArrowUpCircleIcon, ChevronsUpDown, MapPin } from "lucide-react";
 import * as React from "react";
 import { memo, useEffect, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 
@@ -44,6 +45,7 @@ export function PeerSelector({
   disabledPeerReason,
   disabled = false,
 }: MultiSelectProps) {
+  const t = useTranslations();
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
@@ -130,7 +132,7 @@ export function PeerSelector({
                 </div>
               </div>
             ) : (
-              <span>Select a peer...</span>
+              <span>{t("components.selectPeer")}</span>
             )}
           </div>
 
@@ -157,7 +159,7 @@ export function PeerSelector({
           {unfilteredItems.length == 0 && !search && (
             <div className={"max-w-xs mx-auto"}>
               <DropdownInfoText>
-                {"No peers available to select."}
+                {t("components.noPeersAvailable")}
               </DropdownInfoText>
             </div>
           )}

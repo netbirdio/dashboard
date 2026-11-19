@@ -12,6 +12,7 @@ import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/sentinelone.png";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import {
   SentinelOneIntegration,
@@ -28,6 +29,7 @@ type Props = {
 };
 
 export const SentinelOne = ({ account }: Props) => {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const [setupModal, setSetupModal] = useState(false);
   const { permission } = usePermissions();
@@ -56,8 +58,8 @@ export const SentinelOne = ({ account }: Props) => {
       ? await confirm({
           title: `Disable SentinelOne?`,
           description: `Are you sure you want to disable the SentinelOne integration?`,
-          confirmText: "Disable",
-          cancelText: "Cancel",
+          confirmText: t("common.disable"),
+          cancelText: t("common.cancel"),
           type: "warning",
         })
       : true;
@@ -123,6 +125,7 @@ type ConfigurationProps = {
   config: SentinelOneIntegration;
 };
 const ConfigurationButton = ({ config }: ConfigurationProps) => {
+  const t = useTranslations();
   const [configModal, setConfigModal] = useState(false);
 
   const lastSync = useMemo(() => {
@@ -151,7 +154,7 @@ const ConfigurationButton = ({ config }: ConfigurationProps) => {
           }}
         >
           <Settings size={14} />
-          Settings
+          {t("common.settings")}
         </Button>
       </div>
       <SentinelOneConfiguration

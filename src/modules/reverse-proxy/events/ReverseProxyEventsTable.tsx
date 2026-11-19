@@ -34,6 +34,7 @@ import { DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "@components/DatePickerWithRange";
 import { useServerPagination } from "@/contexts/ServerPaginationProvider";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   REVERSE_PROXY_EVENTS_DOCS_LINK,
   ReverseProxy,
@@ -174,6 +175,7 @@ type Props = {
 export default function ReverseProxyEventsTable({
   headingTarget,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const {
     data: events,
     isLoading,
@@ -388,7 +390,7 @@ export default function ReverseProxyEventsTable({
       isLoading={isLoading}
       inset={false}
       tableCellClassName={"py-1 px-2"}
-      text={"Proxy Events"}
+      text={t("reverseProxy.proxyEvents")}
       sorting={sorting}
       setSorting={setSorting}
       columns={columns}
@@ -404,7 +406,7 @@ export default function ReverseProxyEventsTable({
       renderExpandedRow={(event) => (
         <ReverseProxyEventExpandedRow event={event} />
       )}
-      searchPlaceholder={"Search by IP, host, path, user..."}
+      searchPlaceholder={t("reverseProxy.searchProxyEvents")}
       getStartedCard={
         <GetStartedTest
           icon={
@@ -416,10 +418,8 @@ export default function ReverseProxyEventsTable({
               size={"large"}
             />
           }
-          title={"No Proxy Events Yet"}
-          description={
-            "No proxy traffic yet. Events appear here once your reverse proxy services start serving requests."
-          }
+          title={t("reverseProxy.noProxyEventsTitle")}
+          description={t("reverseProxy.noProxyEventsDescription")}
           learnMore={
             <>
               Learn more about
@@ -427,7 +427,7 @@ export default function ReverseProxyEventsTable({
                 href={REVERSE_PROXY_EVENTS_DOCS_LINK}
                 target={"_blank"}
               >
-                Proxy Events
+                {t("reverseProxy.proxyEvents")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </>

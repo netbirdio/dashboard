@@ -7,6 +7,7 @@ import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useUserContext } from "@/contexts/UserProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { AccessToken } from "@/interfaces/AccessToken";
 import { SetupKey } from "@/interfaces/SetupKey";
 
@@ -16,6 +17,7 @@ type Props = {
 export default function AccessTokenActionCell({
   access_token,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { user } = useUserContext();
   const { permission } = usePermissions();
   const { confirm } = useDialog();
@@ -40,8 +42,8 @@ export default function AccessTokenActionCell({
       title: `Delete '${access_token.name}'?`,
       description:
         "Are you sure you want to delete this token? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
@@ -58,7 +60,7 @@ export default function AccessTokenActionCell({
         data-testid={"access-token-delete"}
       >
         <Trash2 size={16} />
-        Delete
+        {t("common.delete")}
       </Button>
     </div>
   );

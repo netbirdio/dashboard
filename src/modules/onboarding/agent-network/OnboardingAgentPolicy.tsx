@@ -2,6 +2,7 @@ import Button from "@components/Button";
 import { ArrowRightIcon, CheckCircle2Icon, PlusIcon } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import AgentPolicyModal from "@/modules/agent-network/AgentPolicyModal";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 
@@ -14,6 +15,7 @@ type Props = {
 // default Agent Network denies every request; nothing reaches a provider
 // until a policy connects a source group to one or more providers.
 export const OnboardingAgentPolicy = ({ onBack, onNext }: Props) => {
+  const t = useTranslations();
   const { policies } = useAIProviders();
   const [open, setOpen] = useState(false);
   const hasPolicy = policies.length > 0;
@@ -47,17 +49,17 @@ export const OnboardingAgentPolicy = ({ onBack, onNext }: Props) => {
         <div className={"mt-4 flex items-center justify-center"}>
           <Button variant={"primary"} onClick={() => setOpen(true)}>
             <PlusIcon size={16} />
-            Add Policy
+            {t("common.addPolicy")}
           </Button>
         </div>
       )}
 
       <div className={"flex items-center justify-center mt-4 gap-3"}>
         <Button variant={"secondary"} onClick={onBack}>
-          Go Back
+          {t("onboarding.goBack")}
         </Button>
         <Button variant={"primary"} disabled={!hasPolicy} onClick={onNext}>
-          Continue
+          {t("common.continue")}
           <ArrowRightIcon size={16} />
         </Button>
       </div>

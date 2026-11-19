@@ -7,6 +7,7 @@ import * as React from "react";
 import { useMemo, useState } from "react";
 import integrationImage from "@/assets/integrations/okta.png";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DomainValidationStatus } from "@/interfaces/Account";
 import { EnterpriseConnection } from "@/interfaces/IdentityProvider";
 import { IntegrationCard } from "@/modules/integrations/IntegrationCard";
@@ -67,6 +68,7 @@ type ConfigurationProps = {
   connection: EnterpriseConnection;
 };
 const ConfigurationContent = ({ connection }: ConfigurationProps) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
 
   const hasSomePendingDomains = useMemo(() => {
@@ -114,7 +116,7 @@ const ConfigurationContent = ({ connection }: ConfigurationProps) => {
             ? "Pending Verification"
             : hasSomeFailedDomains
             ? "Failed Verification"
-            : "Inactive"}
+            : t("common.inactive")}
         </div>
       ) : (
         <div
@@ -123,7 +125,7 @@ const ConfigurationContent = ({ connection }: ConfigurationProps) => {
           }
         >
           <span className={cn("h-2 w-2 rounded-full bg-nb-gray-600")}></span>
-          Inactive
+          {t("common.inactive")}
         </div>
       )}
       <Button
@@ -133,7 +135,7 @@ const ConfigurationContent = ({ connection }: ConfigurationProps) => {
         onClick={() => setOpen(true)}
       >
         <Settings size={14} />
-        Settings
+        {t("common.settings")}
       </Button>
       {open && (
         <OktaSsoSettings

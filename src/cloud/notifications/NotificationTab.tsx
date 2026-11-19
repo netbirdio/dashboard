@@ -19,6 +19,7 @@ import NotificationProvider, {
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useIsLicensed } from "@/hooks/useIsLicensed";
 import useUrlTab from "@/hooks/useUrlTab";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   NOTIFICATION_CHANNELS_DOCS_LINK,
   NotificationChannelType,
@@ -29,6 +30,7 @@ const NotificationsOverview = ({
 }: {
   onSelectChannel: (value: string) => void;
 }) => {
+  const t = useTranslations();
   const { getFirstChannelByType } = useNotifications();
   const { permission } = usePermissions();
   const canUpdate = permission?.settings?.update ?? false;
@@ -42,26 +44,26 @@ const NotificationsOverview = ({
       <Breadcrumbs>
         <Breadcrumbs.Item
           href={"/settings"}
-          label={"Settings"}
+          label={t("common.settings")}
           icon={<SettingsIcon size={13} />}
         />
         <Breadcrumbs.Item
           href={"/settings?tab=notifications"}
-          label={"Notifications"}
+          label={t("notifications.title")}
           icon={<MessageSquareDot size={14} />}
           active
         />
       </Breadcrumbs>
       <div className={"flex items-start justify-between -mt-1"}>
         <div>
-          <h1>Notifications</h1>
+          <h1>{t("notifications.title")}</h1>
           <Paragraph className={"block"}>
             Get notified when important events happen.{" "}
             <InlineLink
               href={NOTIFICATION_CHANNELS_DOCS_LINK}
               target={"_blank"}
             >
-              Learn more
+              {t("common.learnMore")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
@@ -165,6 +167,7 @@ const NotificationSlackChannelPage = () => {
 };
 
 export const NotificationsTabTrigger = () => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { isLicensed } = useIsLicensed();
 
@@ -174,9 +177,9 @@ export const NotificationsTabTrigger = () => {
   return (
     <VerticalTabs.Trigger value="notifications">
       <MessageSquareDot size={14} />
-      Notifications
+      {t("notifications.title")}
       <SmallBadge
-        text={"Beta"}
+        text={t("common.beta")}
         variant={"sky"}
         className={"text-[8px] leading-none py-[3px] px-[5px]"}
         textClassName={"top-0"}

@@ -13,6 +13,7 @@ import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { useBilling } from "@/contexts/BillingProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Plan } from "@/interfaces/Plan";
 import { PlanTier } from "@/interfaces/Subscription";
 import { PlanCard, PlanLoadingSkeleton } from "@/modules/billing/PlanCard";
@@ -33,6 +34,7 @@ export const PlansAndBillingTab = () => {
 };
 
 export const PlansAndBillingTabTrigger = () => {
+  const t = useTranslations();
   const { permission } = usePermissions();
 
   const { isAccountWithMSPParent } = useMSP();
@@ -47,12 +49,13 @@ export const PlansAndBillingTabTrigger = () => {
       data-testid="settings-tab-plans-and-billing"
     >
       <CreditCardIcon size={14} />
-      Plans & Billing
+      {t("common.plansAndBilling")}
     </VerticalTabs.Trigger>
   );
 };
 
 const PlansAndBillingTabContent = () => {
+  const t = useTranslations();
   const {
     plans,
     subscription,
@@ -148,12 +151,12 @@ const PlansAndBillingTabContent = () => {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("common.settings")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=plans-and-billing"}
-            label={"Plans & Billing"}
+            label={t("common.plansAndBilling")}
             icon={<CreditCardIcon size={14} />}
             active
           />
@@ -162,7 +165,7 @@ const PlansAndBillingTabContent = () => {
         <div
           className={"flex items-start justify-between -mt-1 max-w-4xl mb-4"}
         >
-          <h1>Plans & Billing</h1>
+          <h1>{t("common.plansAndBilling")}</h1>
         </div>
 
         {isTrialAvailable && (

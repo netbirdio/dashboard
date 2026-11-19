@@ -4,6 +4,7 @@ import { Modal, ModalContent } from "@components/modal/Modal";
 import { ArrowRightIcon, CheckCircle2Icon, DownloadIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import type { Peer } from "@/interfaces/Peer";
 import { WaitingForDevice } from "@/modules/onboarding/OnboardingDevices";
 import { SetupModalContent } from "@/modules/setup-netbird-modal/SetupModal";
@@ -22,6 +23,7 @@ type Props = {
 // NetBird overlay, so the operator's device must run the client and be
 // authenticated before anything else works.
 export const OnboardingAgentDevice = ({ onBack, onNext, device }: Props) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
 
   // Close the install modal automatically once the device shows up so the
@@ -66,25 +68,25 @@ export const OnboardingAgentDevice = ({ onBack, onNext, device }: Props) => {
       <div className={"flex items-center justify-center mt-4 gap-3"}>
         {onBack && (
           <Button variant={"secondary"} onClick={onBack}>
-            Go Back
+            {t("onboarding.goBack")}
           </Button>
         )}
         {device ? (
           <Button variant={"primary"} onClick={onNext}>
-            Continue
+            {t("common.continue")}
             <ArrowRightIcon size={16} />
           </Button>
         ) : (
           <Button variant={"primary"} onClick={() => setOpen(true)}>
             <DownloadIcon size={16} />
-            Install NetBird
+            {t("onboarding.installNetBird")}
           </Button>
         )}
       </div>
 
       <Modal open={open} onOpenChange={setOpen}>
         <ModalContent className={"!z-[70]"}>
-          <SetupModalContent title={"Install NetBird"} isUserDevice={true} />
+          <SetupModalContent title={t("onboarding.installNetBird")} isUserDevice={true} />
         </ModalContent>
       </Modal>
     </div>

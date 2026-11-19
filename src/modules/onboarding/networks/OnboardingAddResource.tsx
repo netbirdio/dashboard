@@ -8,6 +8,7 @@ import * as React from "react";
 import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
@@ -24,6 +25,7 @@ export const OnboardingAddResource = ({
   onResourceCreation,
   onBack,
 }: Props) => {
+  const t = useTranslations();
   const [resourceType, setResourceType] = useState("");
   const [resourceAddress, setResourceAddress] = useState("");
   const [error, setError] = useState("");
@@ -196,7 +198,7 @@ export const OnboardingAddResource = ({
     <div className={"relative flex flex-col h-full gap-4"}>
       <div className={"flex flex-col gap-8"}>
         <div>
-          <h1 className={"text-xl text-center"}>Add your first resource</h1>
+          <h1 className={"text-xl text-center"}>{t("onboarding.addResource")}</h1>
           <div
             className={
               "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
@@ -222,7 +224,7 @@ export const OnboardingAddResource = ({
           />
           <RadioCard
             value={"domain"}
-            title={"Domain"}
+            title={t("common.domain")}
             icon={<GlobeIcon size={12} />}
             description={
               "A domain like service.internal or a wildcard like *.services.internal"
@@ -243,7 +245,7 @@ export const OnboardingAddResource = ({
 
         <div className={"flex gap-4"}>
           <Button variant={"secondary"} className={"w-full"} onClick={onBack}>
-            Go Back
+            {t("onboarding.goBack")}
           </Button>
           <Button
             variant={"primary"}
@@ -251,7 +253,7 @@ export const OnboardingAddResource = ({
             onClick={createResource}
             disabled={resourceAddress === "" || error !== ""}
           >
-            Create Resource
+            {t("onboarding.createResource")}
           </Button>
         </div>
       </div>

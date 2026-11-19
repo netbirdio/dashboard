@@ -25,6 +25,7 @@ import Link from "next/link";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import s3Logo from "@/assets/integrations/s3.svg";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { EventStream } from "@/interfaces/EventStream";
 import { AmazonRegions } from "@/modules/integrations/event-streaming/amazon/AmazonRegions";
 import {
@@ -61,6 +62,7 @@ type ModalProps = {
 };
 
 export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
 
   const integrationRequest = useApiCall<EventStream>(
@@ -322,7 +324,7 @@ export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
             disabled={!regionEntered}
             onClick={() => setStep(2)}
           >
-            Continue
+            {t("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -334,7 +336,7 @@ export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
               onClick={() => setStep(1)}
             >
               <IconArrowLeft size={16} />
-              Back
+              {t("common.back")}
             </Button>
             <Button
               variant={"primary"}
@@ -342,7 +344,7 @@ export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
               disabled={!bucketNameEntered}
               onClick={() => setStep(3)}
             >
-              Continue
+              {t("common.continue")}
               <IconArrowRight size={16} />
             </Button>
           </>
@@ -355,7 +357,7 @@ export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
               onClick={() => setStep(2)}
             >
               <IconArrowLeft size={16} />
-              Back
+              {t("common.back")}
             </Button>
             <Button
               variant={"primary"}
@@ -364,7 +366,7 @@ export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
               onClick={connect}
             >
               <Repeat size={16} />
-              Connect
+              {t("integrations.connect")}
             </Button>
           </>
         )}

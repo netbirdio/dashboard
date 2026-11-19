@@ -7,6 +7,7 @@ import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group, GroupPeer } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { User } from "@/interfaces/User";
@@ -44,6 +45,7 @@ export default function PeerProvider({
   peer,
   isPeerDetailPage = false,
 }: Props) {
+  const t = useTranslations();
   const { user, isLoading: isUserLoading } = usePeerUser(peer);
   const { peerGroups, isLoading: isGroupsLoading } = usePeerGroups(peer);
   const isLoading =
@@ -59,8 +61,8 @@ export default function PeerProvider({
       title: `Delete '${peer.name}'?`,
       description:
         "Are you sure you want to delete this peer? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (choice) {

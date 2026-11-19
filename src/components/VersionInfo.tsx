@@ -11,6 +11,7 @@ import * as React from "react";
 import Skeleton from "react-loading-skeleton";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { VersionInfo as VersionInfoType } from "@/interfaces/Instance";
 
 function formatVersion(version: string): string {
@@ -94,6 +95,7 @@ export const NavigationVersionInfo = () => {
 };
 
 const NavigationVersionInfoContent = () => {
+  const translate = useTranslations();
   const { data: versionInfo, isLoading } = useFetchApi<VersionInfoType>(
     "/instance/version",
     true, // ignore errors
@@ -181,7 +183,7 @@ const NavigationVersionInfoContent = () => {
           className="flex items-center justify-center gap-1.5 text-white font-medium bg-netbird hover:bg-netbird-500 transition-colors rounded-md py-1.5 px-2 mt-1"
         >
           <ArrowUpCircle size={12} />
-          <span>Update available</span>
+          <span>{translate("components.updateAvailable")}</span>
         </a>
       )}
     </div>

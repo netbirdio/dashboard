@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useMemo } from "react";
 import Skeleton from "react-loading-skeleton";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network, NetworkResource } from "@/interfaces/Network";
 
 type Props = {
@@ -325,6 +326,7 @@ const BlankState = () => {
 };
 
 const NotFoundState = () => {
+  const translate = useTranslations();
   return (
     <div className={"flex items-center justify-center pb-8"}>
       <div className={"text-center"}>
@@ -339,7 +341,7 @@ const NotFoundState = () => {
         </div>
 
         <div className={"text-nb-gray-100 mb-1"}>
-          Could not find any results
+          {translate("search.noResultsCardTitle")}
         </div>
         <div className={"text-sm text-nb-gray-350 font-light max-w-xs"}>
           {`We couldn't find any results. Please try a different search term.`}
@@ -360,6 +362,7 @@ const LoadingState = () => {
 };
 
 const KeyboardShortcutsFooter = () => {
+  const translate = useTranslations();
   return (
     <div
       className={
@@ -379,13 +382,13 @@ const KeyboardShortcutsFooter = () => {
         <Kbd variant={"darker"}>
           <CornerDownLeft size={12} />
         </Kbd>
-        <div className={"ml-1"}>Open</div>
+        <div className={"ml-1"}>{translate("search.open")}</div>
       </div>
       <div className={"flex items-center gap-1.5"}>
         <Kbd variant={"darker"} className={"text-[0.65rem] font-medium"}>
           esc
         </Kbd>
-        <div className={"ml-1"}>Close</div>
+        <div className={"ml-1"}>{translate("common.close")}</div>
       </div>
     </div>
   );

@@ -20,6 +20,7 @@ import {
   Loader2,
 } from "lucide-react";
 import React, { useCallback, useMemo, useRef } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { ChangeAccordionItem } from "@/modules/control-center/draft/changeset/ChangeAccordionItem";
 import {
@@ -48,6 +49,7 @@ export const ReviewDeployModal = ({
   onOpenChange,
   onDeployed,
 }: Props) => {
+  const translate = useTranslations();
   const { changes, clearChanges } = useDraftChangeset();
   const { removeWithCascade, previewRemove } = useRemoveChange();
   const { deploy, isDeploying, deployStatus } = useDeployChangeset();
@@ -263,7 +265,7 @@ export const ReviewDeployModal = ({
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
               <Button variant={"secondary"} disabled={isDeploying}>
-                Cancel
+                {translate("common.cancel")}
               </Button>
             </ModalClose>
             {/* A disabled button emits no hover, so the wrapper div FullTooltip

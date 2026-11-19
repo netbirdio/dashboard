@@ -24,8 +24,10 @@ import {
 import { useState } from "react";
 import { FaDiscord } from "react-icons/fa6";
 import SlackIcon from "@/assets/icons/SlackIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 export default function HelpAndSupportButton() {
+  const t = useTranslations();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
@@ -38,19 +40,20 @@ export default function HelpAndSupportButton() {
         <Button
           size={"xs"}
           variant={"default-outline"}
+          aria-label={t("common.helpAndSupport")}
           className={cn(
             "!rounded-full h-[38px] w-[38px] !p-0",
             dropdownOpen && "text-white",
           )}
         >
-          <CircleQuestionMark size={18} />
+          <CircleQuestionMark size={18} aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1 px-1">
             <div className="text-sm font-normal leading-none text-nb-gray-200 py-1">
-              Help and Support
+              {t("common.helpAndSupport")}
             </div>
           </div>
         </DropdownMenuLabel>
@@ -63,7 +66,7 @@ export default function HelpAndSupportButton() {
         >
           <div className={"flex gap-3 items-center"}>
             <BookText size={14} />
-            Documentation
+            {t("common.documentation")}
           </div>
           <DropdownMenuShortcut>
             <ArrowUpRightIcon size={16} />
@@ -77,7 +80,7 @@ export default function HelpAndSupportButton() {
         >
           <div className={"flex gap-3 items-center"}>
             <TriangleAlert size={14} />
-            Troubleshooting
+            {t("common.troubleshooting")}
           </div>
           <DropdownMenuShortcut>
             <ArrowUpRightIcon size={16} />
@@ -103,7 +106,7 @@ export default function HelpAndSupportButton() {
         >
           <div className={"flex gap-3 items-center"}>
             <MessagesSquareIcon size={14} />
-            NetBird Forum
+            {t("common.netbirdForum")}
           </div>
           <DropdownMenuShortcut>
             <ArrowUpRightIcon size={16} />
@@ -148,7 +151,7 @@ export default function HelpAndSupportButton() {
         >
           <div className={"flex gap-3 items-center"}>
             <MessageSquareShare size={14} />
-            Feedback
+            {t("common.feedback")}
           </div>
           <DropdownMenuShortcut>
             <ArrowUpRightIcon size={16} />

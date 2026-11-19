@@ -10,6 +10,7 @@ import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
@@ -49,6 +50,7 @@ const PickerContent = ({
   state: NetworkDestinationPickerState;
   onClose: () => void;
 }) => {
+  const translate = useTranslations();
   const { networkNodeId, policyNodeId } = state;
   const { nodes } = useCanvasState();
   const { groups: apiGroups, networkResources } = useControlCenterData();
@@ -159,7 +161,7 @@ const PickerContent = ({
             <PeerGroupSelector
               data-testid={"network-destination-selector"}
               popoverWidth={480}
-              placeholder={"Select destination(s)..."}
+              placeholder={translate("controlCenter.selectDestination")}
               showResources={true}
               showResourceCounter={true}
               // Land on the tab that has content.
@@ -189,7 +191,7 @@ const PickerContent = ({
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
             <Button variant={"secondary"} className={"w-full"}>
-              Cancel
+              {translate("common.cancel")}
             </Button>
           </ModalClose>
           <Button
@@ -198,7 +200,7 @@ const PickerContent = ({
             onClick={onConnect}
             disabled={!hasPick || !!blockedReason}
           >
-            Connect
+            {translate("controlCenter.connect")}
           </Button>
         </div>
       </ModalFooter>

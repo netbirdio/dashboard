@@ -9,11 +9,13 @@ import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/generic-http.png";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useIsLicensed } from "@/hooks/useIsLicensed";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { EventStream } from "@/interfaces/EventStream";
 import GenericHTTPModal from "@/modules/integrations/event-streaming/generic-http/GenericHTTPModal";
 import { IntegrationCard } from "@/modules/integrations/IntegrationCard";
 
 export default function GenericHTTP() {
+  const t = useTranslations();
   const { permission } = usePermissions();
   // Event Streaming is a licensed feature; skip the call on open-source.
   const { isLicensed } = useIsLicensed();
@@ -97,7 +99,7 @@ export default function GenericHTTP() {
           onClick={() => setOpen(true)}
         >
           <Settings size={14} />
-          Configuration
+          {t("common.configuration")}
         </Button>
       </IntegrationCard>
       <GenericHTTPModal

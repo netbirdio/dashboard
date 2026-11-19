@@ -5,6 +5,7 @@ import * as React from "react";
 import { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import { useHasExitNodes } from "@/modules/exit-node/useHasExitNodes";
 import { RouteModalContent } from "@/modules/routes/RouteModal";
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export const ExitNodeDropdownButton = ({ peer }: Props) => {
+  const t = useTranslations();
   const [modal, setModal] = useState(false);
   const exitNodeInfo = useHasExitNodes(peer);
   const { permission } = usePermissions();
@@ -29,7 +31,7 @@ export const ExitNodeDropdownButton = ({ peer }: Props) => {
             <>
               <IconCirclePlus size={14} className={"shrink-0"} />
               <div className={"flex justify-between items-center w-full"}>
-                Add Exit Node
+                {t("exitNode.addExitNode")}
               </div>
             </>
           ) : (
@@ -39,7 +41,7 @@ export const ExitNodeDropdownButton = ({ peer }: Props) => {
                 className={"shrink-0 text-yellow-400"}
               />
               <div className={"flex justify-between items-center w-full"}>
-                Set Up Exit Node
+                {t("exitNode.setupExitNode")}
               </div>
             </>
           )}

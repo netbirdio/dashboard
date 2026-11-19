@@ -47,6 +47,7 @@ import React, {
 } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   ReverseProxyDomain,
   ReverseProxyDomainType,
@@ -212,6 +213,7 @@ export default function AIProviderModal({
   onDraftSubmit,
   takenNames,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   const {
     providers,
     addProvider,
@@ -903,7 +905,7 @@ export default function AIProviderModal({
           <TabsList justify={"start"} className={"px-8"}>
             <TabsTrigger value={"provider"}>
               <Sparkles size={14} />
-              Provider
+              {translate("common.provider")}
             </TabsTrigger>
             <TabsTrigger
               value={"models"}
@@ -911,7 +913,7 @@ export default function AIProviderModal({
               data-testid={"agent-network-provider-models-tab"}
             >
               <Boxes size={14} />
-              Models
+              {translate("common.models")}
             </TabsTrigger>
             {showMappings && (
               <TabsTrigger
@@ -977,7 +979,7 @@ export default function AIProviderModal({
 
               <div className={"flex-col flex gap-2"}>
                 <FormRow
-                  label={"Provider"}
+                  label={translate("common.provider")}
                   helpText={
                     <>
                       AI provider and upstream URL to expose
@@ -1073,7 +1075,7 @@ export default function AIProviderModal({
                                 }
                                 target={"_blank"}
                               >
-                                Learn more
+                                {translate("common.learnMore")}
                                 <ExternalLinkIcon size={12} />
                               </InlineLink>
                             </>
@@ -1696,7 +1698,7 @@ export default function AIProviderModal({
           <TabsContent value={"models"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-3"}>
               <div>
-                <Label>Models</Label>
+                <Label>{translate("common.models")}</Label>
                 <div data-testid={"agent-network-provider-models-help"}>
                   <HelpText margin={false}>
                     Models exposed through this endpoint, with the per-1k
@@ -1834,7 +1836,7 @@ export default function AIProviderModal({
                     onClick={handleClose}
                     disabled={saveInFlight}
                   >
-                    Cancel
+                    {translate("common.cancel")}
                   </Button>
                 </ModalClose>
                 <Button
@@ -1843,7 +1845,7 @@ export default function AIProviderModal({
                   disabled={!canContinueFromProvider}
                   data-testid={"agent-network-provider-continue"}
                 >
-                  Continue
+                  {translate("common.continue")}
                 </Button>
               </>
             )}
@@ -1854,7 +1856,7 @@ export default function AIProviderModal({
                   onClick={() => setTab("provider")}
                   disabled={saveInFlight}
                 >
-                  Back
+                  {translate("common.back")}
                 </Button>
                 {showMappings ? (
                   <Button
@@ -1863,7 +1865,7 @@ export default function AIProviderModal({
                     disabled={!canContinueFromProvider}
                     data-testid={"agent-network-provider-continue"}
                   >
-                    Continue
+                    {translate("common.continue")}
                   </Button>
                 ) : (
                   <Button
@@ -1884,7 +1886,7 @@ export default function AIProviderModal({
                   onClick={() => setTab("models")}
                   disabled={saveInFlight}
                 >
-                  Back
+                  {translate("common.back")}
                 </Button>
                 <Button
                   variant={"primary"}

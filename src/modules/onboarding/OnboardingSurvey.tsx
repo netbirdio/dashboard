@@ -23,6 +23,7 @@ import {
 import React, { useMemo, useState } from "react";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { HubspotFormField } from "@/contexts/AnalyticsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   domainCategory: string;
@@ -104,6 +105,7 @@ export const referralSourceOptions = [
 ];
 
 export const OnboardingSurvey = ({ domainCategory, onSubmit }: Props) => {
+  const t = useTranslations();
   const { oidcUser: user } = useOidcUser();
   const name = user?.given_name || user?.name || user?.preferred_username;
   const welcomeMessage = name
@@ -340,7 +342,7 @@ export const OnboardingSurvey = ({ domainCategory, onSubmit }: Props) => {
 
           <div className={"flex w-full flex-col gap-2"}>
             <Label>
-              How did you hear about NetBird?
+              {t("onboarding.howDidYouHear")}
               <RequiredAsterisk />
             </Label>
             <SelectDropdown
@@ -348,7 +350,7 @@ export const OnboardingSurvey = ({ domainCategory, onSubmit }: Props) => {
               onChange={setReferralSource}
               options={randomizedOptions}
               showValues={false}
-              placeholder={"Please select an option..."}
+              placeholder={t("onboarding.selectOption")}
               variant={"dropdown"}
             />
           </div>
@@ -478,7 +480,7 @@ export const OnboardingSurvey = ({ domainCategory, onSubmit }: Props) => {
         onClick={submitForm}
         disabled={!canSubmit}
       >
-        Continue
+        {t("common.continue")}
       </Button>
     </>
   );

@@ -3,6 +3,7 @@ import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { Callout } from "@components/Callout";
 import React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { CustomDomainSelector } from "./CustomDomainSelector";
 import { isNetBirdCloud } from "@utils/netbird";
 import InlineLink from "@components/InlineLink";
@@ -28,9 +29,10 @@ export default function ReverseProxyDomainInput({
   subdomainRequired = false,
   clusterOffline,
 }: Readonly<Props>) {
+  const t = useTranslations();
   return (
     <div>
-      <Label>Domain</Label>
+      <Label>{t("common.domain")}</Label>
       <HelpText>
         {subdomainRequired
           ? "Enter a subdomain and select a domain for your service."
@@ -69,7 +71,7 @@ export default function ReverseProxyDomainInput({
       {clusterOffline &&
         (isNetBirdCloud() ? (
           <Callout variant={"warning"} className={"mt-3"}>
-            Cluster {clusterOffline.clusterName} is offline. Please try again in
+            {t("common.cluster") + " "}{clusterOffline.clusterName} is offline. Please try again in
             a few minutes. If the issue persists, check{" "}
             <InlineLink href={"https://status.netbird.io/"} target={"_blank"}>
               NetBird Status
@@ -81,7 +83,7 @@ export default function ReverseProxyDomainInput({
           </Callout>
         ) : (
           <Callout variant={"error"} className={"mt-3"}>
-            Cluster {clusterOffline.clusterName} is offline. Make sure the proxy
+            {t("common.cluster") + " "}{clusterOffline.clusterName} is offline. Make sure the proxy
             server is running and connected to the right management address.
           </Callout>
         ))}

@@ -9,6 +9,7 @@ import genericLogo from "@/assets/integrations/generic-scim.png";
 import googleLogo from "@/assets/integrations/google-workspace.png";
 import jumpcloudLogo from "@/assets/integrations/jumpcloud.png";
 import oktaLogo from "@/assets/integrations/okta.png";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useIntegrations } from "@/modules/integrations/idp-sync/useIntegrations";
 
 type IDP = "azure" | "google" | "okta" | "jumpcloud" | "generic" | "entraScim";
@@ -22,6 +23,7 @@ const idpImages: { [key in IDP]?: StaticImageData } = {
 };
 
 export const IdentityProviderCard = () => {
+  const t = useTranslations();
   const {
     isAnyIntegrationEnabled,
     isAzureEnabled,
@@ -65,7 +67,7 @@ export const IdentityProviderCard = () => {
           <FingerprintIcon size={16} />
         )
       }
-      title={"Identity Provider Sync"}
+      title={t("common.identityProviderSync")}
       action={<FeatureCardStatus enabled={enabled} />}
       description={"Sync users and groups from Okta, Microsoft or Google IdP"}
     />

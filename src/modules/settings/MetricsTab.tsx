@@ -10,6 +10,7 @@ import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 
 type Props = {
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export default function MetricsTab({ account }: Readonly<Props>) {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const saveRequest = useApiCall<Account>("/accounts/" + account.id, true);
@@ -27,7 +29,7 @@ export default function MetricsTab({ account }: Readonly<Props>) {
 
   const toggleMetricsPush = async (toggle: boolean) => {
     notify({
-      title: "Metrics",
+      title: t("common.metrics"),
       description: `Metrics push successfully ${
         toggle ? "enabled" : "disabled"
       }.`,
@@ -53,25 +55,25 @@ export default function MetricsTab({ account }: Readonly<Props>) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("common.settings")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=metrics"}
-            label={"Metrics"}
+            label={t("common.metrics")}
             icon={<ChartNoAxesCombined size={14} />}
             active
           />
         </Breadcrumbs>
         <div>
-          <h1>Metrics</h1>
+          <h1>{t("common.metrics")}</h1>
           <Paragraph className={"block"}>
             Share client performance metrics to help us improve NetBird.{" "}
             <InlineLink
               href={"https://docs.netbird.io/manage/client-metrics"}
               target={"_blank"}
             >
-              Learn more
+              {t("common.learnMore")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>

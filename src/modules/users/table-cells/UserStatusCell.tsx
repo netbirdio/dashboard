@@ -4,6 +4,7 @@ import { cn } from "@utils/helpers";
 import { isNetBirdCloud } from "@utils/netbird";
 import { ExternalLinkIcon, HelpCircle } from "lucide-react";
 import React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { User } from "@/interfaces/User";
 import { useAccount } from "@/modules/account/useAccount";
 
@@ -12,6 +13,7 @@ type Props = {
 };
 
 export default function UserStatusCell({ user }: Readonly<Props>) {
+  const t = useTranslations();
   const account = useAccount();
   const status = user.status;
   const isPendingApproval = user.pending_approval;
@@ -42,8 +44,7 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
   const tooltipContent = isLocalAuthDisabled ? (
     <div className={"max-w-xs text-xs flex flex-col gap-2"}>
       <div>
-        Local authentication is disabled. This user can no longer log in. Use
-        your IdP for authentication.
+        {t("users.localAuthDisabledTooltip")}
       </div>
       <div>
         <InlineLink
@@ -52,34 +53,32 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
           }
           target={"_blank"}
         >
-          Learn more <ExternalLinkIcon size={12} />
+          {t("common.learnMore") + " "}<ExternalLinkIcon size={12} />
         </InlineLink>
       </div>
     </div>
   ) : isInvitedOnCloud ? (
     <div className={"max-w-xs text-xs flex flex-col gap-2"}>
       <div>
-        This user was invited but has not accepted the invitation yet. Use the
-        Resend button to send another invitation email.
+        {t("users.invitedTooltip")}
       </div>
     </div>
   ) : (
     <div className={"max-w-xs text-xs flex flex-col gap-2"}>
       <div>
-        This user needs admin approval before joining your organization. To
-        disable approvals, turn off{" "}
+        {t("users.pendingApprovalTooltip")}{" "}
         <span className={"font-medium text-white"}>
-          {"'User Approval Required'"}
+          {t("users.userApprovalRequiredLabel")}
         </span>{" "}
         in{" "}
-        <InlineLink href={"/settings?tab=authentication"}>Settings</InlineLink>.
+        <InlineLink href={"/settings?tab=authentication"}>{t("common.settings")}</InlineLink>.
       </div>
       <div>
         <InlineLink
           href={"https://docs.netbird.io/how-to/approve-users"}
           target={"_blank"}
         >
-          Learn more <ExternalLinkIcon size={12} />
+          {t("common.learnMore") + " "}<ExternalLinkIcon size={12} />
         </InlineLink>
       </div>
     </div>

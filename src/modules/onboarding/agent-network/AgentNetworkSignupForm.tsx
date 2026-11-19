@@ -20,6 +20,7 @@ import {
 import React, { useMemo, useState } from "react";
 import { HubspotFormField } from "@/contexts/AnalyticsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { countryOptions } from "@/modules/onboarding/countryOptions";
 import {
   companySizes,
@@ -44,6 +45,7 @@ type Props = {
 // domain field (self-hosted IdPs don't emit it) and asks Agent-Network use
 // cases.
 export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
+  const t = useTranslations();
   const { oidcUser: user } = useOidcUser();
   const { loggedInUser } = useLoggedInUser();
   const name = user?.given_name || user?.name || user?.preferred_username;
@@ -191,7 +193,7 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
 
           <div className={"flex w-full flex-col gap-2"}>
             <Label>
-              Country
+              {t("common.country")}
               <RequiredAsterisk />
             </Label>
             <SelectDropdown
@@ -200,7 +202,7 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
               options={countryOptions}
               showSearch={true}
               placeholder={"Select your country..."}
-              searchPlaceholder={"Search country..."}
+              searchPlaceholder={t("onboarding.searchCountry")}
               variant={"dropdown"}
             />
           </div>
@@ -215,7 +217,7 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
               onChange={setReferralSource}
               options={randomizedOptions}
               showValues={false}
-              placeholder={"Please select an option..."}
+              placeholder={t("onboarding.selectOption")}
               variant={"dropdown"}
             />
           </div>
@@ -283,7 +285,7 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
         onClick={submitForm}
         disabled={!canSubmit}
       >
-        Continue
+        {t("common.continue")}
       </Button>
     </>
   );

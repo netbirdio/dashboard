@@ -26,6 +26,7 @@ import { Bar } from "react-chartjs-2";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   AccessLogFilterId,
   useAccessLogFilters,
@@ -196,6 +197,7 @@ function OverviewContent({
 // same look as every other table in the app. Only days with activity are
 // listed (zero-filler days exist for the chart's continuous axis).
 function DailyBreakdownTable({ daily }: { daily: DayBucket[] }) {
+  const t = useTranslations();
   const rows = useMemo(
     () => daily.filter((d) => d.input + d.output > 0 || d.cost > 0),
     [daily],
@@ -356,7 +358,7 @@ function DailyBreakdownTable({ daily }: { daily: DayBucket[] }) {
 
   return (
     <DataTable
-      text={"Days"}
+      text={t("agentNetwork.days")}
       columns={columns}
       data={rows}
       sorting={sorting}
@@ -386,7 +388,7 @@ function DailyBreakdownTable({ daily }: { daily: DayBucket[] }) {
                 href={"https://docs.netbird.io/agent-network"}
                 target={"_blank"}
               >
-                Agent Network
+                {t("common.agentNetwork")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </>

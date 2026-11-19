@@ -10,6 +10,7 @@ import React, { lazy, Suspense, useMemo } from "react";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { SetupKey } from "@/interfaces/SetupKey";
 
@@ -18,6 +19,7 @@ const SetupKeysTable = lazy(
 );
 
 export default function SetupKeysTab() {
+  const t = useTranslations();
   const { data: setupKeys, isLoading } = useFetchApi<SetupKey[]>("/setup-keys");
   const { permission } = usePermissions();
   const { groups } = useGroups();
@@ -42,33 +44,32 @@ export default function SetupKeysTab() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("common.settings")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=setup-keys"}
-            label={"Setup Keys"}
+            label={t("common.setupKeys")}
             icon={<KeyRound size={14} />}
             active
           />
         </Breadcrumbs>
-        <h1>Setup Keys</h1>
+        <h1>{t("common.setupKeys")}</h1>
         <Paragraph>
-          Setup keys are pre-authentication keys that allow to register new
-          machines in your network.{" "}
+          {t("settings.setupKeysDescription")}{" "}
           <InlineLink
             href={
               "https://docs.netbird.io/how-to/register-machines-using-setup-keys"
             }
             target={"_blank"}
           >
-            Learn more
+            {t("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
       </div>
       <RestrictedAccess
-        page={"Setup Keys"}
+        page={t("common.setupKeys")}
         hasAccess={permission.setup_keys.read}
       >
         <Suspense fallback={<SkeletonTable />}>

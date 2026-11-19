@@ -3,6 +3,7 @@
 import { cn } from "@utils/helpers";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { ApiError, SetupRequest } from "@/interfaces/Instance";
 import { submitSetup } from "@/utils/unauthenticatedApi";
 import { NetBirdLogo } from "@components/NetBirdLogo";
@@ -30,6 +31,7 @@ interface FormErrors {
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$/i;
 
 export default function InstanceSetupWizard() {
+  const t = useTranslations();
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
@@ -179,7 +181,7 @@ export default function InstanceSetupWizard() {
               variant={"primary"}
               className={"mx-auto w-full"}
             >
-              Go to Login
+              {t("common.goToLogin")}
             </Button>
           </div>
         </Card>
@@ -210,7 +212,7 @@ export default function InstanceSetupWizard() {
         >
           {errors.general && <ErrorMessage error={errors.general} />}
           <div>
-            <Label htmlFor={"name"}>Name</Label>
+            <Label htmlFor={"name"}>{t("common.name")}</Label>
             <Input
               type="text"
               id="name"
@@ -224,7 +226,7 @@ export default function InstanceSetupWizard() {
           </div>
 
           <div>
-            <Label htmlFor={"email"}>Email</Label>
+            <Label htmlFor={"email"}>{t("common.email")}</Label>
             <Input
               type="email"
               id="email"
@@ -237,7 +239,7 @@ export default function InstanceSetupWizard() {
           </div>
 
           <div>
-            <Label htmlFor={"password"}>Password</Label>
+            <Label htmlFor={"password"}>{t("common.password")}</Label>
             <Input
               type={"password"}
               id="password"
@@ -254,7 +256,7 @@ export default function InstanceSetupWizard() {
           </div>
 
           <div>
-            <Label htmlFor={"confirmPassword"}>Confirm Password</Label>
+            <Label htmlFor={"confirmPassword"}>{t("common.confirmPassword")}</Label>
             <Input
               type={"password"}
               id="confirmPassword"

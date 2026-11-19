@@ -9,6 +9,7 @@ import {
   DistributorCustomer,
   DistributorCustomerStatus,
 } from "@/cloud/distributor/interfaces/Distributor";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PlanTier } from "@/interfaces/Subscription";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 
@@ -18,6 +19,7 @@ type Props = {
 };
 
 export const CustomerPlanCell = ({ customer, onUpgrade }: Props) => {
+  const t = useTranslations();
   const { currentPlanTier, isLoading, trialDaysRemaining, isTrialExpired } =
     useCustomerPlan({ accountId: customer.id });
 
@@ -32,7 +34,7 @@ export const CustomerPlanCell = ({ customer, onUpgrade }: Props) => {
       <div className={"flex gap-3 items-center"}>
         <Badge variant={"yellow"} className={"h-[32px]"}>
           <CircleAlertIcon size={12} />
-          Trial Expired
+          {t("common.trialExpired")}
         </Badge>
         {onUpgrade && (
           <Button
@@ -42,7 +44,7 @@ export const CustomerPlanCell = ({ customer, onUpgrade }: Props) => {
             onClick={onUpgrade}
           >
             <CreditCardIcon size={12} />
-            Upgrade Plan
+            {t("common.upgradePlan")}
           </Button>
         )}
       </div>

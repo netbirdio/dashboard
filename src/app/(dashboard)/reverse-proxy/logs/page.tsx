@@ -11,12 +11,14 @@ import React, { useMemo } from "react";
 import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import ServerPaginationProvider from "@/contexts/ServerPaginationProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import PageContainer from "@/layouts/PageContainer";
 import ReverseProxyEventsTable from "@/modules/reverse-proxy/events/ReverseProxyEventsTable";
 import { usePortalElement } from "@hooks/usePortalElement";
 import { REVERSE_PROXY_EVENTS_DOCS_LINK } from "@/interfaces/ReverseProxy";
 
 export default function ProxyLogsPage() {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
@@ -36,30 +38,30 @@ export default function ProxyLogsPage() {
       <div className="p-default py-6">
         <Breadcrumbs>
           <Breadcrumbs.Item
-            label="Reverse Proxy"
+            label={t("common.reverseProxy")}
             disabled
             icon={<ReverseProxyIcon size={15} />}
           />
           <Breadcrumbs.Item
             href="/reverse-proxy/logs"
-            label="Access Logs"
+            label={t("common.accessLogs")}
             icon={<ReverseProxyIcon size={15} />}
           />
         </Breadcrumbs>
 
-        <h1 ref={headingRef}>Access Logs</h1>
+        <h1 ref={headingRef}>{t("common.accessLogs")}</h1>
 
         <Paragraph>
           View access logs for your reverse proxy services, including allowed
           and denied requests.{" "}
           <InlineLink href={REVERSE_PROXY_EVENTS_DOCS_LINK} target="_blank">
-            Learn more <ExternalLinkIcon size={12} />
+            {t("common.learnMore") + " "}<ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
       </div>
 
       <RestrictedAccess
-        page="Access Logs"
+        page={t("common.accessLogs")}
         hasAccess={permission?.services?.read}
       >
         <ServerPaginationProvider

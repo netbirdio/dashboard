@@ -7,6 +7,7 @@ import { isNetBirdCloud } from "@utils/netbird";
 import { ExternalLinkIcon, FingerprintIcon } from "lucide-react";
 import React from "react";
 import IntegrationIcon from "@/assets/icons/IntegrationIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useAccount } from "@/modules/account/useAccount";
 import { LockedFeatureInfoCard } from "@/modules/billing/locked-feature/LockedFeatureInfoCard";
 import { LockedFeatureOverlay } from "@/modules/billing/locked-feature/LockedFeatureOverlay";
@@ -20,6 +21,7 @@ import { useIntegrations } from "@/modules/integrations/idp-sync/useIntegrations
 import { Callout } from "@components/Callout";
 
 export default function IdentityProviderTab() {
+  const t = useTranslations();
   const account = useAccount();
 
   useIntegrations();
@@ -30,17 +32,17 @@ export default function IdentityProviderTab() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/integrations"}
-            label={"Integrations"}
+            label={t("common.integrations")}
             icon={<IntegrationIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=identity-provider"}
-            label={"Identity Provider Sync"}
+            label={t("common.identityProviderSync")}
             icon={<FingerprintIcon size={14} />}
             active
           />
         </Breadcrumbs>
-        <h1>Identity Provider Sync</h1>
+        <h1>{t("common.identityProviderSync")}</h1>
         <Paragraph>
           Configure your preferred Identity Provider (IdP) to synchronize your
           users and groups to NetBird.
@@ -50,7 +52,7 @@ export default function IdentityProviderTab() {
             href={"https://docs.netbird.io/how-to/idp-sync"}
             target={"_blank"}
           >
-            Learn more
+            {t("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>

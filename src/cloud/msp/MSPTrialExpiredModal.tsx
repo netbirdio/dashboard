@@ -9,11 +9,13 @@ import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { TenantListItem } from "@/cloud/msp/interfaces/Tenant";
 import { useBilling } from "@/contexts/BillingProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PlanTier } from "@/interfaces/Subscription";
 
 const config = loadConfig();
 
 export const MSPTrialExpiredModal = () => {
+  const t = useTranslations();
   const { logout } = useLoggedInUser();
 
   const {
@@ -93,7 +95,7 @@ export const MSPTrialExpiredModal = () => {
               variant={"secondary"}
               onClick={() => loginAs(undefined)}
             >
-              Switch to {mspAccount?.name + "'s"} Account
+              Switch to {mspAccount?.name + "'s"}{" " + t("common.account")}
             </Button>
           </ModalFooter>
         ) : (
@@ -113,7 +115,7 @@ export const MSPTrialExpiredModal = () => {
             >
               <Button className={"w-full"} variant={"primary"}>
                 <MailIcon size={15} className={"shrink-0"} />
-                Get Support
+                {t("msp.getSupport")}
               </Button>
             </a>
           </ModalFooter>

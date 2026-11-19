@@ -2,6 +2,7 @@ import * as React from "react";
 import { useMemo, useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DNSZone } from "@/interfaces/DNS";
 import { Group } from "@/interfaces/Group";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export const DNSZonesGroupCell = ({ zone }: Props) => {
+  const t = useTranslations();
   const { groups } = useGroups();
   const { updateZone } = useDNSZones();
   const [modal, setModal] = useState(false);
@@ -45,7 +47,7 @@ export const DNSZonesGroupCell = ({ zone }: Props) => {
 
   return (
     <GroupsRow
-      label={"Distribution Groups"}
+      label={t("dns.distributionGroups")}
       description={
         "Advertise this zone to peers that belong to the following groups"
       }

@@ -25,6 +25,7 @@ import { useEmbeddedIdentityProviders } from "@/hooks/useEmbeddedIdentityProvide
 import Skeleton from "react-loading-skeleton";
 import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/generic-scim.png";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   IdentityProvider,
   ScimIntegration,
@@ -91,6 +92,7 @@ export function SetupContent({
   onClose,
   provider = IdentityProvider.ENTRA,
 }: ModalProps) {
+  const translate = useTranslations();
   const { isEmbeddedIdPEnabled } = useEmbeddedIdentityProviders();
   const [step, setStep] = useState(isEmbeddedIdPEnabled ? -1 : 0);
   const [authToken, setAuthToken] = useState("");
@@ -247,7 +249,7 @@ export function SetupContent({
             }
           >
             <Shield size={16} />
-            Required Permissions
+            {translate("common.requiredPermissions")}
           </div>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
             Ensure that you have an{" "}
@@ -344,7 +346,7 @@ export function SetupContent({
             </Steps.Step>
             <Steps.Step step={5} line={false}>
               <p className={"font-normal"}>
-                Click <Mark>Create</Mark>
+                Click <Mark>{translate("common.create")}</Mark>
               </p>
             </Steps.Step>
           </Steps>
@@ -404,7 +406,7 @@ export function SetupContent({
                     "https://learn.microsoft.com/en-us/entra/identity/app-provisioning/application-provisioning-config-problem-scim-compatibility#flags-to-alter-the-scim-behavior"
                   }
                 >
-                  Learn more
+                  {translate("common.learnMore")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </Callout>
@@ -413,7 +415,7 @@ export function SetupContent({
               <p className={"font-normal"}>
                 After that click <Mark>Test Connection</Mark> to verify the SCIM
                 connection. If the connection is successful click{" "}
-                <Mark>Create</Mark> to save the configuration.
+                <Mark>{translate("common.create")}</Mark> to save the configuration.
               </p>
             </Steps.Step>
           </Steps>
@@ -430,20 +432,20 @@ export function SetupContent({
             <Steps.Step step={1}>
               <p>
                 Navigate to the <Mark>Attribute mapping</Mark> section and
-                select the <Mark>Groups</Mark> tab
+                select the <Mark>{translate("common.groups")}</Mark> tab
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
                 In the attribute mappings list, locate the{" "}
                 <Mark>externalId</Mark> row <br />
-                and click <Mark>Delete</Mark>
+                and click <Mark>{translate("common.delete")}</Mark>
               </p>
               <Lightbox image={entraGroupMapping} />
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                Click <Mark>Save</Mark> to apply the updated group attribute
+                Click <Mark>{translate("common.save")}</Mark> to apply the updated group attribute
                 mapping configuration
               </p>
             </Steps.Step>
@@ -461,7 +463,7 @@ export function SetupContent({
             <Steps.Step step={1}>
               <p>
                 Navigate to the <Mark>Attribute mapping</Mark> section and
-                select the <Mark>Users</Mark> tab
+                select the <Mark>{translate("common.users")}</Mark> tab
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
@@ -483,8 +485,8 @@ export function SetupContent({
               <p className={"font-normal"}>
                 In the attribute mappings list, locate the{" "}
                 <Mark>externalId</Mark> row <br />
-                and click <Mark>Edit</Mark>. Change the{" "}
-                <Mark>Source attribute</Mark> from <Mark>mailNickname</Mark> to{" "}
+                and click <Mark>{translate("common.edit")}</Mark>. Change the{" "}
+                <Mark>Source attribute</Mark>{" " + translate("integrations.from") + " "}<Mark>mailNickname</Mark> to{" "}
                 <Mark>objectId</Mark> and click <Mark>Ok</Mark> to save the
                 change
               </p>
@@ -492,7 +494,7 @@ export function SetupContent({
             </Steps.Step>
             <Steps.Step step={4} line={false}>
               <p className={"font-normal"}>
-                Click <Mark>Save</Mark> to apply the final attribute mapping
+                Click <Mark>{translate("common.save")}</Mark> to apply the final attribute mapping
                 configuration
               </p>
             </Steps.Step>
@@ -522,7 +524,7 @@ export function SetupContent({
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                Click <Mark>Assign</Mark> to save the assignments
+                Click <Mark>{translate("common.assign")}</Mark> to save the assignments
               </p>
             </Steps.Step>
           </Steps>
@@ -539,7 +541,7 @@ export function SetupContent({
             <Steps.Step step={1}>
               <p>
                 After assigning users and groups, navigate back to the
-                provisioning configuration, click <Mark>Overview</Mark>, then
+                provisioning configuration, click <Mark>{translate("integrations.tabOverview")}</Mark>, then
                 click the <Mark>Start provisioning</Mark> button to enable
                 automatic synchronization
               </p>
@@ -549,7 +551,7 @@ export function SetupContent({
               <p className={"font-normal"}>
                 The first sync will begin shortly after provisioning is started.{" "}
                 <br />
-                Click <Mark>Finish Setup</Mark> below to finalize this setup.
+                Click <Mark>{translate("common.finishSetup")}</Mark> below to finalize this setup.
               </p>
             </Steps.Step>
           </Steps>
@@ -564,7 +566,7 @@ export function SetupContent({
             onClick={() => setStep(step + 1)}
             disabled={!connectorId || connectorId === ""}
           >
-            Continue
+            {translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -575,7 +577,7 @@ export function SetupContent({
             onClick={() => setStep(step - 1)}
           >
             <IconArrowLeft size={16} />
-            Back
+            {translate("common.back")}
           </Button>
         )}
         {step >= 0 && step < maxSteps && (
@@ -585,7 +587,7 @@ export function SetupContent({
             disabled={!entraConnection && isAuth0()}
             onClick={() => setStep(step + 1)}
           >
-            {step == 0 ? "Get Started" : "Continue"}
+            {step == 0 ? "Get Started" : translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -596,7 +598,7 @@ export function SetupContent({
             onClick={finishSetup}
             disabled={integrationId === "" || authToken === ""}
           >
-            Finish Setup
+            {translate("common.finishSetup")}
           </Button>
         )}
       </ModalFooter>

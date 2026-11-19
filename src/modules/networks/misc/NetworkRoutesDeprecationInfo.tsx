@@ -1,16 +1,18 @@
 import FullTooltip from "@components/FullTooltip";
 import { TriangleAlertIcon } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   size?: number;
 };
 export const NetworkRoutesDeprecationInfo = ({ size = 14 }: Props) => {
+  const t = useTranslations();
   return (
     <FullTooltip
       content={
         <div className={"text-xs max-w-[230px]"}>
-          Network Routes will be deprecated and replaced with Networks.
+          {t("networks.routesDeprecationInfo")}
         </div>
       }
     >

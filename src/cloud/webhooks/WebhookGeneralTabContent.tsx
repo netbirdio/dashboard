@@ -6,6 +6,7 @@ import { TabsContent } from "@components/Tabs";
 import { GlobeIcon } from "lucide-react";
 import { AuthenticationSettings } from "@/cloud/webhooks/WebhookAuthenticationSettings";
 import { WebhookConfig } from "@/cloud/webhooks/useWebhookConfig";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   value: WebhookConfig;
@@ -18,11 +19,12 @@ export function WebhookGeneralTabContent({
   urlHelpText = "Full HTTP(S) URL where events will be sent via a POST request.",
   mask,
 }: Readonly<Props>) {
+  const t = useTranslations();
   return (
     <TabsContent value={"general"} className={"px-8 text-sm"}>
       <div className={"mb-6"}>
         <Label>
-          {value.isEditing ? "Endpoint URL" : "Enter your Endpoint URL"}
+          {value.isEditing ? t("webhooks.endpointUrl") : t("webhooks.enterEndpointUrl")}
         </Label>
         <HelpText>{urlHelpText}</HelpText>
         <Input
@@ -36,9 +38,9 @@ export function WebhookGeneralTabContent({
         />
       </div>
 
-      <Label>Authentication</Label>
+      <Label>{t("common.authentication")}</Label>
       <HelpText>
-        Select your preferred authentication method for the endpoint.
+        {t("webhooks.authHelpText")}
       </HelpText>
       <AuthenticationSettings value={value} mask={mask} />
     </TabsContent>

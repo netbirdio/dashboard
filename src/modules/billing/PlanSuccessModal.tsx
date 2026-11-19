@@ -6,8 +6,10 @@ import { cn } from "@utils/helpers";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 export const PlanSuccessModal = () => {
+  const t = useTranslations();
   const params = useSearchParams();
   const subscriptionSuccess = params.get("success");
   const [successModal, setSuccessModal] = useState(
@@ -33,7 +35,7 @@ export const PlanSuccessModal = () => {
           </Paragraph>
           <ModalClose asChild={true}>
             <Button variant={"primary"} className={"w-full mt-4"} size={"xs"}>
-              Close
+              {t("common.close")}
             </Button>
           </ModalClose>
         </div>

@@ -9,6 +9,7 @@ import { cn } from "@utils/helpers";
 import * as React from "react";
 import { useState } from "react";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
 
@@ -34,6 +35,7 @@ export const SingleGroupSelector = ({
   align = "end",
   side = "top",
 }: Props) => {
+  const translate = useTranslations();
   const [inputRef, { width }] = useElementSize<HTMLDivElement>();
   const [open, setOpen] = useState(false);
   const [filteredItems, search, setSearch] = useSearch(
@@ -73,14 +75,14 @@ export const SingleGroupSelector = ({
           <DropdownInput
             value={search}
             onChange={setSearch}
-            placeholder={"Search groups..."}
+            placeholder={translate("groups.searchPlaceholder")}
             hideEnterIcon={true}
           />
 
           {values.length == 0 && !search && (
             <div className={"max-w-xs mx-auto px-4"}>
               <DropdownInfoText>
-                {"Seems like you don't have any groups."}
+                {translate("groups.noGroupsAvailable")}
               </DropdownInfoText>
             </div>
           )}
@@ -88,8 +90,7 @@ export const SingleGroupSelector = ({
           {filteredItems.length == 0 && search != "" && (
             <div className={"max-w-xs mx-auto px-4"}>
               <DropdownInfoText>
-                There are no groups matching your search. Try another search
-                term.
+                {translate("groups.noGroupsMatching")}
               </DropdownInfoText>
             </div>
           )}

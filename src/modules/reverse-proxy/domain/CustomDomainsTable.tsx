@@ -35,6 +35,7 @@ import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   REVERSE_PROXY_DOCS_LINK,
   ReverseProxyDomain,
@@ -84,6 +85,7 @@ type Props = {
 };
 
 export default function CustomDomainsTable({ headingTarget }: Readonly<Props>) {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { permission } = usePermissions();
@@ -174,7 +176,7 @@ export default function CustomDomainsTable({ headingTarget }: Readonly<Props>) {
         initialPageSize={10000}
         showResetFilterButton={false}
         keepStateInLocalStorage={false}
-        text={"Domains"}
+        text={t("common.domains")}
         sorting={sorting}
         setSorting={setSorting}
         columns={CustomDomainsColumns}
@@ -207,14 +209,14 @@ export default function CustomDomainsTable({ headingTarget }: Readonly<Props>) {
                 data-testid={"add-custom-domain"}
               >
                 <PlusCircle size={16} />
-                Add Domain
+                {t("reverseProxy.addDomain")}
               </Button>
             }
             learnMore={
               <>
                 Learn more about
                 <InlineLink href={REVERSE_PROXY_DOCS_LINK} target={"_blank"}>
-                  Custom Domains
+                  {t("common.customDomains")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </>
@@ -232,7 +234,7 @@ export default function CustomDomainsTable({ headingTarget }: Readonly<Props>) {
                 data-testid={"add-custom-domain"}
               >
                 <PlusCircle size={16} />
-                Add Domain
+                {t("reverseProxy.addDomain")}
               </Button>
             )}
           </>
@@ -284,6 +286,7 @@ function CustomDomainNameCell({ domain }: Readonly<CellProps>) {
 }
 
 function CustomDomainStatusCell({ domain }: Readonly<CellProps>) {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { validateDomain } = useReverseProxies();
   const [verificationModalOpen, setVerificationModalOpen] = useState(false);
@@ -327,7 +330,7 @@ function CustomDomainStatusCell({ domain }: Readonly<CellProps>) {
           disabled={!permission?.services?.update}
         >
           <ShieldCheckIcon size={14} />
-          Verify Domain
+          {t("common.verifyDomain")}
         </Button>
       </div>
 
@@ -343,6 +346,7 @@ function CustomDomainStatusCell({ domain }: Readonly<CellProps>) {
 }
 
 function CustomDomainActionCell({ domain }: Readonly<CellProps>) {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { deleteDomain } = useReverseProxies();
 
@@ -359,7 +363,7 @@ function CustomDomainActionCell({ domain }: Readonly<CellProps>) {
         data-testid={"delete-custom-domain"}
       >
         <Trash2 size={16} />
-        Delete
+        {t("common.delete")}
       </Button>
     </div>
   );

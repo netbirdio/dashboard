@@ -30,6 +30,7 @@ import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { User } from "@/interfaces/User";
 import ServiceUserModal from "@/modules/users/ServiceUserModal";
 import ServiceUserNameCell from "@/modules/users/table-cells/ServiceUserNameCell";
@@ -92,6 +93,7 @@ export default function ServiceUsersTable({
   isLoading,
   headingTarget,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   useFetchApi("/groups");
   const { mutate } = useSWRConfig();
   const router = useRouter();
@@ -171,7 +173,7 @@ export default function ServiceUsersTable({
     <DataTable
       headingTarget={headingTarget}
       isLoading={isLoading}
-      text={"Service Users"}
+      text={translate("common.serviceUsers")}
       sorting={sorting}
       setSorting={setSorting}
       columns={ServiceUsersTableColumns}
@@ -199,10 +201,8 @@ export default function ServiceUsersTable({
               size={"large"}
             />
           }
-          title={"Create Service User"}
-          description={
-            "It looks like you don't have any service users. Get started by creating a service user."
-          }
+          title={translate("users.create")}
+          description={translate("users.serviceUsersEmptyDescription")}
           button={
             <div className={"flex flex-col"}>
               <div>
@@ -214,7 +214,7 @@ export default function ServiceUsersTable({
                     disabled={!permission.users.create}
                   >
                     <PlusCircle size={16} />
-                    Create Service User
+                    {translate("users.create")}
                   </Button>
                 </ServiceUserModal>
               </div>
@@ -229,7 +229,7 @@ export default function ServiceUsersTable({
                 }
                 target={"_blank"}
               >
-                Service Users
+                {translate("common.serviceUsers")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </>
@@ -247,7 +247,7 @@ export default function ServiceUsersTable({
                 disabled={!permission.users.create}
               >
                 <PlusCircle size={16} />
-                Create Service User
+                {translate("users.create")}
               </Button>
             </ServiceUserModal>
           )}

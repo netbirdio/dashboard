@@ -27,6 +27,7 @@ import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/okta.png";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { OktaIntegration } from "@/interfaces/IdentityProvider";
 import { EmbeddedIdentityProviderSelect } from "@/modules/integrations/idp-sync/EmbeddedIdentityProviderSelect";
 import { GroupPrefixHelpText } from "@/modules/integrations/idp-sync/GroupPrefixHelpText";
@@ -70,6 +71,7 @@ type ModalProps = {
 };
 
 export function ConfigurationContent({ onSuccess, config }: ModalProps) {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
 
@@ -104,8 +106,8 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
       title: `Regenerate Auth Token?`,
       description:
         "Are you sure you want to regenerate the auth token? You will need to update the token in your Okta configuration.",
-      confirmText: "Regenerate",
-      cancelText: "Cancel",
+      confirmText: t("integrations.regenerateButton"),
+      cancelText: t("common.cancel"),
       type: "default",
     });
 
@@ -127,8 +129,8 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
     const choice = await confirm({
       title: `Delete integration?`,
       description: "Are you sure you want to delete this integration?",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
 
@@ -198,7 +200,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Settings
+            {t("common.settings")}
           </TabsTrigger>
           <TabsTrigger value={"group-sync"}>
             <FolderGit2
@@ -207,7 +209,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Group Sync
+            {t("common.groupSync")}
           </TabsTrigger>
           <TabsTrigger value={"user-sync"}>
             <UserCircle
@@ -216,7 +218,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            User Sync
+            {t("common.userSync")}
           </TabsTrigger>
           <TabsTrigger value={"danger"}>
             <AlertOctagon
@@ -225,7 +227,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Danger Zone
+            {t("common.dangerZoneTitle")}
           </TabsTrigger>
         </TabsList>
         <TabsContent value={"settings"} className={"px-8 text-sm"}>
@@ -262,7 +264,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
             <Label>
               <div className={"flex gap-2 items-center"}>
                 <FolderGit2 size={16} />
-                Synchronize Groups
+                {t("common.syncGroups")}
               </div>
             </Label>
             <GroupPrefixHelpText />
@@ -275,7 +277,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
             <Label>
               <div className={"flex gap-2 items-center"}>
                 <UserCircle size={16} />
-                Synchronize Users
+                {t("common.syncUsers")}
               </div>
             </Label>
             <GroupPrefixHelpText type={"user-groups"} />
@@ -293,7 +295,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
             <Label>
               <div className={"flex gap-2 items-center"}>
                 <AlertOctagon size={16} />
-                Delete Integration
+                {t("common.deleteIntegration")}
               </div>
             </Label>
             <HelpText className={"max-w-lg mt-2"}>
@@ -309,7 +311,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
             className={"mt-3"}
             onClick={deleteIntegration}
           >
-            Delete Integration
+            {t("common.deleteIntegration")}
           </Button>
         </TabsContent>
       </Tabs>
@@ -318,7 +320,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
       <ModalFooter className={"items-center gap-4"}>
         <ModalClose asChild={true}>
           <Button variant={"secondary"} className={"w-full"}>
-            Cancel
+            {t("common.cancel")}
           </Button>
         </ModalClose>
 
@@ -328,7 +330,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
           disabled={!hasChanges}
           onClick={updateIntegration}
         >
-          Save
+          {t("common.save")}
         </Button>
       </ModalFooter>
     </ModalContent>

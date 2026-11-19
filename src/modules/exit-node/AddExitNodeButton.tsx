@@ -4,6 +4,7 @@ import { IconCirclePlus, IconDirectionSign } from "@tabler/icons-react";
 import * as React from "react";
 import { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { ExitNodeHelpTooltip } from "@/modules/exit-node/ExitNodeHelpTooltip";
@@ -19,6 +20,7 @@ export const AddExitNodeButton = ({
   firstTime = false,
   distributionGroups,
 }: Props) => {
+  const t = useTranslations();
   const [modal, setModal] = useState(false);
   const { permission } = usePermissions();
 
@@ -33,12 +35,12 @@ export const AddExitNodeButton = ({
           {!firstTime ? (
             <>
               <IconCirclePlus size={16} />
-              Add Exit Node
+              {t("exitNode.addExitNode")}
             </>
           ) : (
             <>
               <IconDirectionSign size={16} className={"text-yellow-400"} />
-              Set Up Exit Node
+              {t("exitNode.setupExitNode")}
             </>
           )}
         </Button>

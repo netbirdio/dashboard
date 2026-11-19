@@ -25,6 +25,7 @@ import Avatar1 from "@/assets/avatars/009.jpg";
 import Avatar2 from "@/assets/avatars/030.jpg";
 import Avatar3 from "@/assets/avatars/063.jpg";
 import Avatar4 from "@/assets/avatars/086.jpg";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Role, User, UserInvite } from "@/interfaces/User";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -46,6 +47,7 @@ type SuccessData =
   | { type: "invite"; invite: UserInvite };
 
 export default function UserInviteModal({ children, groups }: Readonly<Props>) {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [successModal, setSuccessModal] = useState(false);
   const [successData, setSuccessData] = useState<SuccessData | null>(null);
@@ -166,7 +168,7 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
               <Paragraph
                 className={"mt-3 text-xs text-nb-gray-400 text-center"}
               >
-                Expires on{" "}
+                {t("users.expiresOn")}{" "}
                 {new Date(successData.invite.expires_at).toLocaleString()}
               </Paragraph>
             )}
@@ -178,7 +180,7 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
               onClick={handleCopyAndClose}
             >
               <CopyIcon size={14} />
-              Copy & Close
+              {t("users.copyAndClose")}
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -198,6 +200,7 @@ export function UserInviteModalContent({
   onInviteCreated,
   groups = [],
 }: Readonly<ModalProps>) {
+  const t = useTranslations();
   const userRequest = useApiCall<User>("/users");
   const inviteRequest = useApiCall<UserInvite>("/users/invites");
   const { mutate } = useSWRConfig();
@@ -218,7 +221,7 @@ export function UserInviteModalContent({
     const groups = await saveGroups();
     const groupIds = groups.map((group) => group.id) as string[];
     notify({
-      title: "Create User",
+      title: t("users.createUserTitle"),
       description: `Creating user account for ${name}...`,
       promise: userRequest
         .post({
@@ -232,7 +235,7 @@ export function UserInviteModalContent({
           mutate("/users?service_user=false");
           onUserCreated && onUserCreated(user);
         }),
-      loadingMessage: "Creating user...",
+      loadingMessage: t("users.creatingUserNotify"),
     });
   };
 
@@ -240,7 +243,7 @@ export function UserInviteModalContent({
     const groups = await saveGroups();
     const groupIds = groups.map((group) => group.id) as string[];
     notify({
-      title: "Create Invite",
+      title: t("users.createInviteNotify"),
       description: `Creating invite link for ${name}...`,
       promise: inviteRequest
         .post({
@@ -254,7 +257,7 @@ export function UserInviteModalContent({
           mutate("/users?service_user=false");
           onInviteCreated && onInviteCreated(invite);
         }),
-      loadingMessage: "Creating invite...",
+      loadingMessage: t("users.creatingInviteNotify"),
     });
   };
 
@@ -347,11 +350,11 @@ export function UserInviteModalContent({
             <SegmentedTabs.List className="rounded-lg border">
               <SegmentedTabs.Trigger value="invite">
                 <IconLink size={16} />
-                Invite User
+                {t("common.inviteUser")}
               </SegmentedTabs.Trigger>
               <SegmentedTabs.Trigger value="create">
                 <IconUserPlus size={16} />
-                Create User
+                {t("users.createUserTitle")}
               </SegmentedTabs.Trigger>
             </SegmentedTabs.List>
           </SegmentedTabs>
@@ -388,8 +391,8 @@ export function UserInviteModalContent({
           {!isCloud && mode === "invite" && (
             <div className={"flex justify-between mt-3"}>
               <div>
-                <Label>Expires in</Label>
-                <HelpText>Days until the invite expires.</HelpText>
+                <Label>{t("users.expiresIn")}</Label>
+                <HelpText>{t("users.expiresInHelp")}</HelpText>
               </div>
               <Input
                 maxWidthClass={"max-w-[200px]"}
@@ -408,9 +411,9 @@ export function UserInviteModalContent({
         </div>
 
         <div className={"mb-4"}>
-          <Label>Auto-assigned groups</Label>
+          <Label>{t("common.autoAssignedGroups")}</Label>
           <HelpText>
-            Groups will be assigned to peers added by this user.
+            {t("users.autoAssignedGroupsHelp")}
           </HelpText>
           <PeerGroupSelector
             onChange={setSelectedGroups}

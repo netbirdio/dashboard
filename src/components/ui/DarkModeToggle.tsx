@@ -10,8 +10,10 @@ import {
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/contexts/ThemeProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 export default function DarkModeToggle() {
+  const t = useTranslations();
   const [mounted, setMounted] = useState(false);
   const { setTheme } = useTheme();
 
@@ -42,14 +44,14 @@ export default function DarkModeToggle() {
           disabled={true}
         >
           <SunIcon size={16} />
-          Light
+          {t("components.light")}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme("dark")}
           className={"flex gap-2"}
         >
           <MoonIcon size={16} />
-          Dark
+          {t("components.dark")}
         </DropdownMenuItem>
         <DropdownMenuItem
           disabled={true}

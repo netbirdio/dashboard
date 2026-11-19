@@ -13,6 +13,7 @@ import * as React from "react";
 import { useState } from "react";
 import integrationImage from "@/assets/integrations/okta.png";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DomainValidationStatus } from "@/interfaces/Account";
 import {
   EnterpriseConnection,
@@ -29,6 +30,7 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 export const OktaSsoSettings = ({ open, onOpenChange, config }: Props) => {
+  const t = useTranslations();
   const { deleteConnection, addDomain, verifyDomain, mutate } =
     useEnterpriseConnections();
   const [tab, setTab] = useState("domains");
@@ -40,8 +42,8 @@ export const OktaSsoSettings = ({ open, onOpenChange, config }: Props) => {
       title: `Delete Integration?`,
       description:
         "Are you sure you want to delete this integration? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
 
@@ -121,7 +123,7 @@ export const OktaSsoSettings = ({ open, onOpenChange, config }: Props) => {
                   "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
                 }
               />
-              Domains
+              {t("common.domains")}
             </TabsTrigger>
             <TabsTrigger value={"settings"}>
               <Settings
@@ -130,7 +132,7 @@ export const OktaSsoSettings = ({ open, onOpenChange, config }: Props) => {
                   "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
                 }
               />
-              Configuration
+              {t("common.configuration")}
             </TabsTrigger>
             <TabsTrigger value={"danger"}>
               <AlertOctagon
@@ -139,7 +141,7 @@ export const OktaSsoSettings = ({ open, onOpenChange, config }: Props) => {
                   "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
                 }
               />
-              Danger Zone
+              {t("common.dangerZoneTitle")}
             </TabsTrigger>
           </TabsList>
           <TabsContent value={"settings"} className={"px-8 text-sm"}>
@@ -163,7 +165,7 @@ export const OktaSsoSettings = ({ open, onOpenChange, config }: Props) => {
                     label={
                       <>
                         <KeyRound size={16} />
-                        Client ID
+                        {t("integrations.idpClientId")}
                       </>
                     }
                     value={config?.client_id}
@@ -172,7 +174,7 @@ export const OktaSsoSettings = ({ open, onOpenChange, config }: Props) => {
                     label={
                       <>
                         <KeyRound size={16} />
-                        Client Secret
+                        {t("integrations.idpClientSecret")}
                       </>
                     }
                     value={"********"}
@@ -199,7 +201,7 @@ export const OktaSsoSettings = ({ open, onOpenChange, config }: Props) => {
                 />
               </div>
               <Button type={"submit"} variant={"secondaryLighter"}>
-                Add Domain
+                {t("integrations.addDomain")}
               </Button>
             </form>
             <div className={"flex flex-col gap-3"}>
@@ -218,7 +220,7 @@ export const OktaSsoSettings = ({ open, onOpenChange, config }: Props) => {
               <Label>
                 <div className={"flex gap-2 items-center"}>
                   <AlertOctagon size={16} />
-                  Delete Integration
+                  {t("common.deleteIntegration")}
                 </div>
               </Label>
               <HelpText className={"max-w-lg mt-2"}>
@@ -233,7 +235,7 @@ export const OktaSsoSettings = ({ open, onOpenChange, config }: Props) => {
               className={"mt-3"}
               onClick={deleteIntegration}
             >
-              Delete Integration
+              {t("common.deleteIntegration")}
             </Button>
           </TabsContent>
         </Tabs>

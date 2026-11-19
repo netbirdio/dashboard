@@ -42,6 +42,7 @@ import {
   MSPTenantPlanTab,
   MSPTenantPlanTabTrigger,
 } from "@/cloud/msp/MSPTenantPlanTab";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Role } from "@/interfaces/User";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 
@@ -77,6 +78,7 @@ const ModalWidth = {
 } as Record<string, string>;
 
 const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const { openDomainVerificationModal, verifyDomain, openAccountExistsModal } =
     useTenants();
@@ -193,7 +195,7 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            General
+            {translate("msp.general")}
           </TabsTrigger>
           <TabsTrigger value={"permissions"} disabled={!canContinue}>
             <LockIcon
@@ -202,14 +204,14 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Permissions
+            {translate("common.permissions")}
           </TabsTrigger>
           {tenant && <MSPTenantPlanTabTrigger tenant={tenant} />}
         </TabsList>
         <TabsContent value={"general"} className={"px-8 pb-8"}>
           <div className={"flex flex-col gap-6"}>
             <div className={""}>
-              <Label>Name</Label>
+              <Label>{translate("common.name")}</Label>
               <HelpText>
                 Set an easily recognizable name for the tenant.
               </HelpText>
@@ -225,7 +227,7 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
               />
             </div>
             <div className={""}>
-              <Label>Domain</Label>
+              <Label>{translate("common.domain")}</Label>
               {!tenant ? (
                 <HelpText>Enter the primary domain of the tenant.</HelpText>
               ) : (
@@ -264,7 +266,7 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
                         onClick={() => verifyDomain(tenant, true)}
                       >
                         <ShieldCheckIcon size={14} />
-                        Verify Domain
+                        {translate("common.verifyDomain")}
                       </Button>
                     )}
                   </div>
@@ -319,21 +321,21 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
           {tab === "general" && !tenant && (
             <>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{translate("common.cancel")}</Button>
               </ModalClose>
               <Button
                 variant={"primary"}
                 disabled={!canContinue}
                 onClick={() => setTab("permissions")}
               >
-                Continue
+                {translate("common.continue")}
               </Button>
             </>
           )}
           {tab === "permissions" && !tenant && (
             <>
               <Button variant={"secondary"} onClick={() => setTab("general")}>
-                Back
+                {translate("common.back")}
               </Button>
               <Button
                 variant={"primary"}
@@ -348,7 +350,7 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
           {tenant && (
             <>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{translate("common.cancel")}</Button>
               </ModalClose>
               {tab !== "plan" && (
                 <Button
@@ -356,7 +358,7 @@ const MspAccountModalContent = ({ setOpen, tenant, initialTab }: Props) => {
                   disabled={!hasChanges || !canContinue}
                   onClick={updateTenant}
                 >
-                  Save Changes
+                  {translate("common.saveChanges")}
                 </Button>
               )}
             </>

@@ -14,6 +14,7 @@ import GroupsProvider from "@/contexts/GroupsProvider";
 import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import ServerPaginationProvider from "@/contexts/ServerPaginationProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import PageContainer from "@/layouts/PageContainer";
 import AgentAccessLogTable from "@/modules/agent-network/AgentAccessLogTable";
 import AgentOverviewPanel from "@/modules/agent-network/AgentOverviewPanel";
@@ -30,6 +31,7 @@ const TAB_ACCESS_LOGS = "access-logs";
 // Configuration entry. Providers are mounted once at the top so switching
 // tabs is instant — no re-fetch on tab change.
 export default function UsageAndLogsPage() {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -89,16 +91,16 @@ export default function UsageAndLogsPage() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/agent-network/providers"}
-            label={"Agent Network"}
+            label={t("common.agentNetwork")}
             icon={<AgentNetworkIcon size={16} />}
           />
           <Breadcrumbs.Item
             href={"/agent-network/usage"}
-            label={"Usage & Logs"}
+            label={t("common.usageAndLogs")}
             active={true}
           />
         </Breadcrumbs>
-        <h1>Usage & Logs</h1>
+        <h1>{t("common.usageAndLogs")}</h1>
         <Paragraph>
           Per-request audit with real caller identity, cost attribution, and
           budget controls.
@@ -106,7 +108,7 @@ export default function UsageAndLogsPage() {
       </div>
 
       <RestrictedAccess
-        page={"Usage & Logs"}
+        page={t("common.usageAndLogs")}
         hasAccess={canUseUsage || canUseLogs}
       >
         <GroupsProvider>
@@ -121,13 +123,13 @@ export default function UsageAndLogsPage() {
                   {canUseUsage && (
                     <TabsTrigger value={TAB_USAGE}>
                       <LayoutDashboard size={16} />
-                      Usage
+                      {t("agentNetwork.usage")}
                     </TabsTrigger>
                   )}
                   {canUseLogs && (
                     <TabsTrigger value={TAB_ACCESS_LOGS}>
                       <ScrollText size={16} />
-                      Access Logs
+                      {t("common.accessLogs")}
                     </TabsTrigger>
                   )}
                 </TabsList>

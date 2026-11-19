@@ -46,6 +46,7 @@ import TeamIcon from "@/assets/icons/TeamIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { User, UserInvite } from "@/interfaces/User";
 import { useAccount } from "@/modules/account/useAccount";
@@ -174,6 +175,7 @@ export default function UsersTable({
   onRowClick,
   keepStateInLocalStorage = true,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   useFetchApi("/groups");
   const { groups } = useGroups();
   const { mutate } = useSWRConfig();
@@ -342,7 +344,7 @@ export default function UsersTable({
       headingTarget={headingTarget}
       isLoading={isLoading}
       keepStateInLocalStorage={keepStateInLocalStorage}
-      text={"Users"}
+      text={translate("common.users")}
       sorting={sorting}
       setSorting={setSorting}
       columns={columns}
@@ -372,7 +374,7 @@ export default function UsersTable({
             }
           : onRowClick
       }
-      searchPlaceholder={"Search by name, email or role..."}
+      searchPlaceholder={translate("users.searchByNameEmailOrRole")}
       getStartedCard={
         !getStartedCard ? (
           <GetStartedTest
@@ -383,10 +385,8 @@ export default function UsersTable({
                 size={"large"}
               />
             }
-            title={"Add New Users"}
-            description={
-              "It looks like you don't have any users yet. Get started by inviting users to your account."
-            }
+            title={translate("users.addNewUsers")}
+            description={translate("users.addNewUsersDescription")}
             button={
               <div className={"flex flex-col items-center justify-center"}>
                 <InviteUserButton show={true} />
@@ -401,7 +401,7 @@ export default function UsersTable({
                   }
                   target={"_blank"}
                 >
-                  Users
+                  {translate("common.users")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </>
@@ -458,7 +458,7 @@ export default function UsersTable({
                 onClick={() => setShowInvites(true)}
               >
                 <Link2 size={14} />
-                Show Invites
+                {translate("users.showInvites")}
                 <NotificationCountBadge count={validInvitesCount} />
               </Button>
             )}
@@ -480,6 +480,7 @@ export const InviteUserButton = ({
   className,
   groups,
 }: InviteUserButtonProps) => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const account = useAccount();
 
@@ -498,7 +499,7 @@ export const InviteUserButton = ({
   const button = (
     <Button variant={"primary"} className={className} disabled={isDisabled}>
       <MailPlus size={16} />
-      {isCloud ? "Invite User" : "Add User"}
+      {isCloud ? t("common.inviteUser") : t("users.addUser")}
     </Button>
   );
 
@@ -510,7 +511,7 @@ export const InviteUserButton = ({
         content={
           <div className={"flex flex-col"}>
             <p className={"max-w-[200px] text-xs"}>
-              Local authentication is disabled. Use your IdP for authentication.
+              {t("users.localAuthDisabled")}
             </p>
             <div className={"text-xs mt-1.5"}>
               <InlineLink
@@ -520,7 +521,7 @@ export const InviteUserButton = ({
                 target={"_blank"}
                 className={"flex gap-1 items-center"}
               >
-                Learn more
+                {t("common.learnMore")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </div>

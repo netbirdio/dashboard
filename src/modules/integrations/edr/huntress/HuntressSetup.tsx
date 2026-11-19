@@ -37,6 +37,7 @@ import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/huntress.png";
 import HelpText from "@/components/HelpText";
 import { PeerGroupSelector } from "@/components/PeerGroupSelector";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import {
   DEFAULT_HUNTRESS_MATCH_ATTRIBUTES,
@@ -87,6 +88,7 @@ type ModalProps = {
 };
 
 export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const huntressRequest = useApiCall<HuntressIntegration>(
     "/integrations/edr/huntress",
@@ -213,7 +215,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             }
           >
             <Shield size={16} />
-            Required Permissions
+            {translate("common.requiredPermissions")}
           </div>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
             Ensure that you have an{" "}
@@ -313,7 +315,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4 mb-3"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <FolderGit2 size={16} />
-            Peer Approval
+            {translate("common.peerApproval")}
           </p>
 
           <HelpText className={"max-w-lg mt-2"}>
@@ -402,7 +404,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             onClick={() => setStep(step - 1)}
           >
             <IconArrowLeft size={16} />
-            Back
+            {translate("common.back")}
           </Button>
         )}
         {step >= 0 && step < maxSteps && (
@@ -412,7 +414,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             disabled={isDisabled}
             onClick={() => setStep(step + 1)}
           >
-            {step === 0 ? "Get Started" : "Continue"}
+            {step === 0 ? "Get Started" : translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -424,7 +426,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             onClick={connect}
           >
             <Repeat size={16} />
-            Connect
+            {translate("integrations.connect")}
           </Button>
         )}
       </ModalFooter>

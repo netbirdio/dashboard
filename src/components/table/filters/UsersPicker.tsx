@@ -9,6 +9,7 @@ import { sortBy, uniqBy } from "lodash";
 import { UserCircle2 } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
 // UsersPicker — single-select search list mirroring the Activity ›
@@ -40,6 +41,7 @@ const searchPredicate = (item: UserOption, query: string) => {
 };
 
 export function UsersPicker({ value, onChange, close, options }: Props) {
+  const t = useTranslations();
   const [filteredItems, search, setSearch] = useSearch(
     options.concat({
       id: ALL_USERS_ID,
@@ -68,7 +70,7 @@ export function UsersPicker({ value, onChange, close, options }: Props) {
       <DropdownInput
         value={search}
         onChange={setSearch}
-        placeholder={"Search user..."}
+        placeholder={t("tables.searchUser")}
         hideEnterIcon={true}
       />
 

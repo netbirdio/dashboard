@@ -9,6 +9,7 @@ import Separator from "@components/Separator";
 import { LockIcon } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   CertificateInfo,
   CertificatePromptInfo,
@@ -27,6 +28,7 @@ export const RDPCertificateModal = ({
   onAccept,
   onReject,
 }: Props) => {
+  const t = useTranslations();
   const [rememberCertificate, setRememberCertificate] = useState(false);
   if (!certificateInfo) return null;
   const { hostname, certificate, isChange } = certificateInfo;
@@ -84,7 +86,7 @@ export const RDPCertificateModal = ({
         <ModalFooter className={"items-center"}>
           <div className={"flex gap-3 w-full justify-end"}>
             <Button variant={"secondary"} onClick={onReject}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant={"primary"}
@@ -104,6 +106,7 @@ const CertificateDetailsList = ({
 }: {
   certificate: CertificateInfo;
 }) => {
+  const t = useTranslations();
   if (!certificate) return null;
 
   return (
@@ -141,7 +144,7 @@ const CertificateDetailsList = ({
         value={certificate.keySize ? `${certificate.keySize} bits` : "N/A"}
       />
       <CertificateDetailsListItem
-        label={"Serial Number"}
+        label={t("common.serialNumber")}
         value={certificate.serialNumber || "N/A"}
       />
       <CertificateDetailsListItem

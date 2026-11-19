@@ -17,6 +17,7 @@ import HelpText from "@components/HelpText";
 import { useApiCall } from "@utils/api";
 import { KeyRound, LockIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   children: React.ReactNode;
@@ -49,6 +50,7 @@ export function ChangePasswordModalContent({
   userId,
   onSuccess,
 }: Readonly<ModalProps>) {
+  const t = useTranslations();
   const passwordRequest = useApiCall<void>(`/users/${userId}/password`, true);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -85,8 +87,8 @@ export function ChangePasswordModalContent({
 
     setIsLoading(true);
     notify({
-      title: "Change Password",
-      description: "Your password has been successfully changed.",
+      title: t("common.changePassword"),
+      description: t("users.passwordChanged"),
       promise: passwordRequest
         .put({
           old_password: currentPassword,
@@ -98,7 +100,7 @@ export function ChangePasswordModalContent({
         .finally(() => {
           setIsLoading(false);
         }),
-      loadingMessage: "Changing password...",
+      loadingMessage: t("users.changingPassword"),
     });
   };
 
@@ -112,8 +114,8 @@ export function ChangePasswordModalContent({
     <ModalContent maxWidthClass={"max-w-lg"}>
       <ModalHeader
         icon={<KeyRound size={18} />}
-        title={"Change Password"}
-        description={"Update your account password."}
+        title={t("common.changePassword")}
+        description={t("users.updateAccountPassword")}
         color={"netbird"}
       />
 
@@ -121,11 +123,11 @@ export function ChangePasswordModalContent({
 
       <form className={"px-8 py-6 flex flex-col gap-6"} onSubmit={changePassword}>
         <div>
-          <Label>Current Password</Label>
-          <HelpText>Enter your current password to verify your identity.</HelpText>
+          <Label>{t("users.currentPassword")}</Label>
+          <HelpText>{t("users.enterCurrentPasswordHelp")}</HelpText>
           <Input
             type="password"
-            placeholder={"Enter current password"}
+            placeholder={t("users.enterCurrentPasswordPlaceholder")}
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -138,13 +140,13 @@ export function ChangePasswordModalContent({
         </div>
 
         <div>
-          <Label>New Password</Label>
+          <Label>{t("common.newPassword")}</Label>
           <HelpText>
-            Enter your new password. Must be at least 8 characters.
+            {t("users.enterNewPasswordHelp")}
           </HelpText>
           <Input
             type="password"
-            placeholder={"Enter new password"}
+            placeholder={t("users.enterNewPasswordPlaceholder")}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -157,11 +159,11 @@ export function ChangePasswordModalContent({
         </div>
 
         <div>
-          <Label>Confirm New Password</Label>
-          <HelpText>Re-enter your new password to confirm.</HelpText>
+          <Label>{t("users.confirmNewPassword")}</Label>
+          <HelpText>{t("users.reenterNewPasswordHelp")}</HelpText>
           <Input
             type="password"
-            placeholder={"Confirm new password"}
+            placeholder={t("users.confirmNewPasswordPlaceholder")}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -177,7 +179,7 @@ export function ChangePasswordModalContent({
       <ModalFooter className={"items-center"}>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("common.cancel")}</Button>
           </ModalClose>
 
           <Button
@@ -185,7 +187,7 @@ export function ChangePasswordModalContent({
             disabled={isDisabled || isLoading}
             onClick={changePassword}
           >
-            Change Password
+            {t("common.changePassword")}
           </Button>
         </div>
       </ModalFooter>

@@ -6,6 +6,7 @@ import { TrashIcon } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DomainValidationStatus } from "@/interfaces/Account";
 import { EnterpriseConnectionDomain } from "@/interfaces/IdentityProvider";
 import { DomainVerificationModal } from "@/modules/integrations/sso/DomainVerificationModal";
@@ -16,6 +17,7 @@ type Props = {
   connectionId: string;
 };
 export const DomainVerificationCard = ({ domain, connectionId }: Props) => {
+  const t = useTranslations();
   const [modal, setModal] = useState(false);
   const { deleteDomain, verifyDomain, mutate } = useEnterpriseConnections();
   const { confirm } = useDialog();
@@ -24,8 +26,8 @@ export const DomainVerificationCard = ({ domain, connectionId }: Props) => {
     const choice = await confirm({
       title: `Remove Domain?`,
       description: "Are you sure you want to remove this domain?",
-      confirmText: "Remove",
-      cancelText: "Cancel",
+      confirmText: t("common.remove"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
@@ -74,7 +76,7 @@ export const DomainVerificationCard = ({ domain, connectionId }: Props) => {
           onClick={deleteDomainHandler}
         >
           <TrashIcon size={14} />
-          Remove
+          {t("common.remove")}
         </Button>
       </div>
     </Card>

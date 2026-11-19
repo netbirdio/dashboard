@@ -1,3 +1,4 @@
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK,
   ReverseProxy,
@@ -34,6 +35,7 @@ export default function ReverseProxyStatusCell({
   compact,
   readyFallback,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   const dataRef = useRef<ReverseProxy | undefined>(undefined);
 
   const isActive =
@@ -91,12 +93,12 @@ export default function ReverseProxyStatusCell({
             <div className={"flex"}>
               {compact ? (
                 <span className={"text-red-400 cursor-help truncate"}>
-                  Error
+                  {translate("common.error")}
                 </span>
               ) : (
                 <Badge variant={"red"}>
                   <CircleAlert size={11} />
-                  Error
+                  {translate("common.error")}
                 </Badge>
               )}
             </div>

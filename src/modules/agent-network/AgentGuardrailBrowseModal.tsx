@@ -12,6 +12,7 @@ import ModalHeader from "@components/modal/ModalHeader";
 import { cn } from "@utils/helpers";
 import { ShieldHalf } from "lucide-react";
 import React, { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { AgentGuardrail } from "@/modules/agent-network/data/mockData";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 
@@ -28,6 +29,7 @@ export default function AgentGuardrailBrowseModal({
   alreadyAttached,
   onSuccess,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { guardrails } = useAIProviders();
   const [selected, setSelected] = useState<string[]>([]);
 
@@ -73,7 +75,7 @@ export default function AgentGuardrailBrowseModal({
         <ModalFooter className={"items-center"}>
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>{t("common.cancel")}</Button>
             </ModalClose>
             <Button
               variant={"primary"}

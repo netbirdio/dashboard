@@ -11,6 +11,7 @@ import { useApiCall } from "@utils/api";
 import { useReactFlow } from "@xyflow/react";
 import { CheckCircle2Icon } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { SetupKey } from "@/interfaces/SetupKey";
@@ -32,6 +33,7 @@ import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 // Server/Agent installs arrive without a setup key: it is generated on demand
 // and written back onto the placeholder node so reopening Install reuses it.
 export const DraftInstallPeerModal = () => {
+  const t = useTranslations();
   const { installModal, setInstallModal } = useDraftMode();
   const { oidcUser: user } = useOidcUser();
   const reactFlow = useReactFlow();
@@ -304,7 +306,7 @@ export const DraftInstallPeerModal = () => {
           <ModalFooter>
             <ModalClose asChild={true}>
               <Button variant={"primary"} className={"w-full"}>
-                Continue
+                {t("common.continue")}
               </Button>
             </ModalClose>
           </ModalFooter>

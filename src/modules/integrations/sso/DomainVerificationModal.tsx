@@ -16,6 +16,7 @@ import { Mark } from "@components/ui/Mark";
 import { cn } from "@utils/helpers";
 import { ExternalLinkIcon, GlobeIcon } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   open: boolean;
@@ -31,6 +32,7 @@ export const DomainVerificationModal = ({
   token,
   onVerify,
 }: Props) => {
+  const translate = useTranslations();
   const startVerification = async () => {
     notify({
       title: "Domain Verification",
@@ -79,13 +81,13 @@ export const DomainVerificationModal = ({
               <Card.ListItem
                 copy
                 copyText={"TXT Host"}
-                label={"Host"}
+                label={translate("common.host")}
                 value={domain}
               />
               <Card.ListItem
                 copy
                 copyText={"TXT Value"}
-                label={"Value"}
+                label={translate("integrations.headerValue")}
                 value={`nb-verification=${token}`}
               />
             </Card.List>

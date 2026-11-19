@@ -5,6 +5,7 @@ import * as React from "react";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useNetworkAccessControl } from "@/modules/networks/NetworkAccessControlProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource, NetworkRouter } from "@/interfaces/Network";
@@ -78,6 +79,7 @@ export const NetworkProvider = ({
   onNetworkCreated,
   onResourceCreated,
 }: Props) => {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
   const deleteCall = useApiCall("/networks").del;
@@ -200,10 +202,10 @@ export const NetworkProvider = ({
     if (!isMulti && action === "edit") return true;
     return confirm({
       title: isMulti ? (
-        <>This policy is used by multiple resources</>
+        <>{t("networks.multiResourceTitle")}</>
       ) : (
         <>
-          {action === "edit" ? "Edit" : "Delete"} policy &apos;{policy.name}
+          {action === "edit" ? t("common.edit") : t("common.delete")} policy &apos;{policy.name}
           &apos;?
         </>
       ),
@@ -212,13 +214,13 @@ export const NetworkProvider = ({
             action === "edit" ? "Updating" : "Deleting"
           } this policy will also affect following resources:`
         : action === "delete"
-        ? "Are you sure you want to delete this policy? This action cannot be undone."
+        ? t("networks.deletePolicyDesc")
         : undefined,
       children: isMulti ? (
         <AffectedResourceList resources={affectedResources} />
       ) : undefined,
-      confirmText: action === "edit" ? "Edit Policy" : "Delete Policy",
-      cancelText: "Cancel",
+      confirmText: action === "edit" ? t("networks.editPolicy") : t("networks.deletePolicy"),
+      cancelText: t("common.cancel"),
       hideIcon: isMulti,
       type: action === "edit" ? "warning" : "danger",
       maxWidthClass: isMulti ? "max-w-lg" : undefined,
@@ -230,8 +232,8 @@ export const NetworkProvider = ({
       title: `Delete network '${network.name}'?`,
       description:
         "Are you sure you want to delete this network? Every resource and routing peers will be removed from this network. This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
 
@@ -244,8 +246,8 @@ export const NetworkProvider = ({
 
     notify({
       title: network.name,
-      description: "Network deleted successfully.",
-      loadingMessage: "Deleting network...",
+      description: t("networks.networkDeleted"),
+      loadingMessage: t("networks.networkDeleting"),
       promise,
     });
 
@@ -259,9 +261,9 @@ export const NetworkProvider = ({
     const choice = await confirm({
       title: `Delete resource '${resource.name}'?`,
       description:
-        "Are you sure you want to delete this resource? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+        t("networks.confirmDeleteResourceDesc"),
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
 
@@ -269,8 +271,8 @@ export const NetworkProvider = ({
 
     notify({
       title: resource.name,
-      description: "Resource deleted successfully.",
-      loadingMessage: "Deleting resource...",
+      description: t("networks.resourceDeleted"),
+      loadingMessage: t("networks.resourceDeleting"),
       promise: deleteCall({}, `/${network.id}/resources/${resource.id}`).then(
         () => {
           onResourceDelete?.();
@@ -284,10 +286,10 @@ export const NetworkProvider = ({
 
   const deleteRouter = async (network: Network, router: NetworkRouter) => {
     const choice = await confirm({
-      title: `Remove this router?`,
-      description: "Are you sure you want to remove this router?",
-      confirmText: "Remove",
-      cancelText: "Cancel",
+      title: t("networks.confirmRemoveRouterTitle"),
+      description: t("networks.confirmRemoveRouterDesc"),
+      confirmText: t("common.remove"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
 
@@ -295,8 +297,8 @@ export const NetworkProvider = ({
 
     notify({
       title: "Router of " + network.name,
-      description: "Router deleted successfully.",
-      loadingMessage: "Deleting router...",
+      description: t("networks.routerRemoved"),
+      loadingMessage: t("networks.routerRemoving"),
       promise: deleteCall({}, `/${network.id}/routers/${router.id}`).then(
         () => {
           mutate(`/networks/${network.id}/routers`);
@@ -309,9 +311,9 @@ export const NetworkProvider = ({
     const choice = await confirm({
       title: `Add Routing Peer to '${network.name}'?`,
       description:
-        "Without a routing peer, the resources inside this network will not be accessible by any peers.",
-      confirmText: "Add Routing Peer",
-      cancelText: "Later",
+        t("networks.confirmAddRoutingPeerDesc"),
+      confirmText: t("networks.addRoutingPeer"),
+      cancelText: t("networks.later"),
       type: "default",
     });
     if (!choice) return;
@@ -322,9 +324,9 @@ export const NetworkProvider = ({
     const choice = await confirm({
       title: `Add Resource to '${network.name}'?`,
       description:
-        "Peers will be able to access your network resources once you add them.",
-      confirmText: "Add Resource",
-      cancelText: "Later",
+        t("networks.confirmAddResourceDesc"),
+      confirmText: t("common.addResource"),
+      cancelText: t("networks.later"),
       type: "default",
     });
     if (!choice) return;

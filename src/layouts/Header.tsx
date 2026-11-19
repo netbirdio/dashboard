@@ -4,6 +4,7 @@ import Button from "@components/Button";
 import { NetBirdLogo } from "@components/NetBirdLogo";
 import { AnnouncementBanner } from "@components/ui/AnnouncementBanner";
 import HelpAndSupportButton from "@components/ui/HelpAndSupportButton";
+import LocaleSwitcher from "@components/ui/LocaleSwitcher";
 import UserDropdown from "@components/ui/UserDropdown";
 import { cn } from "@utils/helpers";
 import { useGuardedRouter } from "@utils/navigation-guard";
@@ -70,6 +71,7 @@ export default function NavbarWithDropdown() {
             <MSPTransferAccountModal />
             <DistributorTransferAccountModal />
             <MSPTenantsSwitcher />
+            <LocaleSwitcher />
             <HelpAndSupportButton />
             <UserDropdown />
           </div>

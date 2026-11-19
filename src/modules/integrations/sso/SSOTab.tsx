@@ -6,12 +6,14 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { ExternalLinkIcon, KeyRoundIcon } from "lucide-react";
 import React from "react";
 import IntegrationIcon from "@/assets/icons/IntegrationIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useAccount } from "@/modules/account/useAccount";
 import { LockedFeatureInfoCard } from "@/modules/billing/locked-feature/LockedFeatureInfoCard";
 import { LockedFeatureOverlay } from "@/modules/billing/locked-feature/LockedFeatureOverlay";
 import { OktaSSOIntegrationCard } from "@/modules/integrations/sso/okta/OktaSSOIntegrationCard";
 
 export default function SSOTab() {
+  const t = useTranslations();
   const account = useAccount();
 
   return (
@@ -20,17 +22,17 @@ export default function SSOTab() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/integrations"}
-            label={"Integrations"}
+            label={t("common.integrations")}
             icon={<IntegrationIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=sso"}
-            label={"Single Sign-On"}
+            label={t("common.singleSignOn")}
             icon={<KeyRoundIcon size={14} />}
             active
           />
         </Breadcrumbs>
-        <h1>Single Sign-On</h1>
+        <h1>{t("common.singleSignOn")}</h1>
         <Paragraph>
           Configure your preferred Identity Provider (IdP) to enable Single
           Sign-On (SSO) for your team.
@@ -42,7 +44,7 @@ export default function SSOTab() {
             }
             target={"_blank"}
           >
-            Learn more
+            {t("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>

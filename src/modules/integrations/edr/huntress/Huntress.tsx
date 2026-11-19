@@ -11,6 +11,7 @@ import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/huntress.png";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import { HuntressIntegration, HuntressMatchAttributes } from "@/interfaces/EDR";
 import { Group } from "@/interfaces/Group";
@@ -30,6 +31,7 @@ export const HUNTRESS_NETBIRD_DOCUMENTATION_URL =
   "https://docs.netbird.io/how-to/huntress-edr";
 
 export const Huntress = ({ account }: Props) => {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const [setupModal, setSetupModal] = useState(false);
   const { permission } = usePermissions();
@@ -58,8 +60,8 @@ export const Huntress = ({ account }: Props) => {
       ? await confirm({
           title: `Disable Huntress?`,
           description: `Are you sure you want to disable the Huntress integration?`,
-          confirmText: "Disable",
-          cancelText: "Cancel",
+          confirmText: t("common.disable"),
+          cancelText: t("common.cancel"),
           type: "warning",
         })
       : true;
@@ -127,6 +129,7 @@ type ConfigurationProps = {
 };
 
 const ConfigurationButton = ({ config }: ConfigurationProps) => {
+  const t = useTranslations();
   const [configModal, setConfigModal] = useState(false);
 
   const lastSync = useMemo(() => {
@@ -155,7 +158,7 @@ const ConfigurationButton = ({ config }: ConfigurationProps) => {
           }}
         >
           <Settings size={14} />
-          Settings
+          {t("common.settings")}
         </Button>
       </div>
       <HuntressConfiguration

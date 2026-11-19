@@ -14,6 +14,7 @@ import * as React from "react";
 import { useMemo, useState } from "react";
 import { usePeer } from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PeerSSHPolicyInfo } from "@/modules/peer/PeerSSHPolicyInfo";
 import { Label } from "@components/Label";
 import HelpText from "@components/HelpText";
@@ -35,6 +36,7 @@ import InlineLink from "@components/InlineLink";
 import { isNetbirdSSHProtocolSupported } from "@utils/version";
 
 export const PeerSSHToggle = () => {
+  const translate = useTranslations();
   const { permission } = usePermissions();
   const { peer, toggleSSH, setSSHInstructionsModal } = usePeer();
   const { data: policies } = useFetchApi<Policy[]>(
@@ -80,7 +82,7 @@ export const PeerSSHToggle = () => {
 
   const disableDashboardSSH = async () => {
     const choice = await confirm({
-      title: `Disable SSH Access?`,
+      title: translate("peer.disableSSHConfirmation"),
       description: (
         <div>
           Starting from NetBird v0.61.0, once SSH access is disabled, you cannot
@@ -92,13 +94,13 @@ export const PeerSSHToggle = () => {
             target={"_blank"}
             onClick={(e) => e.stopPropagation()}
           >
-            Learn more
+            {translate("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </div>
       ),
-      confirmText: "Disable",
-      cancelText: "Cancel",
+      confirmText: translate("common.disable"),
+      cancelText: translate("common.cancel"),
       type: "warning",
       maxWidthClass: "max-w-xl",
     });
@@ -113,7 +115,7 @@ export const PeerSSHToggle = () => {
           <div className={"flex gap-2 items-center !text-nb-gray-300 text-xs"}>
             <LockIcon size={14} />
             <span>
-              {`You don't have the required permissions to update this setting.`}
+              {translate("peer.noPermissionToUpdateSetting")}
             </span>
           </div>
         }
@@ -130,7 +132,7 @@ export const PeerSSHToggle = () => {
           label={
             <>
               <TerminalSquare size={16} />
-              SSH Access
+              {translate("peer.sshAccess")}
             </>
           }
           helpText={
@@ -143,12 +145,11 @@ export const PeerSSHToggle = () => {
   ) : (
     <div>
       <div className={"flex gap-2 items-center w-full"}>
-        <Label>SSH Access</Label>
+        <Label>{translate("peer.sshAccess")}</Label>
       </div>
 
       <HelpText>
-        Set up SSH and create an explicit access control policy defining which
-        users can access specific local usernames of this machine via SSH.
+        {translate("peer.sshSetupHelp")}
       </HelpText>
 
       {!isNetbirdSSHProtocolSupported(peer.version) &&
@@ -164,9 +165,7 @@ export const PeerSSHToggle = () => {
             }
             className="my-3"
           >
-            You have SSH access configured but your client runs on an older
-            NetBird version. Please update your NetBird client to v.0.61.0+ in
-            order to allow SSH connections.
+            {translate("peer.sshOldVersionWarning")}
           </Callout>
         )}
 
@@ -198,9 +197,7 @@ export const PeerSSHToggle = () => {
           }
           className="my-3"
         >
-          Your SSH server is enabled, but starting from NetBird v0.61.0, SSH
-          requires an explicit access control policy. Please create an SSH
-          access control policy in order to allow SSH connections.
+          {translate("peer.sshNeedsPolicy")}
         </Callout>
       )}
 
@@ -212,14 +209,14 @@ export const PeerSSHToggle = () => {
             disabled={!permission?.policies.create}
           >
             <CirclePlusIcon size={14} />
-            Create SSH Policy
+            {translate("peer.createSSHPolicy")}
           </Button>
         ) : (
           <Button
             variant={"secondary"}
             onClick={() => setSSHInstructionsModal(true)}
           >
-            Enable SSH Access <ArrowUpRightIcon size={14} />
+            {translate("peer.enableSSH") + " "}<ArrowUpRightIcon size={14} />
           </Button>
         )}
 

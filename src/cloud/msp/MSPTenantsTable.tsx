@@ -24,6 +24,7 @@ import { TenantPlanCostCell } from "@/cloud/msp/table/TenantPlanCostCell";
 import { TenantUsersCell } from "@/cloud/msp/table/TenantUsersCell";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { LockedFeatureInfoCard } from "@/modules/billing/locked-feature/LockedFeatureInfoCard";
 import { LockedFeatureOverlay } from "@/modules/billing/locked-feature/LockedFeatureOverlay";
 import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
@@ -122,6 +123,7 @@ export default function MSPTenantsTable({
   isLoading,
   headingTarget,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   const { hasReseller } = useMSP();
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
@@ -177,7 +179,7 @@ export default function MSPTenantsTable({
         <DataTable
           headingTarget={headingTarget}
           useRowId={true}
-          text={"Tenants"}
+          text={translate("common.tenants")}
           sorting={sorting}
           setSorting={setSorting}
           columns={TenantsTableColumns}
@@ -215,7 +217,7 @@ export default function MSPTenantsTable({
                       onClick={() => router.push("/settings?tab=invoices")}
                     >
                       <ReceiptTextIcon size={16} />
-                      Invoices
+                      {translate("msp.title")}
                     </Button>
                   )}
 

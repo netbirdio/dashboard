@@ -5,6 +5,7 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import * as React from "react";
 import { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { EnterpriseConnectionDomain } from "@/interfaces/IdentityProvider";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
 
@@ -42,6 +43,7 @@ type Props = {
   domains: EnterpriseConnectionDomain[];
 };
 export const DomainVerificationTable = ({ domains }: Props) => {
+  const t = useTranslations();
   const [sorting, setSorting] = useState<SortingState>([
     {
       id: "is_current",
@@ -60,7 +62,7 @@ export const DomainVerificationTable = ({ domains }: Props) => {
         tableClassName={"w-full mt-0"}
         minimal={true}
         showSearchAndFilters={false}
-        text={"Domains"}
+        text={t("common.domains")}
         sorting={sorting}
         setSorting={setSorting}
         columns={DomainTableColumns}

@@ -12,6 +12,7 @@ import { lazy, useState } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { useGroupContext } from "@/contexts/GroupProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import { AssignPeerToGroupModal } from "@/modules/groups/AssignPeerToGroupModal";
 import { GroupPeersRemoveCell } from "@/modules/groups/details/GroupDetailsRemoveCell";
@@ -109,6 +110,7 @@ type Props = {
 };
 
 export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
+  const t = useTranslations();
   const { group, addPeersToGroup, removePeersFromGroup } = useGroupContext();
   const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
   const [open, setOpen] = useState(false);
@@ -158,7 +160,7 @@ export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
                 <>
                   <FullTooltip
                     content={
-                      <span className={"text-xs"}>Remove Peers from Group</span>
+                      <span className={"text-xs"}>{t("groups.removePeersFromGroup")}</span>
                     }
                   >
                     <Button

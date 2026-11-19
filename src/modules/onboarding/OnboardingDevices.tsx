@@ -2,6 +2,7 @@ import { DeviceCard } from "@components/DeviceCard";
 import { cn } from "@utils/helpers";
 import { ShieldCheckIcon, ShieldXIcon } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 import { Intent } from "@/modules/onboarding/Onboarding";
@@ -23,6 +24,7 @@ export const OnboardingDevices = ({
   firstRoutingPeer,
   enabled = false,
 }: Props) => {
+  const t = useTranslations();
   return intent === Intent.P2P ? (
     <div
       className={cn(
@@ -74,7 +76,7 @@ export const OnboardingDevices = ({
       )}
     >
       {firstRoutingPeer && resource && (
-        <span className={"text-xs text-nb-gray-500"}>Network</span>
+        <span className={"text-xs text-nb-gray-500"}>{t("onboarding.network")}</span>
       )}
 
       <div

@@ -13,10 +13,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import { submitHubspotForm } from "@/cloud/analytics/Hubspot";
 import { HubspotFormField } from "@/contexts/AnalyticsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useAccount } from "@/modules/account/useAccount";
 import { referralSourceOptions } from "@/modules/onboarding/OnboardingSurvey";
 
 export default function HowDidYouHearAboutUs() {
+  const t = useTranslations();
   const { isOwner, loggedInUser } = useLoggedInUser();
   const account = useAccount();
   const params = useSearchParams();
@@ -109,19 +111,18 @@ export default function HowDidYouHearAboutUs() {
             <Paragraph
               className={cn("text-sm text-center max-w-[400px] px-4 mt-2")}
             >
-              Help us improve by sharing how you discovered NetBird. Your
-              feedback truly helps us grow.
+              {t("survey.improveHelp")}
             </Paragraph>
           </div>
           <div className={"px-8 py-3 flex flex-col mt-5 z-0 gap-6"}>
             <div className={"flex w-full flex-col gap-2"}>
-              <Label>How did you hear about NetBird?</Label>
+              <Label>{t("survey.howDidYouHear")}</Label>
               <SelectDropdown
                 value={referralSource}
                 onChange={setReferralSource}
                 options={randomizedOptions}
                 showValues={false}
-                placeholder={"Please select an option..."}
+                placeholder={t("survey.selectOption")}
                 variant={"dropdown"}
               />
             </div>
@@ -131,7 +132,7 @@ export default function HowDidYouHearAboutUs() {
               className={"w-full"}
               onClick={submitForm}
             >
-              Submit & Continue
+              {t("survey.submitContinue")}
             </Button>
           </div>
         </ModalContent>

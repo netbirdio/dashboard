@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/Select";
 import Separator from "@/components/Separator";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Workload } from "@/interfaces/Job";
 import { useApiCall } from "@/utils/api";
 
@@ -37,6 +38,7 @@ type Props = {
 };
 
 export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
+  const t = useTranslations();
   const jobRequest = useApiCall<Workload>(`/peers/${peerID}/jobs`, true);
   const { mutate } = useSWRConfig();
 
@@ -108,7 +110,7 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
     <ModalContent maxWidthClass="max-w-xl">
       <ModalHeader
         icon={<BugPlay size={20} />}
-        title="Debug Bundle"
+        title={t("jobs.debugBundle")}
         description="Generate a debug bundle on this peer with logs and diagnostics. Useful for troubleshooting without CLI access."
         color="netbird"
       />
@@ -118,7 +120,7 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
         {/* Log File Count */}
         <div className="flex justify-between gap-6">
           <div className={"max-w-[300px]"}>
-            <Label>Log File Count</Label>
+            <Label>{t("jobs.logFileCount")}</Label>
             <HelpText>
               Sets the limit for how many individual log files will be included
               in the debug bundle.
@@ -161,7 +163,7 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
           {bundleForTimeEnabled && (
             <div className="flex justify-between gap-6 mt-6 mb-3">
               <div className={"max-w-[300px]"}>
-                <Label>Duration</Label>
+                <Label>{t("jobs.duration")}</Label>
                 <HelpText>
                   Time period for which logs should be collected before creating
                   the debug bundle.
@@ -251,7 +253,7 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
       <ModalFooter className="items-center">
         <div className="flex gap-3 w-full justify-end">
           <ModalClose asChild>
-            <Button variant="secondary">Cancel</Button>
+            <Button variant="secondary">{t("common.cancel")}</Button>
           </ModalClose>
           <Button
             variant="primary"

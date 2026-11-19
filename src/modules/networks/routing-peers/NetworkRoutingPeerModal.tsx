@@ -38,6 +38,7 @@ import {
 import React, { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkRouter } from "@/interfaces/Network";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
@@ -103,6 +104,7 @@ export function RoutingPeerModalContent({
   useSave = true,
   onSaved,
 }: ContentProps) {
+  const translate = useTranslations();
   const isRoutingPeer = router ? router.peer != "" : true;
 
   const [tab, setTab] = useState("router");
@@ -181,7 +183,7 @@ export function RoutingPeerModalContent({
     const isRoutingPeer = type === "peer";
 
     notify({
-      title: "Network Routing Peer",
+      title: translate("networks.networkRoutingPeer"),
       description: "Routing Peer added successfully.",
       loadingMessage: "Adding Routing Peer...",
       promise: create({
@@ -208,7 +210,7 @@ export function RoutingPeerModalContent({
     const isRoutingPeer = type === "peer";
 
     notify({
-      title: "Network Routing Peer",
+      title: translate("networks.networkRoutingPeer"),
       description: "Routing Peer added successfully.",
       loadingMessage: "Adding Routing Peer...",
       promise: update({
@@ -245,7 +247,7 @@ export function RoutingPeerModalContent({
     >
       <ModalHeader
         icon={<Share2Icon size={16} />}
-        title={router ? "Update Routing Peer" : "Add Routing Peer"}
+        title={router ? "Update Routing Peer" : translate("networks.addRoutingPeer")}
         description={`Route traffic to '${network.name}'`}
         color={"netbird"}
       />
@@ -259,7 +261,7 @@ export function RoutingPeerModalContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Routing Peers
+            {translate("common.routingPeers")}
           </TabsTrigger>
 
           <TabsTrigger value={"settings"} className={"ml-auto"}>
@@ -269,7 +271,7 @@ export function RoutingPeerModalContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Advanced Settings
+            {translate("networks.advancedSettings")}
           </TabsTrigger>
         </TabsList>
         <TabsContent value={"router"} className={"pb-6"}>
@@ -289,7 +291,7 @@ export function RoutingPeerModalContent({
                     data-testid="routing-peer-tab-peer"
                   >
                     <MonitorSmartphoneIcon size={16} />
-                    Routing Peers
+                    {translate("common.routingPeers")}
                   </SegmentedTabs.Trigger>
 
                   <SegmentedTabs.Trigger
@@ -297,7 +299,7 @@ export function RoutingPeerModalContent({
                     data-testid="routing-peer-tab-group"
                   >
                     <FolderGit2 size={16} />
-                    Peer Group
+                    {translate("networks.peerGroup")}
                   </SegmentedTabs.Trigger>
                 </SegmentedTabs.List>
                 <SegmentedTabs.Content value={"peer"}>
@@ -374,7 +376,7 @@ export function RoutingPeerModalContent({
 
             <div className={cn("flex justify-between")}>
               <div>
-                <Label>Metric</Label>
+                <Label>{translate("networks.metric")}</Label>
                 <HelpText className={"max-w-[200px]"}>
                   A lower metric indicates higher priority routing peers.
                 </HelpText>
@@ -409,7 +411,7 @@ export function RoutingPeerModalContent({
               href={"https://docs.netbird.io/how-to/networks#routing-peers"}
               target={"_blank"}
             >
-              Routing Peers
+              {translate("common.routingPeers")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
@@ -418,7 +420,7 @@ export function RoutingPeerModalContent({
           {tab == "router" && (
             <>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{translate("common.cancel")}</Button>
               </ModalClose>
               <Button
                 variant={"primary"}
@@ -426,14 +428,14 @@ export function RoutingPeerModalContent({
                 disabled={!canContinue}
                 data-testid="routing-peer-continue"
               >
-                Continue
+                {translate("common.continue")}
               </Button>
             </>
           )}
           {tab == "settings" && (
             <>
               <Button variant={"secondary"} onClick={() => setTab("router")}>
-                Back
+                {translate("common.back")}
               </Button>
 
               <Button
@@ -447,11 +449,11 @@ export function RoutingPeerModalContent({
                 data-testid="submit-routing-peer"
               >
                 {router ? (
-                  <>Save Changes</>
+                  <>{translate("common.saveChanges")}</>
                 ) : (
                   <>
                     <PlusCircle size={16} />
-                    Add Routing Peer
+                    {translate("networks.addRoutingPeer")}
                   </>
                 )}
               </Button>
@@ -470,6 +472,7 @@ type InstallNetBirdWithSetupKeyButtonProps = {
 const InstallNetBirdWithSetupKeyButton = ({
   name,
 }: InstallNetBirdWithSetupKeyButtonProps) => {
+  const t = useTranslations();
   const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
@@ -483,8 +486,8 @@ const InstallNetBirdWithSetupKeyButton = ({
       title: `Create a Setup Key?`,
       description:
         "If you continue, a one-off setup key will be automatically created and you will be able to install NetBird.",
-      confirmText: "Continue",
-      cancelText: "Cancel",
+      confirmText: t("common.continue"),
+      cancelText: t("common.cancel"),
       type: "default",
     });
     if (!choice) return;
@@ -527,7 +530,7 @@ const InstallNetBirdWithSetupKeyButton = ({
         ) : (
           <DownloadIcon size={14} />
         )}
-        Install NetBird
+        {t("networks.installNetBird")}
       </Button>
       {setupKey && (
         <Modal

@@ -17,6 +17,7 @@ import {
 import * as React from "react";
 import { useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 
 interface MultiSelectProps {
@@ -33,6 +34,7 @@ export function GroupFilterSelector({
   popoverWidth = 400,
   groups,
 }: MultiSelectProps) {
+  const translate = useTranslations();
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
   const [search, setSearch] = useState("");
@@ -173,7 +175,7 @@ export function GroupFilterSelector({
                                 }
                               >
                                 <MonitorSmartphoneIcon size={13} />
-                                {item.peers_count} Peer(s)
+                                {item.peers_count}{" " + translate("groups.usageLimitSuffix")}
                               </div>
                             </div>
                           </div>

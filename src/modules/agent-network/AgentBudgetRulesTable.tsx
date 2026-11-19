@@ -40,6 +40,7 @@ import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import ActiveInactiveRow from "@/modules/common-table-rows/ActiveInactiveRow";
@@ -249,6 +250,7 @@ function ActionsCell({
   rule: AgentBudgetRule;
   onEdit: (r: AgentBudgetRule) => void;
 }) {
+  const t = useTranslations();
   const { confirm } = useDialog();
   const { toggleBudgetRule, deleteBudgetRule } = useAIProviders();
 
@@ -257,8 +259,8 @@ function ActionsCell({
       title: `Delete '${rule.name}'?`,
       description:
         "Are you sure you want to delete this global limit? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!ok) return;
@@ -289,14 +291,14 @@ function ActionsCell({
           <DropdownMenuItem onClick={() => toggleBudgetRule(rule.id)}>
             <div className={"flex gap-3 items-center"}>
               <Power size={14} className={"shrink-0"} />
-              {rule.enabled ? "Disable" : "Enable"}
+              {rule.enabled ? t("common.disable") : t("common.enable")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={onDelete} variant={"danger"}>
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {t("common.delete")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -306,6 +308,7 @@ function ActionsCell({
 }
 
 export default function AgentBudgetRulesTable() {
+  const t = useTranslations();
   const path = usePathname();
   const { budgetRules, budgetRulesLoading } = useAIProviders();
 
@@ -420,7 +423,7 @@ export default function AgentBudgetRulesTable() {
 
       <DataTable
         isLoading={budgetRulesLoading}
-        text={"Global Limits"}
+        text={t("common.globalLimits")}
         sorting={sorting}
         setSorting={setSorting}
         columns={columns}
@@ -464,7 +467,7 @@ export default function AgentBudgetRulesTable() {
                   href={"https://docs.netbird.io/agent-network"}
                   target={"_blank"}
                 >
-                  Agent Network
+                  {t("common.agentNetwork")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </>

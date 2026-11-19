@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useDestinationGroup } from "@/modules/control-center/contexts/ControlCenterContext";
 import {
   useCanvasState,
@@ -70,6 +71,7 @@ function NetworkActionsMenu({
   networkNodeId: string;
   onDeleted?: () => void;
 }) {
+  const t = useTranslations();
   const { isDraft, setNetworkEditor } = useDraftMode();
   const { permission } = usePermissions();
   const reactFlow = useReactFlow();
@@ -119,7 +121,7 @@ function NetworkActionsMenu({
           <DropdownMenuItem onClick={() => setNetworkEditor({ networkNodeId })}>
             <div className={"flex gap-3 items-center"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
-              Edit
+              {t("common.edit")}
             </div>
           </DropdownMenuItem>
         )}
@@ -132,7 +134,7 @@ function NetworkActionsMenu({
               ) : (
                 <Trash2Icon size={14} className={"shrink-0"} />
               )}
-              {isDraftNew ? "Remove" : "Delete"}
+              {isDraftNew ? t("common.remove") : t("common.delete")}
             </div>
           </DropdownMenuItem>
         )}
@@ -142,6 +144,7 @@ function NetworkActionsMenu({
 }
 
 function AddResourceButton({ networkNodeId }: { networkNodeId: string }) {
+  const t = useTranslations();
   const { setResourceEditor } = useDraftMode();
   return (
     <button
@@ -157,7 +160,7 @@ function AddResourceButton({ networkNodeId }: { networkNodeId: string }) {
       )}
     >
       <CirclePlusIcon size={14} className={"shrink-0"} />
-      Add Resource
+      {t("common.addResource")}
     </button>
   );
 }
@@ -521,6 +524,7 @@ function HeaderBottom() {
 }
 
 function FeedbackButton() {
+  const t = useTranslations();
   return (
     <div className={"absolute bottom-0 right-0 z-10 p-3 md:px-6 md:py-4"}>
       <a
@@ -530,7 +534,7 @@ function FeedbackButton() {
       >
         <Button variant={"secondary"} size={"xs"} className={"h-[39px] px-4.5"}>
           <MessageSquareShare size={14} />
-          Feedback
+          {t("common.feedback")}
         </Button>
       </a>
     </div>

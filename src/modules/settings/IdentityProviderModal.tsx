@@ -35,6 +35,7 @@ import {
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   SSOIdentityProvider,
   SSOIdentityProviderOptions,
@@ -83,6 +84,7 @@ export default function IdentityProviderModal({
   onClose,
   provider,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
   const isEditing = !!provider;
@@ -177,8 +179,8 @@ export default function IdentityProviderModal({
 
           <div className={"px-8 py-6 flex flex-col gap-6"}>
             <div>
-              <Label>Provider Type</Label>
-              <HelpText>Select the type of identity provider</HelpText>
+              <Label>{t("settings.idpProviderType")}</Label>
+              <HelpText>{t("settings.idpProviderTypeHelp")}</HelpText>
               <Select
                 value={type}
                 onValueChange={(v) => {
@@ -207,8 +209,8 @@ export default function IdentityProviderModal({
             </div>
 
             <div>
-              <Label>Name</Label>
-              <HelpText>A friendly name to identify this provider</HelpText>
+              <Label>{t("common.name")}</Label>
+              <HelpText>{t("settings.idpNameHelp")}</HelpText>
               <Input
                 placeholder={"e.g., Corporate SSO"}
                 value={name}
@@ -222,7 +224,7 @@ export default function IdentityProviderModal({
             {requiresIssuer && (
               <div>
                 <Label>Issuer URL</Label>
-                <HelpText>The OIDC issuer URL for this provider</HelpText>
+                <HelpText>{t("settings.idpIssuerUrlHelp")}</HelpText>
                 <Input
                   placeholder={issuerHints[type] ?? "https://login.example.com"}
                   value={issuer}
@@ -235,7 +237,7 @@ export default function IdentityProviderModal({
             )}
 
             <div>
-              <Label>Client ID</Label>
+              <Label>{t("settings.idpClientId")}</Label>
               <HelpText>The OAuth2 confidential client ID</HelpText>
               <Input
                 placeholder={"Enter client ID"}
@@ -246,7 +248,7 @@ export default function IdentityProviderModal({
             </div>
 
             <div>
-              <Label>Client Secret</Label>
+              <Label>{t("settings.idpClientSecret")}</Label>
               <HelpText>
                 {isEditing
                   ? clientIdChanged
@@ -269,33 +271,33 @@ export default function IdentityProviderModal({
 
             <div className={"flex flex-col gap-3"}>
               <div>
-                <Label>Endpoint URLs</Label>
+                <Label>{t("settings.endpointUrls")}</Label>
                 <HelpText margin={false}>
-                  Add these to your identity provider configuration
+                  {t("settings.endpointUrlsHelp")}
                 </HelpText>
               </div>
 
               <div>
-                <Label className={"text-xs mb-1"}>Redirect / Callback</Label>
+                <Label className={"text-xs mb-1"}>{t("settings.redirectCallback")}</Label>
                 <Code codeToCopy={redirectUrl} message={copyMessage}>
                   <Code.Line>{redirectUrl}</Code.Line>
                 </Code>
               </div>
 
               <div>
-                <Label className={"text-xs mb-1"}>Logout</Label>
+                <Label className={"text-xs mb-1"}>{t("settings.logoutLabel")}</Label>
                 <Code codeToCopy={logoutUrl} message={logoutCopyMessage}>
                   <Code.Line>{logoutUrl}</Code.Line>
                 </Code>
                 <HelpText margin={false} className={"mt-1.5"}>
-                  Not all identity providers support logout.{" "}
+                  {t("settings.notAllProvidersLogout")}{" "}
                   <InlineLink
                     href={
                       "https://docs.netbird.io/selfhosted/identity-providers"
                     }
                     target={"_blank"}
                   >
-                    Learn more
+                    {t("common.learnMore")}
                   </InlineLink>
                 </HelpText>
               </div>
@@ -305,7 +307,7 @@ export default function IdentityProviderModal({
           <ModalFooter className={"items-center"}>
             <div className={"flex gap-3 w-full justify-end"}>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{t("common.cancel")}</Button>
               </ModalClose>
 
               <Button
@@ -321,7 +323,7 @@ export default function IdentityProviderModal({
                 {isEditing ? (
                   <>
                     <SaveIcon size={16} />
-                    Save Changes
+                    {t("common.saveChanges")}
                   </>
                 ) : (
                   <>

@@ -6,6 +6,7 @@ import { useGuardedRouter } from "@utils/navigation-guard";
 import { User2 } from "lucide-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 export const USERS_TABS = [
   { value: "users", href: "/team/users", label: "Users" },
@@ -26,6 +27,7 @@ export type UsersTab = (typeof USERS_TABS)[number]["value"];
 export default function UsersTabs({
   current,
 }: Readonly<{ current: UsersTab }>) {
+  const translate = useTranslations();
   const router = useGuardedRouter();
   const { permission } = usePermissions();
   if (!permission.users.read) return null;
@@ -44,14 +46,14 @@ export default function UsersTabs({
       <TabsList justify={"start"} className={"px-8"}>
         <TabsTrigger value={"users"} data-testid={"users-tab-users"}>
           <User2 size={16} />
-          Users
+          {translate("common.users")}
         </TabsTrigger>
         <TabsTrigger
           value={"service-users"}
           data-testid={"users-tab-service-users"}
         >
           <IconSettings2 size={16} />
-          Service Users
+          {translate("common.serviceUsers")}
         </TabsTrigger>
       </TabsList>
     </Tabs>

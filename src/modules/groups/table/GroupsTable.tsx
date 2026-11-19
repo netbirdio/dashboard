@@ -33,6 +33,7 @@ import { AddGroupButton } from "@/components/ui/AddGroupButton";
 import { GroupProvider } from "@/contexts/GroupProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { GroupsMultiSelect } from "@/modules/groups/GroupsMultiSelect";
 import GroupsActionCell from "@/modules/groups/table/GroupsActionCell";
 import GroupsCountCell from "@/modules/groups/table/GroupsCountCell";
@@ -44,280 +45,329 @@ import useGroupsUsage, {
   isGroupInUse,
 } from "@/modules/groups/useGroupsUsage";
 
-export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <div className={"min-w-[20px] max-w-[20px]"}>
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected()
-              ? true
-              : table.getIsSomePageRowsSelected()
-              ? "indeterminate"
-              : false
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          disabled={!table.getRowModel().rows.some((row) => row.getCanSelect())}
-          aria-label="Select all groups on this page"
-        />
-      </div>
-    ),
-    cell: ({ row }) => {
-      const canSelect = row.getCanSelect();
-      const disabledReason = groupDeleteDisabledReason(row.original);
-      return (
+function createGroupsColumns(
+  t: ReturnType<typeof useTranslations>,
+): ColumnDef<GroupUsage>[] {
+  return [
+    {
+      id: "select",
+      header: ({ table }) => (
         <div className={"min-w-[20px] max-w-[20px]"}>
-          <FullTooltip
-            content={<div className={"text-xs max-w-xs"}>{disabledReason}</div>}
-            interactive={false}
-            disabled={canSelect || !disabledReason}
-          >
-            <Checkbox
-              checked={row.getIsSelected() && canSelect}
-              variant={"tableCell"}
-              onCheckedChange={(value) => row.toggleSelected(!!value)}
-              disabled={!canSelect}
-              aria-label={`Select ${row.original.name}`}
-            />
-          </FullTooltip>
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected()
+                ? true
+                : table.getIsSomePageRowsSelected()
+                ? "indeterminate"
+                : false
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+            disabled={
+              !table.getRowModel().rows.some((row) => row.getCanSelect())
+            }
+            aria-label={t("groups.selectAllOnPage")}
+          />
         </div>
-      );
+      ),
+      cell: ({ row }) => {
+        const canSelect = row.getCanSelect();
+        const disabledReason = groupDeleteDisabledReason(row.original);
+        return (
+          <div className={"min-w-[20px] max-w-[20px]"}>
+            <FullTooltip
+              content={
+                <div className={"text-xs max-w-xs"}>{disabledReason}</div>
+              }
+              interactive={false}
+              disabled={canSelect || !disabledReason}
+            >
+              <Checkbox
+                checked={row.getIsSelected() && canSelect}
+                variant={"tableCell"}
+                onCheckedChange={(value) => row.toggleSelected(!!value)}
+                disabled={!canSelect}
+                aria-label={t("groups.selectGroup", {
+                  name: row.original.name,
+                })}
+              />
+            </FullTooltip>
+          </div>
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
     },
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return (
+          <DataTableHeader column={column}>{t("common.name")}</DataTableHeader>
+        );
+      },
+      cell: ({ row }) => {
+        const in_use = !!row.getValue("in_use");
+        return (
+          <GroupsNameCell
+            active={in_use}
+            group={{
+              id: row.original?.id,
+              issued: row.original?.issued,
+              name: row.original?.name,
+            }}
+          />
+        );
+      },
+      sortingFn: "text",
     },
-    cell: ({ row }) => {
-      const in_use = !!row.getValue("in_use");
-      return (
-        <GroupsNameCell
-          active={in_use}
-          group={{
-            id: row.original?.id,
-            issued: row.original?.issued,
-            name: row.original?.name,
-          }}
+    {
+      accessorKey: "users_count",
+      header: ({ column }) => {
+        return (
+          <DataTableHeader
+            column={column}
+            tooltip={
+              <div className={"text-xs normal-case"}>{t("common.users")}</div>
+            }
+          >
+            <TeamIcon size={12} />
+          </DataTableHeader>
+        );
+      },
+      cell: ({ row }) => (
+        <GroupsCountCell
+          icon={<TeamIcon size={10} />}
+          groupName={row.original.name}
+          href={`/group?id=${row.original.id}&tab=users`}
+          hidden={row.original.name === "All"}
+          text={t("groups.countUsers")}
+          count={row.original.users_count}
         />
-      );
+      ),
     },
-    sortingFn: "text",
-  },
-  {
-    accessorKey: "users_count",
-    header: ({ column }) => {
-      return (
-        <DataTableHeader
-          column={column}
-          tooltip={<div className={"text-xs normal-case"}>Users</div>}
-        >
-          <TeamIcon size={12} />
-        </DataTableHeader>
-      );
+    {
+      accessorKey: "peers_count",
+      header: ({ column }) => {
+        return (
+          <DataTableHeader
+            column={column}
+            tooltip={
+              <div className={"text-xs normal-case"}>{t("common.peers")}</div>
+            }
+          >
+            <PeerIcon size={12} />
+          </DataTableHeader>
+        );
+      },
+      cell: ({ row }) => (
+        <GroupsCountCell
+          icon={<PeerIcon size={10} />}
+          groupName={row.original.name}
+          href={`/group?id=${row.original.id}&tab=peers`}
+          hidden={row.original.name === "All"}
+          text={t("groups.countPeers")}
+          count={row.original.peers_count}
+        />
+      ),
     },
-    cell: ({ row }) => (
-      <GroupsCountCell
-        icon={<TeamIcon size={10} />}
-        groupName={row.original.name}
-        href={`/group?id=${row.original.id}&tab=users`}
-        hidden={row.original.name === "All"}
-        text={"User(s)"}
-        count={row.original.users_count}
-      />
-    ),
-  },
-  {
-    accessorKey: "peers_count",
-    header: ({ column }) => {
-      return (
-        <DataTableHeader
-          column={column}
-          tooltip={<div className={"text-xs normal-case"}>Peers</div>}
-        >
-          <PeerIcon size={12} />
-        </DataTableHeader>
-      );
-    },
-    cell: ({ row }) => (
-      <GroupsCountCell
-        icon={<PeerIcon size={10} />}
-        groupName={row.original.name}
-        href={`/group?id=${row.original.id}&tab=peers`}
-        hidden={row.original.name === "All"}
-        text={"Peer(s)"}
-        count={row.original.peers_count}
-      />
-    ),
-  },
-  {
-    accessorKey: "policies_count",
-    header: ({ column }) => {
-      return (
-        <DataTableHeader
-          column={column}
-          tooltip={<div className={"text-xs normal-case"}>Policies</div>}
-        >
-          <AccessControlIcon size={12} />
-        </DataTableHeader>
-      );
-    },
-    cell: ({ row }) => (
-      <GroupsCountCell
-        icon={<AccessControlIcon size={10} />}
-        groupName={row.original.name}
-        href={`/group?id=${row.original.id}&tab=policies`}
-        text={row.original.policies_count === 1 ? "Policy" : "Policies"}
-        count={row.original.policies_count}
-      />
-    ),
-  },
-  {
-    accessorKey: "resources_count",
-    header: ({ column }) => {
-      return (
-        <DataTableHeader
-          column={column}
-          tooltip={
-            <div className={"text-xs normal-case"}>Network Resources</div>
+    {
+      accessorKey: "policies_count",
+      header: ({ column }) => {
+        return (
+          <DataTableHeader
+            column={column}
+            tooltip={
+              <div className={"text-xs normal-case"}>
+                {t("common.policies")}
+              </div>
+            }
+          >
+            <AccessControlIcon size={12} />
+          </DataTableHeader>
+        );
+      },
+      cell: ({ row }) => (
+        <GroupsCountCell
+          icon={<AccessControlIcon size={10} />}
+          groupName={row.original.name}
+          href={`/group?id=${row.original.id}&tab=policies`}
+          text={
+            row.original.policies_count === 1
+              ? t("groups.countPolicy")
+              : t("groups.countPolicies")
           }
-        >
-          <Layers3Icon size={12} />
-        </DataTableHeader>
-      );
+          count={row.original.policies_count}
+        />
+      ),
     },
-    cell: ({ row }) => (
-      <GroupsCountCell
-        icon={<Layers3Icon size={10} />}
-        groupName={row.original.name}
-        href={`/group?id=${row.original.id}&tab=resources`}
-        text={"Network Resource(s)"}
-        count={row.original.resources_count}
-      />
-    ),
-  },
-  {
-    accessorKey: "routes_count",
-    header: ({ column }) => {
-      return (
-        <DataTableHeader
-          column={column}
-          tooltip={<div className={"text-xs normal-case"}>Network Routes</div>}
-        >
-          <NetworkRoutesIcon size={12} />
-        </DataTableHeader>
-      );
+    {
+      accessorKey: "resources_count",
+      header: ({ column }) => {
+        return (
+          <DataTableHeader
+            column={column}
+            tooltip={
+              <div className={"text-xs normal-case"}>
+                {t("groups.networkResources")}
+              </div>
+            }
+          >
+            <Layers3Icon size={12} />
+          </DataTableHeader>
+        );
+      },
+      cell: ({ row }) => (
+        <GroupsCountCell
+          icon={<Layers3Icon size={10} />}
+          groupName={row.original.name}
+          href={`/group?id=${row.original.id}&tab=resources`}
+          text={t("groups.countResources")}
+          count={row.original.resources_count}
+        />
+      ),
     },
-    cell: ({ row }) => (
-      <GroupsCountCell
-        icon={<NetworkRoutesIcon size={10} />}
-        groupName={row.original.name}
-        href={`/group?id=${row.original.id}&tab=network-routes`}
-        text={"Network Route(s)"}
-        count={row.original.routes_count}
-      />
-    ),
-  },
-  {
-    accessorKey: "nameservers_count",
-    header: ({ column }) => {
-      return (
-        <DataTableHeader
-          column={column}
-          tooltip={<div className={"text-xs normal-case"}>Nameservers</div>}
-        >
-          <DNSIcon size={12} />
-        </DataTableHeader>
-      );
+    {
+      accessorKey: "routes_count",
+      header: ({ column }) => {
+        return (
+          <DataTableHeader
+            column={column}
+            tooltip={
+              <div className={"text-xs normal-case"}>
+                {t("common.networkRoutes")}
+              </div>
+            }
+          >
+            <NetworkRoutesIcon size={12} />
+          </DataTableHeader>
+        );
+      },
+      cell: ({ row }) => (
+        <GroupsCountCell
+          icon={<NetworkRoutesIcon size={10} />}
+          groupName={row.original.name}
+          href={`/group?id=${row.original.id}&tab=network-routes`}
+          text={t("groups.countRoutes")}
+          count={row.original.routes_count}
+        />
+      ),
     },
-    cell: ({ row }) => (
-      <GroupsCountCell
-        icon={<DNSIcon size={10} />}
-        groupName={row.original.name}
-        href={`/group?id=${row.original.id}&tab=nameservers`}
-        text={"Nameserver(s)"}
-        count={row.original.nameservers_count}
-      />
-    ),
-  },
-  {
-    accessorKey: "zones_count",
-    header: ({ column }) => {
-      return (
-        <DataTableHeader
-          column={column}
-          tooltip={<div className={"text-xs normal-case"}>Zones</div>}
-        >
-          <DNSZoneIcon size={16} />
-        </DataTableHeader>
-      );
+    {
+      accessorKey: "nameservers_count",
+      header: ({ column }) => {
+        return (
+          <DataTableHeader
+            column={column}
+            tooltip={
+              <div className={"text-xs normal-case"}>
+                {t("common.nameservers")}
+              </div>
+            }
+          >
+            <DNSIcon size={12} />
+          </DataTableHeader>
+        );
+      },
+      cell: ({ row }) => (
+        <GroupsCountCell
+          icon={<DNSIcon size={10} />}
+          groupName={row.original.name}
+          href={`/group?id=${row.original.id}&tab=nameservers`}
+          text={t("groups.countNameservers")}
+          count={row.original.nameservers_count}
+        />
+      ),
     },
-    cell: ({ row }) => (
-      <GroupsCountCell
-        icon={<DNSZoneIcon size={14} />}
-        groupName={row.original.name}
-        href={`/group?id=${row.original.id}&tab=zones`}
-        text={"Zone(s)"}
-        count={row.original.zones_count}
-      />
-    ),
-  },
-  {
-    accessorKey: "setup_keys_count",
-    header: ({ column }) => {
-      return (
-        <DataTableHeader
-          column={column}
-          center={true}
-          tooltip={<div className={"text-xs normal-case"}>Setup Keys</div>}
-        >
-          <SetupKeysIcon size={12} />
-        </DataTableHeader>
-      );
+    {
+      accessorKey: "zones_count",
+      header: ({ column }) => {
+        return (
+          <DataTableHeader
+            column={column}
+            tooltip={
+              <div className={"text-xs normal-case"}>{t("common.zones")}</div>
+            }
+          >
+            <DNSZoneIcon size={16} />
+          </DataTableHeader>
+        );
+      },
+      cell: ({ row }) => (
+        <GroupsCountCell
+          icon={<DNSZoneIcon size={14} />}
+          groupName={row.original.name}
+          href={`/group?id=${row.original.id}&tab=zones`}
+          text={t("groups.countZones")}
+          count={row.original.zones_count}
+        />
+      ),
     },
-    cell: ({ row }) => (
-      <GroupsCountCell
-        icon={<SetupKeysIcon size={10} />}
-        groupName={row.original.name}
-        href={`/group?id=${row.original.id}&tab=setup-keys`}
-        hidden={row.original.name === "All"}
-        text={"Setup Key(s)"}
-        count={row.original.setup_keys_count}
-      />
-    ),
-  },
-  {
-    id: "in_use",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>In Use</DataTableHeader>;
+    {
+      accessorKey: "setup_keys_count",
+      header: ({ column }) => {
+        return (
+          <DataTableHeader
+            column={column}
+            center={true}
+            tooltip={
+              <div className={"text-xs normal-case"}>
+                {t("common.setupKeys")}
+              </div>
+            }
+          >
+            <SetupKeysIcon size={12} />
+          </DataTableHeader>
+        );
+      },
+      cell: ({ row }) => (
+        <GroupsCountCell
+          icon={<SetupKeysIcon size={10} />}
+          groupName={row.original.name}
+          href={`/group?id=${row.original.id}&tab=setup-keys`}
+          hidden={row.original.name === "All"}
+          text={t("groups.countSetupKeys")}
+          count={row.original.setup_keys_count}
+        />
+      ),
     },
-    sortingFn: "basic",
-    accessorFn: isGroupInUse,
-  },
-  {
-    accessorKey: "id",
-    header: "",
-    cell: ({ row }) => (
-      <GroupProvider group={row.original} isDetailPage={false}>
-        <GroupsActionCell group={row.original} inUse={row.getValue("in_use")} />
-      </GroupProvider>
-    ),
-  },
-  {
-    accessorKey: "search",
-    accessorFn: (row) => removeAllSpaces(row.name),
-    filterFn: "fuzzy",
-  },
-];
+    {
+      id: "in_use",
+      header: ({ column }) => {
+        return (
+          <DataTableHeader column={column}>{t("groups.inUse")}</DataTableHeader>
+        );
+      },
+      sortingFn: "basic",
+      accessorFn: isGroupInUse,
+    },
+    {
+      accessorKey: "id",
+      header: "",
+      cell: ({ row }) => (
+        <GroupProvider group={row.original} isDetailPage={false}>
+          <GroupsActionCell
+            group={row.original}
+            inUse={row.getValue("in_use")}
+          />
+        </GroupProvider>
+      ),
+    },
+    {
+      accessorKey: "search",
+      accessorFn: (row) => removeAllSpaces(row.name),
+      filterFn: "fuzzy",
+    },
+  ];
+}
 
 type Props = {
   headingTarget?: HTMLHeadingElement | null;
 };
 
 export default function GroupsTable({ headingTarget }: Readonly<Props>) {
+  const t = useTranslations();
+  const columns = useMemo(() => createGroupsColumns(t), [t]);
   const { data: groups, isLoading } = useGroupsUsage();
   const { permission } = usePermissions();
   const path = usePathname();
@@ -365,18 +415,18 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
 
   const usageOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All" },
-      { value: true, label: "Used" },
-      { value: false, label: "Unused" },
+      { value: undefined, label: t("common.all") },
+      { value: true, label: t("groups.used") },
+      { value: false, label: t("groups.unused") },
     ],
-    [],
+    [t],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "in_use",
-        label: "Usage",
+        label: t("groups.usage"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -389,7 +439,7 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
           formatRadioChip(v as boolean | undefined, usageOptions),
       },
     ],
-    [usageOptions],
+    [t, usageOptions],
   );
 
   return (
@@ -407,15 +457,15 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
         }
         useRowId={true}
         resetRowSelectionOnFilter={true}
-        text={"Groups"}
+        text={t("common.groups")}
         sorting={sorting}
         isLoading={isLoading}
         setSorting={setSorting}
-        columns={GroupsTableColumns}
+        columns={columns}
         data={groups}
         initialPageSize={25}
         showResetFilterButton={false}
-        searchPlaceholder={"Search group by name..."}
+        searchPlaceholder={t("groups.searchByName")}
         rightSide={() => <AddGroupButton />}
         aboveTable={(table) => (
           <TableFilterChips table={table} filters={filterDefs} />

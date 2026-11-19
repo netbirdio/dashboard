@@ -22,6 +22,7 @@ import {
 import { notify } from "@components/Notification";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { NotificationEventTypes } from "@/cloud/notifications/NotificationEventTypes";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   NotificationChannel,
   NotificationEventType,
@@ -37,6 +38,7 @@ type Props = {
 };
 
 export const NotificationWebhookChannel = ({ channel }: Props) => {
+  const t = useTranslations();
   const { updateChannel, toggleType } = useNotifications();
   const { confirm } = useDialog();
   const { permission } = usePermissions();
@@ -49,7 +51,7 @@ export const NotificationWebhookChannel = ({ channel }: Props) => {
   const handleSave = (newTarget: WebhookTarget) => {
     const isNew = !isConnected;
     notify({
-      title: "Webhook Notifications",
+      title: t("notifications.webhookNotifications"),
       description: isNew
         ? "Webhook has been successfully connected."
         : "Webhook configuration has been successfully updated.",
@@ -60,16 +62,16 @@ export const NotificationWebhookChannel = ({ channel }: Props) => {
 
   const handleDeleteConnection = async () => {
     const choice = await confirm({
-      title: "Delete Webhook Connection",
+      title: t("notifications.deleteWebhookConnection"),
       description:
-        "Are you sure you want to delete this webhook connection? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+        t("notifications.deleteWebhookConfirm"),
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
     notify({
-      title: "Webhook Notifications",
+      title: t("notifications.webhookNotifications"),
       description: "Webhook connection has been successfully deleted.",
       promise: updateChannel({
         ...channel,
@@ -89,12 +91,12 @@ export const NotificationWebhookChannel = ({ channel }: Props) => {
       <Breadcrumbs>
         <Breadcrumbs.Item
           href={"/settings"}
-          label={"Settings"}
+          label={t("common.settings")}
           icon={<SettingsIcon size={13} />}
         />
         <Breadcrumbs.Item
           href={"/settings?tab=notifications"}
-          label={"Notifications"}
+          label={t("notifications.title")}
           icon={<MessageSquareDot size={14} />}
         />
         <Breadcrumbs.Item
@@ -144,7 +146,7 @@ export const NotificationWebhookChannel = ({ channel }: Props) => {
               />
             ) : (
               <span className={"text-xs text-nb-gray-300 mt-0.5"}>
-                Not Connected
+                {t("notifications.notConnected")}
               </span>
             )}
           </div>
@@ -162,7 +164,7 @@ export const NotificationWebhookChannel = ({ channel }: Props) => {
                 <DropdownMenuItem onClick={() => setModalOpen(true)} disabled={!canUpdate} data-testid="webhook-edit">
                   <div className={"flex gap-3 items-center"}>
                     <SquarePen size={14} className={"shrink-0"} />
-                    Edit
+                    {t("common.edit")}
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -173,7 +175,7 @@ export const NotificationWebhookChannel = ({ channel }: Props) => {
                 >
                   <div className={"flex gap-3 items-center"}>
                     <Trash2 size={14} className={"shrink-0"} />
-                    Delete
+                    {t("common.delete")}
                   </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -188,7 +190,7 @@ export const NotificationWebhookChannel = ({ channel }: Props) => {
               data-testid="webhook-connect"
             >
               <Repeat size={13} />
-              Connect
+              {t("notifications.connect")}
             </Button>
           )}
         </Card>

@@ -25,6 +25,7 @@ import * as React from "react";
 import { useMemo, useState } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { NetworkRouter } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { NetworkRoutingPeerName } from "@/modules/networks/routing-peers/NetworkRoutingPeerName";
@@ -102,6 +103,7 @@ export default function NetworkRoutingPeersTable({
   isLoading,
   headingTarget,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { openAddRoutingPeerModal, network } = useNetworksContext();
 
@@ -152,7 +154,7 @@ export default function NetworkRoutingPeersTable({
       showSearchAndFilters={true}
       inset={false}
       tableClassName={"mt-0"}
-      text={"Routing Peers"}
+      text={t("common.routingPeers")}
       columns={NetworkRouterColumns}
       keepStateInLocalStorage={false}
       initialPageSize={25}
@@ -161,15 +163,13 @@ export default function NetworkRoutingPeersTable({
         <TableFilterChips table={table} filters={filterDefs} />
       )}
       data={routers}
-      searchPlaceholder={"Search by peer name, group name..."}
+      searchPlaceholder={t("networks.searchRoutingPeers")}
       isLoading={isLoading}
       getStartedCard={
         <NoResults
           className={"py-4"}
-          title={"This network has no routing peers"}
-          description={
-            "Add routing peers to this network to access resources inside this network."
-          }
+          title={t("networks.noRoutingPeers")}
+          description={t("networks.noRoutingPeersDesc")}
           icon={<PeerIcon size={18} className={"fill-nb-gray-400"} />}
         />
       }
@@ -184,7 +184,7 @@ export default function NetworkRoutingPeersTable({
           disabled={!permission.networks.update}
         >
           <PlusCircle size={16} />
-          Add
+          {t("common.add")}
         </Button>
       )}
     >

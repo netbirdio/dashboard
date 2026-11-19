@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useMemo } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { GroupedRoute } from "@/interfaces/Route";
 import { useAddRoutingPeer } from "@/modules/routes/RouteAddRoutingPeerProvider";
 
@@ -16,6 +17,7 @@ type Props = {
 export default function GroupedRouteHighAvailabilityCell({
   groupedRoute,
 }: Props) {
+  const t = useTranslations();
   const router = useRouter();
   const isActive = useMemo(() => {
     return groupedRoute.high_availability_count > 1;
@@ -54,8 +56,7 @@ export default function GroupedRouteHighAvailabilityCell({
             <>
               {disabledText}
               <div className={"inline-flex mt-2"}>
-                Go ahead and add more routing peers to enable high availability
-                for this network route.
+                {t("routeGroup.haAddMorePeersTooltip")}
               </div>
             </>
           )}
@@ -63,8 +64,7 @@ export default function GroupedRouteHighAvailabilityCell({
             <>
               {enabledText}
               <div className={"inline-flex mt-2"}>
-                You can add more peers to increase the availability of this
-                network route.
+                {t("routeGroup.haIncreasePeersTooltip")}
               </div>
             </>
           )}
@@ -72,8 +72,7 @@ export default function GroupedRouteHighAvailabilityCell({
             <>
               {disabledText}
               <div className={"inline-flex mt-2"}>
-                To configure, you must add more peers to a group in this route.
-                You can do it in the Peers menu.
+                {t("routeGroup.haAddToGroupTooltip")}
               </div>
             </>
           )}
@@ -81,8 +80,7 @@ export default function GroupedRouteHighAvailabilityCell({
             <>
               {enabledText}
               <div className={"inline-flex mt-2"}>
-                You can add more peers to a group in this route by going to the
-                peers page.
+                {t("routeGroup.haAddFromPeersTooltip")}
               </div>
             </>
           )}
@@ -101,12 +99,12 @@ export default function GroupedRouteHighAvailabilityCell({
           {isActive ? (
             <>
               <div className={"h-2 w-2 rounded-full bg-green-500"}></div>
-              {groupedRoute.high_availability_count} Peer(s)
+              {groupedRoute.high_availability_count}{" " + t("routeGroup.usageLimitSuffix")}
             </>
           ) : (
             <>
               <div className={"h-2 w-2 rounded-full bg-nb-gray-700"}></div>
-              Disabled
+              {t("common.disabled")}
             </>
           )}
           <HelpCircle size={12} />
@@ -120,7 +118,7 @@ export default function GroupedRouteHighAvailabilityCell({
           >
             <>
               <PeerIcon size={12} />
-              Go to Peers
+              {t("routeGroup.goToPeers")}
             </>
           </Button>
         )}
@@ -132,7 +130,7 @@ export default function GroupedRouteHighAvailabilityCell({
             onClick={() => openAddRoutingPeerModal(groupedRoute)}
           >
             <PlusCircle size={12} />
-            Add Peer
+            {t("common.addPeer")}
           </Button>
         )}{" "}
       </div>

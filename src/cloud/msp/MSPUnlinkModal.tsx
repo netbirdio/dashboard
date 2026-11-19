@@ -19,6 +19,7 @@ import * as React from "react";
 import { useState } from "react";
 import { useTenants } from "@/cloud/msp/contexts/TenantsProvider";
 import { Tenant } from "@/cloud/msp/interfaces/Tenant";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { User } from "@/interfaces/User";
 
 type Props = {
@@ -28,6 +29,7 @@ type Props = {
 };
 
 export const MSPUnlinkModal = ({ open, setOpen, tenant }: Props) => {
+  const t = useTranslations();
   const { unlinkTenant } = useTenants();
   const { data: users } = useFetchApi<User[]>(
     `/users?service_user=false&account=${tenant.id}`,
@@ -90,7 +92,7 @@ export const MSPUnlinkModal = ({ open, setOpen, tenant }: Props) => {
             </div>
             <div className={"flex gap-3 w-full justify-end"}>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{t("common.cancel")}</Button>
               </ModalClose>
 
               <Button
@@ -101,7 +103,7 @@ export const MSPUnlinkModal = ({ open, setOpen, tenant }: Props) => {
                   unlinkTenant(tenant, selectedUser).then();
                 }}
               >
-                Unlink
+                {t("common.unlink")}
               </Button>
             </div>
           </ModalFooter>

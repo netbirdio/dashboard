@@ -5,6 +5,7 @@ import * as React from "react";
 import { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { NetworkRouter } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
@@ -12,6 +13,7 @@ type Props = {
   router: NetworkRouter;
 };
 export const RoutingPeersEnabledCell = ({ router }: Props) => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const { network } = useNetworksContext();
@@ -22,7 +24,7 @@ export const RoutingPeersEnabledCell = ({ router }: Props) => {
 
   const toggle = async (enabled: boolean) => {
     notify({
-      title: "Network Routing Peer",
+      title: t("networks.networkRoutingPeer"),
       description: `Routing peer is now ${enabled ? "enabled" : "disabled"}`,
       loadingMessage: "Updating routing peer...",
       promise: update({

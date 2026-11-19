@@ -44,6 +44,7 @@ import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import AgentPolicyGuardrailsTab from "@/modules/agent-network/AgentPolicyGuardrailsTab";
 import AgentPolicyLimitsTab from "@/modules/agent-network/AgentPolicyLimitsTab";
@@ -122,6 +123,7 @@ function AgentPolicyModalContent({
   onDraftSubmit?: (policy: Omit<AgentPolicy, "id">) => void;
   onSuccess: () => void;
 }) {
+  const t = useTranslations();
   const {
     providers: accountProviders,
     addPolicy,
@@ -301,7 +303,7 @@ function AgentPolicyModalContent({
         <TabsList justify={"start"} className={"px-8"}>
           <TabsTrigger value={"policy"}>
             <ArrowRightLeft size={16} />
-            Policy
+            {t("common.policy")}
           </TabsTrigger>
           <TabsTrigger value={"limits"}>
             <Gauge size={16} />
@@ -319,7 +321,7 @@ function AgentPolicyModalContent({
               <div className={"w-full self-start"}>
                 <Label className={"mb-2"}>
                   <FolderDown size={15} />
-                  Source
+                  {t("common.source")}
                   <HelpTooltip
                     content={
                       <>
@@ -347,7 +349,7 @@ function AgentPolicyModalContent({
               <div className={"w-full self-start"}>
                 <Label className={"mb-2"}>
                   <Sparkles size={15} />
-                  Provider
+                  {t("common.provider")}
                   <HelpTooltip
                     content={<>AI providers the source is allowed to reach.</>}
                   />
@@ -363,7 +365,7 @@ function AgentPolicyModalContent({
             <div>
               <Label>Name of the Policy</Label>
               <HelpText>
-                Set an easily identifiable name for your policy.
+                {t("agentNetwork.ruleNameHelp")}
               </HelpText>
               <Input
                 value={name}
@@ -375,9 +377,9 @@ function AgentPolicyModalContent({
               />
             </div>
             <div>
-              <Label>Description (optional)</Label>
+              <Label>{t("agentNetwork.policyDescriptionLabel")}</Label>
               <HelpText>
-                Write a short description to add more context to this policy.
+                {t("agentNetwork.policyDescriptionHelp")}
               </HelpText>
               <Textarea
                 value={description}
@@ -408,7 +410,7 @@ function AgentPolicyModalContent({
               href={"https://docs.netbird.io/agent-network"}
               target={"_blank"}
             >
-              Agent Network
+              {t("common.agentNetwork")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
@@ -419,7 +421,7 @@ function AgentPolicyModalContent({
               {tab === "policy" && (
                 <>
                   <ModalClose asChild>
-                    <Button variant={"secondary"}>Cancel</Button>
+                    <Button variant={"secondary"}>{t("common.cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant={"primary"}
@@ -428,7 +430,7 @@ function AgentPolicyModalContent({
                       !canContinueFromPolicy || name.trim().length === 0
                     }
                   >
-                    Continue
+                    {t("common.continue")}
                   </Button>
                 </>
               )}
@@ -438,13 +440,13 @@ function AgentPolicyModalContent({
                     variant={"secondary"}
                     onClick={() => setTab("policy")}
                   >
-                    Back
+                    {t("common.back")}
                   </Button>
                   <Button
                     variant={"primary"}
                     onClick={() => setTab("guardrails")}
                   >
-                    Continue
+                    {t("common.continue")}
                   </Button>
                 </>
               )}
@@ -454,7 +456,7 @@ function AgentPolicyModalContent({
                     variant={"secondary"}
                     onClick={() => setTab("limits")}
                   >
-                    Back
+                    {t("common.back")}
                   </Button>
                   <Button
                     variant={"primary"}
@@ -462,7 +464,7 @@ function AgentPolicyModalContent({
                     disabled={submitDisabled}
                   >
                     <PlusCircle size={16} />
-                    Add Policy
+                    {t("common.addPolicy")}
                   </Button>
                 </>
               )}
@@ -470,14 +472,14 @@ function AgentPolicyModalContent({
           ) : (
             <>
               <ModalClose asChild>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{t("common.cancel")}</Button>
               </ModalClose>
               <Button
                 variant={"primary"}
                 onClick={handleSubmit}
                 disabled={submitDisabled}
               >
-                Save Changes
+                {t("common.saveChanges")}
               </Button>
             </>
           )}
@@ -494,6 +496,7 @@ function SourceGroupsSelector({
   value: Group[];
   onChange: React.Dispatch<React.SetStateAction<Group[]>>;
 }) {
+  const t = useTranslations();
   const { users } = useUsers();
   return (
     <PeerGroupSelector
@@ -502,7 +505,7 @@ function SourceGroupsSelector({
         <div className={"flex items-center gap-2"}>
           <Badge className={"py-[3px]"} variant={"gray-ghost"}>
             <CircleUser size={12} />
-            All
+            {t("common.all")}
           </Badge>
           Select source group(s)...
         </div>

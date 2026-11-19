@@ -32,6 +32,7 @@ import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   getSSOIdentityProviderLabelByType,
   SSOIdentityProvider,
@@ -58,6 +59,7 @@ type ActionCellProps = {
 };
 
 function ActionCell({ provider, onEdit }: ActionCellProps) {
+  const t = useTranslations();
   const { confirm } = useDialog();
   const { mutate } = useSWRConfig();
   const deleteRequest = useApiCall<SSOIdentityProvider>(
@@ -70,8 +72,8 @@ function ActionCell({ provider, onEdit }: ActionCellProps) {
       title: `Delete '${provider.name}'?`,
       description:
         "Are you sure you want to delete this identity provider? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
 
@@ -101,7 +103,7 @@ function ActionCell({ provider, onEdit }: ActionCellProps) {
             disabled={!permission.identity_providers.update}
           >
             <PencilIcon size={14} className="mr-2" />
-            Edit
+            {t("common.edit")}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={handleDelete}
@@ -109,7 +111,7 @@ function ActionCell({ provider, onEdit }: ActionCellProps) {
             className="text-red-500 focus:text-red-500"
           >
             <Trash2 size={14} className="mr-2" />
-            Delete
+            {t("common.delete")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -118,6 +120,7 @@ function ActionCell({ provider, onEdit }: ActionCellProps) {
 }
 
 export default function IdentityProvidersTab() {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const { data: providers, isLoading } = useFetchApi<SSOIdentityProvider[]>(
@@ -153,7 +156,7 @@ export default function IdentityProvidersTab() {
     {
       accessorKey: "name",
       header: ({ column }) => (
-        <DataTableHeader column={column}>Name</DataTableHeader>
+        <DataTableHeader column={column}>{t("common.name")}</DataTableHeader>
       ),
       sortingFn: "text",
       cell: ({ row }) => (
@@ -168,7 +171,7 @@ export default function IdentityProvidersTab() {
     {
       accessorKey: "type",
       header: ({ column }) => (
-        <DataTableHeader column={column}>Type</DataTableHeader>
+        <DataTableHeader column={column}>{t("common.type")}</DataTableHeader>
       ),
       cell: ({ row }) => (
         <span className="text-nb-gray-400">
@@ -192,22 +195,21 @@ export default function IdentityProvidersTab() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("common.settings")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=identity-providers"}
-            label={"Identity Providers"}
+            label={t("common.identityProviders")}
             icon={<FingerprintIcon size={14} />}
             active
           />
         </Breadcrumbs>
         <div className={"flex items-start justify-between -mt-1"}>
           <div>
-            <h1>Identity Providers</h1>
+            <h1>{t("common.identityProviders")}</h1>
             <Paragraph>
-              Configure identity providers for user authentication in your
-              network.
+              {t("settings.configureIdpDescription")}
             </Paragraph>
           </div>
         </div>
@@ -222,7 +224,7 @@ export default function IdentityProvidersTab() {
 
       <DataTable
         isLoading={isLoading}
-        text={"Identity Providers"}
+        text={t("common.identityProviders")}
         sorting={sorting}
         setSorting={setSorting}
         columns={columns}

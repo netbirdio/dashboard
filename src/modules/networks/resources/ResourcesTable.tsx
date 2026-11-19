@@ -34,6 +34,7 @@ import {
   isResourceTargetType,
   useReverseProxies,
 } from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
@@ -153,6 +154,7 @@ export default function ResourcesTable({
   headingTarget,
   isGroupPage,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const params = useSearchParams();
   const resourceId = params.get("resource") ?? undefined;
@@ -289,7 +291,7 @@ export default function ResourcesTable({
       showSearchAndFilters={true}
       inset={false}
       tableClassName={"mt-0"}
-      text={"Resources"}
+      text={t("common.resources")}
       columns={columns}
       keepStateInLocalStorage={false}
       initialPageSize={25}
@@ -303,20 +305,20 @@ export default function ResourcesTable({
         <TableFilterChips table={table} filters={filterDefs} />
       )}
       data={resources}
-      searchPlaceholder={"Search by name, address or group..."}
+      searchPlaceholder={t("networks.searchResources")}
       isLoading={isLoading}
       getStartedCard={
         <NoResults
           className={"py-4"}
           title={
             isGroupPage
-              ? "This group has no assigned resources"
-              : "This network has no resources"
+              ? t("networks.noAssignedResources")
+              : t("networks.noNetworkResources")
           }
           description={
             isGroupPage
-              ? "Assign this group to your resources inside your networks to see them listed here."
-              : "Add resources to this network to control what peers can access. Resources can be anything from a single IP, a subnet, or a domain."
+              ? t("networks.noAssignedResourcesDesc")
+              : t("networks.noNetworkResourcesDesc")
           }
           icon={<Layers3Icon size={20} className={"text-nb-gray-400"} />}
         >
@@ -327,7 +329,7 @@ export default function ResourcesTable({
                 className={"mt-4"}
                 onClick={() => router.push("/networks")}
               >
-                Go to Networks
+                {t("networks.goToNetworks")}
                 <ArrowUpRightIcon size={16} />
               </Button>
             </>
@@ -353,7 +355,7 @@ export default function ResourcesTable({
                 data-testid={"add-resource"}
               >
                 <PlusCircle size={16} />
-                Add
+                {t("common.add")}
               </Button>
             )
           : undefined

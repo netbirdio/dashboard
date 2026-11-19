@@ -17,6 +17,7 @@ import {
 } from "@/cloud/msp/interfaces/Tenant";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
 import { UserRoles } from "@/modules/users/UserRoleSelector";
@@ -25,6 +26,7 @@ type Props = {
   tenant: Tenant;
 };
 export const TenantGroupsCell = ({ tenant }: Props) => {
+  const t = useTranslations();
   const { groups } = useGroups();
   const { openEditTenantModal } = useTenants();
   const isPending = tenant.status === TenantStatus.Pending;
@@ -51,7 +53,7 @@ export const TenantGroupsCell = ({ tenant }: Props) => {
         className={"max-h-[38px]"}
       >
         <IconCirclePlus size={14} />
-        Add Groups
+        {t("msp.addGroups")}
       </Button>
     );
 

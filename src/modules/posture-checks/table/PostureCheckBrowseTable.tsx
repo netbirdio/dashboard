@@ -11,6 +11,7 @@ import {
 import useFetchApi from "@utils/api";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckChecksCell } from "@/modules/posture-checks/table/cells/PostureCheckChecksCell";
 import { PostureCheckNameCell } from "@/modules/posture-checks/table/cells/PostureCheckNameCell";
@@ -20,6 +21,7 @@ type Props = {
 };
 
 export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
+  const t = useTranslations();
   const { data: postureChecks, isLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
   const { mutate } = useSWRConfig();
@@ -42,7 +44,7 @@ export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
         setRowSelection={setSelectedRows}
         isLoading={isLoading}
         keepStateInLocalStorage={false}
-        text={"Posture Check"}
+        text={t("postureChecks.postureCheck")}
         sorting={sorting}
         wrapperClassName={""}
         setSorting={setSorting}
@@ -54,7 +56,7 @@ export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
         tableClassName={"mt-6 !border-0"}
         rowClassName={"!border-b-0 px-10"}
         data={postureChecks}
-        searchPlaceholder={"Search by name and description..."}
+        searchPlaceholder={t("postureChecks.searchByNameAndDescription")}
         onRowClick={(row) => row.toggleSelected()}
         rightSide={(table) => (
           <>

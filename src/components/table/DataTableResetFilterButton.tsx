@@ -4,6 +4,7 @@ import { Table } from "@tanstack/react-table";
 import { FilterX } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 interface Props<TData> {
   table: Table<TData>;
@@ -16,6 +17,7 @@ export default function DataTableResetFilterButton<TData>({
   onClick,
   hasServerSideFilters = undefined,
 }: Props<TData>) {
+  const t = useTranslations();
   const [hovered, setHovered] = useState(false);
 
   const hasClientSideFilters =
@@ -53,7 +55,7 @@ export default function DataTableResetFilterButton<TData>({
           }}
         >
           <span className={"text-xs text-neutral-300"}>
-            Reset Filters & Search
+            {t("tables.resetFilters")}
           </span>
         </TooltipContent>
       </Tooltip>

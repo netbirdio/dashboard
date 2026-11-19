@@ -5,6 +5,7 @@ import { Label } from "@components/Label";
 import { Modal } from "@components/modal/Modal";
 import { ClusterOption, PeerGroupSelector } from "@components/PeerGroupSelector";
 import React, { useMemo, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network } from "@/interfaces/Network";
 import {
   ReverseProxyDomainType,
@@ -47,6 +48,7 @@ export default function ReverseProxyTargetSelector({
   serviceCluster,
   onClusterPick,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   const { resources, peers, domains } = useReverseProxies();
   const [installModal, setInstallModal] = useState(false);
 
@@ -86,18 +88,18 @@ export default function ReverseProxyTargetSelector({
           "Select Resource"
         ) : (
           <>
-            Select{" "}
+            {translate("common.select")}{" "}
             <HelpTooltip
               className={"max-w-sm"}
               content={
                 <>
-                  A <span className={"text-white font-medium"}>peer</span> is a
+                  A <span className={"text-white font-medium"}>{translate("reverseProxy.peerWord")}</span> is a
                   machine (e.g., laptop, server, container) running NetBird.
                   Select a peer if your service runs directly on it.
                   <span className={"mt-1 block"}>
                     If you don&apos;t have a peer yet, you can{" "}
                     <InlineButtonLink onClick={() => setInstallModal(true)}>
-                      Install NetBird
+                      {translate("reverseProxy.installNetBird")}
                     </InlineButtonLink>
                     .
                   </span>
@@ -105,7 +107,7 @@ export default function ReverseProxyTargetSelector({
               }
               interactive={true}
             >
-              Peer
+              {translate("reverseProxy.peer")}
             </HelpTooltip>
             ,{" "}
             <HelpTooltip
@@ -118,14 +120,14 @@ export default function ReverseProxyTargetSelector({
                   reached through a routing peer that forwards traffic to them.
                   <span className={"mt-1 block"}>
                     If you don&apos;t have resources yet, go to{" "}
-                    <InlineLink href={"/networks"}>Networks</InlineLink> to
+                    <InlineLink href={"/networks"}>{translate("common.networks")}</InlineLink> to
                     create some.
                   </span>
                 </>
               }
               interactive={true}
             >
-              Resource
+              {translate("common.resource")}
             </HelpTooltip>
             {showClusters && (
               <>

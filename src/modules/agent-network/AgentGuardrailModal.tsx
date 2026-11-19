@@ -26,6 +26,7 @@ import {
   Text,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import {
@@ -54,6 +55,7 @@ export default function AgentGuardrailModal({
   onSuccess,
   providerIds,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { addGuardrail, updateGuardrail } = useAIProviders();
 
   const [tab, setTab] = useState("checks");
@@ -104,7 +106,7 @@ export default function AgentGuardrailModal({
           <TabsList justify={"start"} className={"px-8"}>
             <TabsTrigger value={"checks"}>
               <LayoutList size={16} />
-              Checks
+              {t("agentNetwork.checks")}
             </TabsTrigger>
             <TabsTrigger value={"general"} disabled={!atLeastOneEnabled}>
               <Text
@@ -113,7 +115,7 @@ export default function AgentGuardrailModal({
                   "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
                 }
               />
-              Name & Description
+              {t("agentNetwork.tabNameDescription")}
             </TabsTrigger>
           </TabsList>
 
@@ -162,7 +164,7 @@ export default function AgentGuardrailModal({
                 />
               </div>
               <div>
-                <Label>Description (optional)</Label>
+                <Label>{t("agentNetwork.policyDescriptionLabel")}</Label>
                 <HelpText>
                   Write a short description to add more context to this
                   guardrail.
@@ -188,7 +190,7 @@ export default function AgentGuardrailModal({
                 href={"https://docs.netbird.io/agent-network"}
                 target={"_blank"}
               >
-                Agent Network
+                {t("common.agentNetwork")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
@@ -196,12 +198,12 @@ export default function AgentGuardrailModal({
           <div className={"flex gap-3 w-full justify-end"}>
             {tab === "checks" && (
               <Button variant={"secondary"} onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             )}
             {tab === "general" && (
               <Button variant={"secondary"} onClick={() => setTab("checks")}>
-                Back
+                {t("common.back")}
               </Button>
             )}
             {!guardrail && tab === "checks" && (
@@ -210,7 +212,7 @@ export default function AgentGuardrailModal({
                 onClick={() => setTab("general")}
                 disabled={!atLeastOneEnabled}
               >
-                Continue
+                {t("common.continue")}
               </Button>
             )}
             {((!guardrail && tab === "general") || guardrail) && (
@@ -219,7 +221,7 @@ export default function AgentGuardrailModal({
                 onClick={handleSubmit}
                 disabled={!canSubmit}
               >
-                {guardrail ? "Save Changes" : "Create Guardrail"}
+                {guardrail ? t("common.saveChanges") : "Create Guardrail"}
               </Button>
             )}
           </div>
@@ -274,6 +276,7 @@ function ModelAllowlistContent({
   onChange: (value: string[] | undefined) => void;
   providerIds?: string[];
 }) {
+  const translate = useTranslations();
   const [draft, setDraft] = useState<string[]>(value ?? []);
   const { providers } = useAIProviders();
   // When opened from a policy with destination providers selected,
@@ -378,7 +381,7 @@ function ModelAllowlistContent({
                       "py-2 px-4 text-left text-[11px] uppercase tracking-wider text-nb-gray-400 font-medium"
                     }
                   >
-                    Provider
+                    {translate("common.provider")}
                   </th>
                 </tr>
               </thead>
@@ -433,14 +436,14 @@ function ModelAllowlistContent({
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{translate("common.cancel")}</Button>
           </ModalClose>
           <Button
             variant={"primary"}
             disabled={draft.length === 0}
             onClick={() => onChange(draft.length === 0 ? undefined : draft)}
           >
-            Save
+            {translate("common.save")}
           </Button>
         </div>
       </ModalFooter>
@@ -480,6 +483,7 @@ function PromptCaptureCheck({
 }
 
 function PromptCaptureContent({ onConfirm }: { onConfirm: () => void }) {
+  const t = useTranslations();
   return (
     <>
       <div className={"flex flex-col px-8 gap-3 pb-6"}>
@@ -506,10 +510,10 @@ function PromptCaptureContent({ onConfirm }: { onConfirm: () => void }) {
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("common.cancel")}</Button>
           </ModalClose>
           <Button variant={"primary"} onClick={onConfirm}>
-            Save
+            {t("common.save")}
           </Button>
         </div>
       </ModalFooter>

@@ -19,11 +19,13 @@ import {
 import * as React from "react";
 import { useTenants } from "@/cloud/msp/contexts/TenantsProvider";
 import { Tenant, TenantStatus } from "@/cloud/msp/interfaces/Tenant";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   tenant: Tenant;
 };
 export const TenantActionCell = ({ tenant }: Props) => {
+  const t = useTranslations();
   const {
     openEditTenantModal,
     verifyDomain,
@@ -47,7 +49,7 @@ export const TenantActionCell = ({ tenant }: Props) => {
           onClick={() => verifyDomain(tenant, true)}
         >
           <ShieldCheckIcon size={14} />
-          Verify Domain
+          {t("common.verifyDomain")}
         </Button>
       )}
 
@@ -59,7 +61,7 @@ export const TenantActionCell = ({ tenant }: Props) => {
           onClick={() => openAccountExistsModal(tenant)}
         >
           <ShieldUserIcon size={16} />
-          Request Access
+          {t("common.requestAccess")}
         </Button>
       )}
 
@@ -87,7 +89,7 @@ export const TenantActionCell = ({ tenant }: Props) => {
         onClick={() => openEditTenantModal(tenant)}
       >
         <SquarePenIcon size={14} />
-        Edit
+        {t("common.edit")}
       </Button>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger
@@ -106,7 +108,7 @@ export const TenantActionCell = ({ tenant }: Props) => {
           <DropdownMenuItem onClick={() => openUnlinkTenantModal(tenant)}>
             <div className={"flex gap-3 items-center"}>
               <UnlinkIcon size={14} className={"shrink-0"} />
-              Unlink
+              {t("common.unlink")}
             </div>
           </DropdownMenuItem>
 
@@ -116,7 +118,7 @@ export const TenantActionCell = ({ tenant }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {t("common.delete")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

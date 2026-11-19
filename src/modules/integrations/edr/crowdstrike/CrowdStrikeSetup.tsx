@@ -27,6 +27,7 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/crowdstrike.png";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import { CrowdstrikeIntegration } from "@/interfaces/EDR";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -77,6 +78,7 @@ type ModalProps = {
 };
 
 export function SetupContent({ onSuccess, account }: ModalProps) {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const [step, setStep] = useState(0);
   const maxSteps = 2;
@@ -241,7 +243,7 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                Click <Mark>Create</Mark> and enter your credentials
+                Click <Mark>{t("common.create")}</Mark> and enter your credentials
               </p>
             </Steps.Step>
           </Steps>
@@ -249,7 +251,7 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
             <Input
               type={"text"}
               className={"w-full"}
-              customPrefix={<div className={"min-w-[60px]"}>Client ID</div>}
+              customPrefix={<div className={"min-w-[60px]"}>{t("integrations.idpClientId")}</div>}
               placeholder={"9f6c80ac8a384e1d88a1fd1f279541d0"}
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
@@ -270,7 +272,7 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <IconDevicesCheck size={20} />
-            Peer Approval
+            {t("common.peerApproval")}
           </p>
 
           <div className={"flex flex-col gap-6"}>
@@ -310,7 +312,7 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
             onClick={() => setStep(step - 1)}
           >
             <IconArrowLeft size={16} />
-            Back
+            {t("common.back")}
           </Button>
         )}
         {step >= 0 && step < maxSteps && (
@@ -320,7 +322,7 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
             onClick={() => setStep(step + 1)}
             disabled={isDisabled}
           >
-            {step == 0 ? "Get Started" : "Continue"}
+            {step == 0 ? "Get Started" : t("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -332,7 +334,7 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
             disabled={isDisabled || hasZtaError}
           >
             <Repeat size={16} />
-            Connect
+            {t("integrations.connect")}
           </Button>
         )}
       </ModalFooter>

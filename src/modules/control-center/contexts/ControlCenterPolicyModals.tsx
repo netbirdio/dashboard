@@ -12,6 +12,7 @@ import React, {
 } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import {
@@ -86,6 +87,7 @@ export function ControlCenterPolicyProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const translate = useTranslations();
   const { policies, peers, networkResources, networks, groups } =
     useControlCenterData();
   const { nodes, refreshLiveViewRef } = useCanvasState();
@@ -122,8 +124,8 @@ export function ControlCenterPolicyProvider({
       title: "Save policy changes?",
       description:
         "You are in live mode. Saving your changes will apply them to your account immediately.",
-      confirmText: "Save",
-      cancelText: "Cancel",
+      confirmText: translate("common.save"),
+      cancelText: translate("common.cancel"),
       type: "warning",
       dismissOnOutsideClick: true,
     });
@@ -134,8 +136,8 @@ export function ControlCenterPolicyProvider({
       description: isDraft
         ? "Agent Network changes aren't part of the draft. Saving applies them to your account immediately."
         : "You are in live mode. Saving your changes will apply them to your account immediately.",
-      confirmText: "Save",
-      cancelText: "Cancel",
+      confirmText: translate("common.save"),
+      cancelText: translate("common.cancel"),
       type: "warning",
       dismissOnOutsideClick: true,
     });
@@ -955,7 +957,7 @@ export function ControlCenterPolicyProvider({
         current,
       )}” will no longer have access to this policy's providers.`,
       confirmText: "Replace",
-      cancelText: "Cancel",
+      cancelText: translate("common.cancel"),
       type: "warning",
     }).then((ok) => ok && apply());
   };

@@ -13,6 +13,7 @@ import { PlusCircle } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useSignInDomains } from "@/cloud/sign-in-domains/useSignInDomains";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DomainValidationStatus, SignInDomain } from "@/interfaces/Account";
 import { DomainVerificationModal } from "@/modules/integrations/sso/DomainVerificationModal";
 
@@ -22,6 +23,7 @@ type Props = {
 };
 
 export const AddSignInDomainModal = ({ open, onOpenChange }: Props) => {
+  const t = useTranslations();
   const { addDomain, verifyDomain, mutate } = useSignInDomains();
   const [name, setName] = useState("");
   const [verifyModal, setVerifyModal] = useState(false);
@@ -116,7 +118,7 @@ export const AddSignInDomainModal = ({ open, onOpenChange }: Props) => {
               <div className={"flex gap-3 w-full justify-end"}>
                 <ModalClose asChild={true}>
                   <Button variant={"secondary"} className={"w-full"}>
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                 </ModalClose>
 
@@ -128,7 +130,7 @@ export const AddSignInDomainModal = ({ open, onOpenChange }: Props) => {
                   data-testid={"add-domain-submit"}
                 >
                   <PlusCircle size={16} />
-                  Add
+                  {t("common.add")}
                 </Button>
               </div>
             </ModalFooter>

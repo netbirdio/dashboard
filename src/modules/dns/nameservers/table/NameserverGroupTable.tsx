@@ -31,6 +31,7 @@ import NoResults from "@/components/ui/NoResults";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 import NameserverModal from "@/modules/dns/nameservers/NameserverModal";
@@ -119,6 +120,7 @@ export default function NameserverGroupTable({
   isGroupPage,
   distributionGroups,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { permission } = usePermissions();
@@ -215,7 +217,7 @@ export default function NameserverGroupTable({
       <DataTable
         headingTarget={headingTarget}
         isLoading={isLoading}
-        text={"Network Routes"}
+        text={translate("common.networkRoutes")}
         sorting={sorting}
         setSorting={setSorting}
         wrapperComponent={isGroupPage ? Card : undefined}
@@ -245,16 +247,14 @@ export default function NameserverGroupTable({
         }}
         columns={NameserverGroupTableColumns}
         data={nameserverGroupsWithNames}
-        searchPlaceholder={"Search by name, domains or nameservers..."}
+        searchPlaceholder={translate("dns.searchNameserverPlaceholder")}
         getStartedCard={
           isGroupPage ? (
             <NoResults
               icon={<DNSIcon className={"fill-nb-gray-200"} size={20} />}
               className={"py-4"}
-              title={"This group is not used within any nameservers yet"}
-              description={
-                "Assign this group as a distribution group in your nameservers to see them listed here."
-              }
+              title={translate("dns.noNameserversGroupTitle")}
+              description={translate("dns.noNameserversGroupDesc")}
             >
               <NameserverTemplateModal distributionGroups={distributionGroups}>
                 <Button
@@ -263,7 +263,7 @@ export default function NameserverGroupTable({
                   disabled={!permission.nameservers.create}
                 >
                   <PlusCircle size={16} />
-                  Add Nameserver
+                  {translate("common.addNameserver")}
                 </Button>
               </NameserverTemplateModal>
             </NoResults>
@@ -276,10 +276,8 @@ export default function NameserverGroupTable({
                   size={"large"}
                 />
               }
-              title={"Create Nameserver"}
-              description={
-                "It looks like you don't have any nameservers. Get started by adding one to your network. Select a predefined or add your custom nameservers."
-              }
+              title={translate("dns.createNameserver")}
+              description={translate("dns.noNameserversGetStartedDesc")}
               button={
                 <div className={"flex flex-col"}>
                   <div>
@@ -293,7 +291,7 @@ export default function NameserverGroupTable({
                         data-testid="open-add-nameserver"
                       >
                         <PlusCircle size={16} />
-                        Add Nameserver
+                        {translate("common.addNameserver")}
                       </Button>
                     </NameserverTemplateModal>
                   </div>
@@ -327,7 +325,7 @@ export default function NameserverGroupTable({
                   data-testid="open-add-nameserver"
                 >
                   <PlusCircle size={16} />
-                  Add Nameserver
+                  {translate("common.addNameserver")}
                 </Button>
               </NameserverTemplateModal>
             )}

@@ -18,6 +18,7 @@ import {
 } from "@/cloud/traffic-events/interfaces/TrafficEvent";
 import { TrafficEventProtocol } from "@/cloud/traffic-events/interfaces/TrafficEventProtocol";
 import { getTrafficEventTypeText } from "@/cloud/traffic-events/TrafficEventsTable";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 interface Props {
   table: Table<TrafficEvent>;
@@ -77,6 +78,7 @@ export function TrafficEventsFilter({
   onFilterChange,
   closeOnSelect = false,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const filterItems = useMemo(() => getFixedTypeFilters(), []);
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
@@ -244,7 +246,7 @@ export function TrafficEventsFilter({
             <span className={"text-white"}>
               {activeFilterIds.length > 0 && activeFilterIds.length}
             </span>
-            {activeFilterIds.length > 0 ? ` Filter(s)` : "Filter"}
+            {activeFilterIds.length > 0 ? ` Filter(s)` : t("common.filter")}
           </span>
         </Button>
       </PopoverTrigger>
@@ -273,13 +275,13 @@ export function TrafficEventsFilter({
             ref={searchRef}
             value={search}
             onChange={setSearch}
-            placeholder={"Search filters..."}
+            placeholder={t("trafficEvents.searchFilters")}
             hideEnterIcon={true}
           />
 
           {filteredItems.length == 0 && search != "" && (
             <DropdownInfoText className={"mb-4"}>
-              There are no filters matching your search.
+              {t("trafficEvents.noMatchingFilters")}
             </DropdownInfoText>
           )}
 

@@ -8,6 +8,7 @@ import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import DomainActionCell from "@/cloud/sign-in-domains/table/DomainActionCell";
 import DomainStatusCell from "@/cloud/sign-in-domains/table/DomainStatusCell";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DomainValidationStatus, SignInDomain } from "@/interfaces/Account";
 
 type Props = {
@@ -72,6 +73,7 @@ export default function SignInDomainsTable({
   domains,
   isLoading,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const [sorting, setSorting] = useState<SortingState>([
     {
       id: "name",
@@ -90,7 +92,7 @@ export default function SignInDomainsTable({
       showSearchAndFilters={false}
       inset={false}
       tableClassName={"mt-0"}
-      text={"Domains"}
+      text={t("common.domains")}
       columns={SignInDomainsColumns}
       keepStateInLocalStorage={false}
       data={isLoading ? [placeholderRow] : domains}

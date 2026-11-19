@@ -6,6 +6,7 @@ import { FilterX } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback } from "react";
 import Skeleton from "react-loading-skeleton";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   icon?: React.ReactNode;
@@ -30,6 +31,7 @@ export default function NoResults({
   onResetFilters,
   contentClassName,
 }: Props) {
+  const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -100,7 +102,7 @@ export default function NoResults({
               className="mt-4"
             >
               <FilterX size={16} />
-              Reset Filters & Search
+              {t("components.resetFilters")}
             </Button>
           )}
           {children}

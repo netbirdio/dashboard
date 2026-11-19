@@ -51,6 +51,7 @@ import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { duplicateAgentPolicy } from "@/modules/agent-network/agentPolicyDuplicate";
 import AgentPolicyModal from "@/modules/agent-network/AgentPolicyModal";
@@ -163,6 +164,7 @@ function ModelsCell({
   policy: AgentPolicy;
   onClickAdd: () => void;
 }) {
+  const t = useTranslations();
   const { guardrails } = useAIProviders();
   const models = allowlistModels(policy, guardrails);
 
@@ -222,7 +224,7 @@ function ModelsCell({
           useHover={true}
           className={"px-3 gap-2 whitespace-nowrap"}
         >
-          {models.length} Models
+          {models.length}{" " + t("common.models")}
         </Badge>
       </FullTooltip>
     </div>
@@ -343,6 +345,7 @@ function ActionsCell({
   onEdit: (p: AgentPolicy) => void;
   onDuplicate: (p: AgentPolicy) => void;
 }) {
+  const t = useTranslations();
   const { confirm } = useDialog();
   const { togglePolicy, deletePolicy } = useAIProviders();
   const { permission } = usePermissions();
@@ -352,9 +355,9 @@ function ActionsCell({
     const ok = await confirm({
       title: `Delete '${policy.name}'?`,
       description:
-        "Are you sure you want to delete this policy? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+        t("agentNetwork.deletePolicyDesc"),
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!ok) return;
@@ -374,7 +377,7 @@ function ActionsCell({
           <Button
             variant={"secondary"}
             className={"!px-3"}
-            aria-label={"Policy actions"}
+            aria-label={t("agentNetwork.policyActions")}
             data-testid={"agent-policy-actions"}
           >
             <MoreVertical size={16} className={"shrink-0"} />
@@ -384,7 +387,7 @@ function ActionsCell({
           <DropdownMenuItem onClick={() => onEdit(policy)}>
             <div className={"flex gap-3 items-center"}>
               <PencilLineIcon size={14} className={"shrink-0"} />
-              Edit Policy
+              {t("agentNetwork.edit")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -400,14 +403,14 @@ function ActionsCell({
           <DropdownMenuItem onClick={() => togglePolicy(policy.id)}>
             <div className={"flex gap-3 items-center"}>
               <Power size={14} className={"shrink-0"} />
-              {policy.enabled ? "Disable" : "Enable"}
+              {policy.enabled ? t("common.disable") : t("common.enable")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={onDelete} variant={"danger"}>
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {t("common.delete")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -421,6 +424,7 @@ type Props = {
 };
 
 export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
+  const t = useTranslations();
   const path = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -514,7 +518,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
       accessorKey: "name",
       sortingFn: "text",
       header: ({ column }) => (
-        <DataTableHeader column={column}>Name</DataTableHeader>
+        <DataTableHeader column={column}>{t("common.name")}</DataTableHeader>
       ),
       cell: ({ row }) => <NameCell policy={row.original} />,
     },
@@ -523,7 +527,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
       accessorFn: (p) => p.sourceGroups.length,
       sortingFn: "basic",
       header: ({ column }) => (
-        <DataTableHeader column={column}>Groups</DataTableHeader>
+        <DataTableHeader column={column}>{t("common.groups")}</DataTableHeader>
       ),
       cell: ({ row }) => <SourceCell policy={row.original} />,
     },
@@ -532,7 +536,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
       accessorFn: (p) => p.destinationProviderIds.length,
       sortingFn: "basic",
       header: ({ column }) => (
-        <DataTableHeader column={column}>Provider</DataTableHeader>
+        <DataTableHeader column={column}>{t("common.provider")}</DataTableHeader>
       ),
       cell: ({ row }) => <ProviderCell policy={row.original} />,
     },
@@ -541,7 +545,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
       accessorFn: (p) => allowlistModels(p, guardrails).length,
       sortingFn: "basic",
       header: ({ column }) => (
-        <DataTableHeader column={column}>Models</DataTableHeader>
+        <DataTableHeader column={column}>{t("common.models")}</DataTableHeader>
       ),
       cell: ({ row }) => (
         <ModelsCell
@@ -617,7 +621,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
         key={`policies-${initialSearch ?? ""}`}
         headingTarget={headingTarget}
         isLoading={isLoading}
-        text={"Policies"}
+        text={t("common.policies")}
         sorting={sorting}
         setSorting={setSorting}
         columns={columns}
@@ -653,7 +657,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
                 }}
               >
                 <PlusCircle size={16} />
-                Add Policy
+                {t("common.addPolicy")}
               </Button>
             }
             learnMore={
@@ -663,7 +667,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
                   href={"https://docs.netbird.io/agent-network"}
                   target={"_blank"}
                 >
-                  Agent Network
+                  {t("common.agentNetwork")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </>
@@ -681,7 +685,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
                 }}
               >
                 <PlusCircle size={16} />
-                Add Policy
+                {t("common.addPolicy")}
               </Button>
             </div>
           )

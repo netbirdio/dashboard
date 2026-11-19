@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import slackImage from "@/assets/integrations/slack.png";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { NotificationWebhookChannel as SlackTarget } from "@/interfaces/NotificationChannel";
 import { IntegrationModalHeader } from "@/modules/integrations/IntegrationModalHeader";
 
@@ -54,6 +55,7 @@ type ModalContentProps = {
 };
 
 function SlackModalContent({ onSave }: Readonly<ModalContentProps>) {
+  const t = useTranslations();
   const [step, setStep] = useState(0);
   const [url, setUrl] = useState("");
 
@@ -97,39 +99,36 @@ function SlackModalContent({ onSave }: Readonly<ModalContentProps>) {
 
       <IntegrationModalHeader
         image={slackImage}
-        title={"Connect NetBird with Slack"}
-        description={
-          "Receive NetBird notification events directly in your Slack channel via an Incoming Webhook."
-        }
+        title={t("notifications.connectNetBirdWithSlack")}
+        description={t("notifications.slackDescription")}
       />
 
       {step === 0 && (
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4 mb-3"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <PlusCircle size={18} />
-            Create a Slack App
+            {t("notifications.createSlackApp")}
           </p>
 
           <Steps>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                Open{" "}
+                {t("notifications.open")}{" "}
                 <InlineLink
                   href={"https://api.slack.com/apps?new_app=1"}
                   target={"_blank"}
                 >
-                  Slack App Management
+                  {t("notifications.slackAppManagement")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>{" "}
-                click <Mark>Create an app</Mark> <br />
-                and choose <Mark>From scratch</Mark>
+                {t("notifications.click") + " "}<Mark>{t("notifications.createAnApp")}</Mark> <br />
+                {t("notifications.andChoose") + " "}<Mark>{t("notifications.fromScratch")}</Mark>
               </p>
             </Steps.Step>
             <Steps.Step step={2} line={false}>
               <p className={"font-normal"}>
-                Set the app name to{" "}
-                <Mark copy={true}>NetBird Notifications</Mark> and select your
-                workspace. After that click <Mark>Create App</Mark>
+                {t("notifications.setAppNameTo")}{" "}
+                <Mark copy={true}>{t("notifications.netBirdNotifications")}</Mark>{" " + t("notifications.andSelectWorkspace") + " "}<Mark>{t("notifications.createApp")}</Mark>
               </p>
             </Steps.Step>
           </Steps>
@@ -140,26 +139,24 @@ function SlackModalContent({ onSave }: Readonly<ModalContentProps>) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <GlobeIcon size={18} />
-            Configure Incoming Webhook
+            {t("notifications.configureIncomingWebhook")}
           </p>
 
           <Steps>
             <Steps.Step step={1}>
               <p className={"font-normal"}>
-                In the app settings, go to <Mark>Incoming Webhooks</Mark> and
-                toggle <Mark>Activate Incoming Webhooks</Mark> to <Mark>On</Mark>
+                {t("notifications.inAppSettings") + " "}<Mark>{t("notifications.incomingWebhooks")}</Mark>{" " + t("notifications.andToggle") + " "}<Mark>{t("notifications.activateIncomingWebhooks")}</Mark> to <Mark>{t("notifications.on")}</Mark>
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Click <Mark>Add New Webhook</Mark> and select the channel where
-                you want to receive notifications and confirm with{" "}
-                <Mark>Allow</Mark>
+                Click <Mark>{t("notifications.addNewWebhook")}</Mark>{" " + t("notifications.andSelectChannel")}{" "}
+                <Mark>{t("common.allow")}</Mark>
               </p>
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                Copy the generated <Mark>Webhook URL</Mark> and paste it below.
+                {t("notifications.copyGenerated") + " "}<Mark>Webhook URL</Mark>{" " + t("notifications.andPasteBelow")}
               </p>
             </Steps.Step>
           </Steps>
@@ -188,7 +185,7 @@ function SlackModalContent({ onSave }: Readonly<ModalContentProps>) {
         {step === 0 && (
           <ModalClose asChild={true}>
             <Button variant={"secondary"} className={"w-full"}>
-              Cancel
+              {t("common.cancel")}
             </Button>
           </ModalClose>
         )}
@@ -199,7 +196,7 @@ function SlackModalContent({ onSave }: Readonly<ModalContentProps>) {
             onClick={() => setStep(step - 1)}
           >
             <IconArrowLeft size={16} />
-            Back
+            {t("common.back")}
           </Button>
         )}
         {step < maxSteps - 1 && (
@@ -209,7 +206,7 @@ function SlackModalContent({ onSave }: Readonly<ModalContentProps>) {
             onClick={() => setStep(step + 1)}
             data-testid="slack-continue"
           >
-            Continue
+            {t("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -222,7 +219,7 @@ function SlackModalContent({ onSave }: Readonly<ModalContentProps>) {
             data-testid="slack-connect"
           >
             <Repeat size={16} />
-            Connect
+            {t("notifications.connect")}
           </Button>
         )}
       </ModalFooter>

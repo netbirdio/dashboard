@@ -23,13 +23,12 @@ export default meta;
 
 const loaded = () => text("olivias-macbook-pro");
 
-/* The help button is the only header menu trigger without a test id. */
+// The icon selector also finds the trigger in the pre-localization baseline.
 const helpButton = () =>
-  [
-    ...document.querySelectorAll<HTMLButtonElement>(
-      "button[aria-haspopup=menu]",
-    ),
-  ].find((b) => b.closest(".fixed") && b.dataset.testid !== "user-dropdown")!;
+  screen.queryByRole("button", { name: "Help and Support" }) ??
+  document.querySelector<HTMLButtonElement>(
+    "button[aria-haspopup=menu]:has(svg.lucide-circle-question-mark)",
+  )!;
 
 export const UserDropdown: Story = {
   play: async () => {
@@ -49,6 +48,7 @@ export const HelpMenu: Story = {
     await loaded();
     await click(helpButton());
     await menu();
+    await text("Help and Support");
   },
 };
 

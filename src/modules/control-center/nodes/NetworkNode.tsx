@@ -11,6 +11,7 @@ import {
 import { CirclePlusIcon, NetworkIcon } from "lucide-react";
 import * as React from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
@@ -294,6 +295,7 @@ const FrameAddResourceButton = ({
   setHoveredNetworkNodeId: (v: string | null) => void;
   setControlsHovered: (v: boolean) => void;
 }) => {
+  const t = useTranslations();
   const { setResourceEditor } = useDraftMode();
   return (
     <div
@@ -330,7 +332,7 @@ const FrameAddResourceButton = ({
         }}
       >
         <CirclePlusIcon size={12} />
-        Add Resource
+        {t("common.addResource")}
       </Button>
     </div>
   );

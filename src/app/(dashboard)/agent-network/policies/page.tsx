@@ -10,11 +10,13 @@ import { ExternalLinkIcon } from "lucide-react";
 import React, { Suspense } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import PageContainer from "@/layouts/PageContainer";
 import AgentPoliciesTable from "@/modules/agent-network/AgentPoliciesTable";
 import AIProvidersProvider from "@/modules/agent-network/AIProvidersProvider";
 
 export default function AgentNetworkPoliciesPage() {
+  const translate = useTranslations();
   const { permission } = usePermissions();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
@@ -25,17 +27,17 @@ export default function AgentNetworkPoliciesPage() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/agent-network/providers"}
-            label={"Agent Network"}
+            label={translate("common.agentNetwork")}
             icon={<AgentNetworkIcon size={16} />}
           />
           <Breadcrumbs.Item
             href={"/agent-network/policies"}
-            label={"Agent Policies"}
+            label={translate("common.agentPolicies")}
             active={true}
           />
         </Breadcrumbs>
         {/* "Agent Policies", next to Networking's Access Control › Policies. */}
-        <h1 ref={headingRef}>Agent Policies</h1>
+        <h1 ref={headingRef}>{translate("common.agentPolicies")}</h1>
         <Paragraph>
           Bind IdP groups to providers: Engineering gets Claude, Finance
           doesn&apos;t. Enforce token limits, budgets, and guardrails.
@@ -43,7 +45,7 @@ export default function AgentNetworkPoliciesPage() {
       </div>
 
       <RestrictedAccess
-        page={"Agent Policies"}
+        page={translate("common.agentPolicies")}
         hasAccess={permission?.["agent_network.policies"]?.read}
       >
         <AIProvidersProvider>

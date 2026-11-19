@@ -2,6 +2,7 @@ import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { ArrowRight } from "lucide-react";
 import React, { useRef } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import ReverseProxyAddressInput, {
@@ -37,6 +38,7 @@ export default function ReverseProxyLayer4Content({
   initialPeer,
   initialNetwork,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const listenPortRef = useRef<HTMLInputElement>(null);
   const portRef = useRef<HTMLInputElement>(null);
 
@@ -84,7 +86,7 @@ export default function ReverseProxyLayer4Content({
               value={!isListenPortSupported ? "" : listenPort || ""}
               onChange={(e) => setListenPort(parseInt(e.target.value) || 0)}
               disabled={!isListenPortSupported || !l4Target}
-              aria-label="Public listen port"
+              aria-label={t("reverseProxy.publicListenPort")}
               data-testid="listen-port-input"
             />
           </div>
@@ -105,7 +107,7 @@ export default function ReverseProxyLayer4Content({
           </div>
           <div>
             <Label>
-              Port
+              {t("common.port")}
               <HelpTooltip
                 content={
                   "Enter the port where your service (e.g., webserver, app, API) is currently listening."
@@ -122,7 +124,7 @@ export default function ReverseProxyLayer4Content({
                 value={port || ""}
                 onChange={(e) => setPort(parseInt(e.target.value) || 0)}
                 disabled={!l4Target}
-                aria-label="Destination port"
+                aria-label={t("reverseProxy.destinationPort")}
                 className={"rounded-l-none"}
                 data-testid="destination-port-input"
               />

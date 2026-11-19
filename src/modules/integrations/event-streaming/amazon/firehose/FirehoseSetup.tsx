@@ -27,6 +27,7 @@ import Link from "next/link";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import firehoseLogo from "@/assets/integrations/firehose.png";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { EventStream } from "@/interfaces/EventStream";
 import { AmazonRegions } from "@/modules/integrations/event-streaming/amazon/AmazonRegions";
 import {
@@ -63,6 +64,7 @@ type ModalProps = {
 };
 
 export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
 
   const integrationRequest = useApiCall<EventStream>(
@@ -215,13 +217,13 @@ export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
             </Steps.Step>
             <Steps.Step step={3}>
               <p className={"font-normal"}>
-                As <Mark>Source</Mark>
+                As <Mark>{t("common.source")}</Mark>
                 select <Mark>Direct PUT</Mark>
               </p>
             </Steps.Step>
             <Steps.Step step={4}>
               <p className={"font-normal"}>
-                As <Mark>Destination</Mark>
+                As <Mark>{t("common.destination")}</Mark>
                 select the AWS service you want to push the events to
               </p>
             </Steps.Step>
@@ -352,7 +354,7 @@ export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
             disabled={!regionEntered}
             onClick={() => setStep(2)}
           >
-            Continue
+            {t("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -364,7 +366,7 @@ export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
               onClick={() => setStep(1)}
             >
               <IconArrowLeft size={16} />
-              Back
+              {t("common.back")}
             </Button>
             <Button
               variant={"primary"}
@@ -372,7 +374,7 @@ export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
               disabled={!streamNameEntered}
               onClick={() => setStep(3)}
             >
-              Continue
+              {t("common.continue")}
               <IconArrowRight size={16} />
             </Button>
           </>
@@ -385,7 +387,7 @@ export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
               onClick={() => setStep(2)}
             >
               <IconArrowLeft size={16} />
-              Back
+              {t("common.back")}
             </Button>
             <Button
               variant={"primary"}
@@ -394,7 +396,7 @@ export function SetupContent({ onSuccess }: Readonly<ModalProps>) {
               onClick={connect}
             >
               <Repeat size={16} />
-              Connect
+              {t("integrations.connect")}
             </Button>
           </>
         )}

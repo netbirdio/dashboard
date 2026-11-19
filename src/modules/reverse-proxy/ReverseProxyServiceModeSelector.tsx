@@ -1,4 +1,5 @@
 import React, { ReactNode, useEffect } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   isL4Mode as isL4ServiceMode,
   type ReverseProxyDomain,
@@ -62,6 +63,7 @@ export const ReverseProxyServiceModeSelector = ({
   disabled,
   domain,
 }: Props) => {
+  const t = useTranslations();
   const selected = value ?? ServiceMode.HTTP;
   const selectedMode = SERVICE_MODES[selected];
   const isL4Supported = domain?.supports_custom_ports !== undefined;
@@ -93,7 +95,7 @@ export const ReverseProxyServiceModeSelector = ({
             data-testid={"service-mode-select-button"}
           >
             {selectedMode.icon}
-            <SelectValue placeholder="Select type..." />
+            <SelectValue placeholder={t("reverseProxy.selectType")} />
           </div>
         </SelectTrigger>
         <SelectContent data-testid={"service-mode-selection"}>

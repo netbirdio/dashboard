@@ -3,6 +3,7 @@ import { Modal, ModalContent } from "@components/modal/Modal";
 import { DownloadIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import { SetupModalContent } from "@/modules/setup-netbird-modal/SetupModal";
 
@@ -17,6 +18,7 @@ export const OnboardingFirstDevice = ({
   firstDevice,
   onFinish,
 }: Props) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
 
   /**
@@ -44,17 +46,17 @@ export const OnboardingFirstDevice = ({
 
       <div className={"flex items-center justify-center mt-4 gap-3"}>
         <Button variant={"secondary"} onClick={onBack}>
-          Go Back
+          {t("onboarding.goBack")}
         </Button>
         <Button variant={"primary"} onClick={() => setOpen(true)}>
           <DownloadIcon size={16} />
-          Install NetBird
+          {t("onboarding.installNetBird")}
         </Button>
       </div>
 
       <Modal open={open} onOpenChange={setOpen}>
         <ModalContent className={"!z-[70]"}>
-          <SetupModalContent title={"Install NetBird"} isUserDevice={true} />
+          <SetupModalContent title={t("onboarding.installNetBird")} isUserDevice={true} />
         </ModalContent>
       </Modal>
     </div>

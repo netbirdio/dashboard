@@ -5,6 +5,7 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { ExternalLinkIcon, ShieldCheck } from "lucide-react";
 import React from "react";
 import IntegrationIcon from "@/assets/icons/IntegrationIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Account } from "@/interfaces/Account";
 import { LockedFeatureInfoCard } from "@/modules/billing/locked-feature/LockedFeatureInfoCard";
 import { LockedFeatureOverlay } from "@/modules/billing/locked-feature/LockedFeatureOverlay";
@@ -19,6 +20,7 @@ type Props = {
   account: Account;
 };
 export default function EDRTab({ account }: Props) {
+  const t = useTranslations();
   useIntegrations();
 
   return (
@@ -27,7 +29,7 @@ export default function EDRTab({ account }: Props) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/integrations"}
-            label={"Integrations"}
+            label={t("common.integrations")}
             icon={<IntegrationIcon size={13} />}
           />
           <Breadcrumbs.Item
@@ -50,7 +52,7 @@ export default function EDRTab({ account }: Props) {
             }
             target={"_blank"}
           >
-            Learn more
+            {t("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>

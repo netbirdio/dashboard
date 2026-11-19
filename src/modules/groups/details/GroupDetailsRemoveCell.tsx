@@ -3,6 +3,7 @@ import * as React from "react";
 import Button from "@/components/Button";
 import { useGroupContext } from "@/contexts/GroupProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import { User } from "@/interfaces/User";
 
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export function GroupDetailsRemoveCell({ onRemove }: Props) {
+  const t = useTranslations();
   return (
     <div className={"flex justify-end pr-4"}>
       <Button
@@ -19,7 +21,7 @@ export function GroupDetailsRemoveCell({ onRemove }: Props) {
         onClick={() => onRemove()}
       >
         <MinusCircle size={14} />
-        Remove
+        {t("common.remove")}
       </Button>
     </div>
   );

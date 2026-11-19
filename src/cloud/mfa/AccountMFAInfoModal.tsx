@@ -2,6 +2,7 @@ import Button from "@components/Button";
 import { Modal, ModalContent } from "@components/modal/Modal";
 import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   open: boolean;
@@ -16,6 +17,7 @@ export const AccountMFAInfoModal = ({
   onCancel,
   onConfirm,
 }: Props) => {
+  const t = useTranslations();
   return (
     <Modal open={open} onOpenChange={setOpen}>
       <ModalContent showClose={false} maxWidthClass={"max-w-[380px]"}>
@@ -38,7 +40,7 @@ export const AccountMFAInfoModal = ({
               variant={"secondary"}
               onClick={onCancel}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               className={"w-full"}

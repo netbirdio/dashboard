@@ -12,6 +12,7 @@ import { ChevronsUpDown, SearchIcon, XIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PortRange } from "@/interfaces/Policy";
 
 interface MultiSelectProps {
@@ -52,6 +53,7 @@ export function PortSelector({
   popoverWidth = "auto",
   showAll = false,
 }: Readonly<MultiSelectProps>) {
+  const translate = useTranslations();
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
@@ -131,7 +133,7 @@ export function PortSelector({
                   variant={"gray"}
                   className={"uppercase tracking-wider font-medium py-1"}
                 >
-                  All
+                  {translate("common.all")}
                 </Badge>
               )}
 

@@ -96,12 +96,14 @@
     "tailwind-merge": "^3.7.0",
     "tailwindcss-animate": "^1.0.7",
     "timescape": "^0.7.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "use-intl": "^4.15.1"
   },
   "overrides": {
     "minimatch": ">=10.2.1"
   },
   "devDependencies": {
+    "@formatjs/icu-messageformat-parser": "^3.5.23",
     "@playwright/test": "^1.64.1",
     "@storybook/nextjs-vite": "^10.6.4",
     "@tailwindcss/postcss": "^4.3.3",

@@ -8,11 +8,13 @@ import integrationImage from "@/assets/integrations/datadog.png";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useIsLicensed } from "@/hooks/useIsLicensed";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { EventStream } from "@/interfaces/EventStream";
 import DatadogSetup from "@/modules/integrations/event-streaming/datadog/DatadogSetup";
 import { IntegrationCard } from "@/modules/integrations/IntegrationCard";
 
 export default function Datadog() {
+  const t = useTranslations();
   const { permission } = usePermissions();
   // Event Streaming is a licensed feature; skip the call on open-source.
   const { isLicensed } = useIsLicensed();
@@ -49,8 +51,8 @@ export default function Datadog() {
       title: `Disconnect Datadog?`,
       description:
         "Disconnecting deletes the current configuration. You will need to start the setup process again.",
-      confirmText: "Disconnect",
-      cancelText: "Cancel",
+      confirmText: t("integrations.disconnect"),
+      cancelText: t("common.cancel"),
       type: "warning",
     });
     if (!choice) return;

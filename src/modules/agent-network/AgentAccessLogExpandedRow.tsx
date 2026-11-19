@@ -8,6 +8,7 @@ import { cn } from "@utils/helpers";
 import { GaugeIcon, ShieldXIcon } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import {
   AIAccessLogEntry,
@@ -35,6 +36,7 @@ export default function AgentAccessLogExpandedRow({
   entry,
   selfScoped = false,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { policies, budgetRules } = useAIProviders();
   const isDeny = entry.decision === "deny";
   const hasSession = Boolean(entry.sessionId);
@@ -95,7 +97,7 @@ export default function AgentAccessLogExpandedRow({
   return (
     <div className={"px-4 py-4 space-y-3 bg-nb-gray-940/30"}>
       {requestLine && (
-        <Section heading={"Request"}>
+        <Section heading={t("agentNetwork.request")}>
           <Code dark small codeToCopy={requestLine}>
             <Code.Line>{requestLine}</Code.Line>
           </Code>

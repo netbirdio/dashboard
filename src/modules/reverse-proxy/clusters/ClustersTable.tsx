@@ -24,6 +24,7 @@ import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import {
   ReverseProxyCluster,
   ReverseProxyClusterType,
@@ -87,6 +88,7 @@ type Props = {
 };
 
 export default function ClustersTable({ headingTarget }: Readonly<Props>) {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { permission } = usePermissions();
@@ -175,7 +177,7 @@ export default function ClustersTable({ headingTarget }: Readonly<Props>) {
         keepStateInLocalStorage={false}
         initialPageSize={25}
         showResetFilterButton={false}
-        text={"Clusters"}
+        text={t("common.clusters")}
         sorting={sorting}
         setSorting={setSorting}
         columns={ClustersColumns}
@@ -199,7 +201,7 @@ export default function ClustersTable({ headingTarget }: Readonly<Props>) {
                 size={"large"}
               />
             }
-            title={"No clusters available"}
+            title={t("reverseProxy.noClusters")}
             description={
               "Set up a cluster to route traffic through your own infrastructure."
             }

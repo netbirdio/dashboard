@@ -14,6 +14,7 @@ import {
 import { getTrafficEventTypeText } from "@/cloud/traffic-events/TrafficEventsTable";
 import { stripZeroPort } from "@/cloud/traffic-events/utils/parseAddress";
 import { usePeers } from "@/contexts/PeersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 
 type Props = {
   event: TrafficEvent;
@@ -43,6 +44,7 @@ export const TrafficEventDescription = ({
   type,
   showCaret = false,
 }: Props) => {
+  const t = useTranslations();
   const { peers } = usePeers();
 
   const routerName = useMemo(() => {
@@ -125,7 +127,7 @@ export const TrafficEventDescription = ({
       sentences.push(
         info.isInbound ? (
           <>
-            {info.destinationName} {joinClauses(initiated)} from{" "}
+            {info.destinationName} {joinClauses(initiated)}{" " + t("trafficEvents.from")}{" "}
             {info.sourceName}
           </>
         ) : (
@@ -200,8 +202,8 @@ export const TrafficEventDescription = ({
     ) {
       return (
         <>
-          Routing peer {routerName} received connection to{" "}
-          {info.destinationName} from {info.sourceName}
+          {t("common.routingPeer") + " "}{routerName} received connection to{" "}
+          {info.destinationName}{" " + t("trafficEvents.from") + " "}{info.sourceName}
         </>
       );
     }
@@ -214,8 +216,8 @@ export const TrafficEventDescription = ({
     ) {
       return (
         <>
-          Routing peer {routerName} started routing to {info.destinationName}{" "}
-          from {info.sourceName}
+          {t("common.routingPeer") + " "}{routerName} started routing to {info.destinationName}{" "}
+          {t("trafficEvents.from") + " "}{info.sourceName}
         </>
       );
     }
@@ -228,8 +230,8 @@ export const TrafficEventDescription = ({
     ) {
       return (
         <>
-          Routing peer {routerName} stopped routing to {info.destinationName}{" "}
-          from {info.sourceName}
+          {t("common.routingPeer") + " "}{routerName} stopped routing to {info.destinationName}{" "}
+          {t("trafficEvents.from") + " "}{info.sourceName}
         </>
       );
     }
@@ -242,8 +244,8 @@ export const TrafficEventDescription = ({
     ) {
       return (
         <>
-          Routing peer {routerName} stopped connection to {info.destinationName}{" "}
-          from {info.sourceName}
+          {t("common.routingPeer") + " "}{routerName} stopped connection to {info.destinationName}{" "}
+          {t("trafficEvents.from") + " "}{info.sourceName}
         </>
       );
     }
@@ -265,7 +267,7 @@ export const TrafficEventDescription = ({
     ) {
       return (
         <>
-          Routing peer {routerName} blocked connection to {info.destinationName}
+          {t("common.routingPeer") + " "}{routerName} blocked connection to {info.destinationName}
         </>
       );
     }

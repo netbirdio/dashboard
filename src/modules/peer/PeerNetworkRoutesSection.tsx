@@ -2,6 +2,7 @@ import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import * as React from "react";
 import { lazy, Suspense } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import type { Peer } from "@/interfaces/Peer";
 import { AddExitNodeButton } from "@/modules/exit-node/AddExitNodeButton";
 import { useHasExitNodes } from "@/modules/exit-node/useHasExitNodes";
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export const PeerNetworkRoutesSection = ({ peer }: Props) => {
+  const t = useTranslations();
   const { peerRoutes, isLoading } = usePeerRoutes({ peer });
   const exitNodeInfo = useHasExitNodes(peer);
 
@@ -26,15 +28,14 @@ export const PeerNetworkRoutesSection = ({ peer }: Props) => {
         <div className={"flex justify-between items-center mb-5"}>
           <div>
             <Paragraph>
-              Access other networks without installing NetBird on every
-              resource.{" "}
+              {t("peer.networkRoutesDesc")}{" "}
               <InlineLink
                 href={
                   "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
                 }
                 target={"_blank"}
               >
-                Learn more
+                {t("common.learnMore")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>

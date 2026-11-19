@@ -21,6 +21,7 @@ import {
 import * as React from "react";
 import { useState } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
 // PeerResourcePicker — single-select endpoint picker with two tabs (Peers /
@@ -98,6 +99,7 @@ function OptionList({
   onSelect: (item: PeerResourceOption) => void;
   emptyText: string;
 }) {
+  const t = useTranslations();
   const [filteredItems, search, setSearch] = useSearch(
     options,
     searchPredicate,
@@ -114,7 +116,7 @@ function OptionList({
       <DropdownInput
         value={search}
         onChange={setSearch}
-        placeholder={"Search..."}
+        placeholder={t("common.searchInput")}
         hideEnterIcon={true}
       />
 
@@ -192,6 +194,7 @@ export function PeerResourcePicker({
   resources,
   users,
 }: Props) {
+  const t = useTranslations();
   const [tab, setTab] = useState<string>(() => {
     if (value) {
       if (users?.some((u) => u.id === value)) return "users";
@@ -218,7 +221,7 @@ export function PeerResourcePicker({
               className={"flex-1 gap-1.5 px-1.5 text-xs"}
             >
               <UsersIcon size={13} className={"shrink-0"} />
-              Users
+              {t("common.users")}
             </TabsTrigger>
           )}
           <TabsTrigger
@@ -226,14 +229,14 @@ export function PeerResourcePicker({
             className={"flex-1 gap-1.5 px-1.5 text-xs"}
           >
             <PeerIcon size={13} className={"fill-current shrink-0"} />
-            Peers
+            {t("common.peers")}
           </TabsTrigger>
           <TabsTrigger
             value={"resources"}
             className={"flex-1 gap-1.5 px-1.5 text-xs"}
           >
             <Layers3Icon size={13} className={"shrink-0"} />
-            Resources
+            {t("common.resources")}
           </TabsTrigger>
         </TabsPrimitive.List>
         {users && (

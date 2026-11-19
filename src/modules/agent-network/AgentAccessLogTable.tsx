@@ -52,6 +52,7 @@ import { useGroups } from "@/contexts/GroupsProvider";
 import { usePeers } from "@/contexts/PeersProvider";
 import { useServerPagination } from "@/contexts/ServerPaginationProvider";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import {
   AIAccessLogEntry,
@@ -115,6 +116,7 @@ export default function AgentAccessLogTable({
   onGroupedChange,
   selfScoped = false,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   const { providers } = useAIProviders();
   const { catalog } = useProviderCatalog();
   const { users } = useUsers();
@@ -789,7 +791,7 @@ export default function AgentAccessLogTable({
                 href={"https://docs.netbird.io/agent-network"}
                 target={"_blank"}
               >
-                Agent Network
+                {translate("common.agentNetwork")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </>

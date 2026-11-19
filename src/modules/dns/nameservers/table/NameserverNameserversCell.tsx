@@ -7,12 +7,14 @@ import {
 } from "@components/Tooltip";
 import { Server } from "lucide-react";
 import React from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 
 type Props = {
   ns: NameserverGroup;
 };
 export default function NameserverNameserversCell({ ns }: Props) {
+  const t = useTranslations();
   const nameservers = ns.nameservers ?? [];
 
   if (nameservers.length > 3) {
@@ -22,7 +24,7 @@ export default function NameserverNameserversCell({ ns }: Props) {
           <TooltipTrigger asChild={true}>
             <Badge variant={"gray"} className={"font-mono cursor-help"}>
               <Server size={10} className={"mr-1"} />
-              {nameservers.length} Servers
+              {nameservers.length}{" " + t("dns.servers")}
             </Badge>
           </TooltipTrigger>
           <TooltipContent className={"p-3"}>

@@ -5,6 +5,7 @@ import { uniqueId } from "lodash";
 import { GlobeIcon, MinusCircleIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Domain } from "@/interfaces/Domain";
 
 type Props = {
@@ -47,6 +48,7 @@ export default function InputDomain({
   allowWildcard = true,
   showRemoveButton = true,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const [name, setName] = useState(value?.name || "");
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,7 +82,7 @@ export default function InputDomain({
       <div className={"w-full"}>
         <Input
           customPrefix={<GlobeIcon size={15} />}
-          placeholder={"e.g., example.com"}
+          placeholder={t("components.domainPlaceholder")}
           maxWidthClass={"w-full"}
           data-testid={"domain-input"}
           value={name}

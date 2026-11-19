@@ -28,6 +28,7 @@ import React, { useState } from "react";
 import { useEmbeddedIdentityProviders } from "@/hooks/useEmbeddedIdentityProviders";
 import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/entra-id.png";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { AzureADIntegration } from "@/interfaces/IdentityProvider";
 import azureGrantAdmin from "@/modules/integrations/idp-sync/azure-ad/images/azure-grant-admin-conset.png";
 import { EmbeddedIdentityProviderSelect } from "@/modules/integrations/idp-sync/EmbeddedIdentityProviderSelect";
@@ -61,6 +62,7 @@ type ModalProps = {
 };
 
 export function SetupContent({ onSuccess }: ModalProps) {
+  const translate = useTranslations();
   const { mutate } = useSWRConfig();
   const azureRequest = useApiCall<AzureADIntegration>(
     "/integrations/azure-idp",
@@ -172,7 +174,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
             }
           >
             <Shield size={16} />
-            Required Permissions
+            {translate("common.requiredPermissions")}
           </div>
           <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
             Ensure that you have an{" "}
@@ -302,7 +304,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
             <Steps.Step step={4} line={false}>
               <p className={"font-normal"}>
                 Click <Mark>Grant admin consent for Default Directory</Mark> and
-                click <Mark>Yes</Mark>
+                click <Mark>{translate("common.yes")}</Mark>
               </p>
               <Lightbox image={azureGrantAdmin} />
             </Steps.Step>
@@ -330,13 +332,13 @@ export function SetupContent({ onSuccess }: ModalProps) {
             </Steps.Step>
             <Steps.Step step={3}>
               <p className={"font-normal"}>
-                Add <Mark copy>NetBird</Mark> as the description and click{" "}
-                <Mark>Add</Mark>
+                {translate("common.add") + " "}<Mark copy>NetBird</Mark> as the description and click{" "}
+                <Mark>{translate("common.add")}</Mark>
               </p>
             </Steps.Step>
             <Steps.Step step={4} line={false}>
               <p className={"font-normal"}>
-                Copy the <Mark>Value</Mark> and paste it here
+                Copy the <Mark>{translate("integrations.headerValue")}</Mark> and paste it here
               </p>
             </Steps.Step>
           </Steps>
@@ -380,7 +382,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
             </Steps.Step>
             <Steps.Step step={2} line={false}>
               <p className={"font-normal"}>
-                Select <Mark>NetBird</Mark> application in overview page and
+                {translate("common.select") + " "}<Mark>NetBird</Mark> application in overview page and
                 enter your <Mark>Application (client) ID</Mark> and{" "}
                 <Mark>Directory (tenant) ID</Mark>
               </p>
@@ -421,7 +423,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <FolderGit2 size={20} />
-            Groups to be synchronized
+            {translate("common.groupsToSync")}
           </p>
 
           <div className={"mb-4 flex flex-col gap-1"}>
@@ -440,7 +442,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
         <div className={"px-8 py-3 flex flex-col gap-0 mt-4"}>
           <p className={"font-medium flex gap-3 items-center text-base"}>
             <UserCircle size={18} />
-            Users to be synchronized
+            {translate("common.usersToSync")}
           </p>
 
           <div className={"mb-4 flex flex-col gap-1"}>
@@ -466,7 +468,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
             onClick={() => setStep(step + 1)}
             disabled={!connectorId || connectorId === ""}
           >
-            Continue
+            {translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -477,7 +479,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
             onClick={() => setStep(step - 1)}
           >
             <IconArrowLeft size={16} />
-            Back
+            {translate("common.back")}
           </Button>
         )}
         {step >= 0 && step < maxSteps && (
@@ -487,7 +489,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
             disabled={isDisabled}
             onClick={() => setStep(step + 1)}
           >
-            {step == 0 ? "Get Started" : "Continue"}
+            {step == 0 ? "Get Started" : translate("common.continue")}
             <IconArrowRight size={16} />
           </Button>
         )}
@@ -499,7 +501,7 @@ export function SetupContent({ onSuccess }: ModalProps) {
             onClick={connect}
           >
             <Repeat size={16} />
-            Connect
+            {translate("integrations.connect")}
           </Button>
         )}
       </ModalFooter>

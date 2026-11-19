@@ -68,6 +68,7 @@ import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import {
   Role,
@@ -107,6 +108,7 @@ function InviteNameCell({ invite }: { invite: UserInvite }) {
 
 // Role cell for invites - same styling as UserRoleCell but for invites
 function InviteRoleCell({ invite }: { invite: UserInvite }) {
+  const t = useTranslations();
   const role = invite.role as Role;
 
   return (
@@ -115,49 +117,49 @@ function InviteRoleCell({ invite }: { invite: UserInvite }) {
         {role === Role.User && (
           <>
             <User2 size={14} />
-            User
+            {t("users.user")}
           </>
         )}
         {role === Role.Admin && (
           <>
             <Cog size={14} />
-            Admin
+            {t("users.admin")}
           </>
         )}
         {role === Role.Owner && (
           <>
             <NetBirdIcon size={14} />
-            Owner
+            {t("users.owner")}
           </>
         )}
         {role === Role.BillingAdmin && (
           <>
             <CreditCardIcon size={14} />
-            Billing Admin
+            {t("users.billingAdmin")}
           </>
         )}
         {role === Role.Auditor && (
           <>
             <EyeIcon size={14} />
-            Auditor
+            {t("users.auditor")}
           </>
         )}
         {role === Role.NetworkAdmin && (
           <>
             <NetworkIcon size={14} />
-            Network Admin
+            {t("users.networkAdmin")}
           </>
         )}
         {role === Role.AgentNetworkAdmin && (
           <>
             <AgentNetworkIcon size={14} />
-            Agent Network Admin
+            {t("common.agentNetworkAdmin")}
           </>
         )}
         {role === Role.UsageViewer && (
           <>
             <GaugeIcon size={14} />
-            Usage Viewer
+            {t("users.usageViewer")}
           </>
         )}
       </Badge>
@@ -167,6 +169,7 @@ function InviteRoleCell({ invite }: { invite: UserInvite }) {
 
 // Groups cell for invites - read-only display of auto_groups
 function InviteGroupCell({ invite }: { invite: UserInvite }) {
+  const t = useTranslations();
   const { groups, isLoading } = useGroups();
 
   const foundGroups = useMemo(() => {
@@ -188,7 +191,7 @@ function InviteGroupCell({ invite }: { invite: UserInvite }) {
   return (
     <MultipleGroups
       groups={foundGroups}
-      label={"Auto-assigned Groups"}
+      label={t("users.autoAssignedGroups")}
       countOnly={true}
     />
   );
@@ -213,6 +216,7 @@ function InviteStatusCell({ invite }: { invite: UserInvite }) {
 
 // Action cell for invites - regenerate + delete in a dropdown menu
 function InviteActionCell({ invite }: { invite: UserInvite }) {
+  const t = useTranslations();
   const { confirm } = useDialog();
   const { permission } = usePermissions();
   const inviteRequest = useApiCall<UserInvite>("/users/invites");
@@ -235,14 +239,14 @@ function InviteActionCell({ invite }: { invite: UserInvite }) {
 
   const handleRegenerate = async () => {
     notify({
-      title: "Regenerate Invite",
+      title: t("users.regenerateInvite"),
       description: `Regenerating invite link for ${invite.name}...`,
       promise: regenerateRequest.post({}).then((response) => {
         setRegeneratedData(response);
         setModalOpen(true);
         mutate("/users/invites");
       }),
-      loadingMessage: "Regenerating...",
+      loadingMessage: t("users.regenerating"),
     });
   };
 
@@ -257,11 +261,11 @@ function InviteActionCell({ invite }: { invite: UserInvite }) {
     const name = invite.name || invite.email || "Invite";
     notify({
       title: `'${name}' deleted`,
-      description: "Invite was successfully deleted.",
+      description: t("users.inviteDeletedDesc"),
       promise: inviteRequest.del("", `/${invite.id}`).then(() => {
         mutate("/users/invites");
       }),
-      loadingMessage: "Deleting the invite...",
+      loadingMessage: t("users.deletingInvite"),
     });
   };
 
@@ -270,9 +274,9 @@ function InviteActionCell({ invite }: { invite: UserInvite }) {
     const choice = await confirm({
       title: `Delete invite for '${name}'?`,
       description:
-        "Deleting this invite will revoke the invite link. The user will no longer be able to join using this invite.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+        t("users.deleteInviteDesc"),
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       maxWidthClass: "max-w-md",
       type: "danger",
     });
@@ -294,7 +298,7 @@ function InviteActionCell({ invite }: { invite: UserInvite }) {
             <Button
               variant={"secondary"}
               className={"!px-3"}
-              aria-label={"Invite actions"}
+              aria-label={t("users.inviteActions")}
             >
               <MoreVertical size={16} className={"shrink-0"} />
             </Button>
@@ -307,7 +311,7 @@ function InviteActionCell({ invite }: { invite: UserInvite }) {
             >
               <div className={"flex gap-3 items-center"}>
                 <RefreshCw size={14} className={"shrink-0"} />
-                Regenerate
+                {t("users.regenerateButton")}
               </div>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -319,7 +323,7 @@ function InviteActionCell({ invite }: { invite: UserInvite }) {
             >
               <div className={"flex gap-3 items-center"}>
                 <Trash2 size={14} className={"shrink-0"} />
-                Delete
+                {t("common.delete")}
               </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -344,11 +348,10 @@ function InviteActionCell({ invite }: { invite: UserInvite }) {
             <div className={"flex flex-col items-center justify-center gap-3"}>
               <div>
                 <h2 className={"text-2xl text-center mb-2"}>
-                  Invite link regenerated!
+                  {t("users.inviteLinkRegenerated")}
                 </h2>
                 <Paragraph className={"mt-0 text-sm text-center"}>
-                  Share this link with the user. They will be able to set their
-                  own password.
+                  {t("users.inviteLinkShareInfo")}
                 </Paragraph>
               </div>
             </div>
@@ -367,7 +370,7 @@ function InviteActionCell({ invite }: { invite: UserInvite }) {
               <Paragraph
                 className={"mt-3 text-xs text-nb-gray-400 text-center"}
               >
-                Expires on{" "}
+                {t("users.expiresOn")}{" "}
                 {new Date(regeneratedData.invite_expires_at).toLocaleString()}
               </Paragraph>
             )}
@@ -379,7 +382,7 @@ function InviteActionCell({ invite }: { invite: UserInvite }) {
               onClick={handleCopyAndClose}
             >
               <CopyIcon size={14} />
-              Copy & Close
+              {t("users.copyAndClose")}
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -462,6 +465,7 @@ export default function UserInvitesTable({
   headingTarget,
   onShowUsers,
 }: Readonly<Props>) {
+  const translate = useTranslations();
   useFetchApi("/groups");
   const { groups } = useGroups();
   const { data: invites, isLoading } =
@@ -585,14 +589,14 @@ export default function UserInvitesTable({
     <DataTable
       headingTarget={headingTarget}
       isLoading={isLoading}
-      text={"Invites"}
+      text={translate("users.invites")}
       sorting={sorting}
       setSorting={setSorting}
       columns={InvitesTableColumns}
       data={invitesWithGroupNames}
       initialPageSize={25}
       showResetFilterButton={false}
-      searchPlaceholder={"Search by name or email..."}
+      searchPlaceholder={translate("users.searchByNameOrEmail")}
       aboveTable={(table) => (
         <TableFilterChips table={table} filters={filterDefs} />
       )}
@@ -609,10 +613,8 @@ export default function UserInvitesTable({
               size={"large"}
             />
           }
-          title={"No Pending Invites"}
-          description={
-            "There are no pending invites. Create an invite to add users to your network."
-          }
+          title={translate("users.noPendingInvites")}
+          description={translate("users.noPendingInvitesDesc")}
           button={
             <div className={"flex flex-col items-center justify-center"}>
               <InviteUserButton show={true} />
@@ -627,7 +629,7 @@ export default function UserInvitesTable({
                 }
                 target={"_blank"}
               >
-                Users
+                {translate("common.users")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </>
@@ -665,7 +667,7 @@ export default function UserInvitesTable({
             />
             <Button variant={"secondary"} onClick={onShowUsers}>
               <User2 size={14} />
-              Show Users
+              {translate("users.showUsers")}
             </Button>
           </>
         );
@@ -685,6 +687,7 @@ export const InviteUserButton = ({
   className,
   groups,
 }: InviteUserButtonProps) => {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const account = useAccount();
 
@@ -705,7 +708,7 @@ export const InviteUserButton = ({
         disabled={!permission.users.create}
       >
         <MailPlus size={16} />
-        {isCloud ? "Invite User" : "Add User"}
+        {isCloud ? t("common.inviteUser") : t("users.addUser")}
       </Button>
     </UserInviteModal>
   );

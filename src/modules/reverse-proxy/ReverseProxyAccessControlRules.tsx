@@ -18,6 +18,7 @@ import {
   SelectOption,
 } from "@components/select/SelectDropdown";
 import { CountrySelector } from "@/components/ui/CountrySelector";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { AccessRestrictions, CrowdSecMode } from "@/interfaces/ReverseProxy";
 import { ReverseProxyCrowdSecIPReputation } from "@/modules/reverse-proxy/ReverseProxyCrowdSecIPReputation";
 
@@ -193,6 +194,7 @@ export const ReverseProxyAccessControlRules = ({
   onValidationChange,
   supportsCrowdSec,
 }: Props) => {
+  const t = useTranslations();
   const [rules, dispatch] = useReducer(
     rulesReducer,
     value,
@@ -242,7 +244,7 @@ export const ReverseProxyAccessControlRules = ({
         />
       )}
       <div>
-        <Label>Access Control Rules</Label>
+        <Label>{t("reverseProxy.accessControlRules")}</Label>
         <HelpText>
           Define rules to allow or block traffic based on country, IP address,
           or CIDR block.
@@ -340,7 +342,7 @@ export const ReverseProxyAccessControlRules = ({
                 variant="default-outline"
                 className="h-[42px] w-[42px] !px-0 shrink-0 ml-2"
                 onClick={() => dispatch({ type: "remove", id: rule.id })}
-                aria-label="Remove rule"
+                aria-label={t("reverseProxy.removeRule")}
                 data-testid="remove-access-rule"
               >
                 <MinusCircleIcon size={14} />
@@ -357,7 +359,7 @@ export const ReverseProxyAccessControlRules = ({
         data-testid="add-access-rule"
       >
         <PlusIcon size={14} />
-        Add Rule
+        {t("reverseProxy.addRule")}
       </Button>
     </div>
   );

@@ -12,6 +12,7 @@ import { ExternalLinkIcon } from "lucide-react";
 import React, { Suspense } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import PageContainer from "@/layouts/PageContainer";
 import AIProviderModal from "@/modules/agent-network/AIProviderModal";
 import AIProvidersProvider, {
@@ -73,6 +74,7 @@ function PageBody({
 }
 
 export default function AgentNetworkProvidersPage() {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
@@ -83,7 +85,7 @@ export default function AgentNetworkProvidersPage() {
           agent-network state, so they must not mount for users without
           read on the providers submodule. */}
       <RestrictedAccess
-        page={"Providers"}
+        page={t("common.providers")}
         hasAccess={permission?.["agent_network.providers"]?.read}
       >
         <AIProvidersProvider>
@@ -91,16 +93,16 @@ export default function AgentNetworkProvidersPage() {
             <Breadcrumbs>
               <Breadcrumbs.Item
                 href={"/agent-network/providers"}
-                label={"Agent Network"}
+                label={t("common.agentNetwork")}
                 icon={<AgentNetworkIcon size={16} />}
               />
               <Breadcrumbs.Item
                 href={"/agent-network/providers"}
-                label={"Providers"}
+                label={t("common.providers")}
                 active={true}
               />
             </Breadcrumbs>
-            <h1 ref={headingRef}>Providers</h1>
+            <h1 ref={headingRef}>{t("common.providers")}</h1>
             <Paragraph>
               Connect AI providers and gateways like LiteLLM, OpenAI, and
               Anthropic through one keyless endpoint, accessible only via
@@ -109,7 +111,7 @@ export default function AgentNetworkProvidersPage() {
                 href={"https://docs.netbird.io/agent-network/providers"}
                 target={"_blank"}
               >
-                Learn more
+                {t("common.learnMore")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>

@@ -28,6 +28,7 @@ import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/generic-http.png";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { EventStream } from "@/interfaces/EventStream";
 import { IntegrationModalHeader } from "@/modules/integrations/IntegrationModalHeader";
 import { useWebhookConfig } from "@/cloud/webhooks/useWebhookConfig";
@@ -94,6 +95,7 @@ export function GenericHTTPModalContent({
   onDelete,
   stream,
 }: Readonly<ModalProps>) {
+  const t = useTranslations();
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
   const integrationRequest = useApiCall("/integrations/event-streaming", true);
@@ -185,8 +187,8 @@ export function GenericHTTPModalContent({
       title: `Delete Generic HTTP Integration?`,
       description:
         "Are you sure you want to delete this integration? You will need to start the setup process again.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      confirmText: t("common.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
       maxWidthClass: "max-w-lg",
     });
@@ -245,7 +247,7 @@ export function GenericHTTPModalContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            General
+            {t("integrations.general")}
           </TabsTrigger>
           <TabsTrigger value={"headers"} disabled={!config.canContinueToHeaders}>
             <FileCode2Icon
@@ -254,7 +256,7 @@ export function GenericHTTPModalContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Headers
+            {t("integrations.headers")}
           </TabsTrigger>
           <TabsTrigger
             value={"template"}
@@ -276,7 +278,7 @@ export function GenericHTTPModalContent({
                   "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
                 }
               />
-              Danger Zone
+              {t("common.dangerZoneTitle")}
             </TabsTrigger>
           )}
         </TabsList>
@@ -334,7 +336,7 @@ export function GenericHTTPModalContent({
             <Label>
               <div className={"flex gap-2 items-center"}>
                 <AlertOctagon size={16} />
-                Delete Integration
+                {t("common.deleteIntegration")}
               </div>
             </Label>
             <HelpText className={"max-w-lg mt-2"}>
@@ -349,7 +351,7 @@ export function GenericHTTPModalContent({
             className={"mt-3"}
             onClick={deleteIntegration}
           >
-            Delete Integration
+            {t("common.deleteIntegration")}
           </Button>
         </TabsContent>
       </Tabs>
@@ -373,12 +375,12 @@ export function GenericHTTPModalContent({
         <div className={"flex gap-3 w-full justify-end"}>
           {tab === "general" && !stream && (
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>{t("common.cancel")}</Button>
             </ModalClose>
           )}
           {tab !== "general" && !stream && (
             <Button variant={"secondary"} onClick={goBack}>
-              Back
+              {t("common.back")}
             </Button>
           )}
           {tab === "general" && !stream && (
@@ -387,7 +389,7 @@ export function GenericHTTPModalContent({
               disabled={!config.canContinueToHeaders}
               onClick={() => setTab("headers")}
             >
-              Continue
+              {t("common.continue")}
               <IconArrowRight size={16} />
             </Button>
           )}
@@ -397,7 +399,7 @@ export function GenericHTTPModalContent({
               disabled={!config.canContinueToHeaders || !canContinueToBodyTemplate}
               onClick={() => setTab("template")}
             >
-              Continue
+              {t("common.continue")}
               <IconArrowRight size={16} />
             </Button>
           )}
@@ -409,21 +411,21 @@ export function GenericHTTPModalContent({
               onClick={connect}
             >
               <Repeat size={16} />
-              Connect
+              {t("integrations.connect")}
             </Button>
           )}
 
           {stream && (
             <>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{t("common.cancel")}</Button>
               </ModalClose>
               <Button
                 variant={"primary"}
                 onClick={update}
                 disabled={!canCreateOrUpdate}
               >
-                Save Changes
+                {t("common.saveChanges")}
               </Button>
             </>
           )}

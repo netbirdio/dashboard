@@ -20,6 +20,7 @@ import * as React from "react";
 import { useMemo } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -51,6 +52,7 @@ export default function GroupsRow({
   disabled = false,
   countOnly = false,
 }: Readonly<Props>) {
+  const t = useTranslations();
   const { groups: allGroups } = useGroups();
   const { permission } = usePermissions();
 
@@ -75,7 +77,7 @@ export default function GroupsRow({
         {foundGroups?.length == 0 && showAddGroupButton ? (
           <Badge variant={"gray"} useHover={true}>
             <IconCirclePlus size={14} />
-            Add Groups
+            {t("commonTableRows.addGroups")}
           </Badge>
         ) : (
           <div
@@ -125,6 +127,7 @@ export function EditGroupsModal({
   hideAllGroup = false,
   disabled,
 }: Readonly<EditGroupsModalProps>) {
+  const t = useTranslations();
   const [selectedGroups, setSelectedGroups, { getAllGroupCalls }] =
     useGroupHelper({
       initial: groups,
@@ -160,7 +163,7 @@ export function EditGroupsModal({
       <ModalFooter className={"items-center"}>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("common.cancel")}</Button>
           </ModalClose>
 
           <Button
@@ -169,7 +172,7 @@ export function EditGroupsModal({
             disabled={disabled}
             data-testid="save-groups"
           >
-            Save Groups
+            {t("commonTableRows.saveGroups")}
           </Button>
         </div>
       </ModalFooter>

@@ -7,6 +7,7 @@ import { PlanFeatureAvailability } from "@/cloud/cloud-hooks/useIsFeatureLocked"
 import { useTrial } from "@/cloud/cloud-hooks/useTrial";
 import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { PlanTier } from "@/interfaces/Subscription";
 import { LockedFeatureInfoCardProps } from "@/modules/billing/locked-feature/LockedFeatureInfoCard";
 import { TrialOrUpgradeButton } from "@/modules/billing/trial/TrialOrUpgradeButton";
@@ -144,6 +145,7 @@ const UpgradeOrTrialText = ({
 };
 
 const GetMSPSupportButton = () => {
+  const t = useTranslations();
   const { mspInfo, hasReseller } = useMSP();
   const mailToEmail = mspInfo?.parent_owner_email || "support@netbird.io";
   if (hasReseller) return;
@@ -160,7 +162,7 @@ const GetMSPSupportButton = () => {
           className={cn("w-full h-[34px]")}
         >
           <MailIcon size={15} className={"shrink-0"} />
-          Get Support
+          {t("billing.getSupport")}
         </Button>
       </a>
     </div>

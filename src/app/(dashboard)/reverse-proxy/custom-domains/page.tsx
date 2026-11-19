@@ -11,6 +11,7 @@ import React, { lazy, Suspense } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import ReverseProxiesProvider from "@/contexts/ReverseProxiesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK } from "@/interfaces/ReverseProxy";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -19,6 +20,7 @@ const CustomDomainsTable = lazy(
 );
 
 export default function ReverseProxyCustomDomainsPage() {
+  const t = useTranslations();
   const { permission } = usePermissions();
 
   const { ref: headingRef, portalTarget } =
@@ -30,29 +32,29 @@ export default function ReverseProxyCustomDomainsPage() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/reverse-proxy/services"}
-            label={"Reverse Proxy"}
+            label={t("common.reverseProxy")}
             icon={<ReverseProxyIcon size={16} />}
           />
           <Breadcrumbs.Item
             href={"/reverse-proxy/custom-domains"}
-            label={"Custom Domains"}
+            label={t("common.customDomains")}
             active={true}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Domains</h1>
+        <h1 ref={headingRef}>{t("common.domains")}</h1>
         <Paragraph>
           Add and manage custom domains for your reverse proxy services.{" "}
           <InlineLink
             href={REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK}
             target={"_blank"}
           >
-            Learn more
+            {t("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
       </div>
       <RestrictedAccess
-        page={"Custom Domains"}
+        page={t("common.customDomains")}
         hasAccess={permission?.services?.read}
       >
         <ReverseProxiesProvider>
