@@ -62,6 +62,7 @@ export default function FancyToggleSwitch({
   labelClassName,
   textWrapperClassName = "max-w-sm",
 }: Readonly<Props>) {
+  const labelId = React.useId();
   const handleToggle = () => {
     if (disabled) return;
     onChange(!value);
@@ -92,7 +93,9 @@ export default function FancyToggleSwitch({
     >
       <div className={"flex justify-between gap-10"}>
         <div className={cn(textWrapperClassName)}>
-          <Label className={labelClassName}>{label}</Label>
+          <Label id={labelId} className={labelClassName}>
+            {label}
+          </Label>
           <HelpText margin={false}>{helpText}</HelpText>
         </div>
         <div className={"mt-2 pr-1"}>
@@ -100,11 +103,16 @@ export default function FancyToggleSwitch({
             checked={value}
             onCheckedChange={onChange}
             data-testid={dataTestId}
+            aria-labelledby={label ? labelId : undefined}
           />
         </div>
       </div>
       {children && value ? (
-        <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="mt-4"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
           {children}
         </div>
       ) : null}
