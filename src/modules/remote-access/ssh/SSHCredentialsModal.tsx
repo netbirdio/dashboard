@@ -45,15 +45,15 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
   const [port, setPort] = useState(initialPort);
 
   const userNameError = useMemo(() => {
-    if (username?.length === 0) return "Username cannot be empty";
-  }, [username]);
+    if (username?.length === 0) return t("remoteAccess.usernameRequired");
+  }, [username, t]);
 
   const portError = useMemo(() => {
     const portNumber = Number(port);
     const isValid =
       Number.isInteger(portNumber) && portNumber > 0 && portNumber <= 65535;
-    if (!isValid) return "Port must be a number between 1 and 65535";
-  }, [port]);
+    if (!isValid) return t("remoteAccess.portRangeError");
+  }, [port, t]);
 
   const hasAnyError = useMemo(() => {
     if (userNameError !== undefined) return true;
@@ -78,17 +78,15 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
         <ModalHeader
           icon={<TerminalIcon className={"text-netbird"} size={18} />}
           title={peer.name}
-          description={`Connect to ${peer.ip} via SSH`}
+          description={t("remoteAccess.connectViaSsh", { host: peer.ip })}
           color={"netbird"}
         />
         <Separator />
 
         <div className={"px-8 py-6 flex flex-col gap-8"}>
           <div className={""}>
-            <Label>Username & Port</Label>
-            <HelpText>
-              The username and port you will use to connect to the remote host.
-            </HelpText>
+            <Label>{t("remoteAccess.usernameAndPort")}</Label>
+            <HelpText>{t("remoteAccess.usernameAndPortHelp")}</HelpText>
             <div className={"flex flex-col gap-2 w-full"}>
               <Input
                 placeholder={"root"}
@@ -129,11 +127,15 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
         <ModalFooter className={"items-center"}>
           <div className={"w-full"}>
             <Paragraph className={"text-sm mt-auto"}>
-              Learn more about
-              <InlineLink href={SSH_DOCS_LINK} target={"_blank"}>
-                SSH
-                <ExternalLinkIcon size={12} />
-              </InlineLink>
+              {t.rich("remoteAccess.learnMoreAbout", {
+                topic: "SSH",
+                link: (chunks) => (
+                  <InlineLink href={SSH_DOCS_LINK} target={"_blank"}>
+                    {chunks}
+                    <ExternalLinkIcon size={12} />
+                  </InlineLink>
+                ),
+              })}
             </Paragraph>
           </div>
           <div className={"flex gap-3 w-full justify-end"}>

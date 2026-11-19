@@ -72,7 +72,7 @@ export const AssignUserToGroupModalContent = ({
   onSuccess,
   excludedUsers,
   showClose = true,
-  buttonText = "Assign Users",
+  buttonText,
 }: ContentProps) => {
   const translate = useTranslations();
   const { data: users, isLoading } = useFetchApi<User[]>(
@@ -86,6 +86,8 @@ export const AssignUserToGroupModalContent = ({
       desc: false,
     },
   ]);
+  const columns = useUsersTableColumns();
+  const assignLabel = buttonText ?? translate("groups.assignUsers");
 
   const data = useMemo(() => {
     return users?.filter((p) => {
@@ -111,7 +113,7 @@ export const AssignUserToGroupModalContent = ({
         sorting={sorting}
         keepStateInLocalStorage={false}
         setSorting={setSorting}
-        columns={UsersTableColumns}
+        columns={columns}
         data={data}
         isLoading={isLoading}
         tableCellClassName={"!py-1 scale-[95%]"}
@@ -122,10 +124,8 @@ export const AssignUserToGroupModalContent = ({
         getStartedCard={
           <NoResultsCard
             className={"mb-8"}
-            title={"You don't have any users to assign"}
-            description={
-              "In order to assign users to this group you need to have at least one user that is not already part of this group."
-            }
+            title={translate("groups.noUsersToAssignTitle")}
+            description={translate("groups.noUsersToAssignDescription")}
             icon={<TeamIcon className={"fill-nb-gray-200"} size={14} />}
           />
         }
@@ -137,7 +137,7 @@ export const AssignUserToGroupModalContent = ({
                   <span className={"text-netbird font-medium"}>
                     {Object.keys(selectedRows).length}
                   </span>{" "}
-                  User(s) selected
+                  {translate("groups.usersSelected")}
                 </div>
               )}
             </div>
@@ -155,7 +155,7 @@ export const AssignUserToGroupModalContent = ({
                   onSuccess?.(selectedUsers);
                 }}
               >
-                {buttonText}
+                {assignLabel}
               </Button>
             )}
           </div>
@@ -165,7 +165,9 @@ export const AssignUserToGroupModalContent = ({
   );
 };
 
-const UsersTableColumns: ColumnDef<User>[] = [
+function useUsersTableColumns(): ColumnDef<User>[] {
+  const t = useTranslations();
+  return [
   {
     id: "select",
     header: ({ table }) => (
@@ -173,7 +175,7 @@ const UsersTableColumns: ColumnDef<User>[] = [
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
+          aria-label={t("tables.selectAll")}
         />
       </div>
     ),
@@ -183,7 +185,7 @@ const UsersTableColumns: ColumnDef<User>[] = [
           checked={row.getIsSelected()}
           variant={"tableCell"}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
+          aria-label={t("tables.selectRow")}
         />
       </div>
     ),
@@ -193,7 +195,9 @@ const UsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} labelId="common.name" />
+      );
     },
     accessorFn: (row) => row.name + " " + row.email,
     sortingFn: "text",
@@ -202,7 +206,9 @@ const UsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "role",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Role</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} labelId="common.role" />
+      );
     },
     sortingFn: "text",
     cell: ({ row }) => <UserRoleCell user={row.original} />,
@@ -210,7 +216,9 @@ const UsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "status",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Status</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} labelId="common.status" />
+      );
     },
     sortingFn: "text",
     cell: ({ row }) => <UserStatusCell user={row.original} />,
@@ -218,7 +226,9 @@ const UsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "last_login",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Last Login</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} labelId="tables.lastLogin" />
+      );
     },
     sortingFn: "text",
     cell: ({ row }) => (
@@ -228,4 +238,5 @@ const UsersTableColumns: ColumnDef<User>[] = [
       />
     ),
   },
-];
+  ];
+}

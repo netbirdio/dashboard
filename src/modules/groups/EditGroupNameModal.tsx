@@ -41,7 +41,7 @@ export const EditGroupNameModal = ({
     const newName = e.target.value;
     const findGroup = groups?.find((g) => g.name === newName);
     if (findGroup) {
-      setError("This group already exists. Please choose another name.");
+      setError(t("groups.nameAlreadyExists"));
     } else {
       setError("");
     }
@@ -52,8 +52,8 @@ export const EditGroupNameModal = ({
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent maxWidthClass={"max-w-md"}>
         <ModalHeader
-          title={"Rename Group"}
-          description={"Set an easily identifiable name for your group."}
+          title={t("groups.rename")}
+          description={t("groups.renameDescription")}
           color={"blue"}
         />
 

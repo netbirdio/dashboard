@@ -38,7 +38,7 @@ export default function PeerRouteActionCell({ route }: Props) {
 
   const handleRevoke = async () => {
     notify({
-      title: "Delete Route " + route.network_id,
+      title: t("peer.deleteRouteTitle", { id: route.network_id }),
       description: t("peer.routeRemoved"),
       promise: routeRequest.del("", `/${route.id}`).then(() => {
         mutate("/routes");
@@ -49,9 +49,11 @@ export default function PeerRouteActionCell({ route }: Props) {
 
   const handleConfirm = async () => {
     const choice = await confirm({
-      title: `Delete peer ${peer.name} from '${route.network_id}' network?`,
-      description:
-        "Are you sure you want to delete the peer from this route? This action cannot be undone.",
+      title: t("peer.deletePeerFromRouteTitle", {
+        peer: peer.name,
+        network: route.network_id,
+      }),
+      description: t("peer.deletePeerFromRouteDescription"),
       confirmText: t("common.delete"),
       cancelText: t("common.cancel"),
       type: "danger",
@@ -78,10 +80,12 @@ export default function PeerRouteActionCell({ route }: Props) {
           {peerGroup && (
             <TooltipContent>
               <div className={"max-w-xs text-sm"}>
-                <span className={"text-netbird"}>{peer.name}</span> is a part of
-                a group used in a network route. To remove this peer from the
-                network route, you need to disassociate this peer from the group
-                used in this route.
+                {t.rich("peer.peerInRouteGroup", {
+                  name: peer.name,
+                  peer: (chunks) => (
+                    <span className={"text-netbird"}>{chunks}</span>
+                  ),
+                })}
               </div>
             </TooltipContent>
           )}

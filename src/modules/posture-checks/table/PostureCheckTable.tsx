@@ -248,9 +248,7 @@ export default function PostureCheckTable({
                   />
                 }
                 title={t("postureChecks.createPostureCheck")}
-                description={
-                  "Add posture checks to further restrict access in your network. E.g., only clients with a specific NetBird client version, operating system or location are allowed to connect."
-                }
+                description={t("postureChecks.noChecksDescription")}
                 button={
                   <Button
                     variant={"primary"}
@@ -264,20 +262,20 @@ export default function PostureCheckTable({
                     {t("postureChecks.createPostureCheck")}
                   </Button>
                 }
-                learnMore={
-                  <>
-                    Learn more about
+                learnMore={t.rich("postureChecks.learnMoreAbout", {
+                  topic: t("common.postureChecks"),
+                  link: (chunks) => (
                     <InlineLink
                       href={
                         "https://docs.netbird.io/how-to/manage-posture-checks"
                       }
                       target={"_blank"}
                     >
-                      {t("common.postureChecks")}
+                      {chunks}
                       <ExternalLinkIcon size={12} />
                     </InlineLink>
-                  </>
-                }
+                  ),
+                })}
               />
             }
           >

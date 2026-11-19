@@ -82,7 +82,7 @@ export default function RouteModal({
     if (!r?.access_control_groups) return;
 
     const choice = await confirm({
-      title: `Do you want to create a new access control policy for the route '${r.network_id}'?`,
+      title: t("routes.createPolicyForRouteTitle", { name: r.network_id }),
       description:
         t("routes.createPolicyDescription"),
       confirmText: t("routes.createPolicyConfirmText"),
@@ -337,8 +337,8 @@ export function RouteModalContent({
   const cidrError = useMemo(() => {
     if (networkRange == "") return "";
     const validCIDR = isValidIP(networkRange);
-    if (!validCIDR) return "Please enter a valid IP or CIDR, e.g., 192.168.1.1, 192.168.1.0/24 or 2001:db8::/64";
-  }, [networkRange]);
+    if (!validCIDR) return t("routes.invalidCidr");
+  }, [networkRange, t]);
 
   const isGroupsEntered = useMemo(() => {
     return groups.length > 0;
@@ -364,15 +364,15 @@ export function RouteModalContent({
 
   const networkIdentifierError = useMemo(() => {
     return (networkIdentifier?.length || 0) > 40
-      ? "Network Identifier must be less than 40 characters"
+      ? t("routes.networkIdentifierTooLong")
       : "";
-  }, [networkIdentifier]);
+  }, [networkIdentifier, t]);
 
   const metricError = useMemo(() => {
     return parseInt(metric) < 1 || parseInt(metric) > 9999
-      ? "Metric must be between 1 and 9999"
+      ? t("routes.metricRangeError")
       : "";
-  }, [metric]);
+  }, [metric, t]);
 
   const isNameEntered = useMemo(() => {
     return networkIdentifier != "" && networkIdentifierError == "";
@@ -402,13 +402,13 @@ export function RouteModalContent({
             ? isFirstExitNode
               ? t("routes.setupExitNode")
               : t("routes.addExitNode")
-            : "Create New  Route"
+            : t("routes.createNewRoute")
         }
         truncate={!!peer}
         description={
           exitNode
             ? peer
-              ? `Route all traffic through the peer '${peer.name}'`
+              ? t("routes.routeAllThroughPeer", { name: peer.name })
               : t("routes.routeAllInternet")
             : t("routes.createDescription")
         }
@@ -736,7 +736,7 @@ export function RouteModalContent({
                   {t("routes.enableRoute")}
                 </>
               }
-              helpText={"Use this switch to enable or disable the route."}
+              helpText={t("routes.enableRouteHelp")}
             />
 
             {exitNode && (
@@ -749,9 +749,7 @@ export function RouteModalContent({
                     {t("routes.autoApplyRoute")}
                   </>
                 }
-                helpText={
-                  "Automatically apply this exit node to your distribution groups. This requires NetBird client v0.55.0 or higher."
-                }
+                helpText={t("routes.autoApplyExitNodeHelp")}
               />
             )}
 
@@ -797,18 +795,24 @@ export function RouteModalContent({
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
-            <InlineLink
-              href={
-                exitNode
-                  ? "https://docs.netbird.io/how-to/configuring-default-routes-for-internet-traffic"
-                  : "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
-              }
-              target={"_blank"}
-            >
-              {exitNode ? "Exit Nodes" : t("common.networkRoutes")}
-              <ExternalLinkIcon size={12} />
-            </InlineLink>
+            {t.rich("routes.learnMoreAbout", {
+              link: (chunks) => (
+                <InlineLink
+                  href={
+                    exitNode
+                      ? "https://docs.netbird.io/how-to/configuring-default-routes-for-internet-traffic"
+                      : "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+                  }
+                  target={"_blank"}
+                >
+                  {chunks}
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              ),
+              topic: exitNode
+                ? t("routes.exitNodes")
+                : t("common.networkRoutes"),
+            })}
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>

@@ -286,7 +286,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
 
   const metricError = useMemo(() => {
     return parseInt(metric.toString()) < 1 || parseInt(metric.toString()) > 9999
-      ? "Metric must be between 1 and 9999"
+      ? t("routes.metricRangeError")
       : "";
   }, [metric]);
 
@@ -454,7 +454,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
                   {t("routes.enableRoute")}
                 </>
               }
-              helpText={"Use this switch to enable or disable the route."}
+              helpText={t("routes.enableRouteHelp")}
             />
 
             {isExitNode && (
@@ -467,7 +467,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
                       {t("routes.autoApplyRoute")}
                     </>
                   }
-                  helpText={"Automatically apply this exit node to your distribution groups. This requires NetBird client v0.55.0 or higher."}
+                  helpText={t("routes.autoApplyExitNodeHelp")}
                 />
             )}
 
@@ -483,7 +483,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
               <div>
                 <Label>{t("routes.colMetric")}</Label>
                 <HelpText className={"max-w-[200px]"}>
-                  A lower metric indicates a higher priority route.
+                  {t("routes.metricPriority")}
                 </HelpText>
               </div>
 
@@ -511,16 +511,20 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
-            <InlineLink
-              href={
-                "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
-              }
-              target={"_blank"}
-            >
-              {t("common.networkRoutes")}
-              <ExternalLinkIcon size={12} />
-            </InlineLink>
+            {t.rich("routes.learnMoreAbout", {
+              topic: t("common.networkRoutes"),
+              link: (chunks) => (
+                <InlineLink
+                  href={
+                    "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+                  }
+                  target={"_blank"}
+                >
+                  {chunks}
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              ),
+            })}
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>

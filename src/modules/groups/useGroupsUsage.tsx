@@ -1,7 +1,8 @@
 import useFetchApi from "@utils/api";
 import { useMemo } from "react";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { DNSZone } from "@/interfaces/DNS";
-import { GROUP_TOOLTIP_TEXT, Group, GroupIssued } from "@/interfaces/Group";
+import { Group, GroupIssued } from "@/interfaces/Group";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 import { Policy } from "@/interfaces/Policy";
 import { Route } from "@/interfaces/Route";
@@ -34,16 +35,21 @@ export const isGroupInUse = (group: GroupUsage) =>
  * rules the single-group action cell applies, so the bulk-select checkboxes and
  * the row menu can never disagree about what is deletable.
  */
-export const groupDeleteDisabledReason = (group: GroupUsage) => {
-  if (group.name === "All") return GROUP_TOOLTIP_TEXT.DELETE.ALL;
+export const groupDeleteDisabledReason = (
+  group: GroupUsage,
+  t: ReturnType<typeof useTranslations>,
+) => {
+  if (group.name === "All") return t("groups.cannotDeleteAll");
   if (group.issued === GroupIssued.INTEGRATION)
-    return GROUP_TOOLTIP_TEXT.DELETE.INTEGRATION;
-  if (isGroupInUse(group)) return GROUP_TOOLTIP_TEXT.IN_USE;
+    return t("groups.cannotDeleteIntegration");
+  if (isGroupInUse(group)) return t("groups.removeDependenciesToDelete");
   return undefined;
 };
 
-export const canDeleteGroup = (group: GroupUsage) =>
-  !!group.id && !groupDeleteDisabledReason(group);
+export const canDeleteGroup = (
+  group: GroupUsage,
+  t: ReturnType<typeof useTranslations>,
+) => !!group.id && !groupDeleteDisabledReason(group, t);
 
 export default function useGroupsUsage() {
   const { data: groups, isLoading: isGroupsLoading } =

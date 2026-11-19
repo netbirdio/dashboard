@@ -205,14 +205,18 @@ export const NetworkProvider = ({
         <>{t("networks.multiResourceTitle")}</>
       ) : (
         <>
-          {action === "edit" ? t("common.edit") : t("common.delete")} policy &apos;{policy.name}
-          &apos;?
+          {t(
+            action === "edit"
+              ? "networks.editNamedPolicyTitle"
+              : "networks.deleteNamedPolicyTitle",
+            { name: policy.name },
+          )}
         </>
       ),
       description: isMulti
-        ? `This policy uses one or many resource group(s) as destinations. ${
-            action === "edit" ? "Updating" : "Deleting"
-          } this policy will also affect following resources:`
+        ? action === "edit"
+          ? t("networks.multiResourceEditDescription")
+          : t("networks.multiResourceDeleteDescription")
         : action === "delete"
         ? t("networks.deletePolicyDesc")
         : undefined,
@@ -229,9 +233,8 @@ export const NetworkProvider = ({
 
   const deleteNetwork = async (network: Network) => {
     const choice = await confirm({
-      title: `Delete network '${network.name}'?`,
-      description:
-        "Are you sure you want to delete this network? Every resource and routing peers will be removed from this network. This action cannot be undone.",
+      title: t("networks.deleteNetworkTitle", { name: network.name }),
+      description: t("networks.deleteNetworkDescription"),
       confirmText: t("common.delete"),
       cancelText: t("common.cancel"),
       type: "danger",
@@ -259,7 +262,7 @@ export const NetworkProvider = ({
     resource: NetworkResource,
   ) => {
     const choice = await confirm({
-      title: `Delete resource '${resource.name}'?`,
+      title: t("networks.deleteResourceTitle", { name: resource.name }),
       description:
         t("networks.confirmDeleteResourceDesc"),
       confirmText: t("common.delete"),
@@ -296,7 +299,7 @@ export const NetworkProvider = ({
     if (!choice) return;
 
     notify({
-      title: "Router of " + network.name,
+      title: t("networks.routerOf", { name: network.name }),
       description: t("networks.routerRemoved"),
       loadingMessage: t("networks.routerRemoving"),
       promise: deleteCall({}, `/${network.id}/routers/${router.id}`).then(
@@ -309,7 +312,7 @@ export const NetworkProvider = ({
 
   const askForRoutingPeer = async (network: Network) => {
     const choice = await confirm({
-      title: `Add Routing Peer to '${network.name}'?`,
+      title: t("networks.addRoutingPeerTitle", { name: network.name }),
       description:
         t("networks.confirmAddRoutingPeerDesc"),
       confirmText: t("networks.addRoutingPeer"),
@@ -322,7 +325,7 @@ export const NetworkProvider = ({
 
   const askForResource = async (network: Network) => {
     const choice = await confirm({
-      title: `Add Resource to '${network.name}'?`,
+      title: t("networks.addResourceTitle", { name: network.name }),
       description:
         t("networks.confirmAddResourceDesc"),
       confirmText: t("common.addResource"),

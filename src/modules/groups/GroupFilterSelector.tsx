@@ -68,9 +68,13 @@ export function GroupFilterSelector({
           <FolderGit2 size={16} className={"shrink-0"} />
           <div className={"w-full flex justify-between"}>
             {values.length > 0 ? (
-              <div>{values.length} Group(s)</div>
+              <div>
+                {translate("groups.groupsSelectedCount", {
+                  count: values.length,
+                })}
+              </div>
             ) : (
-              "All Groups"
+              translate("groups.allGroups")
             )}
             <div className={"pl-2"}>
               <ChevronsUpDown size={18} className={"shrink-0"} />
@@ -109,7 +113,7 @@ export function GroupFilterSelector({
                 ref={searchRef}
                 value={search}
                 onValueChange={setSearch}
-                placeholder={"Search group..."}
+                placeholder={translate("groups.searchPlaceholder")}
               />
               <div
                 className={

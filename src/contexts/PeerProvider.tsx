@@ -58,9 +58,8 @@ export default function PeerProvider({
 
   const deletePeer = async () => {
     const choice = await confirm({
-      title: `Delete '${peer.name}'?`,
-      description:
-        "Are you sure you want to delete this peer? This action cannot be undone.",
+      title: t("peers.deleteConfirmTitle", { name: peer.name }),
+      description: t("peers.deleteConfirmDescription"),
       confirmText: t("common.delete"),
       cancelText: t("common.cancel"),
       type: "danger",
@@ -68,12 +67,12 @@ export default function PeerProvider({
     if (choice) {
       notify({
         title: peer.name,
-        description: "Peer was successfully deleted",
+        description: t("peers.deletedDescription"),
         promise: peerRequest.del({}, `/${peer.id}`).then(() => {
           mutate("/peers");
           mutate("/groups");
         }),
-        loadingMessage: "Deleting peer...",
+        loadingMessage: t("peers.deleting"),
       });
     }
   };
@@ -116,15 +115,15 @@ export default function PeerProvider({
     notify({
       title: peer.name,
       description: enable
-        ? "SSH Access successfully enabled"
-        : "SSH Access successfully disabled",
+        ? t("peers.sshEnabledDescription")
+        : t("peers.sshDisabledDescription"),
       promise: update({ ssh: enable }).then(() => {
         isPeerDetailPage ? mutate(`/peers/${peer.id}`) : mutate("/peers");
         setSSHInstructionsModal(false);
       }),
       loadingMessage: enable
-        ? "Enabling SSH Access..."
-        : "Disabling SSH Access...",
+        ? t("peers.enablingSsh")
+        : t("peers.disablingSsh"),
     });
   };
 

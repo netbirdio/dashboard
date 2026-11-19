@@ -3,6 +3,7 @@ import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useRoutes } from "@/contexts/RoutesProvider";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Route } from "@/interfaces/Route";
 
 type Props = {
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export default function RouteAutoApplyCell({ route }: Readonly<Props>) {
+  const t = useTranslations();
   const { permission } = usePermissions();
   const { updateRoute } = useRoutes();
   const { mutate } = useSWRConfig();
@@ -30,9 +32,7 @@ export default function RouteAutoApplyCell({ route }: Readonly<Props>) {
       () => {
         mutate("/routes");
       },
-      checked
-        ? "Auto Apply was enabled for the route"
-        : "Auto Apply was disabled for the route",
+      checked ? t("routes.autoApplyEnabled") : t("routes.autoApplyDisabled"),
     );
   };
 

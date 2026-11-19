@@ -38,7 +38,7 @@ export const RDPCertificateModal = ({
       <ModalContent maxWidthClass={"max-w-2xl"} showClose={false}>
         <ModalHeader
           icon={<LockIcon className={"text-netbird"} size={18} />}
-          title={"RDP Certificate"}
+          title={t("remoteAccess.rdpCertificate")}
           description={hostname}
           color={"netbird"}
         />
@@ -47,17 +47,13 @@ export const RDPCertificateModal = ({
         <div className={"px-8 py-6 flex flex-col gap-6"}>
           {isChange && (
             <Callout variant={"warning"}>
-              Warning! Certificate has changed. Only proceed if you trust this
-              connection.
+              {t("remoteAccess.certificateChanged")}
             </Callout>
           )}
 
           <div>
-            <Label>Certificate Details</Label>
-            <HelpText>
-              Certificated could not be verified by a trusted authority. Review
-              the certificate information before proceeding with the connection.
-            </HelpText>
+            <Label>{t("remoteAccess.certificateDetails")}</Label>
+            <HelpText>{t("remoteAccess.certificateUnverified")}</HelpText>
             <CertificateDetailsList certificate={certificate} />
           </div>
 
@@ -71,14 +67,13 @@ export const RDPCertificateModal = ({
               }
             />
             <div className={"font-normal text-sm text-nb-gray-200"}>
-              Always trust{" "}
-              <span className={"text-white font-medium"}>
-                {'"' + certificate?.issuer?.replace("CN=", "") + '"'}
-              </span>{" "}
-              when connecting to{" "}
-              <span className={"text-white font-medium"}>
-                {'"' + hostname + '"'}
-              </span>
+              {t.rich("remoteAccess.alwaysTrust", {
+                issuer: certificate?.issuer?.replace("CN=", "") ?? "",
+                host: hostname,
+                name: (chunks) => (
+                  <span className={"text-white font-medium"}>{chunks}</span>
+                ),
+              })}
             </div>
           </label>
         </div>
@@ -92,7 +87,7 @@ export const RDPCertificateModal = ({
               variant={"primary"}
               onClick={() => onAccept(rememberCertificate)}
             >
-              Accept & Continue
+              {t("remoteAccess.acceptAndContinue")}
             </Button>
           </div>
         </ModalFooter>
@@ -116,40 +111,44 @@ const CertificateDetailsList = ({
       }
     >
       <CertificateDetailsListItem
-        label={"Issuer"}
-        value={certificate.issuer || "N/A"}
+        label={t("remoteAccess.issuer")}
+        value={certificate.issuer || t("remoteAccess.notAvailable")}
       />
       <CertificateDetailsListItem
-        label={"Subject"}
-        value={certificate.subject || "N/A"}
+        label={t("remoteAccess.subject")}
+        value={certificate.subject || t("remoteAccess.notAvailable")}
       />
       <CertificateDetailsListItem
-        label={"Valid From"}
+        label={t("remoteAccess.validFrom")}
         value={
           certificate.validFrom
             ? new Date(certificate.validFrom).toLocaleString()
-            : "N/A"
+            : t("remoteAccess.notAvailable")
         }
       />
       <CertificateDetailsListItem
-        label={"Valid To"}
+        label={t("remoteAccess.validTo")}
         value={
           certificate.validTo
             ? new Date(certificate.validTo).toLocaleString()
-            : "N/A"
+            : t("remoteAccess.notAvailable")
         }
       />
       <CertificateDetailsListItem
-        label={"Key Size"}
-        value={certificate.keySize ? `${certificate.keySize} bits` : "N/A"}
+        label={t("remoteAccess.keySize")}
+        value={
+          certificate.keySize
+            ? t("remoteAccess.keySizeBits", { size: certificate.keySize })
+            : t("remoteAccess.notAvailable")
+        }
       />
       <CertificateDetailsListItem
         label={t("common.serialNumber")}
-        value={certificate.serialNumber || "N/A"}
+        value={certificate.serialNumber || t("remoteAccess.notAvailable")}
       />
       <CertificateDetailsListItem
-        label={"Fingerprint"}
-        value={certificate.fingerprint || "N/A"}
+        label={t("remoteAccess.fingerprint")}
+        value={certificate.fingerprint || t("remoteAccess.notAvailable")}
       />
     </div>
   );

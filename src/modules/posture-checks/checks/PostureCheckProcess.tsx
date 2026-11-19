@@ -116,24 +116,24 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
           errorMacPath: p?.mac_path
             ? validator.isValidUnixFilePath(p?.mac_path || "")
               ? ""
-              : "Please enter a valid macOS file path"
+              : t("postureChecks.invalidMacPath")
             : "",
           errorLinuxPath: p?.linux_path
             ? validator.isValidUnixFilePath(p?.linux_path || "")
               ? ""
-              : "Please enter a valid Unix file path"
+              : t("postureChecks.invalidUnixPath")
             : "",
           errorWindowsPath: p?.windows_path
             ? validator.isValidWindowsFilePath(p?.windows_path || "")
               ? ""
-              : "Please enter a valid Windows file path"
+              : t("postureChecks.invalidWindowsPath")
             : "",
         };
       });
     } else {
       return [];
     }
-  }, [processes]);
+  }, [processes, t]);
 
   const hasErrorsOrIsEmpty = useMemo(() => {
     if (processes.length === 0) return true;

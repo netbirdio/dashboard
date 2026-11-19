@@ -48,9 +48,7 @@ export const DNSZonesGroupCell = ({ zone }: Props) => {
   return (
     <GroupsRow
       label={t("dns.distributionGroups")}
-      description={
-        "Advertise this zone to peers that belong to the following groups"
-      }
+      description={t("dns.advertiseZoneToGroups")}
       groups={groupIDs || []}
       hideAllGroup={false}
       disabled={!permission?.dns?.update}

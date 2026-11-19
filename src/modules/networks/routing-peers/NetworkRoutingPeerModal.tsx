@@ -184,8 +184,8 @@ export function RoutingPeerModalContent({
 
     notify({
       title: translate("networks.networkRoutingPeer"),
-      description: "Routing Peer added successfully.",
-      loadingMessage: "Adding Routing Peer...",
+      description: translate("networks.routingPeerAdded"),
+      loadingMessage: translate("networks.addingRoutingPeer"),
       promise: create({
         peer: isRoutingPeer ? routingPeer?.id : undefined,
         peer_groups: !isRoutingPeer
@@ -211,8 +211,8 @@ export function RoutingPeerModalContent({
 
     notify({
       title: translate("networks.networkRoutingPeer"),
-      description: "Routing Peer added successfully.",
-      loadingMessage: "Adding Routing Peer...",
+      description: translate("networks.routingPeerUpdated"),
+      loadingMessage: translate("networks.updatingRoutingPeer"),
       promise: update({
         peer: isRoutingPeer ? routingPeer?.id : undefined,
         peer_groups: !isRoutingPeer
@@ -247,8 +247,14 @@ export function RoutingPeerModalContent({
     >
       <ModalHeader
         icon={<Share2Icon size={16} />}
-        title={router ? "Update Routing Peer" : translate("networks.addRoutingPeer")}
-        description={`Route traffic to '${network.name}'`}
+        title={
+          router
+            ? translate("networks.updateRoutingPeer")
+            : translate("networks.addRoutingPeer")
+        }
+        description={translate("networks.routeTrafficTo", {
+          name: network.name,
+        })}
         color={"netbird"}
       />
 
@@ -305,25 +311,23 @@ export function RoutingPeerModalContent({
                 <SegmentedTabs.Content value={"peer"}>
                   <div>
                     <HelpText>
-                      Assign a single or multiple peers as routing peers for the
-                      network.
+                      {translate("networks.assignRoutingPeersHelp")}
                     </HelpText>
                     <PeerSelector
                       onChange={setSelectedPeer}
                       value={routingPeer}
                       disabled={peerLoading}
                       disabledPeers={assignedPeerIds}
-                      disabledPeerReason={
-                        "This peer is already a routing peer for this network and cannot be assigned again."
-                      }
+                      disabledPeerReason={translate(
+                        "networks.peerAlreadyRouting",
+                      )}
                     />
                   </div>
                 </SegmentedTabs.Content>
                 <SegmentedTabs.Content value={"group"}>
                   <div>
                     <HelpText>
-                      Assign a peer group with machines to be used as routing
-                      peers.
+                      {translate("networks.assignRoutingPeerGroupHelp")}
                     </HelpText>
                     <PeerGroupSelector
                       max={1}
@@ -337,10 +341,9 @@ export function RoutingPeerModalContent({
 
             <div className={cn("flex justify-between items-center mt-3")}>
               <div>
-                <Label>{"Don't have a routing peer?"}</Label>
+                <Label>{translate("networks.noRoutingPeer")}</Label>
                 <HelpText className={""}>
-                  You can install NetBird with a setup key on one or more
-                  machines to act as routing peers.
+                  {translate("networks.installRoutingPeerHelp")}
                 </HelpText>
               </div>
               <InstallNetBirdWithSetupKeyButton
@@ -358,12 +361,10 @@ export function RoutingPeerModalContent({
               label={
                 <>
                   <Power size={15} />
-                  Enable Routing Peer
+                  {translate("networks.enableRoutingPeer")}
                 </>
               }
-              helpText={
-                "Use this switch to enable or disable the routing peer."
-              }
+              helpText={translate("networks.enableRoutingPeerHelp")}
             />
 
             <RoutingPeerMasqueradeSwitch
@@ -483,9 +484,8 @@ const InstallNetBirdWithSetupKeyButton = ({
 
   const createSetupKey = async () => {
     const choice = await confirm({
-      title: `Create a Setup Key?`,
-      description:
-        "If you continue, a one-off setup key will be automatically created and you will be able to install NetBird.",
+      title: t("networks.createSetupKeyTitle"),
+      description: t("networks.createSetupKeyDescription"),
       confirmText: t("common.continue"),
       cancelText: t("common.cancel"),
       type: "default",

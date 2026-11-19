@@ -41,8 +41,12 @@ export const RoutingPeersActionCell = ({ router }: Props) => {
     const nextEnabled = !router.enabled;
     notify({
       title: t("networks.networkRoutingPeer"),
-      description: `Routing peer is now ${nextEnabled ? "enabled" : "disabled"}`,
-      loadingMessage: "Updating routing peer...",
+      description: t(
+        nextEnabled
+          ? "networks.routingPeerNowEnabled"
+          : "networks.routingPeerNowDisabled",
+      ),
+      loadingMessage: t("networks.updatingRoutingPeer"),
       duration: 1200,
       promise: update({
         ...router,
@@ -70,7 +74,7 @@ export const RoutingPeersActionCell = ({ router }: Props) => {
             disabled={
               !permission.networks.update && !permission.networks.delete
             }
-            aria-label={"Routing peer actions"}
+            aria-label={t("networks.routingPeerActions")}
           >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>

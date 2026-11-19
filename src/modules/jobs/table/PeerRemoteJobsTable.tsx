@@ -114,7 +114,7 @@ export default function PeerRemoteJobsTable({
       showSearchAndFilters={true}
       inset={false}
       tableClassName="mt-0"
-      text="Jobs"
+      text={t("jobs.jobs")}
       columns={PeerRemoteJobsColumns}
       keepStateInLocalStorage={false}
       data={jobs}
@@ -123,8 +123,8 @@ export default function PeerRemoteJobsTable({
       getStartedCard={
         <NoResults
           className="py-4"
-          title="This peer has no remote jobs"
-          description="Create a debug bundle or trigger other remote jobs to see them listed here."
+          title={t("jobs.noRemoteJobsTitle")}
+          description={t("jobs.noRemoteJobsDescription")}
           icon={<ClipboardList size={20} className="text-nb-gray-300" />}
         />
       }

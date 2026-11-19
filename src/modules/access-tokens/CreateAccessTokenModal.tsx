@@ -37,7 +37,6 @@ type Props = {
   children: React.ReactNode;
   user: User;
 };
-const copyMessage = "Access token was copied to your clipboard!";
 export default function CreateAccessTokenModal({
   children,
   user,
@@ -79,20 +78,19 @@ export default function CreateAccessTokenModal({
             <div className={"flex flex-col items-center justify-center gap-3"}>
               <div>
                 <h2 className={"text-2xl text-center mb-2"}>
-                  Access token created successfully!
+                  {t("accessTokens.createdTitle")}
                 </h2>
                 <Paragraph className={"mt-0 text-sm text-center"}>
-                  This token will not be shown again, so be sure to copy it and
-                  store in a secure location.
+                  {t("accessTokens.createdDescription")}
                 </Paragraph>
               </div>
             </div>
           </div>
 
           <div className={"px-8 pb-6"}>
-            <Code message={copyMessage}>
+            <Code message={t("accessTokens.copied")}>
               <Code.Line>
-                {token || "Setup key could not be created..."}
+                {token || t("accessTokens.createFailed")}
               </Code.Line>
             </Code>
           </div>
@@ -112,7 +110,7 @@ export default function CreateAccessTokenModal({
               <Button
                 variant={"primary"}
                 className={"w-full"}
-                onClick={() => copy(copyMessage)}
+                onClick={() => copy(t("accessTokens.copied"))}
               >
                 <CopyIcon size={14} />
                 {t("common.copyToClipboard")}
@@ -149,8 +147,8 @@ export function AccessTokenModalContent({
   const submit = () => {
     const expiration = parseInt(expiresIn);
     notify({
-      title: "Creating access token",
-      description: name + " was created successfully",
+      title: t("accessTokens.creatingTitle"),
+      description: t("accessTokens.createdNamed", { name }),
       promise: tokenRequest
         .post({
           name,
@@ -160,7 +158,7 @@ export function AccessTokenModalContent({
           onSuccess && onSuccess(res.plain_token as string);
           mutate(`/users/${user.id}/tokens`);
         }),
-      loadingMessage: "Creating access token...",
+      loadingMessage: t("accessTokens.creating"),
     });
   };
 
@@ -168,8 +166,8 @@ export function AccessTokenModalContent({
     <ModalContent flow="access_token" maxWidthClass={"max-w-lg"}>
       <ModalHeader
         icon={<IconApi />}
-        title={"Create Access Token"}
-        description={"Use this token to access NetBird's public API"}
+        title={t("accessTokens.createTitle")}
+        description={t("accessTokens.createDescription")}
         color={"netbird"}
       />
 
@@ -181,7 +179,7 @@ export function AccessTokenModalContent({
           <HelpText>{t("accessTokens.tokenNameHelp")}</HelpText>
           <Input
             data-testid={"access-token-name"}
-            placeholder={"e.g., Infra token"}
+            placeholder={t("accessTokens.namePlaceholder")}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -190,7 +188,7 @@ export function AccessTokenModalContent({
         <div className={"flex justify-between"}>
           <div>
             <Label>{t("accessTokens.expiresIn")}</Label>
-            <HelpText>Should be between 1 and 365 days.</HelpText>
+            <HelpText>{t("accessTokens.expiresHelp")}</HelpText>
           </div>
           <Input
             maxWidthClass={"max-w-[200px]"}
@@ -204,7 +202,7 @@ export function AccessTokenModalContent({
             customPrefix={
               <AlarmClock size={16} className={"text-nb-gray-300"} />
             }
-            customSuffix={"Day(s)"}
+            customSuffix={t("accessTokens.daysSuffix")}
           />
         </div>
       </div>
@@ -212,14 +210,19 @@ export function AccessTokenModalContent({
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
-            <InlineLink
-              href={"https://docs.netbird.io/how-to/access-netbird-public-api"}
-              target={"_blank"}
-            >
-              {t("accessTokens.accessTokens")}
-              <ExternalLinkIcon size={12} />
-            </InlineLink>
+            {t.rich("accessTokens.learnMoreAbout", {
+              link: (chunks) => (
+                <InlineLink
+                  href={
+                    "https://docs.netbird.io/how-to/access-netbird-public-api"
+                  }
+                  target={"_blank"}
+                >
+                  {chunks}
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              ),
+            })}
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
@@ -234,7 +237,7 @@ export function AccessTokenModalContent({
             data-testid={"create-access-token"}
           >
             <PlusCircle size={16} />
-            Create Token
+            {t("accessTokens.createToken")}
           </Button>
         </div>
       </ModalFooter>

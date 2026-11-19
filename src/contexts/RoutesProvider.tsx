@@ -2,6 +2,7 @@ import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
 import React from "react";
 import { useSWRConfig } from "swr";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Route } from "@/interfaces/Route";
 
 type Props = {
@@ -26,6 +27,7 @@ const RoutesContext = React.createContext(
 );
 
 export default function RoutesProvider({ children }: Readonly<Props>) {
+  const t = useTranslations();
   const routeRequest = useApiCall<Route>("/routes", true);
   const { mutate } = useSWRConfig();
 
@@ -39,8 +41,11 @@ export default function RoutesProvider({ children }: Readonly<Props>) {
     const hasDomains = route.domains ? route.domains.length > 0 : false;
 
     notify({
-      title: "Network " + route.network_id + "-" + route.network,
-      description: message ?? "The network route was successfully updated",
+      title: t("routes.networkNamedTitle", {
+        id: route.network_id,
+        network: route.network ?? "",
+      }),
+      description: message ?? t("routes.updatedDescription"),
       promise: routeRequest
         .put(
           {
@@ -69,7 +74,7 @@ export default function RoutesProvider({ children }: Readonly<Props>) {
           mutate("/groups");
           onSuccess && onSuccess(route);
         }),
-      loadingMessage: "Updating route...",
+      loadingMessage: t("routes.updating"),
     });
   };
 
@@ -79,8 +84,11 @@ export default function RoutesProvider({ children }: Readonly<Props>) {
     message?: string,
   ) => {
     notify({
-      title: "Network " + route.network_id + "-" + route.network,
-      description: message ?? "The network route was successfully created",
+      title: t("routes.networkNamedTitle", {
+        id: route.network_id,
+        network: route.network ?? "",
+      }),
+      description: message ?? t("routes.createdDescription"),
       promise: routeRequest
         .post({
           network_id: route.network_id,
@@ -102,7 +110,7 @@ export default function RoutesProvider({ children }: Readonly<Props>) {
           mutate("/groups");
           onSuccess && onSuccess(route);
         }),
-      loadingMessage: "Creating route...",
+      loadingMessage: t("routes.creating"),
     });
   };
 

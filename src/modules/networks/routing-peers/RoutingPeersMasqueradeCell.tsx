@@ -43,7 +43,11 @@ export const RoutingPeersMasqueradeCell = ({ router }: Props) => {
   const toggle = async (enabled: boolean) => {
     notify({
       title: t("networks.networkRoutingPeer"),
-      description: `Masquerade is now ${enabled ? "enabled" : "disabled"}`,
+      description: t(
+        enabled
+          ? "networks.masqueradeNowEnabled"
+          : "networks.masqueradeNowDisabled",
+      ),
       loadingMessage: t("networks.updatingMasquerade"),
       promise: update({
         ...router,

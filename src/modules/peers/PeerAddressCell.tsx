@@ -5,6 +5,7 @@ import { isEmpty } from "lodash";
 import { GlobeIcon } from "lucide-react";
 import React from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
+import { useTranslations } from "@/i18n/LocaleProvider";
 import { Peer } from "@/interfaces/Peer";
 import { PeerAddressTooltipContent } from "@/modules/peers/PeerAddressTooltipContent";
 
@@ -25,6 +26,7 @@ function shortDnsLabel(label: string | undefined | null): string {
 }
 
 export default function PeerAddressCell({ peer, fluid = false }: Props) {
+  const t = useTranslations();
   const shortLabel = shortDnsLabel(peer.dns_label);
   return (
     <FullTooltip
@@ -59,13 +61,13 @@ export default function PeerAddressCell({ peer, fluid = false }: Props) {
         </div>
         <div className="flex flex-col gap-0 dark:text-neutral-300 text-neutral-500 font-light truncate">
           <CopyToClipboardText
-            message={"DNS label has been copied to your clipboard"}
+            message={t("peers.dnsLabelCopied")}
             textToCopy={peer.dns_label}
           >
             <span className={"font-normal truncate"}>{shortLabel}</span>
           </CopyToClipboardText>
           <CopyToClipboardText
-            message={"IP address has been copied to your clipboard"}
+            message={t("peers.ipAddressCopied")}
           >
             <span
               className={"dark:text-nb-gray-400 font-mono font-thin text-xs"}

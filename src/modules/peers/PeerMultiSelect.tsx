@@ -201,7 +201,7 @@ const PeerGroupMassAssignmentContent = ({
         );
 
       notify({
-        title: "Assign Groups to Peers",
+        title: translate("peers.assignGroupsToPeersTitle"),
         description: translate("peers.groupsAssigned"),
         promise: updateGroupCalls()
           .then(() => {
@@ -223,7 +223,7 @@ const PeerGroupMassAssignmentContent = ({
 
   const deleteAllPeers = async () => {
     const choice = await confirm({
-      title: `Delete '${peerCount}' ${peerCount > 1 ? "peers" : "peer"}?`,
+      title: translate("peers.deleteCountTitle", { count: peerCount }),
       description: translate("peers.deleteAllConfirmDescription"),
       confirmText: translate("peers.deleteAll"),
       cancelText: translate("common.cancel"),
@@ -237,7 +237,7 @@ const PeerGroupMassAssignmentContent = ({
       });
 
     notify({
-      title: "Delete Peers",
+      title: translate("peers.deletePeersTitle"),
       description: translate("peers.peersDeleted"),
       promise: Promise.all(batchDeleteCalls()).then(() => {
         mutate("/peers");
@@ -270,9 +270,10 @@ const PeerGroupMassAssignmentContent = ({
     if (peersNeedingBypass.length === 0) return;
 
     const choice = await confirm({
-      title: `Bypass compliance for ${peersNeedingBypass.length} ${peersNeedingBypass.length > 1 ? "peers" : "peer"}?`,
-      description:
-        "This will override compliance checks and grant network access to these peers. The bypass will be automatically removed if devices become compliant.",
+      title: translate("peers.bypassCountTitle", {
+        count: peersNeedingBypass.length,
+      }),
+      description: translate("peers.bypassSelectedDescription"),
       confirmText: translate("peers.bypassCompliance"),
       cancelText: translate("common.cancel"),
       type: "warning",
@@ -281,14 +282,14 @@ const PeerGroupMassAssignmentContent = ({
 
     notify({
       title: translate("peers.bypassCompliance"),
-      description: "Compliance was successfully bypassed for selected peers",
+      description: translate("peers.bypassSelectedSuccess"),
       promise: Promise.all(
         peersNeedingBypass.map((id) => bypassCompliance(id)),
       ).then(() => {
         mutate("/peers");
         mutate("/peers/edr/bypassed");
       }),
-      loadingMessage: "Bypassing compliance for selected peers...",
+      loadingMessage: translate("peers.bypassingSelected"),
     });
   };
 
@@ -296,9 +297,10 @@ const PeerGroupMassAssignmentContent = ({
     if (bypassedSelectedPeers.length === 0) return;
 
     const choice = await confirm({
-      title: `Revoke compliance bypass for ${bypassedSelectedPeers.length} ${bypassedSelectedPeers.length > 1 ? "peers" : "peer"}?`,
-      description:
-        "These peers will return to normal compliance validation. If they are non-compliant, they will lose network access.",
+      title: translate("peers.revokeCountTitle", {
+        count: bypassedSelectedPeers.length,
+      }),
+      description: translate("peers.revokeSelectedDescription"),
       confirmText: translate("peers.revoke"),
       cancelText: translate("common.cancel"),
       type: "danger",
@@ -306,8 +308,8 @@ const PeerGroupMassAssignmentContent = ({
     if (!choice) return;
 
     notify({
-      title: "Revoke Compliance Bypass",
-      description: "Compliance bypass was successfully revoked",
+      title: translate("peers.revokeComplianceBypassTitle"),
+      description: translate("peers.revokeSelectedSuccess"),
       promise: Promise.all(
         bypassedSelectedPeers.map((id) => revokeBypass(id)),
       ).then(() => {

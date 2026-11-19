@@ -48,7 +48,7 @@ type Props = {
   groups?: Group[];
 };
 
-const copyMessage = "Setup-Key was copied to your clipboard!";
+
 
 export default function SetupKeyModal({
   children,
@@ -112,11 +112,10 @@ export default function SetupKeyModal({
             <div className={"flex flex-col items-center justify-center gap-3"}>
               <div>
                 <h2 className={"text-2xl text-center mb-2"}>
-                  Setup key created successfully!
+                  {t("setupKeys.createdTitle")}
                 </h2>
                 <Paragraph className={"mt-0 text-sm text-center"}>
-                  This key will not be shown again, so be sure to copy it and
-                  store in a secure location.
+                  {t("setupKeys.createdHiddenWarning")}
                 </Paragraph>
               </div>
             </div>
@@ -127,9 +126,9 @@ export default function SetupKeyModal({
             data-testid={"setup-key-copy-input"}
             data-testid-setup-key-value={setupKey?.key || ""}
           >
-            <Code message={copyMessage}>
+            <Code message={t("setupKeys.copied")}>
               <Code.Line>
-                {setupKey?.key || "Setup key could not be created..."}
+                {setupKey?.key || t("setupKeys.createFailed")}
               </Code.Line>
             </Code>
           </div>
@@ -189,7 +188,7 @@ export function SetupKeyModalContent({
     });
 
   const usageLimitPlaceholder = useMemo(() => {
-    return reusable ? "Unlimited" : "1";
+    return reusable ? t("setupKeys.unlimited") : "1";
   }, [reusable]);
 
   const isDisabled = useMemo(() => {
@@ -202,8 +201,7 @@ export function SetupKeyModalContent({
 
     notify({
       title: t("common.createSetupKey"),
-      description:
-        "Setup key created successfully. You can now enroll peers with your new key.",
+      description: t("setupKeys.createdSuccess"),
       promise: saveGroups().then(async (groups) => {
         return setupKeyRequest
           .post({
@@ -222,7 +220,7 @@ export function SetupKeyModalContent({
             mutate("/groups");
           });
       }),
-      loadingMessage: "Creating your setup key...",
+      loadingMessage: t("setupKeys.creating"),
     });
   };
 
@@ -258,17 +256,17 @@ export function SetupKeyModalContent({
             label={
               <>
                 <IconRepeat size={15} />
-                Make this key reusable
+                {t("setupKeys.makeReusable")}
               </>
             }
-            helpText={"Use this type to enroll multiple peers"}
+            helpText={t("setupKeys.reusableHelp")}
           />
         </div>
 
         {/* Usage Limit */}
         <div className={cn("flex justify-between", !reusable && "opacity-50")}>
           <div>
-            <Label>Usage limit</Label>
+            <Label>{t("setupKeys.usageLimit")}</Label>
             <HelpText className={"max-w-[200px]"}>
               {t("setupKeys.usageLimitHelp")}
             </HelpText>
@@ -286,7 +284,7 @@ export function SetupKeyModalContent({
             customPrefix={
               <MonitorSmartphoneIcon size={16} className={"text-nb-gray-300"} />
             }
-            customSuffix={"Peer(s)"}
+            customSuffix={t("setupKeys.peersSuffix")}
           />
         </div>
 
@@ -312,7 +310,7 @@ export function SetupKeyModalContent({
             customPrefix={
               <AlarmClock size={16} className={"text-nb-gray-300"} />
             }
-            customSuffix={"Day(s)"}
+            customSuffix={t("setupKeys.daysSuffix")}
           />
         </div>
 
@@ -324,12 +322,10 @@ export function SetupKeyModalContent({
             label={
               <>
                 <PowerOffIcon size={15} />
-                Ephemeral Peers
+                {t("setupKeys.ephemeralPeers")}
               </>
             }
-            helpText={
-              "Peers that are offline for over 10 minutes will be removed automatically"
-            }
+            helpText={t("setupKeys.ephemeralPeersHelp")}
           />
         </div>
 
@@ -341,12 +337,10 @@ export function SetupKeyModalContent({
             label={
               <>
                 <GlobeIcon size={15} />
-                Allow Extra DNS Labels
+                {t("setupKeys.allowExtraDnsLabels")}
               </>
             }
-            helpText={
-              "Enable multiple subdomain labels when enrolling peers (e.g., host.dev.example.com)."
-            }
+            helpText={t("setupKeys.allowExtraDnsLabelsHelp")}
           />
         </div>
 
@@ -368,16 +362,19 @@ export function SetupKeyModalContent({
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
-            <InlineLink
-              href={
-                "https://docs.netbird.io/how-to/register-machines-using-setup-keys"
-              }
-              target={"_blank"}
-            >
-              {t("common.setupKeys")}
-              <ExternalLinkIcon size={12} />
-            </InlineLink>
+            {t.rich("setupKeys.learnMoreAbout", {
+              link: (chunks) => (
+                <InlineLink
+                  href={
+                    "https://docs.netbird.io/how-to/register-machines-using-setup-keys"
+                  }
+                  target={"_blank"}
+                >
+                  {chunks}
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              ),
+            })}
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>

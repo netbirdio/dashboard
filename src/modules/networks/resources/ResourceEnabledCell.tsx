@@ -31,9 +31,12 @@ export const ResourceEnabledCell = ({
   const toggle = async (enabled: boolean) => {
     notify({
       title: t("networks.updateResource"),
-      description: `'${resource?.name}' is now ${
-        enabled ? "enabled" : "disabled"
-      }`,
+      description: t(
+        enabled
+          ? "networks.resourceNowEnabled"
+          : "networks.resourceNowDisabled",
+        { name: resource?.name ?? "" },
+      ),
       loadingMessage: t("networks.updatingResource"),
       duration: 1200,
       promise: update({

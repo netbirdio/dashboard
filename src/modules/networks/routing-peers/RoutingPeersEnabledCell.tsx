@@ -25,8 +25,12 @@ export const RoutingPeersEnabledCell = ({ router }: Props) => {
   const toggle = async (enabled: boolean) => {
     notify({
       title: t("networks.networkRoutingPeer"),
-      description: `Routing peer is now ${enabled ? "enabled" : "disabled"}`,
-      loadingMessage: "Updating routing peer...",
+      description: t(
+        enabled
+          ? "networks.routingPeerNowEnabled"
+          : "networks.routingPeerNowDisabled",
+      ),
+      loadingMessage: t("networks.updatingRoutingPeer"),
       promise: update({
         ...router,
         enabled,

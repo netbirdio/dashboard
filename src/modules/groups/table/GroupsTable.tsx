@@ -73,7 +73,7 @@ function createGroupsColumns(
       ),
       cell: ({ row }) => {
         const canSelect = row.getCanSelect();
-        const disabledReason = groupDeleteDisabledReason(row.original);
+        const disabledReason = groupDeleteDisabledReason(row.original, t);
         return (
           <div className={"min-w-[20px] max-w-[20px]"}>
             <FullTooltip
@@ -376,9 +376,10 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
   const selectedGroups = useMemo(
     () =>
       groups?.filter(
-        (group) => canDeleteGroup(group) && group.id && selectedRows[group.id],
+        (group) =>
+          canDeleteGroup(group, t) && group.id && selectedRows[group.id],
       ) ?? [],
-    [groups, selectedRows],
+    [groups, selectedRows, t],
   );
 
   // Drop selections whose group has been deleted or has picked up a dependency
@@ -390,13 +391,13 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
       const selectedIds = Object.keys(prev);
       if (selectedIds.length === 0) return prev;
       const deletableIds = new Set(
-        groups?.filter(canDeleteGroup).map((group) => group.id),
+        groups?.filter((group) => canDeleteGroup(group, t)).map((group) => group.id),
       );
       const remaining = selectedIds.filter((id) => deletableIds.has(id));
       if (remaining.length === selectedIds.length) return prev;
       return Object.fromEntries(remaining.map((id) => [id, prev[id]]));
     });
-  }, [groups]);
+  }, [groups, t]);
 
   // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -453,7 +454,7 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
         rowSelection={selectedRows}
         setRowSelection={setSelectedRows}
         enableRowSelection={(row) =>
-          !!permission.groups.delete && canDeleteGroup(row.original)
+          !!permission.groups.delete && canDeleteGroup(row.original, t)
         }
         useRowId={true}
         resetRowSelectionOnFilter={true}

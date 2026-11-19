@@ -26,6 +26,7 @@ export const RoutingPeerMasqueradeSwitch = ({
   routingPeerGroupId,
   "data-testid": dataTestId,
 }: Props) => {
+  const t = useTranslations();
   return (
     <RoutingPeerMasqueradeTooltip show={disabled}>
       <div className={"flex flex-col gap-4"}>
@@ -37,12 +38,10 @@ export const RoutingPeerMasqueradeSwitch = ({
           label={
             <>
               <VenetianMask size={15} />
-              Masquerade
+              {t("networks.masquerade")}
             </>
           }
-          helpText={
-            "Allow access to your private networks without configuring routes on your local routers or other devices."
-          }
+          helpText={t("networks.masqueradeHelp")}
         />
         {routingPeerGroupId && !value && (
           <RoutingPeerGroupNonLinuxWarning

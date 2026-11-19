@@ -14,7 +14,6 @@ import React from "react";
 import { useGroupContext } from "@/contexts/GroupProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useTranslations } from "@/i18n/LocaleProvider";
-import { GROUP_TOOLTIP_TEXT } from "@/interfaces/Group";
 import { GroupUsage } from "@/modules/groups/useGroupsUsage";
 
 type Props = {
@@ -77,8 +76,8 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
                   content={
                     <div className={"text-xs max-w-xs"}>
                       {isJWTGroup
-                        ? GROUP_TOOLTIP_TEXT.RENAME.JWT
-                        : GROUP_TOOLTIP_TEXT.RENAME.INTEGRATION}
+                        ? t("groups.cannotRenameJwt")
+                        : t("groups.cannotRenameIntegration")}
                     </div>
                   }
                   interactive={false}
@@ -103,8 +102,8 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
                 content={
                   <div className={"text-xs max-w-xs"}>
                     {isIntegrationGroup
-                      ? GROUP_TOOLTIP_TEXT.DELETE.INTEGRATION
-                      : GROUP_TOOLTIP_TEXT.IN_USE}
+                      ? t("groups.cannotDeleteIntegration")
+                      : t("groups.removeDependenciesToDelete")}
                   </div>
                 }
                 interactive={false}

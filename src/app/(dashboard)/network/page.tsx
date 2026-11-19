@@ -14,7 +14,7 @@ import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import useRedirect from "@hooks/useRedirect";
 import useFetchApi from "@utils/api";
-import { cn, singularize } from "@utils/helpers";
+import { cn } from "@utils/helpers";
 import {
   ArrowUpRightIcon,
   HelpCircle,
@@ -151,7 +151,9 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
             <TabsList justify={"start"} className={"px-8"}>
               <TabsTrigger value={"resources"} data-testid="network-tab-resources">
                 <Layers3Icon size={14} />
-                {singularize("Resources", network?.resources?.length)}
+                {t("network.tabResources", {
+                  count: network?.resources?.length ?? 0,
+                })}
               </TabsTrigger>
               <TabsTrigger
                 value={"routing-peers"}
@@ -163,7 +165,9 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
                     "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
                   }
                 />
-                {singularize("Routing Peers", network?.routing_peers_count)}
+                {t("network.tabRoutingPeers", {
+                  count: network?.routing_peers_count ?? 0,
+                })}
               </TabsTrigger>
               <TabsTrigger value={"services"} data-testid="network-tab-services">
                 <ReverseProxyIcon
@@ -172,7 +176,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
                     "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
                   }
                 />
-                {singularize("Services", services.length)}
+                {t("network.tabServices", { count: services.length })}
               </TabsTrigger>
             </TabsList>
 
@@ -262,25 +266,23 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
   );
 
   const disabledText = useMemo(
-    () => (
-      <>
-        High availability is currently{" "}
-        <span className={"text-yellow-400 font-medium"}>inactive</span> for this
-        network.
-      </>
-    ),
-    [],
+    () =>
+      t.rich("network.highAvailabilityInactive", {
+        state: (chunks) => (
+          <span className={"text-yellow-400 font-medium"}>{chunks}</span>
+        ),
+      }),
+    [t],
   );
 
   const enabledText = useMemo(
-    () => (
-      <>
-        High availability is{" "}
-        <span className={"text-green-500 font-medium"}>active</span> for this
-        network.
-      </>
-    ),
-    [],
+    () =>
+      t.rich("network.highAvailabilityActive", {
+        state: (chunks) => (
+          <span className={"text-green-500 font-medium"}>{chunks}</span>
+        ),
+      }),
+    [t],
   );
 
   const policyCount = network.policies?.length ?? 0;
@@ -325,7 +327,7 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
                     !isHighlyAvailable ? "bg-yellow-400" : "bg-green-500",
                   )}
                 ></span>
-                {isHighlyAvailable ? "Active" : t("common.inactive")}
+                {isHighlyAvailable ? t("common.active") : t("common.inactive")}
                 <HelpCircle size={12} />
               </div>
             </FullTooltip>
@@ -337,8 +339,7 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
             policyCount > 0 ? (
               <>
                 <ShieldCheckIcon size={16} className={"text-green-500"} />
-                {policyCount}{" "}
-                {policyCount === 1 ? "Active Policy" : "Active Policies"}
+                {t("network.activePolicies", { count: policyCount })}
               </>
             ) : (
               <>

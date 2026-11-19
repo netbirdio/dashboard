@@ -293,18 +293,19 @@ type OperatingSystemTabProps = {
   disabled?: boolean;
 };
 
-const allOrMinOptions = [
-  {
-    label: "All versions",
-    value: "all",
-    icon: GalleryHorizontalEnd,
-  },
-  {
-    label: "Equal or greater than",
-    value: "min",
-    icon: IconMathEqualGreater,
-  },
-] as SelectOption[];
+const allOrMinOptions = (t: ReturnType<typeof useTranslations>) =>
+  [
+    {
+      label: t("postureChecks.allVersions"),
+      value: "all",
+      icon: GalleryHorizontalEnd,
+    },
+    {
+      label: t("postureChecks.equalOrGreater"),
+      value: "min",
+      icon: IconMathEqualGreater,
+    },
+  ] as SelectOption[];
 
 export const OperatingSystemTab = ({
   value,
@@ -354,17 +355,17 @@ export const OperatingSystemTab = ({
 
   const prefix =
     os === OperatingSystem.LINUX || os === OperatingSystem.WINDOWS
-      ? "Kernel Version"
-      : "Version";
+      ? t("postureChecks.kernelVersion")
+      : t("common.version");
 
   const versionError = useMemo(() => {
-    const msg = "Please enter a valid version, e.g., 0.2, 0.2.0, 0.2.0-alpha.1";
+    const msg = t("postureChecks.invalidVersion");
     if (value == "") return "";
     if (value == "-") return "";
     const validSemver = validator.isValidVersion(value);
     if (!validSemver) return msg;
     return "";
-  }, [value]);
+  }, [value, t]);
 
   useEffect(() => {
     onError(versionError);
@@ -394,7 +395,7 @@ export const OperatingSystemTab = ({
         <SelectDropdown
           value={allOrMin}
           onChange={changeAllOrMin}
-          options={allOrMinOptions}
+          options={allOrMinOptions(t)}
           disabled={allow === "block" || disabled}
         />
         {versionList && !useCustomVersion ? (
@@ -432,7 +433,7 @@ export const OperatingSystemTab = ({
                 {t("postureChecks.useCustomVersion")}
               </>
             }
-            helpText={"Use a custom version number if you need more control."}
+            helpText={t("postureChecks.customVersionHelp")}
           />
         </div>
       )}

@@ -17,8 +17,8 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import useRedirect from "@hooks/useRedirect";
 import useFetchApi from "@utils/api";
-import { singularize } from "@utils/helpers";
-import dayjs from "dayjs";
+import { formatDateTooltip, formatRelativeDate } from "@/i18n/date-time";
+import { useDashboardLocale } from "@/i18n/LocaleProvider";
 import { isEmpty } from "lodash";
 import {
   ArrowRightIcon,
@@ -91,7 +91,7 @@ export default function PeerPage() {
   if (isRestricted) {
     return (
       <PageContainer>
-        <RestrictedAccess page={"Peer Information"} />
+        <RestrictedAccess page={t("peer.informationPage")} />
       </PageContainer>
     );
   }
@@ -371,7 +371,7 @@ const PeerOverviewTabs = () => {
               size={16}
               className="fill-nb-gray-400 group-data-[state=active]/trigger:fill-netbird"
             />
-            {singularize("Services", flatTargets.length)}
+            {t("peer.tabServices", { count: flatTargets.length })}
           </TabsTrigger>
         )}
 
@@ -407,10 +407,8 @@ const PeerOverviewTabs = () => {
             targets={flatTargets}
             isLoading={isServicesLoading}
             hideResourceColumn
-            emptyTableTitle={"This peer has no services"}
-            emptyTableDescription={
-              "Add your services to this peer and securely expose them through NetBird's reverse proxy"
-            }
+            emptyTableTitle={t("peer.noServicesTitle")}
+            emptyTableDescription={t("peer.noServicesDescription")}
           />
         </TabsContent>
       )}
@@ -450,9 +448,7 @@ const PeerOverviewTabContent = () => {
           {permission.groups.read && (
             <div>
               <Label>{t("peer.assignedGroups")}</Label>
-              <HelpText>
-                Use groups to control what this peer can access.
-              </HelpText>
+              <HelpText>{t("peer.assignedGroupsHelp")}</HelpText>
               <PeerGroupSelector
                 disabled={!permission.groups.update}
                 onChange={setSelectedGroups}
@@ -481,6 +477,7 @@ const PeerOverviewTabContent = () => {
 
 function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
   const t = useTranslations();
+  const { locale } = useDashboardLocale();
   const { isLoading, getRegionByPeer } = useCountries();
   const { update } = usePeer();
   const { mutate } = useSWRConfig();
@@ -539,11 +536,11 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
           <Card.ListItem
             copy
             tooltip={false}
-            copyText={"NetBird IP Address"}
+            copyText={t("peer.netbirdIpAddress")}
             label={
               <>
                 <MapPin size={16} className={"shrink-0"} />
-                NetBird IP Address
+                {t("peer.netbirdIpAddress")}
               </>
             }
             valueToCopy={peer.ip}
@@ -560,11 +557,11 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             <Card.ListItem
               copy
               tooltip={false}
-              copyText={"NetBird IPv6 Address"}
+              copyText={t("peer.netbirdIpv6Address")}
               label={
                 <>
                   <MapPin size={16} className={"shrink-0"} />
-                  NetBird IPv6 Address
+                  {t("peer.netbirdIpv6Address")}
                 </>
               }
               valueToCopy={peer.ipv6}
@@ -580,11 +577,11 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
 
           <Card.ListItem
             copy
-            copyText={"Public IP Address"}
+            copyText={t("peer.publicIpAddress")}
             label={
               <>
                 <NetworkIcon size={16} className={"shrink-0"} />
-                Public IP Address
+                {t("peer.publicIpAddress")}
               </>
             }
             value={peer.connection_ip}
@@ -592,7 +589,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
 
           <Card.ListItem
             copy
-            copyText={"DNS label"}
+            copyText={t("peer.dnsLabel")}
             label={
               <>
                 <Globe size={16} className={"shrink-0"} />
@@ -610,7 +607,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
 
           <Card.ListItem
             copy
-            copyText={"Hostname"}
+            copyText={t("common.hostname")}
             label={
               <>
                 <MonitorSmartphoneIcon size={16} className={"shrink-0"} />
@@ -630,7 +627,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             tooltip={false}
             value={
               isEmpty(peer.country_code) ? (
-                "Unknown"
+                t("common.unknown")
               ) : (
                 <>
                   {isLoading ? (
@@ -675,11 +672,11 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
           {peerMacAddresses(peer).length > 0 && (
             <Card.ListItem
               copy
-              copyText={"MAC Address"}
+              copyText={t("peer.macAddress")}
               label={
                 <>
                   <NetworkIcon size={16} className={"shrink-0"} />
-                  MAC Address
+                  {t("peer.macAddress")}
                 </>
               }
               className={
@@ -698,12 +695,16 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
                   {t("peer.registeredOn")}
                 </>
               }
-              value={
-                dayjs(peer.created_at).format("D MMMM, YYYY [at] h:mm A") +
-                " (" +
-                dayjs().to(peer.created_at) +
-                ")"
-              }
+              value={t("peer.absoluteWithRelative", {
+                absolute: formatDateTooltip(
+                  new Date(peer.created_at),
+                  locale,
+                ),
+                relative: formatRelativeDate(
+                  new Date(peer.created_at),
+                  locale,
+                ),
+              })}
             />
           )}
 
@@ -711,16 +712,22 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             label={
               <>
                 <History size={16} className={"shrink-0"} />
-                Last seen
+                {t("tables.lastSeen")}
               </>
             }
             value={
               peer.connected
-                ? "just now"
-                : dayjs(peer.last_seen).format("D MMMM, YYYY [at] h:mm A") +
-                  " (" +
-                  dayjs().to(peer.last_seen) +
-                  ")"
+                ? t("peers.justNow")
+                : t("peer.absoluteWithRelative", {
+                    absolute: formatDateTooltip(
+                      new Date(peer.last_seen),
+                      locale,
+                    ),
+                    relative: formatRelativeDate(
+                      new Date(peer.last_seen),
+                      locale,
+                    ),
+                  })
             }
           />
 

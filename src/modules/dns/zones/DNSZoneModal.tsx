@@ -97,7 +97,7 @@ export function DNSZoneModalContent({
       preventLeadingAndTrailingDots: true,
     });
     if (!valid) {
-      return "Please enter a valid domain, e.g. internal, company.internal or intra.example.com";
+      return t("dns.invalidZoneDomain");
     }
   }, [domain]);
 
@@ -181,9 +181,7 @@ export function DNSZoneModalContent({
               {t("dns.enableSearchDomains")}
             </>
           }
-          helpText={
-            "E.g., 'server.company.internal' will be accessible with 'server'"
-          }
+          helpText={t("dns.zoneSearchDomainExample")}
         />
 
         <FancyToggleSwitch
@@ -196,18 +194,22 @@ export function DNSZoneModalContent({
               {t("dns.enableDNSZone")}
             </>
           }
-          helpText={"Use this switch to enable or disable the dns zone."}
+          helpText={t("dns.enableZoneHelp")}
         />
       </div>
 
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
-            <InlineLink href={DNS_ZONE_DOCS_LINK} target={"_blank"}>
-              {t("dns.dnsZones")}
-              <ExternalLinkIcon size={12} />
-            </InlineLink>
+            {t.rich("dns.learnMoreAbout", {
+              topic: t("dns.dnsZones"),
+              link: (chunks) => (
+                <InlineLink href={DNS_ZONE_DOCS_LINK} target={"_blank"}>
+                  {chunks}
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              ),
+            })}
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>

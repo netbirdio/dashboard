@@ -174,7 +174,7 @@ export function ResourceModalContent({
       (normalized !== resource?.name?.toLowerCase() &&
         takenNames?.some((n) => n.toLowerCase() === normalized))
     )
-      return "A resource with this name already exists. Please use another name.";
+      return t("networks.resourceNameExists");
     return "";
   }, [name, resourceExists, resource?.id, resource?.name, takenNames]);
 
@@ -306,34 +306,23 @@ export function ResourceModalContent({
               value={address}
               onChange={setAddress}
               onError={setAddressError}
-              description={
-                <>
-                  Enter a single{" "}
-                  <HelpTooltip
-                    content={
-                      "A single host address, e.g., 10.0.0.1 or 192.168.1.5. Use this to give access to a specific machine or service."
-                    }
-                  >
-                    {t("networks.ip")}
+              description={t.rich("networks.singleAddressDescription", {
+                ip: (chunks) => (
+                  <HelpTooltip content={t("networks.hostAddressTooltip")}>
+                    {chunks}
                   </HelpTooltip>
-                  ,{" "}
-                  <HelpTooltip
-                    content={
-                      "To give access to an entire subnet, use a CIDR block. For example, 10.0.0.0/24 or 192.168.1.0/24."
-                    }
-                  >
-                    CIDR Block
-                  </HelpTooltip>{" "}
-                  or{" "}
-                  <HelpTooltip
-                    content={
-                      "A DNS domain name, e.g., service.internal, example.com or *.example.com to match all subdomains."
-                    }
-                  >
-                    {t("networks.domainName")}
+                ),
+                cidr: (chunks) => (
+                  <HelpTooltip content={t("networks.cidrTooltip")}>
+                    {chunks}
                   </HelpTooltip>
-                </>
-              }
+                ),
+                domain: (chunks) => (
+                  <HelpTooltip content={t("networks.domainTooltip")}>
+                    {chunks}
+                  </HelpTooltip>
+                ),
+              })}
             />
 
             <Accordion
@@ -370,9 +359,9 @@ export function ResourceModalContent({
                     <div>
                       <Label>{t("networks.resourceGroupsLabel")}</Label>
                       <HelpText className={"mt-1"}>
-                        Add this resource to a group (e.g., Databases, Web
-                        Servers) and reference the group <br /> in access
-                        policies to simplify management.
+                        {t.rich("networks.resourceGroupsManagementHelp", {
+                          br: () => <br />,
+                        })}
                       </HelpText>
                       <PeerGroupSelector
                         side={"top"}
@@ -384,37 +373,32 @@ export function ResourceModalContent({
                       />
                       {groupPolicyCount > 0 && (
                         <Callout variant={"info"} className={"mt-3"}>
-                          Your selected resource groups are used in{" "}
-                          <span className="text-white font-medium">
-                            {groupPolicyCount}
-                            {" " + t("common.accessControl")}{" "}
-                            {groupPolicyCount === 1
-                              ? t("common.policy")
-                              : t("common.policies")}
-                          </span>
-                          . This resource will inherit access from{" "}
-                          {groupPolicyCount === 1
-                            ? "this policy"
-                            : "these policies"}
-                          .
-                          {useSave && (isAddressValid || resource) ? (
-                            <>
-                              {" "}
-                              Please review them in the{" "}
-                              <InlineButtonLink
-                                onClick={() => setTab("access-control")}
-                                variant={"dashed"}
-                              >
-                                {t("common.accessControl")}
-                              </InlineButtonLink>{" "}
-                              tab.
-                            </>
-                          ) : useSave ? (
-                            " Please review them in the Access Control tab."
-                          ) : (
-                            // Draft has no Access Control tab.
-                            " Review them on the canvas before you deploy."
-                          )}
+                          {t.rich("networks.resourceGroupsPolicyUsage", {
+                            count: groupPolicyCount,
+                            policies: () => (
+                              <span className="text-white font-medium">
+                                {groupPolicyCount}
+                                {" " + t("common.accessControl")}{" "}
+                                {groupPolicyCount === 1
+                                  ? t("common.policy")
+                                  : t("common.policies")}
+                              </span>
+                            ),
+                          })}
+                          {useSave && (isAddressValid || resource)
+                            ? t.rich("networks.reviewInAccessControlTab", {
+                                link: (chunks) => (
+                                  <InlineButtonLink
+                                    onClick={() => setTab("access-control")}
+                                    variant={"dashed"}
+                                  >
+                                    {chunks}
+                                  </InlineButtonLink>
+                                ),
+                              })
+                            : useSave
+                              ? t("networks.reviewInAccessControlPlain")
+                              : t("networks.reviewOnCanvas")}
                         </Callout>
                       )}
                     </div>

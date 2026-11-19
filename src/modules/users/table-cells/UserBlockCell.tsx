@@ -26,11 +26,11 @@ export default function UserBlockCell({ user, isUserPage = false }: Props) {
   const disabled = user.is_current || user.role === "owner";
 
   const update = async (blocked: boolean) => {
-    const name = user.name || "User";
+    const name = user.name || t("common.user");
 
     if (blocked) {
       const choice = await confirm({
-        title: `Block '${name}'?`,
+        title: t("users.blockNamedTitle", { name }),
         description:
           t("users.blockUserDesc"),
         confirmText: t("users.block"),

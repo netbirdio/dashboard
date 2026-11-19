@@ -148,7 +148,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
         access_control_groups: accessControlGroupIds || undefined,
       },
       onSuccess,
-      "Peer was successfully added to the route",
+      t("routes.routingPeerAdded"),
     );
   };
 

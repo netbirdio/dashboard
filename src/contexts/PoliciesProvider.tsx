@@ -158,9 +158,8 @@ export default function PoliciesProvider({ children }: Props) {
     message?: string,
   ) => {
     notify({
-      title: "Access Control Policy " + policy.name,
-      description:
-        message || "The access control policy was successfully updated",
+      title: t("accessControl.policyNamedTitle", { name: policy.name }),
+      description: message || t("accessControl.policyUpdatedDescription"),
       promise: request
         .put(
           {
@@ -179,7 +178,7 @@ export default function PoliciesProvider({ children }: Props) {
         .then((p) => {
           onSuccess && onSuccess(p);
         }),
-      loadingMessage: "Updating policy...",
+      loadingMessage: t("accessControl.updatingPolicy"),
     });
   };
 
@@ -189,8 +188,8 @@ export default function PoliciesProvider({ children }: Props) {
       onSuccess?.();
     });
     notify({
-      title: "Access Control Policy " + policy.name,
-      description: "The policy was successfully deleted.",
+      title: t("accessControl.policyNamedTitle", { name: policy.name }),
+      description: t("accessControl.policyDeletedDescription"),
       promise,
       loadingMessage: t("accessControl.policyDeleteLoading"),
     });

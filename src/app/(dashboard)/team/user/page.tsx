@@ -17,6 +17,8 @@ import { IconCirclePlus, IconSettings2 } from "@tabler/icons-react";
 import useFetchApi, { useApiCall } from "@utils/api";
 import { generateColorFromString } from "@utils/helpers";
 import dayjs from "dayjs";
+import { formatDateTooltip, formatRelativeDate } from "@/i18n/date-time";
+import { useDashboardLocale } from "@/i18n/LocaleProvider";
 import {
   Ban,
   GalleryHorizontalEnd,
@@ -47,6 +49,7 @@ import { UserPeersSection } from "@/modules/users/UserPeersSection";
 import { UserRoleSelector } from "@/modules/users/UserRoleSelector";
 
 export default function UserPage() {
+  const t = useTranslations();
   const queryParameter = useSearchParams();
   const userId = queryParameter.get("id");
   const { permission } = usePermissions();
@@ -67,7 +70,7 @@ export default function UserPage() {
   if (!permission.users.read) {
     return (
       <PageContainer>
-        <RestrictedAccess page={"User Information"} />
+        <RestrictedAccess page={t("users.informationPage")} />
       </PageContainer>
     );
   }
@@ -120,7 +123,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
 
     notify({
       title: user.name,
-      description: "Changes successfully saved.",
+      description: translate("users.changesSaved"),
       promise: userRequest
         .put(
           {
@@ -135,7 +138,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
           mutate(`/integrations/msp/switcher`);
           updateChangesRef([role, selectedGroups]);
         }),
-      loadingMessage: "Saving changes...",
+      loadingMessage: translate("users.savingChanges"),
     });
   };
 
@@ -333,7 +336,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                           disabled={!permission.pats.create}
                         >
                           <IconCirclePlus size={16} />
-                          Create Access Token
+                          {translate("accessTokens.createTitle")}
                         </Button>
                       </CreateAccessTokenModal>
                     </div>
@@ -351,6 +354,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
 
 function UserInformationCard({ user }: Readonly<{ user: User }>) {
   const t = useTranslations();
+  const { locale } = useDashboardLocale();
   const isServiceUser = user.is_service_user || false;
   const neverLoggedIn = dayjs(user.last_login).isBefore(
     dayjs().subtract(1000, "years"),
@@ -416,16 +420,22 @@ function UserInformationCard({ user }: Readonly<{ user: User }>) {
               label={
                 <>
                   <History size={16} />
-                  Last login
+                  {t("users.lastLogin")}
                 </>
               }
               value={
-                neverLoggedIn
-                  ? "Never"
-                  : dayjs(user.last_login).format("D MMMM, YYYY [at] h:mm A") +
-                    " (" +
-                    dayjs().to(user.last_login) +
-                    ")"
+                neverLoggedIn || !user.last_login
+                  ? t("users.never")
+                  : t("peer.absoluteWithRelative", {
+                      absolute: formatDateTooltip(
+                        new Date(user.last_login),
+                        locale,
+                      ),
+                      relative: formatRelativeDate(
+                        new Date(user.last_login),
+                        locale,
+                      ),
+                    })
               }
             />
           </>

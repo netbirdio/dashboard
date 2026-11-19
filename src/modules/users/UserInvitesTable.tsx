@@ -68,6 +68,7 @@ import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { formatDateTooltip } from "@/i18n/date-time";
 import { useDashboardLocale, useTranslations } from "@/i18n/LocaleProvider";
 import { defaultLocale } from "@/i18n/locales";
 import { Group } from "@/interfaces/Group";
@@ -200,8 +201,9 @@ function InviteGroupCell({ invite }: { invite: UserInvite }) {
 
 // Status cell for invites - shows Valid/Expired based on expired field
 function InviteStatusCell({ invite }: { invite: UserInvite }) {
+  const t = useTranslations();
   const isExpired = invite.expired;
-  const text = isExpired ? "Expired" : "Valid";
+  const text = isExpired ? t("common.expired") : t("common.valid");
   const color = isExpired ? "bg-red-500" : "bg-green-500";
 
   return (
@@ -241,7 +243,7 @@ function InviteActionCell({ invite }: { invite: UserInvite }) {
   const handleRegenerate = async () => {
     notify({
       title: t("users.regenerateInvite"),
-      description: `Regenerating invite link for ${invite.name}...`,
+      description: t("users.regeneratingNamed", { name: invite.name }),
       promise: regenerateRequest.post({}).then((response) => {
         setRegeneratedData(response);
         setModalOpen(true);
@@ -252,7 +254,7 @@ function InviteActionCell({ invite }: { invite: UserInvite }) {
   };
 
   const handleCopyAndClose = () => {
-    copyToClipboard("Invite link was copied to your clipboard!").then(() => {
+    copyToClipboard(t("users.inviteLinkCopiedMessage")).then(() => {
       setRegeneratedData(null);
       setModalOpen(false);
     });
@@ -271,9 +273,9 @@ function InviteActionCell({ invite }: { invite: UserInvite }) {
   };
 
   const openDeleteConfirm = async () => {
-    const name = invite.name || invite.email || "Invite";
+    const name = invite.name || invite.email || t("users.invite");
     const choice = await confirm({
-      title: `Delete invite for '${name}'?`,
+      title: t("users.deleteInviteTitle", { name }),
       description: t("users.deleteInviteDesc"),
       confirmText: t("common.delete"),
       cancelText: t("common.cancel"),
@@ -396,7 +398,9 @@ function InviteActionCell({ invite }: { invite: UserInvite }) {
   );
 }
 
-export const InvitesTableColumns: ColumnDef<UserInvite>[] = [
+export function useInvitesTableColumns(): ColumnDef<UserInvite>[] {
+  const { locale } = useDashboardLocale();
+  return [
   {
     accessorKey: "name",
     header: ({ column }) => {
@@ -438,7 +442,7 @@ export const InvitesTableColumns: ColumnDef<UserInvite>[] = [
     sortingFn: "datetime",
     cell: ({ row }) => (
       <span className="text-nb-gray-400">
-        {dayjs(row.original.expires_at).format("D MMM, YYYY")}
+        {formatDateTooltip(new Date(row.original.expires_at), locale)}
       </span>
     ),
   },
@@ -459,7 +463,8 @@ export const InvitesTableColumns: ColumnDef<UserInvite>[] = [
     sortingFn: "text",
     cell: ({ row }) => <InviteActionCell invite={row.original} />,
   },
-];
+  ];
+}
 
 type Props = {
   headingTarget?: HTMLHeadingElement | null;
@@ -471,6 +476,7 @@ export default function UserInvitesTable({
   onShowUsers,
 }: Readonly<Props>) {
   const translate = useTranslations();
+  const columns = useInvitesTableColumns();
   useFetchApi("/groups");
   const { groups } = useGroups();
   const { data: invites, isLoading } =
@@ -615,7 +621,7 @@ export default function UserInvitesTable({
       text={translate("users.invites")}
       sorting={sorting}
       setSorting={setSorting}
-      columns={InvitesTableColumns}
+      columns={columns}
       data={invitesWithGroupNames}
       initialPageSize={25}
       showResetFilterButton={false}

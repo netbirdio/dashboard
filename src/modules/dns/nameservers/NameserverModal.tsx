@@ -224,7 +224,7 @@ export function NameserverModalContent({
   }, [domains]);
 
   const nameLengthError = useMemo(() => {
-    if (name.length > 40) return "Name should be less than 40 characters";
+    if (name.length > 40) return t("dns.nameTooLong");
     return "";
   }, [name]);
 
@@ -363,7 +363,7 @@ export function NameserverModalContent({
                   {t("dns.enableNameserver")}
                 </>
               }
-              helpText={"Use this switch to enable or disable the nameserver."}
+              helpText={t("dns.enableNameserverHelp")}
               disabled={!canAction}
             />
           </div>
@@ -431,9 +431,7 @@ export function NameserverModalContent({
                     {t("dns.enableSearchDomainsNS")}
                   </>
                 }
-                helpText={
-                  "E.g., 'peer.example.com' will be accessible with 'peer'"
-                }
+                helpText={t("dns.searchDomainExample")}
                 disabled={!canAction}
               />
             </div>
@@ -581,6 +579,7 @@ function NameserverInput({
   onError?: (error: boolean) => void;
   disabled?: boolean;
 }>) {
+  const t = useTranslations();
   const [ip, setIP] = useState(value.ip);
   const [port, setPort] = useState<string>(value.port.toString());
 
@@ -601,7 +600,7 @@ function NameserverInput({
     const validCIDR = isValidIP(ip);
     if (!validCIDR) {
       onError && onError(true);
-      return "Please enter a valid IP, e.g., 192.168.1.0";
+      return t("dns.invalidIp");
     }
     onError && onError(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -283,22 +283,23 @@ export function UserInviteModalContent({
   }, [name, isValidEmail]);
 
   const getTitle = () => {
-    if (isCloud) return "Invite User";
-    return mode === "create" ? "Create User" : "Invite User";
+    if (isCloud) return t("users.inviteUserTitle");
+    return mode === "create"
+      ? t("users.createUserTitle")
+      : t("users.inviteUserTitle");
   };
 
   const getDescription = () => {
-    if (isCloud)
-      return "Invite a user to your network and set their permissions.";
-    if (mode === "create") {
-      return "Create a NetBird user account with email and password.";
-    }
-    return "Generate an invite link that the user can use to set their own password.";
+    if (isCloud) return t("users.inviteUserDescription");
+    if (mode === "create") return t("users.createUserDescription");
+    return t("users.inviteLinkDescription");
   };
 
   const getButtonText = () => {
-    if (isCloud) return "Send Invitation";
-    return mode === "create" ? "Create User" : "Create Invite Link";
+    if (isCloud) return t("users.sendInvitation");
+    return mode === "create"
+      ? t("users.createUserTitle")
+      : t("users.createInviteLink");
   };
 
   const getButtonIcon = () => {

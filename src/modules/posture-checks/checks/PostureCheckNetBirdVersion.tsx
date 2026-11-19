@@ -60,9 +60,8 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
   const versionError = useMemo(() => {
     if (version == "") return "";
     const validSemver = validator.isValidVersion(version);
-    if (!validSemver)
-      return "Please enter a valid version, e.g., 0.2, 0.2.0, 0.2.0-alpha.1";
-  }, [version]);
+    if (!validSemver) return t("postureChecks.invalidVersion");
+  }, [version, t]);
 
   const canSave = useMemo(() => {
     return (

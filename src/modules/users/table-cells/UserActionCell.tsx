@@ -58,9 +58,9 @@ export default function UserActionCell({
   };
 
   const rejectUser = async () => {
-    const name = user.name || "User";
+    const name = user.name || t("common.user");
     const choice = await confirm({
-      title: `Reject '${name}'?`,
+      title: t("users.rejectNamedTitle", { name }),
       description:
         t("users.rejectUserDesc"),
       confirmText: t("users.reject"),
@@ -82,9 +82,9 @@ export default function UserActionCell({
   };
 
   const openDeleteConfirm = async () => {
-    const name = user.name || "User";
+    const name = user.name || t("common.user");
     const choice = await confirm({
-      title: `Delete '${name}'?`,
+      title: t("users.deleteNamedTitle", { name }),
       description:
         t("users.deleteUserDesc"),
       confirmText: t("common.delete"),
@@ -97,12 +97,12 @@ export default function UserActionCell({
   };
 
   const toggleBlocked = async () => {
-    const name = user.name || "User";
+    const name = user.name || t("common.user");
     const blocked = !user.is_blocked;
 
     if (blocked) {
       const choice = await confirm({
-        title: `Block '${name}'?`,
+        title: t("users.blockNamedTitle", { name }),
         description:
           t("users.blockUserDesc"),
         confirmText: t("users.block"),

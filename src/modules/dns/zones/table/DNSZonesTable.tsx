@@ -281,22 +281,22 @@ export default function DNSZonesTable({
                 size={"large"}
               />
             }
-            title={"Create New Zone"}
+            title={translate("dns.createNewZone")}
             description={translate("dns.noZonesGetStartedDesc")}
             button={
               <div className={"gap-x-4 flex items-center justify-center"}>
                 <AddZoneButton distributionGroups={distributionGroups} />
               </div>
             }
-            learnMore={
-              <>
-                Learn more about
+            learnMore={translate.rich("dns.learnMoreAbout", {
+              topic: translate("dns.dnsZones"),
+              link: (chunks) => (
                 <InlineLink href={DNS_ZONE_DOCS_LINK} target={"_blank"}>
-                  {translate("dns.dnsZones")}
+                  {chunks}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
-              </>
-            }
+              ),
+            })}
           />
         )
       }

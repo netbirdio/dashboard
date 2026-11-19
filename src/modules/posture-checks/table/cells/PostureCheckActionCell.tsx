@@ -23,7 +23,7 @@ export const PostureCheckActionCell = ({ check }: Props) => {
 
   const handleDelete = async () => {
     const choice = await confirm({
-      title: `Delete '${check.name}'?`,
+      title: t("postureChecks.deleteNamedTitle", { name: check.name }),
       description:
         t("postureChecks.confirmDeleteDescription"),
       confirmText: t("common.delete"),

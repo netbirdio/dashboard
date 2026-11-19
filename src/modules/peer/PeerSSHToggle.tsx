@@ -83,22 +83,18 @@ export const PeerSSHToggle = () => {
   const disableDashboardSSH = async () => {
     const choice = await confirm({
       title: translate("peer.disableSSHConfirmation"),
-      description: (
-        <div>
-          Starting from NetBird v0.61.0, once SSH access is disabled, you cannot
-          re-enable it again from the dashboard. You&apos;ll need to create an
-          explicit access control policy and update your NetBird client to
-          restore SSH functionality.{" "}
+      description: translate.rich("peers.disableSshDashboardDescription", {
+        link: (chunks) => (
           <InlineLink
             href={"https://docs.netbird.io/manage/peers/ssh"}
             target={"_blank"}
             onClick={(e) => e.stopPropagation()}
           >
-            {translate("common.learnMore")}
+            {chunks}
             <ExternalLinkIcon size={12} />
           </InlineLink>
-        </div>
-      ),
+        ),
+      }),
       confirmText: translate("common.disable"),
       cancelText: translate("common.cancel"),
       type: "warning",
@@ -135,9 +131,7 @@ export const PeerSSHToggle = () => {
               {translate("peer.sshAccess")}
             </>
           }
-          helpText={
-            "Enable the SSH server on this peer to access the machine via an secure shell."
-          }
+          helpText={translate("peer.enableSshServerHelp")}
         />
       </FullTooltip>
       <PeerSSHPolicyInfo peer={peer} />
@@ -296,7 +290,7 @@ export const PeerSSHToggle = () => {
               <div>
                 <span className={"font-medium text-xs"}>
                   {singularize(
-                    "Active Policies",
+                    translate("peer.activePolicies"),
                     enabledPolicies?.length,
                     true,
                   )}

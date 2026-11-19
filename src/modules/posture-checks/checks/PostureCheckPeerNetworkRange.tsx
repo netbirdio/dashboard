@@ -102,7 +102,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
   const validateNetworkRange = (networkRange: string) => {
     if (networkRange == "") return "";
     const validCIDR = isValidIP(networkRange);
-    if (!validCIDR) return "Please enter a valid CIDR, e.g., 192.168.1.0/24";
+    if (!validCIDR) return t("postureChecks.invalidCidr");
     return "";
   };
 

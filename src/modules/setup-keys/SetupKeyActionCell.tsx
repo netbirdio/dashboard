@@ -32,7 +32,9 @@ export default function SetupKeyActionCell({ setupKey }: Readonly<Props>) {
 
   const handleRevoke = async () => {
     const choice = await confirm({
-      title: `Revoke '${setupKey?.name || "Setup Key"}'?`,
+      title: t("setupKeys.revokeNamedTitle", {
+        name: setupKey?.name || t("common.setupKey"),
+      }),
       description:
         t("setupKeys.revokeConfirmDescription"),
       confirmText: t("setupKeys.revoke"),
@@ -42,11 +44,11 @@ export default function SetupKeyActionCell({ setupKey }: Readonly<Props>) {
     if (!choice) return;
 
     notify({
-      title: setupKey?.name || "Setup Key",
+      title: setupKey?.name || t("common.setupKey"),
       description: t("setupKeys.revokeSuccessDescription"),
       promise: request
         .put({
-          name: setupKey?.name || "Setup Key",
+          name: setupKey?.name || t("common.setupKey"),
           type: setupKey.type,
           expires_in: setupKey.expires_in,
           revoked: true,
@@ -65,7 +67,9 @@ export default function SetupKeyActionCell({ setupKey }: Readonly<Props>) {
 
   const handleDelete = async () => {
     const choice = await confirm({
-      title: `Delete '${setupKey?.name || "Setup Key"}'?`,
+      title: t("setupKeys.deleteNamedTitle", {
+        name: setupKey?.name || t("common.setupKey"),
+      }),
       description:
         t("setupKeys.deleteConfirmDescription"),
       confirmText: t("common.delete"),
@@ -75,7 +79,7 @@ export default function SetupKeyActionCell({ setupKey }: Readonly<Props>) {
     if (!choice) return;
 
     notify({
-      title: setupKey?.name || "Setup Key",
+      title: setupKey?.name || t("common.setupKey"),
       description: t("setupKeys.deleteSuccessDescription"),
       promise: request.del().then(() => {
         mutate("/setup-keys");

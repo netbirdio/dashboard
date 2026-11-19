@@ -64,15 +64,15 @@ export function ChangePasswordModalContent({
 
   const newPasswordError = useMemo(() => {
     if (newPassword.length === 0) return undefined;
-    if (newPassword.length < 8) return "Password must be at least 8 characters";
+    if (newPassword.length < 8) return t("users.passwordTooShort");
     return undefined;
-  }, [newPassword]);
+  }, [newPassword, t]);
 
   const confirmPasswordError = useMemo(() => {
     if (confirmPassword.length === 0) return undefined;
-    if (newPassword !== confirmPassword) return "Passwords do not match";
+    if (newPassword !== confirmPassword) return t("users.passwordsDoNotMatch");
     return undefined;
-  }, [newPassword, confirmPassword]);
+  }, [newPassword, confirmPassword, t]);
 
   const isDisabled = useMemo(() => {
     if (currentPassword.length === 0) return true;

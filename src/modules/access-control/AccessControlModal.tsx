@@ -301,7 +301,7 @@ export function AccessControlModalContent({
             }
           >
             {isCreate
-              ? "Create New Access Control Policy"
+              ? t("accessControl.createNewPolicyTitle")
               : t("accessControl.updatePolicy")}
           </span>
         }
@@ -568,7 +568,7 @@ export function AccessControlModalContent({
                   {t("accessControl.enablePolicy")}
                 </>
               }
-              helpText={"Use this switch to enable or disable the policy."}
+              helpText={t("accessControl.enablePolicyHelp")}
             />
           </div>
         </TabsContent>
@@ -619,14 +619,17 @@ export function AccessControlModalContent({
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
-            <InlineLink
-              href={"https://docs.netbird.io/how-to/manage-network-access"}
-              target={"_blank"}
-            >
-              {t("accessControl.accessControls")}
-              <ExternalLinkIcon size={12} />
-            </InlineLink>
+            {t.rich("accessControl.learnMoreAbout", {
+              link: (chunks) => (
+                <InlineLink
+                  href={"https://docs.netbird.io/how-to/manage-network-access"}
+                  target={"_blank"}
+                >
+                  {chunks}
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              ),
+            })}
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>

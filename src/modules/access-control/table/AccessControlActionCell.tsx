@@ -41,14 +41,14 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
         mutate("/policies");
       },
       nextEnabled
-        ? "The rule was successfully enabled"
-        : "The rule was successfully disabled",
+        ? t("accessControl.ruleEnabled")
+        : t("accessControl.ruleDisabled"),
     );
   };
 
   const handleDelete = async () => {
     const choice = await confirm({
-      title: `Delete '${policy.name}'?`,
+      title: t("accessControl.deleteNamedTitle", { name: policy.name }),
       description:
         t("accessControl.confirmDeleteDescription"),
       confirmText: t("common.delete"),

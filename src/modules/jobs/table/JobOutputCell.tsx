@@ -24,7 +24,7 @@ export const JobOutputCell = ({ job }: Props) => {
             <br />
             <span className="text-nb-gray-200 truncate">
               <CopyToClipboardText
-                message={"Upload key has been copied to your clipboard"}
+                message={t("jobs.uploadKeyCopied")}
                 alwaysShowIcon={true}
               >
                 <span className={"font-mono truncate"}>

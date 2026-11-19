@@ -35,10 +35,9 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
     const enabled = !ns.enabled;
     notify({
       title: ns.name,
-      description:
-        "Nameserver was successfully" +
-        (enabled ? " enabled" : " disabled") +
-        ".",
+      description: enabled
+        ? t("dns.nameserverEnabled")
+        : t("dns.nameserverDisabled"),
       loadingMessage: t("dns.updatingNameserver"),
       promise: nsRequest
         .put(
@@ -62,7 +61,7 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
 
   const deleteRule = async () => {
     notify({
-      title: "Nameserver " + ns.name,
+      title: t("dns.nameserverNamedTitle", { name: ns.name }),
       description: t("dns.nameserverDeletedSuccess"),
       promise: nsRequest.del("", `/${ns.id}`).then(() => {
         mutate("/dns/nameservers");
@@ -73,9 +72,8 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
 
   const openConfirm = async () => {
     const choice = await confirm({
-      title: `Delete '${ns.name}'?`,
-      description:
-        "Are you sure you want to delete this nameserver? This action cannot be undone.",
+      title: t("dns.deleteNameserverTitle", { name: ns.name }),
+      description: t("dns.deleteNameserverDescription"),
       confirmText: t("common.delete"),
       cancelText: t("common.cancel"),
       type: "danger",

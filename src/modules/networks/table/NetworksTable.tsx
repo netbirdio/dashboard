@@ -195,26 +195,25 @@ export default function NetworksTable({
                     size={"large"}
                   />
                 }
-                title={"Create New Network"}
-                description={
-                  "It looks like you don't have any networks. Access internal resources in your LANs and VPC by adding a network."
-                }
+                title={translate("networks.createNewNetwork")}
+                description={translate("networks.noNetworksDescription")}
                 button={
                   <div className={"gap-x-4 flex items-center justify-center"}>
                     <AddNetworkButton />
                   </div>
                 }
                 learnMore={
-                  <>
-                    Learn more about
-                    <InlineLink
-                      href={"https://docs.netbird.io/how-to/networks"}
-                      target={"_blank"}
-                    >
-                      {translate("common.networks")}
-                      <ExternalLinkIcon size={12} />
-                    </InlineLink>
-                  </>
+                  translate.rich("networks.learnMoreAboutNetworks", {
+                    link: (chunks) => (
+                      <InlineLink
+                        href={"https://docs.netbird.io/how-to/networks"}
+                        target={"_blank"}
+                      >
+                        {chunks}
+                        <ExternalLinkIcon size={12} />
+                      </InlineLink>
+                    ),
+                  })
                 }
               />
             }

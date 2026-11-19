@@ -41,9 +41,12 @@ export const ResourceActionCell = ({ resource }: Props) => {
     const nextEnabled = !resource.enabled;
     notify({
       title: t("networks.updateResource"),
-      description: `'${resource?.name}' is now ${
-        nextEnabled ? "enabled" : "disabled"
-      }`,
+      description: t(
+        nextEnabled
+          ? "networks.resourceNowEnabled"
+          : "networks.resourceNowDisabled",
+        { name: resource?.name ?? "" },
+      ),
       loadingMessage: t("networks.updatingResource"),
       duration: 1200,
       promise: update({
@@ -75,7 +78,7 @@ export const ResourceActionCell = ({ resource }: Props) => {
             disabled={
               !permission.networks.update && !permission.networks.delete
             }
-            aria-label={"Resource actions"}
+            aria-label={t("networks.resourceActions")}
           >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
