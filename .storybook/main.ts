@@ -98,6 +98,15 @@ const config: StorybookConfig = {
       mockConfigPlugin,
       layoutRouterPlugin,
     ];
+    // Stories answer /exit-nodes from fixtures (mocks/fixtures/exit-nodes.ts),
+    // shaped like the real API, so the dashboard's in-memory exit node mock
+    // (src/modules/exit-nodes/mock) stays off. A define rather than an import,
+    // so the baseline build of the visual regression check, which borrows
+    // this folder, doesn't need the mock to exist.
+    viteConfig.define = {
+      ...viteConfig.define,
+      "process.env.NEXT_PUBLIC_EXIT_NODES_MOCK": JSON.stringify("off"),
+    };
     return viteConfig;
   },
 };

@@ -6,8 +6,10 @@
  * Components therefore use `useFetchApi("/exit-nodes")` and
  * `useApiCall("/exit-nodes")` exactly as they will against the real API.
  *
- * To switch to the real API: delete this folder and the `exitNodesMock`
- * lines in src/utils/api.tsx and .storybook/preview.tsx.
+ * Set NEXT_PUBLIC_EXIT_NODES_MOCK=off to send these requests to the
+ * management API instead (Storybook does, and answers from fixtures). To
+ * switch to the real API for good: delete this folder, the `exitNodesMock`
+ * lines in src/utils/api.tsx and the define in .storybook/main.ts.
  *
  * Endpoints: GET/POST /exit-nodes, GET/PUT/DELETE /exit-nodes/:id.
  *
@@ -73,8 +75,11 @@ const expandPolicy = (policy: Policy, groups: Group[]): Policy => ({
   })),
 });
 
-export function createExitNodesMock(store = new ExitNodesMockStore()) {
-  let enabled = true;
+export function createExitNodesMock(
+  store = new ExitNodesMockStore(),
+  initiallyEnabled = true,
+) {
+  let enabled = initiallyEnabled;
   let seeding: Promise<void> | undefined;
   let knownGroups: Group[] = [];
 
@@ -223,5 +228,8 @@ export function createExitNodesMock(store = new ExitNodesMockStore()) {
 
 export type ExitNodesMock = ReturnType<typeof createExitNodesMock>;
 
-/** The mock the dashboard uses. Storybook switches it off and answers from fixtures. */
-export const exitNodesMock = createExitNodesMock();
+/** The mock the dashboard uses, unless NEXT_PUBLIC_EXIT_NODES_MOCK is "off". */
+export const exitNodesMock = createExitNodesMock(
+  undefined,
+  process.env.NEXT_PUBLIC_EXIT_NODES_MOCK !== "off",
+);

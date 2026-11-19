@@ -10,13 +10,8 @@ import React from "react";
 import { SWRConfig } from "swr";
 import DialogProvider from "@/contexts/DialogProvider";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
-import { exitNodesMock } from "@/modules/exit-nodes/mock/handler";
 
 dayjs.extend(relativeTime);
-
-// Stories answer /exit-nodes from fixtures in mocks/, shaped like the real
-// API, rather than from the dashboard's in-memory exit node mock.
-exitNodesMock.setEnabled(false);
 
 const inter = localFont({
   src: "../src/assets/fonts/Inter.ttf",
