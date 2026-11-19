@@ -1,6 +1,5 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import { Callout } from "@components/Callout";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
@@ -10,7 +9,6 @@ import { usePortalElement } from "@hooks/usePortalElement";
 import { isNetBirdCloud } from "@utils/netbird";
 import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
-import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import ReverseProxiesProvider from "@/contexts/ReverseProxiesProvider";
 import { useTranslations } from "@/i18n/LocaleProvider";
@@ -31,18 +29,6 @@ export default function ReverseProxyServicesPage() {
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/reverse-proxy/services"}
-            label={t("common.reverseProxy")}
-            icon={<ReverseProxyIcon size={16} />}
-          />
-          <Breadcrumbs.Item
-            href={"/reverse-proxy/services"}
-            label={t("common.services")}
-            active={true}
-          />
-        </Breadcrumbs>
         <h1 ref={headingRef}>{t("common.services")}</h1>
         <Paragraph>
           {t("reverseProxy.exposeServicesSecurelyThroughNetBirdSReverseProxy")}{" "}

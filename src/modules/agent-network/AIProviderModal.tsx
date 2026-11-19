@@ -897,7 +897,7 @@ export default function AIProviderModal({
         data-testid={"agent-network-provider-modal"}
       >
         <ModalHeader
-          icon={<Sparkles size={18} className={"text-netbird"} />}
+          icon={<Sparkles size={18} />}
           title={
             isEdit
               ? tr("agentNetwork.editProvider")

@@ -173,7 +173,7 @@ export default function InstanceSetupWizard() {
             {t.rich("instanceSetup.redirectCountdown", {
               seconds: countdown,
               count: (chunks) => (
-                <span className="text-white font-medium">{chunks}</span>
+                <span className="text-nb-gray-100 dark:text-white font-medium">{chunks}</span>
               ),
             })}
           </div>

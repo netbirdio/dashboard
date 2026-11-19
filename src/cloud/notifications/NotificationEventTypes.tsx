@@ -119,7 +119,7 @@ export const NotificationEventTypes = ({
             </Label>
             <Card
               className={
-                "w-full flex flex-col border-nb-gray-910 bg-nb-gray-935"
+                "w-full flex flex-col border-nb-gray-910 dark:border-nb-gray-910 bg-nb-gray-935"
               }
             >
               {types.map((type, index) => (

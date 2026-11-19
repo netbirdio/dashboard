@@ -76,7 +76,7 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent maxWidthClass={"max-w-lg"}>
         <ModalHeader
-          icon={<TerminalIcon className={"text-netbird"} size={18} />}
+          icon={<TerminalIcon size={18} />}
           title={peer.name}
           description={t("remoteAccess.connectViaSsh", { host: peer.ip })}
           color={"netbird"}

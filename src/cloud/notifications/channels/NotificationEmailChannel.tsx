@@ -16,7 +16,6 @@ import { Input } from "@components/Input";
 import Button from "@components/Button";
 import Badge from "@components/Badge";
 import { notify } from "@components/Notification";
-import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useTranslations } from "@/i18n/LocaleProvider";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 import { NotificationEventTypes } from "@/cloud/notifications/NotificationEventTypes";
@@ -92,11 +91,6 @@ export const NotificationEmailChannel = ({ channel }: Props) => {
   return (
     <div className={"p-default py-6 max-w-2xl"}>
       <Breadcrumbs>
-        <Breadcrumbs.Item
-          href={"/settings"}
-          label={t("common.settings")}
-          icon={<SettingsIcon size={13} />}
-        />
         <Breadcrumbs.Item
           href={"/settings?tab=notifications"}
           label={t("notifications.title")}

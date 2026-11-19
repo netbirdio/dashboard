@@ -23,7 +23,7 @@ export const ClusterTypeIndicator = ({ cluster }: Props) => {
       <FullTooltip
         content={
           <div className={"text-xs max-w-xs"}>
-            <span className={"font-medium text-white"}>
+            <span className={"font-medium text-nb-gray-100 dark:text-white"}>
               {t("reverseProxy.accountCluster")}
             </span>{" "}
             {t(
@@ -40,7 +40,7 @@ export const ClusterTypeIndicator = ({ cluster }: Props) => {
     <FullTooltip
       content={
         <div className={"text-xs max-w-xs"}>
-          <span className={"font-medium text-white"}>
+          <span className={"font-medium text-nb-gray-100 dark:text-white"}>
             {t("reverseProxy.sharedCluster")}
           </span>{" "}
           {t(

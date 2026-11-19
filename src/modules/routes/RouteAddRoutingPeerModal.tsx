@@ -165,7 +165,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
   return (
     <ModalContent flow="route_routing_peer" maxWidthClass={"max-w-2xl"}>
       <ModalHeader
-        icon={<NetworkRoutesIcon className={"fill-netbird"} />}
+        icon={<NetworkRoutesIcon className={"fill-current"} />}
         title={t("routes.addNewRoutingPeer")}
         description={t("routes.addRoutingPeerDescription")}
         color={"netbird"}

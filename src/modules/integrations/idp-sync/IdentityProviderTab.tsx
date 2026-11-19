@@ -1,12 +1,10 @@
-import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import { SkeletonIntegration } from "@components/skeletons/SkeletonIntegration";
 import * as Tabs from "@radix-ui/react-tabs";
 import { isNetBirdCloud } from "@utils/netbird";
-import { ExternalLinkIcon, FingerprintIcon } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 import React from "react";
-import IntegrationIcon from "@/assets/icons/IntegrationIcon";
 import { useTranslations } from "@/i18n/LocaleProvider";
 import { useAccount } from "@/modules/account/useAccount";
 import { LockedFeatureInfoCard } from "@/modules/billing/locked-feature/LockedFeatureInfoCard";
@@ -29,19 +27,6 @@ export default function IdentityProviderTab() {
   return (
     <Tabs.Content value={"identity-provider"}>
       <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/integrations"}
-            label={t("common.integrations")}
-            icon={<IntegrationIcon size={13} />}
-          />
-          <Breadcrumbs.Item
-            href={"/settings?tab=identity-provider"}
-            label={t("common.identityProviderSync")}
-            icon={<FingerprintIcon size={14} />}
-            active
-          />
-        </Breadcrumbs>
         <h1>{t("common.identityProviderSync")}</h1>
         <Paragraph>{t("integrations.idpTabDescription")}</Paragraph>
         <Paragraph>

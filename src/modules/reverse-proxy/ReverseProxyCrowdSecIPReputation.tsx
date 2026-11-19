@@ -72,8 +72,8 @@ export const ReverseProxyCrowdSecIPReputation = ({
           <Label>{t("reverseProxy.crowdSecIPReputation")}</Label>
           <HelpText>
             {t.rich("reverseProxy.crowdSecHelp", {
-              enforce: (chunks) => <b className="text-white">{chunks}</b>,
-              observe: (chunks) => <b className="text-white">{chunks}</b>,
+              enforce: (chunks) => <b className="text-nb-gray-100 dark:text-white">{chunks}</b>,
+              observe: (chunks) => <b className="text-nb-gray-100 dark:text-white">{chunks}</b>,
             })}
           </HelpText>
         </div>

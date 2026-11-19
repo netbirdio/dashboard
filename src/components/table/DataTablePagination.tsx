@@ -48,10 +48,10 @@ export function DataTablePagination<TData>({
             count: totalRows,
             items: text ?? t("tables.rows"),
             range: (chunks) => (
-              <span className="font-medium text-white">{chunks}</span>
+              <span className="font-medium text-nb-gray-100 dark:text-white">{chunks}</span>
             ),
             total: (chunks) => (
-              <span className="font-medium text-white">{chunks}</span>
+              <span className="font-medium text-nb-gray-100 dark:text-white">{chunks}</span>
             ),
           })}
         </div>

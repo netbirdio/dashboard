@@ -282,7 +282,7 @@ const DeploySuccess = ({
                 : "IP",
               ip,
               name: (chunks) => (
-                <span className="text-white font-medium">{chunks}</span>
+                <span className="text-sky-900 dark:text-white font-medium">{chunks}</span>
               ),
               address: (chunks) => (
                 <span className="text-netbird font-medium">{chunks}</span>
@@ -293,7 +293,7 @@ const DeploySuccess = ({
               resourceName: name,
               note: ipPendingNote ?? "",
               name: (chunks) => (
-                <span className="text-white font-medium">{chunks}</span>
+                <span className="text-sky-900 dark:text-white font-medium">{chunks}</span>
               ),
             })}
       </Callout>

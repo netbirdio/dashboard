@@ -1,6 +1,5 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
@@ -9,7 +8,6 @@ import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
 import React, { Suspense } from "react";
-import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useTranslations } from "@/i18n/LocaleProvider";
 import { Network } from "@/interfaces/Network";
@@ -26,13 +24,6 @@ export default function Networks() {
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            label={t("common.networkRouting")}
-            icon={<NetworkRoutesIcon size={13} />}
-          />
-          <Breadcrumbs.Item href={"/networks"} label={t("common.networks")} />
-        </Breadcrumbs>
         <h1 ref={headingRef}>{t("common.networks")}</h1>
         <Paragraph>
           {t("networks.pageDescription")}{" "}

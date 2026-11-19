@@ -95,7 +95,7 @@ export default function ReverseProxyTargetSelector({
                 <>
                   {translate.rich("reverseProxy.targetPeerHelp", {
                     peer: (chunks) => (
-                      <span className="text-white font-medium">{chunks}</span>
+                      <span className="text-nb-gray-100 dark:text-white font-medium">{chunks}</span>
                     ),
                     hint: (chunks) => (
                       <span className="mt-1 block">{chunks}</span>
@@ -119,7 +119,7 @@ export default function ReverseProxyTargetSelector({
                 <>
                   {translate.rich("reverseProxy.targetResourceHelp", {
                     resource: (chunks) => (
-                      <span className="text-white font-medium">{chunks}</span>
+                      <span className="text-nb-gray-100 dark:text-white font-medium">{chunks}</span>
                     ),
                     hint: (chunks) => (
                       <span className="mt-1 block">{chunks}</span>
@@ -144,7 +144,7 @@ export default function ReverseProxyTargetSelector({
                     <>
                       {translate.rich("reverseProxy.targetClusterHelp", {
                         cluster: (chunks) => (
-                          <span className="text-white font-medium">
+                          <span className="text-nb-gray-100 dark:text-white font-medium">
                             {chunks}
                           </span>
                         ),

@@ -43,9 +43,9 @@ export const OnboardingTestP2P = ({
         <Steps.Step step={1}>
           <p className={"!text-nb-gray-300"}>
             {t.rich("onboarding.runThisCommandFromToPingYouShouldReceiveA", {
-              part0: (chunks) => <span className={"text-white"}>{chunks}</span>,
+              part0: (chunks) => <span className={"text-nb-gray-100 dark:text-white"}>{chunks}</span>,
               part1: () => firstDevice?.name,
-              part2: (chunks) => <span className={"text-white"}>{chunks}</span>,
+              part2: (chunks) => <span className={"text-nb-gray-100 dark:text-white"}>{chunks}</span>,
               part3: () => secondDevice?.name,
             })}
           </p>

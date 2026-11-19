@@ -394,7 +394,7 @@ export function RouteModalContent({
           exitNode ? (
             <IconDirectionSign size={20} />
           ) : (
-            <NetworkRoutesIcon className={"fill-netbird"} />
+            <NetworkRoutesIcon className={"fill-current"} />
           )
         }
         title={

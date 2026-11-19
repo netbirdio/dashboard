@@ -1,10 +1,8 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import React from "react";
-import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import { useTranslations } from "@/i18n/LocaleProvider";
 import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import PageContainer from "@/layouts/PageContainer";
@@ -41,18 +39,6 @@ export default function ConnectAgentPage() {
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/agent-network/connect"}
-            label={t("common.agentNetwork")}
-            icon={<AgentNetworkIcon size={16} />}
-          />
-          <Breadcrumbs.Item
-            href={"/agent-network/connect"}
-            label={t("common.connectAgent")}
-            active
-          />
-        </Breadcrumbs>
         <h1>{tr("agentNetwork.connectYourAgent")}</h1>
         {/* block, so the <br /> lands: Paragraph is a flex container by
             default and a break element does nothing between flex items. */}

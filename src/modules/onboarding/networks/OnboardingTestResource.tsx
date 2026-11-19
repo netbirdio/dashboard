@@ -66,7 +66,7 @@ export const OnboardingTestResource = ({
               "onboarding.openYourCommandLineAndRunThisCommandFromTo",
               {
                 part0: (chunks) => (
-                  <span className={cn(device && "text-white")}>{chunks}</span>
+                  <span className={cn(device && "text-nb-gray-100 dark:text-white")}>{chunks}</span>
                 ),
                 part1: () => device?.name || "your device",
               },

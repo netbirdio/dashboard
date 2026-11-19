@@ -85,7 +85,9 @@ export default function MultipleGroups({
                 useHover={true}
                 className={cn(
                   "px-3 gap-2 whitespace-nowrap",
-                  permission.groups.update ? "group-hover:bg-nb-gray-800" : "",
+                  permission.groups.update
+                    ? "group-hover:bg-gray-100 dark:group-hover:bg-nb-gray-800"
+                    : "",
                 )}
               >
                 {orderedGroups.length}
@@ -100,7 +102,7 @@ export default function MultipleGroups({
                     showNewBadge={true}
                     className={
                       permission.groups.update
-                        ? "group-hover:bg-nb-gray-800"
+                        ? "group-hover:bg-gray-100 dark:group-hover:bg-nb-gray-800"
                         : ""
                     }
                   />
@@ -114,7 +116,7 @@ export default function MultipleGroups({
                     showNewBadge={true}
                     className={
                       permission.groups.update
-                        ? "group-hover:bg-nb-gray-800"
+                        ? "group-hover:bg-gray-100 dark:group-hover:bg-nb-gray-800"
                         : ""
                     }
                   />
@@ -126,7 +128,7 @@ export default function MultipleGroups({
                     className={cn(
                       "px-3 gap-2 whitespace-nowrap",
                       permission.groups.update
-                        ? "group-hover:bg-nb-gray-800"
+                        ? "group-hover:bg-gray-100 dark:group-hover:bg-nb-gray-800"
                         : "",
                     )}
                   >

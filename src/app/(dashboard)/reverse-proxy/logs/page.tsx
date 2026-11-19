@@ -1,6 +1,5 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
@@ -36,19 +35,6 @@ export default function ProxyLogsPage() {
   return (
     <PageContainer>
       <div className="p-default py-6">
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            label={t("common.reverseProxy")}
-            disabled
-            icon={<ReverseProxyIcon size={15} />}
-          />
-          <Breadcrumbs.Item
-            href="/reverse-proxy/logs"
-            label={t("common.accessLogs")}
-            icon={<ReverseProxyIcon size={15} />}
-          />
-        </Breadcrumbs>
-
         <h1 ref={headingRef}>{t("common.accessLogs")}</h1>
 
         <Paragraph>

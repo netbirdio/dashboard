@@ -114,7 +114,7 @@ export const PlanCard = ({
     <div
       key={plan.name}
       className={
-        "w-full bg-nb-gray-930/70 border border-nb-gray-900/70 rounded-md max-w-2xl p-5 flex flex-col justify-between"
+        "w-full bg-white dark:bg-nb-gray-930/70 border border-nb-gray-900/70 rounded-md max-w-2xl p-5 flex flex-col justify-between"
       }
     >
       <div>
@@ -144,8 +144,8 @@ export const PlanCard = ({
         </div>
 
         {/* Plan Price */}
-        <div className="flex items-center text-white mt-3">
-          <p className="text-2xl font-bold">
+        <div className="flex items-center text-neutral-900 dark:text-white mt-3">
+          <p className="text-2xl font-bold text-neutral-900">
             {currency == Currency.USD && "$"}
             {planPrice / 100}
             {currency == Currency.EUR && "€"}

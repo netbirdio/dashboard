@@ -13,7 +13,7 @@ function Card({ children, className, ...props }: Props) {
     <div
       {...props}
       className={cn(
-        "bg-nb-gray-940 rounded-md border border-nb-gray-900 w-1/2 overflow-hidden",
+        "bg-nb-gray-940 rounded-md border border-nb-gray-700 dark:border-nb-gray-900 w-1/2 overflow-hidden",
         className,
       )}
     >
@@ -50,7 +50,7 @@ function CardListItem({
   return (
     <li
       className={cn(
-        "flex justify-between px-4 border-b border-nb-gray-900 py-3.5 last:border-b-0 items-center h-full",
+        "flex justify-between px-4 border-b border-nb-gray-800 dark:border-nb-gray-900 py-3.5 last:border-b-0 items-center h-full",
         className,
       )}
     >

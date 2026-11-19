@@ -254,7 +254,7 @@ export function NameserverModalContent({
   return (
     <ModalContent flow="dns_nameserver" maxWidthClass={"max-w-xl"}>
       <ModalHeader
-        icon={<DNSIcon className={"fill-netbird"} />}
+        icon={<DNSIcon className={"fill-current"} />}
         title={isUpdate ? preset?.name : t("common.addNameserver")}
         description={t("dns.nameserverModalDescription")}
         color={"netbird"}

@@ -63,7 +63,7 @@ export default function AddRouteDropdownButton() {
                 size={"small"}
               />
               <div className={"flex flex-col text-left"}>
-                <div className={"text-left text-white"}>{t("peer.newNetworkRoute")}</div>
+                <div className={"text-left text-nb-gray-100 dark:text-white"}>{t("peer.newNetworkRoute")}</div>
                 <div className={"text-xs"}>
                   {t("peer.newNetworkRouteDesc")}
                 </div>
@@ -78,14 +78,14 @@ export default function AddRouteDropdownButton() {
             <div className={"flex gap-3 items-center justify-center pr-3"}>
               <SquareIcon
                 icon={
-                  <NetworkRoutesIcon size={14} className={"fill-netbird"} />
+                  <NetworkRoutesIcon size={14} className={"fill-current"} />
                 }
                 color={"netbird"}
                 margin={""}
                 size={"small"}
               />
               <div className={"flex flex-col text-left"}>
-                <div className={"text-left text-white"}>{t("peer.existingNetwork")}</div>
+                <div className={"text-left text-nb-gray-100 dark:text-white"}>{t("peer.existingNetwork")}</div>
                 <div className={"text-xs"}>
                   {t("peer.existingNetworkDesc")}
                 </div>

@@ -293,7 +293,7 @@ function AgentPolicyModalContent({
   return (
     <ModalContent maxWidthClass={"max-w-3xl"}>
       <ModalHeader
-        icon={<AccessControlIcon className={"fill-netbird"} />}
+        icon={<AccessControlIcon className={"fill-current"} />}
         title={
           policy
             ? tr("agentNetwork.updateAgentPolicy")

@@ -83,7 +83,7 @@ export function TableFiltersButton<TData>({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className={"w-[280px] p-0 shadow-sm shadow-nb-gray-950"}
+        className={"w-[280px] p-0 shadow-sm dark:shadow-nb-gray-950"}
         align={"start"}
         sideOffset={7}
       >
@@ -97,7 +97,7 @@ export function TableFiltersButton<TData>({
               <button
                 aria-label={t("common.back")}
                 className={
-                  "flex items-center justify-center w-7 h-7 -ml-1 shrink-0 text-nb-gray-400 hover:text-white hover:bg-nb-gray-900 rounded transition-colors"
+                  "flex items-center justify-center w-7 h-7 -ml-1 shrink-0 text-nb-gray-400 hover:text-nb-gray-100 dark:hover:text-white hover:bg-nb-gray-900 rounded transition-colors"
                 }
                 onClick={() => setActiveFilterId(null)}
               >
@@ -211,8 +211,8 @@ function FilterChip<TData>({ def, text, table }: FilterChipProps<TData>) {
     <Popover open={open} onOpenChange={setOpen}>
       <div
         className={cn(
-          "flex items-stretch h-8 rounded-md border border-nb-gray-900",
-          "bg-nb-gray-930/40 text-sm text-nb-gray-200 overflow-hidden",
+          "flex items-stretch h-8 rounded-md border border-nb-gray-800 dark:border-nb-gray-900",
+          "bg-white dark:bg-nb-gray-930/40 text-sm text-nb-gray-200 overflow-hidden",
           "hover:border-nb-gray-700 transition-colors",
         )}
       >
@@ -233,8 +233,8 @@ function FilterChip<TData>({ def, text, table }: FilterChipProps<TData>) {
           aria-label={t("tables.removeFilter", { filter: def.label })}
           className={cn(
             "flex items-center justify-center px-2",
-            "border-l border-nb-gray-900",
-            "text-nb-gray-400 hover:bg-nb-gray-900 hover:text-white transition-colors",
+            "border-l border-nb-gray-800 dark:border-nb-gray-900",
+            "text-nb-gray-400 hover:bg-nb-gray-900 hover:text-nb-gray-100 dark:hover:text-white transition-colors",
           )}
           onClick={(e) => {
             e.stopPropagation();
@@ -246,7 +246,7 @@ function FilterChip<TData>({ def, text, table }: FilterChipProps<TData>) {
         </button>
       </div>
       <PopoverContent
-        className={"w-[280px] p-0 shadow-sm shadow-nb-gray-950"}
+        className={"w-[280px] p-0 shadow-sm dark:shadow-nb-gray-950"}
         align={"start"}
         sideOffset={6}
       >

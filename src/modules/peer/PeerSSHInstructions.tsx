@@ -56,7 +56,7 @@ export const PeerSSHInstructions = ({
         showClose={true}
       >
         <ModalHeader
-          icon={<TerminalSquare size={16} className={"text-netbird"} />}
+          icon={<TerminalSquare size={16} />}
           title={t("peer.enableSSH")}
           description={t("peer.allowRemoteSshDescription")}
           color={"netbird"}

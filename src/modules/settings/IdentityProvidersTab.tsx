@@ -1,4 +1,3 @@
-import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import {
   DropdownMenu,
@@ -28,7 +27,6 @@ import {
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import { idpIcon } from "@/assets/icons/IdentityProviderIcons";
-import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -191,19 +189,6 @@ export default function IdentityProvidersTab() {
   return (
     <Tabs.Content value={"identity-providers"} className={"w-full"}>
       <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/settings"}
-            label={t("common.settings")}
-            icon={<SettingsIcon size={13} />}
-          />
-          <Breadcrumbs.Item
-            href={"/settings?tab=identity-providers"}
-            label={t("common.identityProviders")}
-            icon={<FingerprintIcon size={14} />}
-            active
-          />
-        </Breadcrumbs>
         <div className={"flex items-start justify-between -mt-1"}>
           <div>
             <h1>{t("common.identityProviders")}</h1>

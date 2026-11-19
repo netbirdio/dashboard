@@ -37,7 +37,7 @@ export const RDPCertificateModal = ({
     <Modal open={open} onOpenChange={undefined}>
       <ModalContent maxWidthClass={"max-w-2xl"} showClose={false}>
         <ModalHeader
-          icon={<LockIcon className={"text-netbird"} size={18} />}
+          icon={<LockIcon size={18} />}
           title={t("remoteAccess.rdpCertificate")}
           description={hostname}
           color={"netbird"}
@@ -71,7 +71,7 @@ export const RDPCertificateModal = ({
                 issuer: certificate?.issuer?.replace("CN=", "") ?? "",
                 host: hostname,
                 name: (chunks) => (
-                  <span className={"text-white font-medium"}>{chunks}</span>
+                  <span className={"text-nb-gray-100 dark:text-white font-medium"}>{chunks}</span>
                 ),
               })}
             </div>

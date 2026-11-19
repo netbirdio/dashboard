@@ -1,14 +1,12 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
-import { IconSettings2 } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
-import { ExternalLinkIcon, User2 } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useTranslations } from "@/i18n/LocaleProvider";
@@ -33,19 +31,6 @@ export default function ServiceUsers() {
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/team/users"}
-            label={t("common.users")}
-            icon={<User2 size={16} />}
-          />
-          <Breadcrumbs.Item
-            href={"/team/service-users"}
-            label={t("common.serviceUsers")}
-            active
-            icon={<IconSettings2 size={17} />}
-          />
-        </Breadcrumbs>
         <h1 ref={headingRef}>{t("common.serviceUsers")}</h1>
         <Paragraph>
           {t("team.serviceUsersDescription")}{" "}

@@ -65,7 +65,7 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
       <div>
         {t.rich("users.pendingApprovalHint", {
           setting: (chunks) => (
-            <span className="font-medium text-white">{chunks}</span>
+            <span className="font-medium text-nb-gray-100 dark:text-white">{chunks}</span>
           ),
           settingsLink: (chunks) => (
             <InlineLink href="/settings?tab=authentication">

@@ -376,7 +376,7 @@ export function ResourceModalContent({
                           {t.rich("networks.resourceGroupsPolicyUsage", {
                             count: groupPolicyCount,
                             policies: () => (
-                              <span className="text-white font-medium">
+                              <span className="text-sky-900 dark:text-white font-medium">
                                 {groupPolicyCount}
                                 {" " + t("common.accessControl")}{" "}
                                 {groupPolicyCount === 1

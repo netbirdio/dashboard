@@ -173,7 +173,7 @@ const PickerContent = ({
     <>
       <ModalContent maxWidthClass={"max-w-lg"}>
         <ModalHeader
-          icon={<NetworkRoutesIcon className={"fill-netbird"} />}
+          icon={<NetworkRoutesIcon className={"fill-current"} />}
           title={translate("controlCenter.assignANetwork")}
           description={translate(
             "controlCenter.pickANetworkForThisResourceOrCreate",

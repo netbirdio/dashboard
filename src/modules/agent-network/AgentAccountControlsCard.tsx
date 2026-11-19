@@ -1,6 +1,5 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
@@ -17,7 +16,6 @@ import { useHasChanges } from "@hooks/useHasChanges";
 import { cn } from "@utils/helpers";
 import { Clock, FileText, ScrollText } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import { useTranslations } from "@/i18n/LocaleProvider";
 import { useAgentNetworkText } from "@/modules/agent-network/agentNetworkText";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
@@ -88,20 +86,6 @@ export default function AgentAccountControlsCard() {
 
   return (
     <div className={"p-default py-6 max-w-2xl"}>
-      <Breadcrumbs>
-        <Breadcrumbs.Item
-          href={"/agent-network/providers"}
-          label={translate("common.agentNetwork")}
-          icon={<AgentNetworkIcon size={16} />}
-        />
-        <Breadcrumbs.Item
-          href={"/agent-network/configuration?tab=log-settings"}
-          label={translate("common.logCollection")}
-          icon={<ScrollText size={14} />}
-          active
-        />
-      </Breadcrumbs>
-
       <div className={"flex items-start justify-between"}>
         <h1>{translate("common.logCollection")}</h1>
 

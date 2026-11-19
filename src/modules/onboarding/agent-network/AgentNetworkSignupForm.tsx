@@ -274,7 +274,7 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
 
               <label
                 className={
-                  "text-neutral-500 dark:text-nb-gray-300 font-normal flex items-center gap-4 cursor-pointer"
+                  "text-neutral-700 dark:text-nb-gray-300 font-normal flex items-center gap-4 cursor-pointer"
                 }
               >
                 <Checkbox
@@ -336,7 +336,7 @@ const SignupCheckbox = ({
   return (
     <label
       className={
-        "text-neutral-500 dark:text-nb-gray-300 font-normal flex items-center gap-4 cursor-pointer"
+        "text-neutral-700 dark:text-nb-gray-300 font-normal flex items-center gap-4 cursor-pointer"
       }
     >
       <Checkbox checked={value} onCheckedChange={setValue} />

@@ -4,7 +4,7 @@ import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
-import { ExternalLinkIcon, FolderGit2Icon } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import InlineLink from "@/components/InlineLink";
@@ -23,14 +23,6 @@ export default function GroupsPage() {
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/groups"}
-            label={t("common.groups")}
-            icon={<FolderGit2Icon size={14} />}
-            active
-          />
-        </Breadcrumbs>
         <h1 ref={headingRef}>{t("common.groups")}</h1>
         <Paragraph>
           {t("groups.groupsDescription")}{" "}

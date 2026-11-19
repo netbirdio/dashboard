@@ -272,7 +272,7 @@ export const PeerSSHToggle = () => {
             <Badge
               variant={"gray"}
               useHover={false}
-              className={"select-none hover:bg-nb-gray-910 px-4"}
+              className={"select-none hover:bg-nb-gray-910 dark:hover:bg-nb-gray-910 px-4"}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

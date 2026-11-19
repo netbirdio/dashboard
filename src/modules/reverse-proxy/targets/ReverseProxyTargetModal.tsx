@@ -271,7 +271,7 @@ export default function ReverseProxyTargetModal({
       <Modal open={open} onOpenChange={onOpenChange}>
         <ModalContent maxWidthClass="max-w-2xl">
           <ModalHeader
-            icon={<Server className="text-netbird" size={16} />}
+            icon={<Server size={16} />}
             title={
               currentTarget
                 ? translate("reverseProxy.editTarget")
@@ -379,12 +379,12 @@ export default function ReverseProxyTargetModal({
                                   {
                                     path: targetPath,
                                     from: (chunks) => (
-                                      <span className="font-mono text-white">
+                                      <span className="font-mono text-nb-gray-100 dark:text-white">
                                         {chunks}
                                       </span>
                                     ),
                                     to: (chunks) => (
-                                      <span className="font-mono text-white">
+                                      <span className="font-mono text-nb-gray-100 dark:text-white">
                                         {chunks}
                                       </span>
                                     ),
@@ -397,12 +397,12 @@ export default function ReverseProxyTargetModal({
                                   {
                                     path: targetPath,
                                     from: (chunks) => (
-                                      <span className="font-mono text-white">
+                                      <span className="font-mono text-nb-gray-100 dark:text-white">
                                         {chunks}
                                       </span>
                                     ),
                                     to: (chunks) => (
-                                      <span className="font-mono text-white">
+                                      <span className="font-mono text-nb-gray-100 dark:text-white">
                                         {chunks}
                                       </span>
                                     ),

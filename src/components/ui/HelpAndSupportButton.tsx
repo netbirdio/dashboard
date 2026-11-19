@@ -43,7 +43,7 @@ export default function HelpAndSupportButton() {
           aria-label={t("common.helpAndSupport")}
           className={cn(
             "!rounded-full h-[38px] w-[38px] !p-0",
-            dropdownOpen && "text-white",
+            dropdownOpen && "text-nb-gray-100 dark:text-white",
           )}
         >
           <CircleQuestionMark size={18} aria-hidden="true" />

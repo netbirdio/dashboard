@@ -118,7 +118,7 @@ export function SSHUsernameSelector({
           </button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-full p-0 shadow-sm  shadow-nb-gray-950"
+          className="w-full p-0 shadow-sm  dark:shadow-nb-gray-950"
           style={{
             width: popoverWidth === "auto" ? width : popoverWidth,
           }}

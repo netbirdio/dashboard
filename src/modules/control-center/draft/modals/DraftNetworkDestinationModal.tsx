@@ -145,7 +145,7 @@ const PickerContent = ({
   return (
     <ModalContent maxWidthClass={"max-w-lg"}>
       <ModalHeader
-        icon={<NetworkRoutesIcon className={"fill-netbird"} />}
+        icon={<NetworkRoutesIcon className={"fill-current"} />}
         title={translate("controlCenter.selectDestinationTitle")}
         description={translate("controlCenter.networkAccessDescription", {
           thisNetwork: network?.name ?? translate("common.network"),

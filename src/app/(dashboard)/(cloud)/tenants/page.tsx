@@ -1,6 +1,5 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
@@ -9,7 +8,6 @@ import { usePortalElement } from "@hooks/usePortalElement";
 import useRedirect from "@hooks/useRedirect";
 import useFetchApi from "@utils/api";
 import React, { Suspense, useMemo } from "react";
-import MSPIcon from "@/assets/icons/MSPIcon";
 import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { TenantsProvider } from "@/cloud/msp/contexts/TenantsProvider";
 import { Tenant } from "@/cloud/msp/interfaces/Tenant";
@@ -54,13 +52,6 @@ const TenantsPageContent = () => {
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/tenants"}
-            label={t("common.tenants")}
-            icon={<MSPIcon size={15} />}
-          />
-        </Breadcrumbs>
         <h1 ref={headingRef}>{t("common.tenants")}</h1>
         <Paragraph>
           {t("tenants.aListOfAllTenantsAndTheirSubscriptionDetailsUse")}
