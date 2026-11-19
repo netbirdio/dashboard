@@ -1,6 +1,12 @@
-import React, { useMemo, useState } from "react";
-import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { AccordionContent, AccordionItem } from "@components/Accordion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@components/DropdownMenu";
+import { notify } from "@components/Notification";
+import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { cn } from "@utils/helpers";
 import {
   CheckIcon,
@@ -10,29 +16,10 @@ import {
   MoreVerticalIcon,
   Trash2Icon,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@components/DropdownMenu";
-import { notify } from "@components/Notification";
+import React, { useMemo, useState } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
 import {
-  DraftChange,
-  getChangeApiCall,
-  getChangeIssue,
-  getChangeKind,
-} from "@/modules/control-center/draft/DraftChangesetContext";
-import {
-  buildChangeRequest,
-  changeDiffLines,
-  LiveData,
-  toCurl,
-} from "@/modules/control-center/utils/changeset-request";
-import { CascadePreview } from "@/modules/control-center/utils/change-cascade";
-import { diffStat } from "@/modules/control-center/utils/json-line-diff";
-import {
+  AssistantBadge,
   changeIcon,
   DiffStat,
   entityName,
@@ -40,7 +27,21 @@ import {
   KindBadge,
 } from "@/modules/control-center/draft/changeset/change-presentation";
 import { ChangeCodeView } from "@/modules/control-center/draft/changeset/ChangeCodeView";
+import {
+  DraftChange,
+  getChangeApiCall,
+  getChangeIssue,
+  getChangeKind,
+} from "@/modules/control-center/draft/DraftChangesetContext";
 import { DeployStatus } from "@/modules/control-center/hooks/useDeployChangeset";
+import { CascadePreview } from "@/modules/control-center/utils/change-cascade";
+import {
+  buildChangeRequest,
+  changeDiffLines,
+  LiveData,
+  toCurl,
+} from "@/modules/control-center/utils/changeset-request";
+import { diffStat } from "@/modules/control-center/utils/json-line-diff";
 
 type Props = {
   change: DraftChange;
@@ -52,6 +53,7 @@ type Props = {
   disabled: boolean;
   // Undefined = deploy not started.
   status?: DeployStatus;
+  byAssistant?: boolean;
 };
 
 export const ChangeAccordionItem = ({
@@ -63,6 +65,7 @@ export const ChangeAccordionItem = ({
   onResolveIssue,
   disabled,
   status,
+  byAssistant = false,
 }: Props) => {
   const apiCall = getChangeApiCall(change);
   const request = useMemo(
@@ -121,6 +124,7 @@ export const ChangeAccordionItem = ({
       data-testid={`cc-change-${change.type}`}
       className={cn(
         "border border-nb-gray-910 rounded-lg bg-nb-gray-930/40 overflow-hidden min-w-0",
+        byAssistant && "border-netbird-500/40",
         status === "deploying" && "animate-pulse",
       )}
     >
@@ -201,6 +205,7 @@ export const ChangeAccordionItem = ({
 
           <span className={"flex-1"} />
 
+          {byAssistant && <AssistantBadge />}
           {issue ? (
             <IssueBadge
               label={issue.label}

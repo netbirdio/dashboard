@@ -147,6 +147,20 @@ export function useRemoveChange() {
               .map((n) => n.id),
           );
           dropNodes(ids);
+          setNodes((prev) =>
+            prev.map((n) => {
+              const refs = (n.data as { resourceGroupIds?: string[] })
+                ?.resourceGroupIds;
+              if (!refs?.includes(change.name)) return n;
+              return {
+                ...n,
+                data: {
+                  ...n.data,
+                  resourceGroupIds: refs.filter((r) => r !== change.name),
+                },
+              };
+            }),
+          );
           patchPolicyNodeData((p) =>
             policyNamesDraftGroup(p, change.name)
               ? stripDraftGroupFromPolicy(p, change.name)

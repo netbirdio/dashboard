@@ -15,6 +15,8 @@ import { MSPTransferAccountModal } from "@/cloud/msp/MSPTransferAccountModal";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { PANEL_ON_LEFT } from "@/interfaces/Assistant";
+import AssistantButton from "@/modules/assistant/AssistantButton";
 
 export const headerHeight = 65;
 
@@ -25,62 +27,58 @@ export default function NavbarWithDropdown() {
   const { isRestricted } = usePermissions();
 
   return (
-    <>
+    <div
+      data-header
+      className={"relative z-50 shrink-0"}
+      style={{ height: headerHeight + bannerHeight }}
+    >
+      <AnnouncementBanner />
       <div
-        className={"fixed z-50 w-full"}
-        style={{
-          height: headerHeight + bannerHeight,
-        }}
+        className={cn(
+          "bg-nb-gray px-2 py-3 dark:border-gray-700 backdrop-blur-lg sm:px-6",
+          "border-b dark:border-zinc-700/40 px-3 md:px-4 w-full",
+          // Not `transition-all`: that also animates the width, which judders
+          // as the card's insets change.
+          "flex justify-between items-center transition-colors",
+        )}
       >
-        <AnnouncementBanner />
-        <div
-          className={cn(
-            "bg-nb-gray px-2 py-3 dark:border-gray-700 backdrop-blur-lg sm:px-6",
-            "border-b dark:border-zinc-700/40 px-3 md:px-4 w-full",
-            "flex justify-between items-center transition-all",
-          )}
-        >
-          <div className={"flex items-center gap-4 md:hidden"}>
-            <Button
-              className={cn(
-                "!px-3 md:hidden",
-                isRestricted && "opacity-0 pointer-events-none",
-              )}
-              variant={"default-outline"}
-              onClick={toggleMobileNav}
-            >
-              <div>
-                <MenuIcon size={20} className={"relative"} />
-              </div>
-            </Button>
-          </div>
-          <div className={"flex gap-4 mr-auto"}>
-            <button
-              onClick={() => router.push("/peers")}
-              className={
-                "cursor-pointer hover:opacity-70 transition-all mr-auto"
-              }
-            >
-              <NetBirdLogo />
-            </button>
-            <ToggleCollapsableNavigationButton />
-          </div>
+        <div className={"flex items-center gap-4 md:hidden"}>
+          <Button
+            className={cn(
+              "!px-3 md:hidden",
+              isRestricted && "opacity-0 pointer-events-none",
+            )}
+            variant={"default-outline"}
+            onClick={toggleMobileNav}
+          >
+            <div>
+              <MenuIcon size={20} className={"relative"} />
+            </div>
+          </Button>
+        </div>
+        <div className={"flex gap-4 mr-auto items-center"}>
+          <button
+            onClick={() => router.push("/peers")}
+            className={"cursor-pointer hover:opacity-70 transition-all mr-auto"}
+          >
+            <NetBirdLogo />
+          </button>
+          <ToggleCollapsableNavigationButton />
+          {PANEL_ON_LEFT && !isRestricted && <AssistantButton />}
+        </div>
 
-          <div className="flex md:order-2 gap-5 items-center">
-            <MSPTransferAccountModal />
-            <DistributorTransferAccountModal />
-            <MSPTenantsSwitcher />
+        <div className="flex md:order-2 gap-5 items-center">
+          <MSPTransferAccountModal />
+          <DistributorTransferAccountModal />
+          <MSPTenantsSwitcher />
+          <div className={"flex items-center gap-2"}>
             <HelpAndSupportButton />
-            <UserDropdown />
+            {!PANEL_ON_LEFT && !isRestricted && <AssistantButton />}
           </div>
+          <UserDropdown />
         </div>
       </div>
-      <div
-        style={{
-          height: headerHeight + bannerHeight,
-        }}
-      ></div>
-    </>
+    </div>
   );
 }
 

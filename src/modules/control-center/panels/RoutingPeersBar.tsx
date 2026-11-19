@@ -13,6 +13,7 @@ import Skeleton from "react-loading-skeleton";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { getIpPlaceholderFromRange } from "@/modules/control-center/utils/helpers";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 
 export const RoutingPeersIndicator = ({
@@ -61,6 +62,7 @@ export type RoutingPeerRow = {
   isGroup: boolean;
   peersCount?: number;
   enabled: boolean;
+  pendingInstall?: boolean;
   // Rows without one are read-only.
   onEdit?: () => void;
 };
@@ -257,6 +259,15 @@ export const RoutingPeersBar = ({
                     {row.peersCount !== undefined &&
                       ` (${singularize("Peers", row.peersCount, true)})`}
                   </span>
+                  {row.pendingInstall && (
+                    <span
+                      className={
+                        "shrink-0 font-mono text-[10px] font-normal text-nb-gray-400"
+                      }
+                    >
+                      {getIpPlaceholderFromRange()}
+                    </span>
+                  )}
                   {row.onEdit && (
                     <SquarePenIcon
                       size={13}
