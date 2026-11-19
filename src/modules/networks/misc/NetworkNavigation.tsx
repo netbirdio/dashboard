@@ -32,7 +32,8 @@ export const NetworkNavigation = () => {
       <SidebarItem
         label={
           <div className={"flex items-center gap-2"}>
-            Exit Nodes
+            {/* Its own element, so the label matches "Exit Nodes" exactly. */}
+            <span>Exit Nodes</span>
             <SmallBadge
               text={"New"}
               variant={"sky"}

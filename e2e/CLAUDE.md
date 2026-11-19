@@ -224,6 +224,14 @@ await deleteServicesByPrefix(page, "my-prefix-");
 await deleteGroupsByPrefix(page, "my-prefix-");
 ```
 
+### Exit Nodes (mocked API)
+
+The management API for exit nodes doesn't exist yet, so the dashboard answers
+`/exit-nodes` and the policies that target an exit node from an in-memory mock
+(`src/modules/exit-nodes/mock/`), seeded with "EU Egress", "US Egress" and
+"Contractors Egress" on every page load. A `navigateTo()` reloads and starts
+over: within a test, move between pages through the sidebar.
+
 ### Sidebar Navigation
 
 ```typescript
@@ -243,7 +251,7 @@ shared owner page must clear that key again.
 |---------|--------|----------|
 | (top) | Control Center, Peers, Users (its page has Users / Service Users tabs: `users-tab-users`, `users-tab-service-users`), Groups | — |
 | Networking | Access Control | Policies, Posture Checks |
-| Networking | Network Routing | Networks, Routes |
+| Networking | Network Routing | Networks, Routes, Exit Nodes |
 | Networking | Reverse Proxy | Services, Custom Domains, Clusters, Access Logs |
 | Networking | DNS | Nameservers, Zones, DNS Settings |
 | Networking | Traffic Events | — |
@@ -259,7 +267,7 @@ Documentation is in the header's help menu, not the sidebar.
 |------|-----------|-----|
 | Access Control | `access-control.spec.ts`, `access-control-groups.spec.ts` | `@access-control` |
 | DNS | `dns-zones.spec.ts`, `dns-nameservers.spec.ts`, `dns-settings.spec.ts` | `@dns` |
-| Networks | `networks.spec.ts`, `network-routes.spec.ts` | `@network` |
+| Networks | `networks.spec.ts`, `network-routes.spec.ts`, `exit-nodes.spec.ts` | `@network` |
 | Reverse Proxy | `reverse-proxy-services-https.spec.ts`, `reverse-proxy-services-tcp.spec.ts`, `reverse-proxy-services-tls.spec.ts`, `reverse-proxy-services-udp.spec.ts`, `reverse-proxy-custom-domains.spec.ts` | `@reverse-proxy` |
 | Settings | `settings-authentication.spec.ts`, `settings-clients.spec.ts`, `settings-groups.spec.ts`, `settings-networks.spec.ts`, `settings-permissions.spec.ts` | `@settings` |
 | Notifications | `settings-notifications-email.spec.ts`, `settings-notifications-slack.spec.ts`, `settings-notifications-webhook.spec.ts` | `@notifications` |
