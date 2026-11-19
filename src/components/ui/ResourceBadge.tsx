@@ -1,8 +1,10 @@
 import Badge from "@components/Badge";
 import TruncatedText from "@components/ui/TruncatedText";
+import { IconDirectionSign } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import { GlobeIcon, NetworkIcon, WorkflowIcon, XIcon } from "lucide-react";
 import * as React from "react";
+import { ExitNode } from "@/interfaces/ExitNode";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
@@ -11,6 +13,7 @@ import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon
 type Props = {
   resource?: NetworkResource;
   peer?: Peer;
+  exitNode?: Pick<ExitNode, "id" | "name">;
   onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
   showX?: boolean;
   children?: React.ReactNode;
@@ -20,14 +23,19 @@ export default function ResourceBadge({
   onClick,
   resource,
   peer,
+  exitNode,
   showX = false,
   children,
   className,
 }: Readonly<Props>) {
-  if (!resource && !peer) return;
+  if (!resource && !peer && !exitNode) return;
 
   const isPeer = !!peer;
-  const key = resource ? resource.id || resource?.name : peer?.id || peer?.name;
+  const key = exitNode
+    ? exitNode.id
+    : resource
+    ? resource.id || resource?.name
+    : peer?.id || peer?.name;
 
   return (
     <Badge
@@ -45,7 +53,12 @@ export default function ResourceBadge({
         onClick?.(e);
       }}
     >
-      {isPeer ? (
+      {exitNode ? (
+        <>
+          <IconDirectionSign size={12} className={"shrink-0"} />
+          <TruncatedText text={exitNode.name} maxChars={20} />
+        </>
+      ) : isPeer ? (
         <>
           <PeerOperatingSystemIcon os={peer?.os} />
           <TruncatedText text={peer?.name || ""} maxChars={20} />

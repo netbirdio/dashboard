@@ -12,6 +12,9 @@ import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { Policy, PolicyRule } from "@/interfaces/Policy";
 
+export const EXIT_NODES_DOCS_URL =
+  "https://docs.netbird.io/how-to/configuring-default-routes-for-internet-traffic";
+
 /** The node's peers, preferred (lowest metric) first. */
 export const sortPeersByMetric = (peers: ExitNodePeer[] = []) =>
   [...peers].sort((a, b) => a.metric - b.metric);

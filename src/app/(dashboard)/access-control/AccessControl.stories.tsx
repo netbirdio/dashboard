@@ -108,6 +108,24 @@ export const DestinationPickerOpen: Story = {
   },
 };
 
+export const DestinationExitNodesTab: Story = {
+  play: async () => {
+    await ready();
+    await clickSelector("[data-testid='open-add-policy']");
+    await findText("Create New Access Control Policy");
+    await clickSelector("[data-testid='destination-group-selector']");
+    await findSelector("[data-testid='destination-group-selector-search']");
+    await clickTab(/Exit Nodes/);
+    await findText("US Egress");
+  },
+};
+
+export const ExitNodeDestinationPolicy: Story = {
+  play: async () => {
+    await openPolicy("EU Egress Access");
+  },
+};
+
 export const PortSelectorOpen: Story = {
   play: async () => {
     await openPolicy("Developers to Servers");

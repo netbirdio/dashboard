@@ -32,6 +32,7 @@ describe("sectionsForPath", () => {
     ["/networks", ["networking"]],
     ["/network", ["networking"]],
     ["/network-routes", ["networking"]],
+    ["/exit-nodes", ["networking"]],
     ["/reverse-proxy/services", ["networking"]],
     ["/dns/zones", ["networking"]],
     ["/events/traffic", ["networking"]],
