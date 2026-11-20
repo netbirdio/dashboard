@@ -82,7 +82,7 @@ export default function SidebarItem({
   }, [collapsible, href, path, childRoutes]);
 
   const [open, setOpen] = React.useState(hasActiveChild);
-  const toggleAnimation = useToggleAnimation();
+  const toggleAnimation = useToggleAnimation(open);
 
   // Open the collapsible if a child route becomes active
   useEffect(() => {
@@ -131,7 +131,7 @@ export default function SidebarItem({
       open={open}
       onOpenChange={(next) => {
         // Plain items toggle too when clicked, but have nothing to animate.
-        if (collapsible) toggleAnimation.onToggle();
+        if (collapsible) toggleAnimation.onToggle(next);
         setOpen(next);
       }}
       data-nav-item={href || undefined}

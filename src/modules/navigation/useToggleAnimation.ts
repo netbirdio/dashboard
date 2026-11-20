@@ -9,18 +9,27 @@ const ANIMATION_CLASS_NAME =
  * on navigation, or when the sidebar shrinks to icons. Those should switch
  * at once, not play the accordion animation.
  */
-export const useToggleAnimation = () => {
-  const [animate, setAnimate] = useState(false);
+export const useToggleAnimation = (open: boolean) => {
+  // The state the user's toggle asked for, until its animation ends.
+  const [requested, setRequested] = useState<boolean | null>(null);
+  const [previousOpen, setPreviousOpen] = useState(open);
 
-  const onToggle = useCallback(() => setAnimate(true), []);
+  // Something else overrode the toggle, e.g. the sidebar shrank to icons and
+  // forced the section open mid-close; that change must not animate.
+  if (open !== previousOpen) {
+    setPreviousOpen(open);
+    if (requested !== null && requested !== open) setRequested(null);
+  }
+
+  const onToggle = useCallback((next: boolean) => setRequested(next), []);
 
   const onAnimationEnd = useCallback((event: AnimationEvent) => {
     // Nested collapsibles bubble their own animation end up to this one.
-    if (event.target === event.currentTarget) setAnimate(false);
+    if (event.target === event.currentTarget) setRequested(null);
   }, []);
 
   return {
-    className: animate ? ANIMATION_CLASS_NAME : undefined,
+    className: requested === open ? ANIMATION_CLASS_NAME : undefined,
     onToggle,
     onAnimationEnd,
   };

@@ -42,15 +42,6 @@ export default function SidebarItemGroup({
   id,
 }: Readonly<Props>) {
   const { isNavigationCollapsed, mobileNavOpen } = useApplicationContext();
-  const toggleAnimation = useToggleAnimation();
-
-  if (!label) {
-    return (
-      <div className={groupClassName} data-nav-section={id}>
-        {children}
-      </div>
-    );
-  }
 
   // A group with a heading is set apart by the heading and space alone. The
   // icon-only sidebar has no room for the heading, so a divider drawn in its
@@ -62,6 +53,16 @@ export default function SidebarItemGroup({
   // remembered state applies again once the sidebar is full width.
   const canToggle = collapsible && !iconOnly;
   const isOpen = canToggle ? open : true;
+  const toggleAnimation = useToggleAnimation(isOpen);
+
+  if (!label) {
+    return (
+      <div className={groupClassName} data-nav-section={id}>
+        {children}
+      </div>
+    );
+  }
+
   const Chevron = isOpen ? ChevronUpIcon : ChevronDownIcon;
   const labelledClassName = "mt-3.5 first:mt-0 border-t border-transparent";
 
@@ -104,7 +105,7 @@ export default function SidebarItemGroup({
       <Collapsible.Root
         open={isOpen}
         onOpenChange={(next) => {
-          toggleAnimation.onToggle();
+          toggleAnimation.onToggle(next);
           onOpenChange?.(next);
         }}
       >
