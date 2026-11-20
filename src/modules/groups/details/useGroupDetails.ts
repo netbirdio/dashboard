@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { DNSZone } from "@/interfaces/DNS";
-import { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
+import { Group, GroupResource } from "@/interfaces/Group";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 import {
   Network,
@@ -12,6 +12,7 @@ import { Policy } from "@/interfaces/Policy";
 import { Route } from "@/interfaces/Route";
 import { SetupKey } from "@/interfaces/SetupKey";
 import { User } from "@/interfaces/User";
+import { groupPeerIds } from "@/modules/groups/groupMembers";
 import useFetchApi from "@/utils/api";
 
 export interface GroupDetails extends Group {
@@ -99,10 +100,10 @@ export default function useGroupDetails(groupId: string) {
   }, [users, groupId]);
 
   const linkedPeers = useMemo(() => {
-    const groupPeerIds = (group?.peers as GroupPeer[])?.map((p) => p.id);
+    const memberIds = new Set(groupPeerIds(group));
     return (
       peers
-        ?.filter((p) => groupPeerIds?.includes(p.id!))
+        ?.filter((p) => memberIds.has(p.id!))
         .map((p) => ({
           ...p,
           user: users?.find((u) => u.id === p.user_id),

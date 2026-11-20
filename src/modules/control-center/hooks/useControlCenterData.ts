@@ -9,6 +9,7 @@ import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { User } from "@/interfaces/User";
+import { buildGroupsByPeerId } from "@/modules/groups/groupMembers";
 
 export function useControlCenterData() {
   const { data: policies, isLoading: isPoliciesLoading } =
@@ -31,6 +32,9 @@ export function useControlCenterData() {
     "/users?service_user=false",
     true,
   );
+
+  // Peers no longer carry their groups; membership lives on the groups.
+  const groupsByPeerId = useMemo(() => buildGroupsByPeerId(groups), [groups]);
 
   const isLoading =
     isPoliciesLoading ||
@@ -74,6 +78,7 @@ export function useControlCenterData() {
     networks,
     networkResources,
     groups,
+    groupsByPeerId,
     users,
     isPeersLoading,
     isNetworksLoading,

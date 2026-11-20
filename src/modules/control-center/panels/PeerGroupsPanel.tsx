@@ -7,6 +7,7 @@ import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
+import { toIds } from "@utils/ids";
 import { motion } from "framer-motion";
 import { FolderGit2, Loader2, SearchIcon } from "lucide-react";
 import * as React from "react";
@@ -53,7 +54,7 @@ interface PeerGroupsPanelProps {
 const groupRef = (g: Group) => g.id ?? g.name;
 
 export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
-  const { peers, groups } = useControlCenterData();
+  const { peers, groups, groupsByPeerId } = useControlCenterData();
   const { groupUserCounts } = useCanvasUI();
   const nodes = useStructuralNodes();
   const { isDraft } = useDraftMode();
@@ -90,7 +91,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
   const assignedRefs = useMemo(() => {
     const assigned = new Set<string>();
     // "All" is excluded from the list, so it must not count as assigned either.
-    (peer?.groups ?? []).forEach(
+    (groupsByPeerId.get(peerId) ?? []).forEach(
       (g) => g.id && !isAllGroup(g) && assigned.add(g.id),
     );
     if (isDraft) {
@@ -104,7 +105,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
       });
     }
     return assigned;
-  }, [peer, changes, isDraft, peerId]);
+  }, [groupsByPeerId, changes, isDraft, peerId]);
   const assignedKey = useMemo(
     () => [...assignedRefs].sort().join(","),
     [assignedRefs],
@@ -177,8 +178,6 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
     });
     if (!choice) return;
     setSaving(true);
-    const toIds = (list?: (string | { id?: string })[]) =>
-      (list ?? []).map((x) => (typeof x === "string" ? x : x.id ?? ""));
     const request = (async () => {
       for (const g of [...added, ...removed]) {
         const full = groups?.find((x) => x.id === g.id);

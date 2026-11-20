@@ -11,7 +11,6 @@ export interface Peer {
   last_seen: Date;
   os: string;
   version: string;
-  groups?: Group[];
   ssh_enabled: boolean;
   hostname: string;
   user_id?: string;
@@ -67,3 +66,6 @@ export interface PeerLocalFlags {
   rosenpass_permissive: boolean;
   server_ssh_allowed: boolean;
 }
+
+/** A peer decorated client-side with the groups it belongs to. */
+export type PeerWithGroups = Peer & { groups?: Group[] };

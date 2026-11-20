@@ -11,6 +11,7 @@ import { Group } from "@/interfaces/Group";
 import { Network, NetworkRouter } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { SetupKey } from "@/interfaces/SetupKey";
+import { groupPeerIds } from "@/modules/groups/groupMembers";
 import { SetupModalContent } from "@/modules/setup-netbird-modal/SetupModal";
 
 type Props = {
@@ -70,9 +71,10 @@ export const OnboardingAddRoutingPeer = ({
    * Detect routing peer based on group and add it to the network
    */
   useEffect(() => {
-    const routingPeer = peers?.find(
-      (p) => p.groups?.some((g) => g.name === "Routing Peers"),
+    const routingPeerIds = new Set(
+      groupPeerIds(groups?.find((g) => g.name === "Routing Peers")),
     );
+    const routingPeer = peers?.find((p) => p.id && routingPeerIds.has(p.id));
     const hasNetworkRoutingPeer =
       network?.routers?.find((r) => r === routingPeer?.id) !== undefined;
     if (routingPeer && network && !hasNetworkRoutingPeer) {
@@ -90,7 +92,7 @@ export const OnboardingAddRoutingPeer = ({
           onRoutingPeerAdded(routingPeer);
         });
     }
-  }, [network, peers]);
+  }, [network, peers, groups]);
 
   /**
    * Copy the setup key to clipboard

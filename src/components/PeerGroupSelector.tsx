@@ -42,11 +42,12 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useElementSize } from "@/hooks/useElementSize";
-import type { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
+import type { Group, GroupResource } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { User } from "@/interfaces/User";
+import { addPeersToMembers } from "@/modules/groups/groupMembers";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
 
@@ -291,20 +292,9 @@ export function PeerGroupSelector({
     onResourceChange?.(undefined);
     const group = groups?.find((group) => group.name == name);
     const option = dropdownOptions.find((option) => option.name == name);
-    const groupPeers: GroupPeer[] | undefined =
-      (group?.peers as GroupPeer[]) || [];
+    const groupPeers = addPeersToMembers(group?.peers, peer?.id ? [peer.id] : []);
     const groupResources: GroupResource[] | undefined =
       (group?.resources as GroupResource[]) || [];
-
-    if (peer) {
-      const peerInGroup = groupPeers?.find((p) => p?.id === peer?.id);
-      if (!peerInGroup) {
-        groupPeers?.push({
-          id: peer?.id as string,
-          name: peer?.name,
-        });
-      }
-    }
 
     if (!group && !option) {
       addDropdownOptions([

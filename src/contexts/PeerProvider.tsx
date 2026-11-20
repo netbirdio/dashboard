@@ -4,10 +4,10 @@ import { useApiCall } from "@utils/api";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
-import { useGroups } from "@/contexts/GroupsProvider";
+import { useGroups, useGroupsOfPeer } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
-import { Group, GroupPeer } from "@/interfaces/Group";
+import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { User } from "@/interfaces/User";
 import { PeerSSHInstructions } from "@/modules/peer/PeerSSHInstructions";
@@ -163,20 +163,8 @@ export default function PeerProvider({
  * @param peer
  */
 export const usePeerGroups = (peer?: Peer) => {
-  const { groups, isLoading } = useGroups();
-
-  const peerGroups = useMemo(() => {
-    if (!peer) return [];
-    const peerGroups = groups?.filter((group) => {
-      const foundGroup = group.peers?.find((p) => {
-        const peerGroup = p as GroupPeer;
-        return peerGroup.id === peer.id;
-      });
-      return foundGroup !== undefined;
-    });
-    return peerGroups || [];
-  }, [groups, peer]);
-
+  const { isLoading } = useGroups();
+  const peerGroups = useGroupsOfPeer(peer?.id);
   return { peerGroups, isLoading };
 };
 

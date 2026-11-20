@@ -13,8 +13,15 @@ import {
 import { addDestinationResourceNodes, ViewResult } from "./types";
 
 export function useUserView() {
-  const { policies, peers, networks, networkResources, groups, isDataReady } =
-    useControlCenterData();
+  const {
+    policies,
+    peers,
+    networks,
+    networkResources,
+    groups,
+    groupsByPeerId,
+    isDataReady,
+  } = useControlCenterData();
   const agentNetwork = useAgentNetworkOverlay();
 
   const applyUserView = (
@@ -51,7 +58,11 @@ export function useUserView() {
     });
 
     const allUserGroups = [
-      ...new Set(userPeers.flatMap((p) => p.groups?.map((g) => g.id) || [])),
+      ...new Set(
+        userPeers.flatMap(
+          (p) => groupsByPeerId.get(p.id!)?.map((g) => g.id) || [],
+        ),
+      ),
     ];
     const userPolicies = sortBy(
       (policiesOverride ?? policies!).filter((p) => {
@@ -79,7 +90,8 @@ export function useUserView() {
       const sourcesIds = (rule?.sources as Group[])?.map((g) => g.id) || [];
 
       userPeers.forEach((peer) => {
-        const peerGroupIds = peer.groups?.map((g) => g.id) || [];
+        const peerGroupIds =
+          groupsByPeerId.get(peer.id!)?.map((g) => g.id) || [];
         const hasSharedGroup = sourcesIds.some((sourceId) =>
           peerGroupIds.includes(sourceId),
         );
@@ -138,7 +150,7 @@ export function useUserView() {
 
     userPeers.forEach(
       (peer) =>
-        peer.groups?.forEach((group) =>
+        groupsByPeerId.get(peer.id!)?.forEach((group) =>
           addAgentNetworkProviderNodes(
             group.id ?? "",
             `source-peer-${peer.id}`,

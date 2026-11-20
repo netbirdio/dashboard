@@ -1,6 +1,7 @@
 import loadConfig from "@utils/config";
+import { toIds } from "@utils/ids";
 import { normalizeHostCIDR } from "@utils/ip";
-import { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
+import { Group, GroupResource } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
@@ -74,10 +75,7 @@ export interface RequestResolvers {
 
 type WireResource = { id: string; type?: NetworkResource["type"] };
 
-export const toIds = (items?: ({ id?: string } | string)[] | null): string[] =>
-  (items ?? [])
-    .map((i) => (typeof i === "string" ? i : i.id))
-    .filter(Boolean) as string[];
+export { toIds };
 
 // Every rule travels, each with its own action: a toggle or edit rebuilt from
 // this body must not rewrite an API-created multi-rule or "drop" policy.
@@ -147,7 +145,7 @@ export function groupCreateBody(
 // is also a PUT, and it derives its removals instead of carrying them.
 export function mergeGroupMembers(
   base: {
-    peers?: (GroupPeer | string)[];
+    peers?: ({ id?: string } | string)[];
     resources?: (GroupResource | string)[];
   },
   change: Pick<UpdateGroupChange, "peerIds" | "resourceIds"> &
