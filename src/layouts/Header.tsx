@@ -16,7 +16,7 @@ import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 
-export const headerHeight = 65;
+export const headerHeight = 61;
 
 export default function NavbarWithDropdown() {
   const router = useGuardedRouter();
@@ -35,10 +35,13 @@ export default function NavbarWithDropdown() {
         <AnnouncementBanner />
         <div
           className={cn(
-            "bg-nb-gray px-2 py-3 dark:border-gray-700 backdrop-blur-lg sm:px-6",
+            "bg-nb-gray px-2 dark:border-gray-700 backdrop-blur-lg sm:px-6",
             "border-b dark:border-zinc-700/40 px-3 md:px-4 w-full",
             "flex justify-between items-center transition-all",
           )}
+          // Fixed to headerHeight, which the nav, tabs and page heights
+          // subtract, so the bar can't grow out of step with them.
+          style={{ height: headerHeight }}
         >
           <div className={"flex items-center gap-4 md:hidden"}>
             <Button

@@ -5,6 +5,7 @@ import { cn } from "@utils/helpers";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import * as React from "react";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
+import { useToggleAnimation } from "@/modules/navigation/useToggleAnimation";
 
 type Props = {
   children: React.ReactNode;
@@ -28,7 +29,7 @@ type Props = {
 };
 
 const groupClassName =
-  "mt-4 border-t border-gray-200 pt-4 first:mt-0 first:border-t-0 first:pt-0 dark:border-zinc-700/40 space-y-[3px]";
+  "mt-3.5 border-t border-gray-200 pt-4 first:mt-0 first:border-t-0 first:pt-0 dark:border-zinc-700/40 space-y-px";
 
 export default function SidebarItemGroup({
   children,
@@ -41,6 +42,7 @@ export default function SidebarItemGroup({
   id,
 }: Readonly<Props>) {
   const { isNavigationCollapsed, mobileNavOpen } = useApplicationContext();
+  const toggleAnimation = useToggleAnimation();
 
   if (!label) {
     return (
@@ -51,8 +53,8 @@ export default function SidebarItemGroup({
   }
 
   // A group with a heading is set apart by the heading and space alone. The
-  // icon-only sidebar has no room for the heading, so a divider stands in
-  // for it until a hover widens the sidebar again.
+  // icon-only sidebar has no room for the heading, so a divider drawn in its
+  // place stands in for it until a hover widens the sidebar again.
   const iconOnly = isNavigationCollapsed && !mobileNavOpen;
   // The icon-only heading can't be seen or clicked, so a closed group there
   // would hide its icons with no way back; every group stays open in that
@@ -61,12 +63,7 @@ export default function SidebarItemGroup({
   const canToggle = collapsible && !iconOnly;
   const isOpen = canToggle ? open : true;
   const Chevron = isOpen ? ChevronUpIcon : ChevronDownIcon;
-  const labelledClassName = cn(
-    "first:mt-0 border-t border-transparent",
-    iconOnly
-      ? "mt-4 pt-3 border-gray-200 dark:border-zinc-700/40 group-hover/navigation:border-transparent"
-      : "mt-4",
-  );
+  const labelledClassName = "mt-3.5 first:mt-0 border-t border-transparent";
 
   const heading = (
     <div
@@ -104,13 +101,31 @@ export default function SidebarItemGroup({
 
   return (
     <div className={labelledClassName} data-nav-section={id}>
-      <Collapsible.Root open={isOpen} onOpenChange={onOpenChange}>
-        <div className={"px-3"}>
+      <Collapsible.Root
+        open={isOpen}
+        onOpenChange={(next) => {
+          toggleAnimation.onToggle();
+          onOpenChange?.(next);
+        }}
+      >
+        <div className={"relative px-3"}>
+          {/* Drawn across the hidden heading rather than above it, so
+              collapsing the sidebar doesn't move the items. */}
+          {iconOnly && (
+            <span
+              aria-hidden
+              className={
+                "absolute inset-x-0 top-1/2 h-px bg-gray-200 dark:bg-zinc-700/40 group-hover/navigation:opacity-0"
+              }
+            />
+          )}
           {canToggle ? (
             <Collapsible.Trigger asChild>
               <button
                 type={"button"}
-                className={"group/heading w-full cursor-pointer"}
+                // Block rather than the default inline-block, so the heading
+                // is as tall as the plain div used when it can't toggle.
+                className={"group/heading block w-full cursor-pointer"}
                 data-testid={"left-navigation-section"}
                 data-active={active}
               >
@@ -123,7 +138,13 @@ export default function SidebarItemGroup({
             </div>
           )}
         </div>
-        <Collapsible.Content className={"space-y-[3px] pt-[3px]"}>
+        <Collapsible.Content
+          className={cn(
+            "space-y-px pt-0.5 overflow-hidden",
+            toggleAnimation.className,
+          )}
+          onAnimationEnd={toggleAnimation.onAnimationEnd}
+        >
           {children}
         </Collapsible.Content>
       </Collapsible.Root>
