@@ -807,7 +807,6 @@ export default function AgentAccessLogTable({
           />
           <ButtonGroup disabled={isLoading}>
             <ButtonGroup.Button
-              className={"h-[42px]"}
               variant={grouped ? "secondary" : "tertiary"}
               onClick={() => onGroupedChange?.(false)}
             >
@@ -816,7 +815,7 @@ export default function AgentAccessLogTable({
             <ButtonGroup.Button
               // Drop the left border so it doesn't stack with the first
               // button's right border into a doubled divider.
-              className={"h-[42px] !border-l-0"}
+              className={"!border-l-0"}
               variant={grouped ? "tertiary" : "secondary"}
               onClick={() => onGroupedChange?.(true)}
             >

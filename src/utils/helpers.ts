@@ -1,7 +1,13 @@
 import chroma from "chroma-js";
 import { type ClassValue, clsx } from "clsx";
 import deepClone from "lodash/cloneDeep";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+// Font sizes added to the theme in globals.css. Unregistered, tailwind-merge
+// reads them as text colours and drops them next to a real colour class.
+const twMerge = extendTailwindMerge({
+  extend: { theme: { text: ["xsm", "smd"] } },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

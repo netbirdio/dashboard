@@ -22,7 +22,7 @@ export const MSPNavigationItem = () => {
   return (
     isNetBirdCloud() && (
       <SidebarItem
-        icon={<MSPIcon size={17} />}
+        icon={<MSPIcon size={16} />}
         visible={permission?.tenants?.read}
         label={<div className={"flex items-center gap-2"}>Tenants</div>}
         href={"/tenants"}
