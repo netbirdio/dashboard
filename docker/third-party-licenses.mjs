@@ -11,8 +11,18 @@ const rootDir = join(dirname(fileURLToPath(import.meta.url)), "..");
 // preflight and utility CSS.
 const bundledTooling = new Set(["node_modules/tailwindcss"]);
 
-// Inter ships as a font file rather than a package, so its OFL lives beside it.
+// Files that ship outside npm: IronRDP is downloaded from its release by CI
+// (dual-licensed MIT OR Apache-2.0), and Inter is a font file with its OFL
+// beside it.
 const staticTerms = [
+  {
+    title: "IronRDP v0.0.2 (netbirdio/IronRDP), Apache License 2.0",
+    file: "docker/ironrdp/LICENSE-APACHE",
+  },
+  {
+    title: "IronRDP v0.0.2 (netbirdio/IronRDP), MIT License",
+    file: "docker/ironrdp/LICENSE-MIT",
+  },
   {
     title: "Inter 3.019 (git-0a5106e0b), SIL Open Font License 1.1",
     file: "src/assets/fonts/OFL.txt",
