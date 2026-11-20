@@ -26,6 +26,10 @@ interface MultiSelectProps {
   disabledPeers?: string[];
   disabledPeerReason?: string;
   disabled?: boolean;
+  // Replaces the select-style button, e.g. with an "Add Peer" button.
+  trigger?: React.ReactNode;
+  // Opens the list on mount.
+  defaultOpen?: boolean;
 }
 
 const searchPredicate = (item: Peer, query: string) => {
@@ -43,9 +47,13 @@ export function PeerSelector({
   disabledPeers,
   disabledPeerReason,
   disabled = false,
+  trigger,
+  defaultOpen = false,
 }: MultiSelectProps) {
   const { data: peers } = useFetchApi<Peer[]>("/peers");
-  const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
+  const [inputRef, { width }] = useElementSize<
+    HTMLButtonElement | HTMLDivElement
+  >();
 
   const [unfilteredItems, setUnfilteredItems] = useState<Peer[]>([]);
   const [filteredItems, search, setSearch] = useSearch(
@@ -81,7 +89,7 @@ export function PeerSelector({
     setOpen(false);
   };
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
 
   return (
     <Popover
@@ -96,46 +104,52 @@ export function PeerSelector({
       }}
     >
       <PopoverTrigger asChild>
-        <button
-          className={cn(
-            "min-h-[46px] w-full relative items-center group",
-            "border border-neutral-200 dark:border-nb-gray-700 justify-between py-2 px-3",
-            "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex dark:text-neutral-400/70 text-neutral-500 cursor-pointer enabled:hover:dark:bg-nb-gray-900/50",
-            "disabled:opacity-40 disabled:cursor-default",
-          )}
-          disabled={disabled}
-          ref={inputRef}
-        >
-          <div
-            className={
-              "flex items-center w-full gap-2 border-nb-gray-700 flex-wrap h-full"
-            }
+        {trigger ? (
+          <div ref={inputRef} className={"w-full"}>
+            {trigger}
+          </div>
+        ) : (
+          <button
+            className={cn(
+              "min-h-[46px] w-full relative items-center group",
+              "border border-neutral-200 dark:border-nb-gray-700 justify-between py-2 px-3",
+              "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex dark:text-neutral-400/70 text-neutral-500 cursor-pointer enabled:hover:dark:bg-nb-gray-900/50",
+              "disabled:opacity-40 disabled:cursor-default",
+            )}
+            disabled={disabled}
+            ref={inputRef}
           >
-            {value ? (
-              <div
-                className={
-                  "flex items-center justify-between text-sm text-nb-gray-100 dark:text-white w-full pr-4 pl-1"
-                }
-              >
-                <div className={"flex items-center gap-2.5 text-sm"}>
-                  <TextWithTooltip text={value.name} maxChars={22} />
-                </div>
-
+            <div
+              className={
+                "flex items-center w-full gap-2 border-nb-gray-700 flex-wrap h-full"
+              }
+            >
+              {value ? (
                 <div
                   className={
-                    "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-1 font-mono text-[10px]"
+                    "flex items-center justify-between text-sm text-nb-gray-100 dark:text-white w-full pr-4 pl-1"
                   }
                 >
-                  {value.ip}
-                </div>
-              </div>
-            ) : (
-              <span>Select a peer...</span>
-            )}
-          </div>
+                  <div className={"flex items-center gap-2.5 text-sm"}>
+                    <TextWithTooltip text={value.name} maxChars={22} />
+                  </div>
 
-          <ChevronsUpDown size={18} className={"shrink-0"} />
-        </button>
+                  <div
+                    className={
+                      "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-1 font-mono text-[10px]"
+                    }
+                  >
+                    {value.ip}
+                  </div>
+                </div>
+              ) : (
+                <span>Select a peer...</span>
+              )}
+            </div>
+
+            <ChevronsUpDown size={18} className={"shrink-0"} />
+          </button>
+        )}
       </PopoverTrigger>
       <PopoverContent
         hideWhenDetached={false}

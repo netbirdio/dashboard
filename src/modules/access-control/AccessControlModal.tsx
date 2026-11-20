@@ -47,6 +47,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
+import { ExitNode } from "@/interfaces/ExitNode";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
@@ -149,6 +150,8 @@ type ModalProps = {
   destinationScope?: PolicyDestinationScope;
   // The policy is an unsaved duplicate: show the create wizard, seeded from it.
   isDuplicate?: boolean;
+  // Exit nodes that don't exist yet, e.g. the one a draft policy is for.
+  additionalExitNodes?: Pick<ExitNode, "id" | "name">[];
 };
 
 export type PolicyDestinationScope = {
@@ -178,6 +181,7 @@ export function AccessControlModalContent({
   additionalPeers,
   destinationScope,
   isDuplicate = false,
+  additionalExitNodes,
 }: Readonly<ModalProps>) {
   const { permission } = usePermissions();
   const { users } = useUsers();
@@ -452,6 +456,10 @@ export function AccessControlModalContent({
                   showRoutes={true}
                   showResources={protocol !== "netbird-ssh"}
                   showPeers={!destinationScope}
+                  showExitNodes={
+                    protocol !== "netbird-ssh" && !destinationScope
+                  }
+                  additionalExitNodes={additionalExitNodes}
                   resourceIds={destinationScope?.resourceIds}
                   groupIds={destinationScope?.groupIds}
                   hideAllGroup={!!destinationScope}

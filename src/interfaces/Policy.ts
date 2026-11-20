@@ -37,7 +37,7 @@ export interface PortRange {
 
 export interface PolicyRuleResource {
   id: string;
-  type?: "domain" | "host" | "subnet" | "peer";
+  type?: "domain" | "host" | "subnet" | "peer" | "exit_node";
 }
 
 export type Protocol = "all" | "tcp" | "udp" | "icmp" | "netbird-ssh";

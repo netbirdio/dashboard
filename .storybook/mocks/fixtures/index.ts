@@ -1,5 +1,6 @@
 import { account } from "./account";
 import { coreFixtures } from "./core";
+import { exitNodeFixtures } from "./exit-nodes";
 import { networkFixtures } from "./network";
 import { platformFixtures } from "./platform";
 import { currentUser } from "./users";
@@ -18,5 +19,7 @@ export const fixtures: Record<string, Handler> = {
   "GET /accounts/:id": account,
   ...coreFixtures,
   ...networkFixtures,
+  // After networkFixtures: also answers /policies, with the exit node policies.
+  ...exitNodeFixtures,
   ...platformFixtures,
 };

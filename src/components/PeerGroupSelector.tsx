@@ -17,7 +17,7 @@ import TruncatedText from "@components/ui/TruncatedText";
 import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import { useSearch } from "@hooks/useSearch";
 import useSortedDropdownOptions from "@hooks/useSortedDropdownOptions";
-import { IconArrowBack } from "@tabler/icons-react";
+import { IconArrowBack, IconDirectionSign } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { cn } from "@utils/helpers";
@@ -42,6 +42,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useElementSize } from "@/hooks/useElementSize";
+import type { ExitNode } from "@/interfaces/ExitNode";
 import type { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
@@ -54,7 +55,8 @@ export type PeerGroupSelectorTab =
   | "peers"
   | "groups"
   | "resources"
-  | "clusters";
+  | "clusters"
+  | "exit-nodes";
 
 export const getOpeningTab = (params: {
   currentTab: PeerGroupSelectorTab;
@@ -67,6 +69,7 @@ export const getOpeningTab = (params: {
   hideGroupsTab: boolean;
   tabOrder?: PeerGroupSelectorTab[];
   initialTab?: PeerGroupSelectorTab;
+  showExitNodes?: boolean;
 }): PeerGroupSelectorTab => {
   const {
     currentTab,
@@ -79,6 +82,7 @@ export const getOpeningTab = (params: {
     hideGroupsTab,
     tabOrder,
     initialTab,
+    showExitNodes = false,
   } = params;
 
   const renderable = (tab: PeerGroupSelectorTab): boolean => {
@@ -86,6 +90,7 @@ export const getOpeningTab = (params: {
     if (tab === "groups") return !hideGroupsTab;
     if (tab === "peers") return showPeers;
     if (tab === "resources") return showResources;
+    if (tab === "exit-nodes") return showExitNodes;
     return showClusters;
   };
 
@@ -98,6 +103,8 @@ export const getOpeningTab = (params: {
 
   if (hasResource) {
     if (resourceType === "peer") return showPeers ? "peers" : defaultTab();
+    if (resourceType === "exit_node")
+      return showExitNodes ? "exit-nodes" : defaultTab();
     return showResources ? "resources" : defaultTab();
   }
   if (hasSelectedCluster && showClusters) return "clusters";
@@ -163,6 +170,10 @@ interface MultiSelectProps {
   // Extra peers alongside the fetched ones (e.g. draft placeholder peers).
   additionalPeers?: Peer[];
   policies?: Policy[];
+  // Offers exit nodes as a single destination, in an Exit Nodes tab.
+  showExitNodes?: boolean;
+  // Exit nodes that don't exist in the API yet (e.g. one being created).
+  additionalExitNodes?: Pick<ExitNode, "id" | "name">[];
 }
 export function PeerGroupSelector({
   onChange,
@@ -203,6 +214,8 @@ export function PeerGroupSelector({
   clusters,
   selectedCluster,
   onClusterChange,
+  showExitNodes = false,
+  additionalExitNodes,
 }: Readonly<MultiSelectProps>) {
   // Network resources sit behind the networks permission; callers without
   // it (e.g. agent_network_admin opening the policy modal) get a plain
@@ -222,6 +235,23 @@ export function PeerGroupSelector({
 
   const { data: fetchedPeers, isLoading: isPeersLoading } =
     useFetchApi<Peer[]>("/peers");
+
+  // Only fetched where exit nodes can be picked or one is selected.
+  const { data: fetchedExitNodes, isLoading: isExitNodesLoading } = useFetchApi<
+    ExitNode[]
+  >(
+    "/exit-nodes",
+    false,
+    true,
+    showExitNodes || resource?.type === "exit_node",
+  );
+
+  const exitNodes = useMemo(() => {
+    const additional = (additionalExitNodes ?? []).filter(
+      (en) => !fetchedExitNodes?.some((e) => e.id === en.id),
+    );
+    return [...(fetchedExitNodes ?? []), ...additional];
+  }, [fetchedExitNodes, additionalExitNodes]);
 
   const peers = useMemo(() => {
     if (!additionalPeers?.length) return fetchedPeers;
@@ -389,6 +419,7 @@ export function PeerGroupSelector({
     if (tab === "resources") return "Search resource...";
     if (tab === "peers") return "Search peer by name or ip...";
     if (tab === "clusters") return "Search cluster...";
+    if (tab === "exit-nodes") return "Search exit node...";
     return "Search...";
   }, [tab, placeholderForSearch]);
 
@@ -426,6 +457,14 @@ export function PeerGroupSelector({
     }
   };
 
+  const selectExitNode = (exitNode: Pick<ExitNode, "id">) => {
+    onResourceChange?.({ id: exitNode.id, type: "exit_node" });
+    onChange([]);
+    if (closeOnSelect) {
+      setOpen(false);
+    }
+  };
+
   const selectPeer = (peer?: Peer) => {
     if (!peer?.id) return;
     onResourceChange?.({
@@ -455,6 +494,7 @@ export function PeerGroupSelector({
               hideGroupsTab,
               tabOrder,
               initialTab,
+              showExitNodes,
             }),
           );
         }
@@ -498,6 +538,14 @@ export function PeerGroupSelector({
                       name: resource.id,
                       type: resource.type,
                     } as NetworkResource)
+                  }
+                  exitNode={
+                    resource.type === "exit_node"
+                      ? exitNodes.find((e) => e.id === resource.id) ?? {
+                          id: resource.id,
+                          name: resource.id,
+                        }
+                      : undefined
                   }
                   peer={peers?.find((p) => p.id === resource.id)}
                   onClick={(e) => {
@@ -659,6 +707,7 @@ export function PeerGroupSelector({
                 showPeers={showPeers}
                 showResources={showResources}
                 showClusters={showClusters}
+                showExitNodes={showExitNodes}
                 hideGroupsTab={hideGroupsTab}
                 tabOrder={tabOrder}
               />
@@ -818,6 +867,17 @@ export function PeerGroupSelector({
                   />
                 </TabsContent>
               )}
+              {showExitNodes && (
+                <TabsContent value={"exit-nodes"} className={"p-0 my-0"}>
+                  <ExitNodesList
+                    search={search}
+                    exitNodes={exitNodes}
+                    isLoading={isExitNodesLoading}
+                    value={resource}
+                    onChange={selectExitNode}
+                  />
+                </TabsContent>
+              )}
               {showClusters && (
                 <TabsContent value={"clusters"} className={"p-0 my-0"}>
                   <ClustersList
@@ -840,6 +900,7 @@ const TabTriggers = ({
   showResources = false,
   showPeers = false,
   showClusters = false,
+  showExitNodes = false,
   hideGroupsTab = false,
   tabOrder,
 }: {
@@ -847,6 +908,7 @@ const TabTriggers = ({
   showResources?: boolean;
   showPeers?: boolean;
   showClusters?: boolean;
+  showExitNodes?: boolean;
   hideGroupsTab?: boolean;
   tabOrder?: PeerGroupSelectorTab[];
 }) => {
@@ -854,7 +916,8 @@ const TabTriggers = ({
     (!hideGroupsTab ? 1 : 0) +
     (showResources ? 1 : 0) +
     (showPeers ? 1 : 0) +
-    (showClusters ? 1 : 0);
+    (showClusters ? 1 : 0) +
+    (showExitNodes ? 1 : 0);
   if (tabCount <= 1) return null;
 
   const groupsTab = !hideGroupsTab && (
@@ -925,11 +988,29 @@ const TabTriggers = ({
     </TabsTrigger>
   );
 
+  const exitNodesTab = showExitNodes && (
+    <TabsTrigger
+      key="exit-nodes"
+      value={"exit-nodes"}
+      className={"text-[.8rem] font-normal"}
+      onClick={() => searchRef.current?.focus()}
+    >
+      <IconDirectionSign
+        className={
+          "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
+        }
+        size={14}
+      />
+      Exit Nodes
+    </TabsTrigger>
+  );
+
   const tabMap: Record<PeerGroupSelectorTab, React.ReactNode> = {
     groups: groupsTab,
     peers: peersTab,
     resources: resourcesTab,
     clusters: clustersTab,
+    "exit-nodes": exitNodesTab,
   };
 
   if (tabOrder) {
@@ -945,6 +1026,7 @@ const TabTriggers = ({
       {groupsTab}
       {resourcesTab}
       {peersTab}
+      {exitNodesTab}
       {clustersTab}
     </TabsList>
   );
@@ -1163,6 +1245,104 @@ const ResourcesList = ({
             </Fragment>
           );
         }}
+      />
+    </Radio>
+  );
+};
+
+const exitNodesSearchPredicate = (
+  item: Pick<ExitNode, "name">,
+  query: string,
+) => item.name.toLowerCase().includes(query.toLowerCase());
+
+const ExitNodesList = ({
+  search,
+  exitNodes,
+  isLoading,
+  value,
+  onChange,
+}: {
+  search: string;
+  exitNodes: Pick<ExitNode, "id" | "name">[];
+  isLoading: boolean;
+  value?: PolicyRuleResource;
+  onChange: (exitNode: Pick<ExitNode, "id" | "name">) => void;
+}) => {
+  const [filteredItems, _, setSearch] = useSearch(
+    exitNodes,
+    exitNodesSearchPredicate,
+    { filter: true, debounce: 150 },
+  );
+
+  useEffect(() => {
+    setSearch(search);
+  }, [search, setSearch]);
+
+  if (isLoading) {
+    return (
+      <div className={"max-h-[195px] flex flex-col gap-1 py-2 px-2"}>
+        <Skeleton height={42} className={"rounded-md"} />
+        <Skeleton height={42} className={"rounded-md"} />
+      </div>
+    );
+  }
+
+  if (search != "" && filteredItems.length == 0) {
+    return (
+      <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
+        There are no exit nodes matching your search. Please try a different
+        search term.
+      </DropdownInfoText>
+    );
+  }
+
+  if (search == "" && filteredItems.length == 0) {
+    return (
+      <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
+        There are no exit nodes available yet. <br />
+        Go to <InlineLink href={"/exit-nodes"}>Exit Nodes</InlineLink> to add
+        one.
+      </DropdownInfoText>
+    );
+  }
+
+  const selected = value?.type === "exit_node" ? value.id : undefined;
+
+  return (
+    <Radio defaultValue={selected} name={"exit-node"} value={selected}>
+      <VirtualScrollAreaList
+        items={filteredItems}
+        onSelect={onChange}
+        estimatedItemHeight={42}
+        itemClassName={"dark:aria-selected:bg-nb-gray-800/20"}
+        renderItem={(exitNode) => (
+          <Fragment key={exitNode.id}>
+            <div className={"flex items-center gap-2"}>
+              <Badge
+                useHover={true}
+                data-testid={"exit-node-badge"}
+                variant={"gray-ghost"}
+                className={cn("transition-all group whitespace-nowrap h-7")}
+                onClick={(e) => {
+                  e.preventDefault();
+                }}
+              >
+                <IconDirectionSign size={12} className={"shrink-0"} />
+                <TextWithTooltip text={exitNode.name} maxChars={20} />
+              </Badge>
+            </div>
+            <div className={"flex items-center gap-5"}>
+              <div
+                className={
+                  "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2 font-mono text-[11px]"
+                }
+              >
+                0.0.0.0/0
+                <RadioItem value={exitNode.id} />
+              </div>
+            </div>
+          </Fragment>
+        )}
       />
     </Radio>
   );
