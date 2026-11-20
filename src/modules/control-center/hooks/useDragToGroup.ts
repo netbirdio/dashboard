@@ -1,3 +1,4 @@
+import { toIds } from "@utils/ids";
 import { useCallback, useRef } from "react";
 import { Node, useReactFlow, XYPosition } from "@xyflow/react";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
@@ -68,11 +69,7 @@ function groupContainsItem(groupNode: Node, itemId: string): boolean {
     | undefined;
   if (removedMembers?.has(itemId)) return false;
 
-  const peers = group.peers ?? [];
-  const hasPeer = peers.some((p) =>
-    typeof p === "string" ? p === itemId : p.id === itemId,
-  );
-  if (hasPeer) return true;
+  if (toIds(group.peers).includes(itemId)) return true;
 
   const resources = group.resources ?? [];
   const hasResource = resources.some((r) =>

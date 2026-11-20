@@ -314,14 +314,6 @@ const seeds: PeerSeed[] = [
   },
 ];
 
-const ref = (id: string) => ({
-  id,
-  name: groupNames[id],
-  peers_count: 0,
-  resources_count: 0,
-  issued: groupIssued[id] ?? "api",
-});
-
 export const peers = seeds.map((s) => ({
   id: s.id,
   name: s.name,
@@ -334,7 +326,6 @@ export const peers = seeds.map((s) => ({
   kernel_version: s.kernel ?? "",
   version: s.version,
   ui_version: s.ui ?? "",
-  groups: s.groups.map(ref),
   ssh_enabled: !!s.ssh,
   hostname: s.name.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
   user_id: s.user ?? "",
@@ -372,14 +363,14 @@ export const peers = seeds.map((s) => ({
 }));
 
 export const groups = Object.values(GROUP).map((id) => {
-  const members = peers.filter((p) => p.groups.some((g) => g.id === id));
+  const members = seeds.filter((s) => s.groups.includes(id));
   const resources = groupResources[id] ?? [];
   return {
     id,
     name: groupNames[id],
     issued: groupIssued[id] ?? "api",
     peers_count: members.length,
-    peers: members.map((p) => ({ id: p.id, name: p.name })),
+    peers: members.map((s) => s.id),
     resources_count: resources.length,
     resources,
   };

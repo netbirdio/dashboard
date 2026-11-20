@@ -287,6 +287,7 @@ export const Onboarding = ({
 
     const interval = setInterval(() => {
       mutate("/peers");
+      mutate("/groups");
     }, 5000);
 
     return () => clearInterval(interval); // Clean up when dependencies change

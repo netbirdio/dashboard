@@ -48,6 +48,7 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useGroupsOfPeer } from "@/contexts/GroupsProvider";
 import { useRoutes } from "@/contexts/RoutesProvider";
 import { Group } from "@/interfaces/Group";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
@@ -379,10 +380,7 @@ export function RouteModalContent({
     return isNetworkEntered && isNameEntered && metricError == "";
   }, [isNetworkEntered, isNameEntered, metricError]);
 
-  const singleRoutingPeerGroups = useMemo(() => {
-    if (!routingPeer) return [];
-    return routingPeer?.groups;
-  }, [routingPeer]);
+  const singleRoutingPeerGroups = useGroupsOfPeer(routingPeer?.id);
 
   return (
     <ModalContent flow="route" maxWidthClass={"max-w-2xl"}>

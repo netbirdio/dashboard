@@ -1,9 +1,11 @@
 import useFetchApi, { useApiCall } from "@utils/api";
+import { toIds } from "@utils/ids";
 import { merge, sortBy, unionBy } from "lodash";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group, GroupResource } from "@/interfaces/Group";
-import { Peer } from "@/interfaces/Peer";
+import { Peer, PeerWithGroups } from "@/interfaces/Peer";
+import { buildGroupsByPeerId } from "@/modules/groups/groupMembers";
 
 type Props = {
   children: React.ReactNode;
@@ -12,6 +14,7 @@ type Props = {
 const GroupContext = React.createContext(
   {} as {
     groups: Group[] | undefined;
+    groupsByPeerId: Map<string, Group[]>;
     refresh: () => void;
     dropdownOptions: Group[];
     setDropdownOptions: React.Dispatch<React.SetStateAction<Group[]>>;
@@ -52,6 +55,7 @@ export function GroupsProviderContent({
     mutate,
     isLoading,
   } = useFetchApi<Group[]>("/groups", false, true, permission.groups.read);
+  const groupsByPeerId = useMemo(() => buildGroupsByPeerId(groups), [groups]);
   const groupRequest = useApiCall<Group>("/groups", true);
   const [dropdownOptions, setDropdownOptions] = useState<Group[]>([]);
 
@@ -100,12 +104,7 @@ export function GroupsProviderContent({
   }, [groups]);
 
   const createOrUpdate = async (group: Group) => {
-    let peers = group?.peers?.map((p) => {
-      let isString = typeof p === "string";
-      if (isString) return p;
-      let peer = p as Peer;
-      return peer.id;
-    }) as string[];
+    let peers = toIds(group?.peers);
 
     let resources = group?.resources?.map((r) => {
       let isString = typeof r === "string";
@@ -148,6 +147,7 @@ export function GroupsProviderContent({
     <GroupContext.Provider
       value={{
         groups,
+        groupsByPeerId,
         refresh,
         dropdownOptions,
         setDropdownOptions,
@@ -165,3 +165,33 @@ export function GroupsProviderContent({
 }
 
 export const useGroups = () => React.useContext(GroupContext);
+
+const NO_GROUPS: Group[] = [];
+const EMPTY_GROUPS_BY_PEER = new Map<string, Group[]>();
+
+/** Groups the given peer belongs to, derived from `/groups`. */
+export const useGroupsOfPeer = (peerId?: string): Group[] => {
+  const { groupsByPeerId } = useGroups();
+  return (peerId && groupsByPeerId?.get(peerId)) || NO_GROUPS;
+};
+
+/** Peer id to groups lookup, derived from `/groups`. */
+export const useGroupsByPeerId = (): Map<string, Group[]> => {
+  const { groupsByPeerId } = useGroups();
+  return groupsByPeerId ?? EMPTY_GROUPS_BY_PEER;
+};
+
+/** Peers decorated with their groups, derived from `/groups`. */
+export const usePeersWithGroups = (
+  peers?: Peer[],
+): PeerWithGroups[] | undefined => {
+  const groupsByPeerId = useGroupsByPeerId();
+  return useMemo(
+    () =>
+      peers?.map((peer) => ({
+        ...peer,
+        groups: (peer.id && groupsByPeerId.get(peer.id)) || [],
+      })),
+    [peers, groupsByPeerId],
+  );
+};

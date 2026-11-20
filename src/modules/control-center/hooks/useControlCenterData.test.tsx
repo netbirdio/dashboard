@@ -46,3 +46,16 @@ describe("isDataReady", () => {
     expect(subject().isDataReady()).toBe(false);
   });
 });
+
+describe("groupsByPeerId", () => {
+  it("derives a peer's groups from the groups' member ids", () => {
+    responses["/groups"] = [
+      { id: "g1", name: "A", peers: ["p1", "p2"] },
+      { id: "g2", name: "B", peers: ["p2"] },
+    ];
+    const { groupsByPeerId } = subject();
+    expect(groupsByPeerId.get("p1")?.map((g) => g.id)).toEqual(["g1"]);
+    expect(groupsByPeerId.get("p2")?.map((g) => g.id)).toEqual(["g1", "g2"]);
+    expect(groupsByPeerId.get("p3")).toBeUndefined();
+  });
+});

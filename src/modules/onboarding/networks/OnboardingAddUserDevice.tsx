@@ -5,9 +5,11 @@ import { DownloadIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
-import { Group, GroupPeer } from "@/interfaces/Group";
+import { useGroups, useGroupsOfPeer } from "@/contexts/GroupsProvider";
+import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
+import { addPeersToMembers } from "@/modules/groups/groupMembers";
 import { SetupModalContent } from "@/modules/setup-netbird-modal/SetupModal";
 
 type Props = {
@@ -27,23 +29,27 @@ export const OnboardingAddUserDevice = ({ device, policy, onNext }: Props) => {
     return sourceGroups?.find((g) => g.name === "Users");
   }, [policy]);
 
-  const hasDeviceUsersGroup = device?.groups?.find((g) => g.name === "Users");
+  const { groups } = useGroups();
+  const deviceGroups = useGroupsOfPeer(device?.id);
+  const hasDeviceUsersGroup = deviceGroups.some((g) => g.name === "Users");
 
   /**
    * Detect the device and add it to the "Users" group
    */
   useEffect(() => {
     if (!hasDeviceUsersGroup && usersGroup && device) {
-      let peersOfGroup = (usersGroup.peers as GroupPeer[]) || [];
-      let newPeers = peersOfGroup
-        .map((p) => p.id)
-        .filter((x) => x !== undefined);
-      if (device?.id) newPeers.push(device.id);
+      // The policy only carries a minimal group, and the PUT replaces the
+      // member list, so the current members come from /groups.
+      const currentGroup = groups?.find((g) => g.id === usersGroup.id);
+      if (!currentGroup) return;
       groupRequest
         .put(
           {
             ...usersGroup,
-            peers: newPeers,
+            peers: addPeersToMembers(
+              currentGroup.peers,
+              device.id ? [device.id] : [],
+            ),
           },
           `/${usersGroup.id}`,
         )
@@ -52,7 +58,7 @@ export const OnboardingAddUserDevice = ({ device, policy, onNext }: Props) => {
           mutate("/groups");
         });
     }
-  }, [usersGroup, device, hasDeviceUsersGroup]);
+  }, [usersGroup, device, hasDeviceUsersGroup, groups]);
 
   /**
    * Continue to next step once device is recognized

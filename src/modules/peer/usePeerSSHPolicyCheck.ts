@@ -1,4 +1,5 @@
 import useFetchApi from "@utils/api";
+import { useGroupsOfPeer } from "@/contexts/GroupsProvider";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { isNativeSSHSupported } from "@utils/version";
@@ -9,7 +10,7 @@ export const usePeerSSHPolicyCheck = (peer?: Peer) => {
     true,
     false,
   );
-  const peerGroupIds = peer?.groups?.map((p) => p.id);
+  const peerGroupIds = useGroupsOfPeer(peer?.id).map((g) => g.id);
 
   const peerPolicies = policies?.filter((policy) => {
     // Skip disabled policies

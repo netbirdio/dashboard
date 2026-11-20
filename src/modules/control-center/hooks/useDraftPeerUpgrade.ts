@@ -148,7 +148,7 @@ export function usePlaceholderUpgrade() {
 export function useDraftPeerUpgrade() {
   const { isDraft } = useDraftMode();
   const { nodes } = useCanvasState();
-  const { peers } = useControlCenterData();
+  const { peers, groupsByPeerId } = useControlCenterData();
   const upgrade = usePlaceholderUpgrade();
   const { deleteArtifacts } = usePlaceholderArtifacts();
   // State lands asynchronously, so the re-running effect must not upgrade twice.
@@ -190,7 +190,8 @@ export function useDraftPeerUpgrade() {
     const findByGroup = (groupId: string) =>
       peers.find(
         (p) =>
-          p.groups?.some((g) => g.id === groupId) &&
+          !!p.id &&
+          groupsByPeerId.get(p.id)?.some((g) => g.id === groupId) &&
           !onCanvas.has(`peer-${p.id}`),
       );
 
@@ -267,7 +268,7 @@ export function useDraftPeerUpgrade() {
         setupKeyId,
       }),
     );
-  }, [isDraft, peers, nodes, upgrade, deleteArtifacts]);
+  }, [isDraft, peers, groupsByPeerId, nodes, upgrade, deleteArtifacts]);
 
   // Waiting = a setup key was generated but the peer hasn't registered yet.
   const hasWaitingInstall = useMemo(
@@ -288,10 +289,13 @@ export function useDraftPeerUpgrade() {
     [nodes],
   );
 
-  // SWR only revalidates /peers on focus/reconnect, so poll while one waits.
+  // SWR only revalidates /peers and /groups on focus/reconnect, so poll while one waits.
   useEffect(() => {
     if (!isDraft || !hasWaitingInstall) return;
-    const id = window.setInterval(() => void mutate("/peers"), 5000);
+    const id = window.setInterval(() => {
+      void mutate("/peers");
+      void mutate("/groups");
+    }, 5000);
     return () => window.clearInterval(id);
   }, [isDraft, hasWaitingInstall]);
 }

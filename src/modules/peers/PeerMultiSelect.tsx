@@ -10,7 +10,7 @@ import { RowSelectionState } from "@tanstack/react-table";
 import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
 import { AnimatePresence, motion } from "framer-motion";
-import { uniq, uniqBy } from "lodash";
+import { uniqBy } from "lodash";
 import {
   CheckCircle,
   CirclePlus,
@@ -32,8 +32,13 @@ import {
   useBypass,
   useBypassedPeers,
 } from "@/cloud/edr/useBypass";
-import { Group, GroupPeer } from "@/interfaces/Group";
+import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
+import {
+  groupsContainingAnyPeer,
+  withPeersAdded,
+  withPeersRemoved,
+} from "@/modules/groups/groupMembers";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
 
@@ -122,55 +127,18 @@ const PeerGroupMassAssignmentContent = ({
       let selectedPeerGroups: Group[] = [];
 
       if (replaceAllGroups) {
-        // Get all the groups of the selected peers
-        selectedPeerGroups = uniqBy(
-          Object.keys(selectedPeers)
-            .map((id) => {
-              return peers?.find((p) => p.id === id)?.groups ?? [];
-            })
-            .flat()
-            .filter((g) => g !== undefined),
-          "id",
+        // Remove the selected peers from every group they are currently in
+        selectedPeerGroups = withPeersRemoved(
+          groupsContainingAnyPeer(allGroups, selectedPeerIDs),
+          selectedPeerIDs,
         );
-
-        // Find the groups
-        selectedPeerGroups =
-          allGroups?.filter((group) =>
-            selectedPeerGroups.find((g) => g.id === group.id),
-          ) ?? [];
-
-        // Remove the peers from the groups
-        selectedPeerGroups = selectedPeerGroups.map((group) => {
-          let previousPeers = group?.peers as GroupPeer[];
-          let previousPeerIDs = previousPeers?.map((p) => p.id);
-          previousPeerIDs = previousPeerIDs
-            .filter((id) => !selectedPeerIDs.includes(id))
-            .filter((id) => id !== "" && id !== null && id !== undefined);
-
-          return {
-            ...group,
-            peers: previousPeerIDs,
-          };
-        }) as Group[];
       }
 
       // Add selected peers to the selected groups
-      currentSelectedGroups = currentSelectedGroups
-        .map((group) => {
-          let previousPeers = (group?.peers as GroupPeer[]) ?? [];
-          let previousPeerIDs = previousPeers.map((p) => p.id);
-
-          let peers = uniq(
-            [...previousPeerIDs, ...selectedPeerIDs].filter(
-              (p) => p !== "" && p !== null && p !== undefined,
-            ),
-          );
-          return {
-            ...group,
-            peers,
-          };
-        })
-        .filter((g) => g !== undefined) as Group[];
+      currentSelectedGroups = withPeersAdded(
+        currentSelectedGroups,
+        selectedPeerIDs,
+      );
 
       // Merge the groups from the peers and the selected groups and remove duplicates
       currentSelectedGroups = uniqBy(

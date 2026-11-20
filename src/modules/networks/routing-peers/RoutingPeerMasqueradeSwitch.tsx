@@ -7,9 +7,9 @@ import { cn } from "@utils/helpers";
 import { AlertCircleIcon, VenetianMask } from "lucide-react";
 import * as React from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
-import { GroupPeer } from "@/interfaces/Group";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
+import { groupPeerIds } from "@/modules/groups/groupMembers";
 
 type Props = {
   value: boolean;
@@ -90,8 +90,8 @@ const RoutingPeerGroupNonLinuxWarning = ({
 
   const hasNonLinuxPeer = React.useMemo(() => {
     try {
-      return group?.peers?.some((groupPeer) => {
-        const peer = peers?.find((p) => p.id === (groupPeer as GroupPeer).id);
+      return groupPeerIds(group).some((peerId) => {
+        const peer = peers?.find((p) => p.id === peerId);
         if (!peer) return false;
         const os = getOperatingSystem(peer.os);
         return os !== OperatingSystem.LINUX;
@@ -99,7 +99,7 @@ const RoutingPeerGroupNonLinuxWarning = ({
     } catch (e) {
       return false;
     }
-  }, [group?.peers, peers]);
+  }, [group, peers]);
 
   return (
     hasNonLinuxPeer && (

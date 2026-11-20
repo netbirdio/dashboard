@@ -4,8 +4,12 @@ import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePeerGroups } from "@/contexts/PeerProvider";
-import { type Group, type GroupPeer } from "@/interfaces/Group";
+import { type Group } from "@/interfaces/Group";
 import { type Peer } from "@/interfaces/Peer";
+import {
+  groupPeerIds,
+  removePeersFromMembers,
+} from "@/modules/groups/groupMembers";
 
 type Props = {
   initial?: Group[] | string[];
@@ -74,35 +78,22 @@ export default function useGroupHelper({ initial = [], peer }: Props) {
   const removePeerFromGroup = async (g: Group) => {
     if (g.name === "All") return Promise.resolve(g);
 
-    const newPeerGroups = g.peers?.filter((p) => {
-      const groupPeer = p as GroupPeer;
-      return groupPeer.id !== peer?.id;
-    });
+    const remainingPeers = g.peers
+      ? removePeersFromMembers(g.peers, peer?.id ? [peer.id] : [])
+      : undefined;
 
     return groupRequest.put(
       {
         name: g.name,
         resources: g.resources,
-        peers: newPeerGroups
-          ? newPeerGroups.map((p) => {
-              const groupPeer = p as GroupPeer;
-              return groupPeer.id;
-            })
-          : undefined,
+        peers: remainingPeers,
       },
       `/${g.id}`,
     );
   };
 
   const updateOrCreateGroup = async (selectedGroup: Group) => {
-    const groupPeers =
-      selectedGroup.peers &&
-      selectedGroup.peers
-        .map((p) => {
-          const groupPeer = p as GroupPeer;
-          return groupPeer.id;
-        })
-        .filter((p) => p !== undefined && p !== null);
+    const groupPeers = selectedGroup.peers && groupPeerIds(selectedGroup);
 
     // Update group if it has an id (only when peer prop is passed)
     const hasId = !!selectedGroup.id;
