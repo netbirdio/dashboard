@@ -6,7 +6,11 @@ import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { Radio, RadioItem } from "@components/Radio";
-import { ScrollArea } from "@components/ScrollArea";
+import {
+  MemoizedScrollArea,
+  ScrollArea,
+  ScrollAreaViewport,
+} from "@components/ScrollArea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { AccessControlGroupCount } from "@components/ui/AccessControlGroupCount";
 import GroupBadge from "@components/ui/GroupBadge";
@@ -19,7 +23,6 @@ import { useSearch } from "@hooks/useSearch";
 import useSortedDropdownOptions from "@hooks/useSortedDropdownOptions";
 import { IconArrowBack } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
-import { usePermissions } from "@/contexts/PermissionsProvider";
 import { cn } from "@utils/helpers";
 import { Command, CommandGroup, CommandInput, CommandList } from "cmdk";
 import { sortBy, trim, unionBy } from "lodash";
@@ -40,7 +43,9 @@ import {
 import * as React from "react";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import Skeleton from "react-loading-skeleton";
+import { Virtuoso } from "react-virtuoso";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useElementSize } from "@/hooks/useElementSize";
 import type { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
@@ -55,6 +60,12 @@ export type PeerGroupSelectorTab =
   | "groups"
   | "resources"
   | "clusters";
+
+const VirtuosoScroller = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>((props, ref) => <ScrollAreaViewport ref={ref} {...props} />);
+VirtuosoScroller.displayName = "PeerGroupSelectorVirtuosoScroller";
 
 export const getOpeningTab = (params: {
   currentTab: PeerGroupSelectorTab;
@@ -113,7 +124,11 @@ export type ClusterOption = {
   label?: string;
 };
 
-const groupsSearchPredicate = (item: Group, query: string) => {
+type GroupListRow =
+  | { kind: "create"; name: string }
+  | { kind: "group"; group: Group };
+
+export const groupsSearchPredicate = (item: Group, query: string) => {
   const lowerCaseQuery = query.toLowerCase();
   if (item.name.toLowerCase().includes(lowerCaseQuery)) return true;
   return item?.id?.toLowerCase().includes(lowerCaseQuery) ?? false;
@@ -350,7 +365,17 @@ export function PeerGroupSelector({
     return isSearching && groupDoesNotExist && !isAllGroup && !groupIds;
   }, [search, dropdownOptions, groupIds]);
 
-  const [slice, setSlice] = useState(10);
+  const groupListRows = useMemo<GroupListRow[]>(() => {
+    const rows: GroupListRow[] = [];
+    if (searchedGroupNotFound) {
+      rows.push({ kind: "create", name: search });
+    }
+    for (const group of filteredGroups) {
+      if (hideAllGroup && group.name === "All") continue;
+      rows.push({ kind: "group", group });
+    }
+    return rows;
+  }, [filteredGroups, hideAllGroup, searchedGroupNotFound, search]);
 
   const getDefaultTab = (): PeerGroupSelectorTab => {
     if (initialTab) return initialTab;
@@ -360,16 +385,6 @@ export function PeerGroupSelector({
   };
 
   const [tab, setTab] = useState<PeerGroupSelectorTab>(getDefaultTab);
-
-  useEffect(() => {
-    if (open) {
-      setTimeout(() => {
-        setSlice(dropdownOptions.length);
-      }, 100);
-    } else {
-      setSlice(10);
-    }
-  }, [open, dropdownOptions]);
 
   const onPeerAssignmentChange = (oldGroup: Group, newGroup: Group) => {
     const filtered = values.filter((group) => group.name !== oldGroup.name);
@@ -382,7 +397,7 @@ export function PeerGroupSelector({
     setTimeout(() => {
       searchRef.current?.focus();
     }, 0);
-  }, [tab]);
+  }, [setSearch, tab]);
 
   const searchPlaceholder = useMemo(() => {
     if (tab === "groups") return placeholderForSearch;
@@ -664,132 +679,168 @@ export function PeerGroupSelector({
               />
               <TabsContent value={"groups"} className={"p-0 my-0"}>
                 <CommandGroup>
-                  <ScrollArea
-                    className={cn(
-                      "max-h-[195px] flex flex-col gap-1 pl-2 py-2 pr-3",
-                      filteredGroups.length == 0 && !search && "py-0",
-                    )}
-                  >
-                    {searchedGroupNotFound && (
-                      <CommandItem
-                        key={search}
-                        onSelect={() => {
-                          toggleGroupByName(search);
-                          searchRef.current?.focus();
-                        }}
-                        value={search}
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <Badge variant={"gray-ghost"} className={"h-7"}>
-                          <FolderGit2 size={12} className={"shrink-0"} />
-                          {search}
-                        </Badge>
-                        <div
-                          className={"text-neutral-500 dark:text-nb-gray-300"}
-                        >
-                          Add this group by pressing{" "}
-                          <span className={"font-bold text-netbird"}>
-                            {"'Enter'"}
-                          </span>
-                        </div>
-                      </CommandItem>
-                    )}
+                  {groupIds && filteredGroups.length === 0 && (
+                    <DropdownInfoText className={"mt-5 mb-5 max-w-sm mx-auto"}>
+                      {search !== ""
+                        ? "There are no groups matching your search. Please try a different search term."
+                        : "There are no groups that contain resources yet."}
+                    </DropdownInfoText>
+                  )}
 
-                    {groupIds && filteredGroups.length === 0 && (
-                      <DropdownInfoText
-                        className={"mt-5 mb-5 max-w-sm mx-auto"}
-                      >
-                        {search !== ""
-                          ? "There are no groups matching your search. Please try a different search term."
-                          : "There are no groups that contain resources yet."}
-                      </DropdownInfoText>
-                    )}
-
-                    {filteredGroups.slice(0, slice).map((option) => {
-                      const isSelected =
-                        values.find((group) => group.name == option.name) !=
-                        undefined;
-                      const isDisabled = disabledGroups
-                        ? disabledGroups?.findIndex(
-                            (g) => g.id === option.id,
-                          ) !== -1
-                        : false;
-
-                      if (hideAllGroup && option?.name === "All") return;
-
-                      return (
-                        <FullTooltip
-                          content={
-                            <div className={"text-xs max-w-xs"}>
-                              This group is already part of the routing peer and
-                              can not be used for the access control groups.
-                            </div>
-                          }
-                          disabled={!isDisabled}
-                          className={"w-full block"}
-                          key={option.name}
-                        >
-                          <CommandItem
-                            key={option.name}
-                            value={option.name + option.id}
-                            disabled={isDisabled}
-                            onSelect={() => {
-                              if (peer != undefined && option.name == "All")
-                                return;
-                              if (isDisabled) return;
-                              toggleGroupByName(option.name);
-                              searchRef.current?.focus();
-                            }}
-                            className={cn(isDisabled && "opacity-40")}
-                            onClick={(e) => e.preventDefault()}
-                          >
-                            <div className={"flex items-center gap-2"}>
-                              <GroupBadge
-                                group={option}
-                                showNewBadge={true}
-                                className={"h-7"}
-                              />
-                            </div>
-
-                            <div className={"flex items-center gap-4"}>
-                              {option?.id && showRoutes && (
-                                <AccessControlGroupCount group_id={option.id} />
-                              )}
-
-                              {showResourceCounter && (
-                                <ResourcesCounter group={option} />
-                              )}
-
-                              {policies && (
-                                <PolicyCounter
-                                  group={option}
-                                  policies={policies}
-                                />
-                              )}
-
-                              <div className={"flex gap-4 items-center"}>
-                                {!users ? (
-                                  showPeerCounter && (
-                                    <PeerCounter
-                                      group={option}
-                                      showResourceCounter={showResourceCounter}
+                  {groupListRows.length > 0 && (
+                    <MemoizedScrollArea
+                      withoutViewport={true}
+                      className={cn(
+                        "max-h-[195px] flex flex-col gap-1 py-2",
+                        groupListRows.length === 0 && "py-0",
+                      )}
+                    >
+                      <Virtuoso
+                        data={groupListRows}
+                        overscan={10}
+                        defaultItemHeight={36}
+                        computeItemKey={(index) =>
+                          groupListRows[index].kind === "create"
+                            ? `create-${groupListRows[index].name}`
+                            : `group-${
+                                groupListRows[index].group.id ??
+                                groupListRows[index].group.name
+                              }`
+                        }
+                        itemContent={(_index, row) => {
+                          if (row.kind === "create") {
+                            return (
+                              <div className={"px-2"}>
+                                <CommandItem
+                                  onSelect={() => {
+                                    toggleGroupByName(row.name);
+                                    searchRef.current?.focus();
+                                  }}
+                                  value={row.name}
+                                  onClick={(e) => e.preventDefault()}
+                                >
+                                  <Badge
+                                    variant={"gray-ghost"}
+                                    className={"h-7"}
+                                  >
+                                    <FolderGit2
+                                      size={12}
+                                      className={"shrink-0"}
                                     />
-                                  )
-                                ) : (
-                                  <UsersCounter
-                                    group={option}
-                                    users={users}
-                                    selected={isSelected}
-                                  />
-                                )}
-                                <Checkbox checked={isSelected} />
+                                    {row.name}
+                                  </Badge>
+                                  <div
+                                    className={
+                                      "text-neutral-500 dark:text-nb-gray-300"
+                                    }
+                                  >
+                                    Add this group by pressing{" "}
+                                    <span className={"font-bold text-netbird"}>
+                                      {"'Enter'"}
+                                    </span>
+                                  </div>
+                                </CommandItem>
                               </div>
-                            </div>
-                          </CommandItem>
-                        </FullTooltip>
-                      );
-                    })}
-                  </ScrollArea>
+                            );
+                          }
+
+                          const option = row.group;
+                          const isSelected =
+                            values.find((group) => group.name == option.name) !=
+                            undefined;
+                          const isDisabled = disabledGroups
+                            ? disabledGroups?.findIndex(
+                                (g) => g.id === option.id,
+                              ) !== -1
+                            : false;
+
+                          return (
+                            <FullTooltip
+                              content={
+                                <div className={"text-xs max-w-xs"}>
+                                  This group is already part of the routing peer
+                                  and can not be used for the access control
+                                  groups.
+                                </div>
+                              }
+                              disabled={!isDisabled}
+                              className={"w-full block"}
+                            >
+                              <div className={"px-2"}>
+                                <CommandItem
+                                  value={option.name + option.id}
+                                  disabled={isDisabled}
+                                  onSelect={() => {
+                                    if (
+                                      peer != undefined &&
+                                      option.name == "All"
+                                    )
+                                      return;
+                                    if (isDisabled) return;
+                                    toggleGroupByName(option.name);
+                                    searchRef.current?.focus();
+                                  }}
+                                  className={cn(isDisabled && "opacity-40")}
+                                  onClick={(e) => e.preventDefault()}
+                                >
+                                  <div className={"flex items-center gap-2"}>
+                                    <GroupBadge
+                                      group={option}
+                                      showNewBadge={true}
+                                      className={"h-7"}
+                                    />
+                                  </div>
+
+                                  <div className={"flex items-center gap-4"}>
+                                    {option?.id && showRoutes && (
+                                      <AccessControlGroupCount
+                                        group_id={option.id}
+                                      />
+                                    )}
+
+                                    {showResourceCounter && (
+                                      <ResourcesCounter group={option} />
+                                    )}
+
+                                    {policies && (
+                                      <PolicyCounter
+                                        group={option}
+                                        policies={policies}
+                                      />
+                                    )}
+
+                                    <div className={"flex gap-4 items-center"}>
+                                      {!users ? (
+                                        showPeerCounter && (
+                                          <PeerCounter
+                                            group={option}
+                                            showResourceCounter={
+                                              showResourceCounter
+                                            }
+                                          />
+                                        )
+                                      ) : (
+                                        <UsersCounter
+                                          group={option}
+                                          users={users}
+                                          selected={isSelected}
+                                        />
+                                      )}
+                                      <Checkbox checked={isSelected} />
+                                    </div>
+                                  </div>
+                                </CommandItem>
+                              </div>
+                            </FullTooltip>
+                          );
+                        }}
+                        components={{ Scroller: VirtuosoScroller }}
+                        style={{
+                          height: Math.min(groupListRows.length * 36, 195),
+                        }}
+                      />
+                    </MemoizedScrollArea>
+                  )}
                 </CommandGroup>
               </TabsContent>
               {showResources && (
