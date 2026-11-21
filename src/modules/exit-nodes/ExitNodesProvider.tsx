@@ -24,6 +24,8 @@ type OpenModalOptions = {
   tab?: ExitNodeModalTab;
   // Opens the peer selector right away, e.g. from the Add button.
   addPeer?: boolean;
+  // Peers a new exit node starts with.
+  peerIds?: string[];
 };
 
 /**
@@ -66,17 +68,24 @@ export const toExitNodeRequest = (exitNode: ExitNode): ExitNodeRequest => ({
 
 type Props = {
   children: React.ReactNode;
+  // Called when the exit node modal closes, saved or not.
+  onModalClose?: () => void;
 };
 
-export default function ExitNodesProvider({ children }: Readonly<Props>) {
+export default function ExitNodesProvider({
+  children,
+  onModalClose,
+}: Readonly<Props>) {
   return (
     <PoliciesProvider>
-      <ExitNodesProviderContent>{children}</ExitNodesProviderContent>
+      <ExitNodesProviderContent onModalClose={onModalClose}>
+        {children}
+      </ExitNodesProviderContent>
     </PoliciesProvider>
   );
 }
 
-function ExitNodesProviderContent({ children }: Readonly<Props>) {
+function ExitNodesProviderContent({ children, onModalClose }: Readonly<Props>) {
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
@@ -216,14 +225,18 @@ function ExitNodesProviderContent({ children }: Readonly<Props>) {
         open={modal}
         setOpen={(open) => {
           setModal(open);
-          if (!open) setCurrent(undefined);
+          if (open) return;
+          setCurrent(undefined);
+          onModalClose?.();
         }}
         exitNode={current}
         initialTab={modalOptions.tab}
         openPeerSelector={modalOptions.addPeer}
+        initialPeerIds={modalOptions.peerIds}
         onSaved={() => {
           setModal(false);
           setCurrent(undefined);
+          onModalClose?.();
         }}
       />
     </ExitNodesContext.Provider>

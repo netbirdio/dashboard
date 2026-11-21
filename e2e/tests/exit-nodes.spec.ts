@@ -119,4 +119,42 @@ test.describe.serial("Exit Nodes @network", () => {
       await deleteGroupsByPrefix(page, PREFIX);
     }
   });
+
+  test("Should set up an exit node from a peer's action menu", async ({
+    dashboardAsOwner: page,
+  }) => {
+    test.skip(
+      !(await supportsExitNodes(page)),
+      "management build does not serve the exit nodes API",
+    );
+
+    const host = generateRandomName(PREFIX);
+    const peers = await routeMockPeer(page);
+    try {
+      const registered = peers.register(host, []);
+      await navigateTo(page, "/peers");
+      await registered;
+
+      await page
+        .locator("tr")
+        .filter({ hasText: host })
+        .getByTestId("peer-actions")
+        .click();
+      await page.getByTestId("peer-exit-node-action").click();
+
+      // A new exit node that already has the peer. Not saved: the mocked
+      // peer doesn't exist in management.
+      const dialog = page.getByRole("dialog");
+      await expect(dialog.getByText("Add Exit Node")).toBeVisible();
+      await expect(dialog.getByText(host)).toBeVisible();
+      await expect(page.getByTestId("exit-node-peer-metric")).toHaveValue(
+        "100",
+      );
+      await expect(page.getByTestId("exit-node-continue")).toBeEnabled();
+      await page.keyboard.press("Escape");
+      await expect(dialog).not.toBeVisible();
+    } finally {
+      await peers.dispose();
+    }
+  });
 });

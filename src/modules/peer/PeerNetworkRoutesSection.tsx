@@ -3,8 +3,7 @@ import SkeletonTable from "@components/skeletons/SkeletonTable";
 import * as React from "react";
 import { lazy, Suspense } from "react";
 import type { Peer } from "@/interfaces/Peer";
-import { AddExitNodeButton } from "@/modules/exit-node/AddExitNodeButton";
-import { useHasExitNodes } from "@/modules/exit-node/useHasExitNodes";
+import { PeerExitNodeButton } from "@/modules/exit-nodes/PeerExitNodeButton";
 import AddRouteDropdownButton from "@/modules/peer/AddRouteDropdownButton";
 import usePeerRoutes from "@/modules/peer/usePeerRoutes";
 import InlineLink from "@components/InlineLink";
@@ -18,7 +17,6 @@ type Props = {
 
 export const PeerNetworkRoutesSection = ({ peer }: Props) => {
   const { peerRoutes, isLoading } = usePeerRoutes({ peer });
-  const exitNodeInfo = useHasExitNodes(peer);
 
   return (
     <div className={"pb-10 px-8"}>
@@ -41,10 +39,7 @@ export const PeerNetworkRoutesSection = ({ peer }: Props) => {
           </div>
           <div className={"inline-flex gap-4 justify-end"}>
             <div className={"gap-4 flex"}>
-              <AddExitNodeButton
-                peer={peer}
-                firstTime={!exitNodeInfo.hasExitNode}
-              />
+              <PeerExitNodeButton peer={peer} />
               <AddRouteDropdownButton />
             </div>
           </div>

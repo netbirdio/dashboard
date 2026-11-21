@@ -71,6 +71,16 @@ export const NetworkRoutesTab: Story = {
   play: openTab(/Network Routes/),
 };
 
+// A peer in no exit node sets up a new one that starts with it.
+export const SetUpExitNodeModal: Story = {
+  play: async () => {
+    await openTab(/Network Routes/)();
+    await clickText("Set Up Exit Node");
+    await text("Add Exit Node");
+    await dialog();
+  },
+};
+
 export const AccessiblePeersTab: Story = {
   play: async () => {
     await openTab(/Accessible Peers/)();

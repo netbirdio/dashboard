@@ -36,6 +36,7 @@ import {
   arePeersValid,
   EXIT_NODES_DOCS_URL,
   getExitNodeNameError,
+  getNextMetric,
   getPeersUsedByOtherExitNodes,
   sortPeersByMetric,
 } from "@/modules/exit-nodes/exitNodeHelpers";
@@ -65,6 +66,8 @@ type Props = {
   exitNode?: ExitNode;
   initialTab?: ExitNodeModalTab;
   openPeerSelector?: boolean;
+  // Peers a new exit node starts with, e.g. when set up from a peer.
+  initialPeerIds?: string[];
   onSaved?: (exitNode: ExitNode) => void;
 };
 
@@ -74,6 +77,7 @@ export default function ExitNodeModal({
   exitNode,
   initialTab,
   openPeerSelector,
+  initialPeerIds,
   onSaved,
 }: Readonly<Props>) {
   return (
@@ -84,6 +88,7 @@ export default function ExitNodeModal({
           exitNode={exitNode}
           initialTab={initialTab}
           openPeerSelector={openPeerSelector}
+          initialPeerIds={initialPeerIds}
           onSaved={onSaved}
         />
       )}
@@ -97,6 +102,7 @@ export function ExitNodeModalContent({
   exitNode,
   initialTab,
   openPeerSelector = false,
+  initialPeerIds = [],
   onSaved,
 }: Readonly<ContentProps>) {
   const isEdit = !!exitNode;
@@ -107,13 +113,26 @@ export function ExitNodeModalContent({
   const request = useApiCall<ExitNode>("/exit-nodes");
 
   const [tab, setTab] = useState<ExitNodeModalTab>(initialTab ?? "peers");
-  const [draftPeers, setDraftPeers] = useState<DraftExitNodePeer[]>(() =>
-    sortPeersByMetric(exitNode?.peers).map((p) => ({
-      peer_id: p.peer_id,
-      metric: String(p.metric),
-      enabled: p.enabled,
-    })),
-  );
+  const [draftPeers, setDraftPeers] = useState<DraftExitNodePeer[]>(() => {
+    if (exitNode)
+      return sortPeersByMetric(exitNode.peers).map((p) => ({
+        peer_id: p.peer_id,
+        metric: String(p.metric),
+        enabled: p.enabled,
+      }));
+    // Each next peer gets a higher metric, as when added one by one.
+    const drafts: DraftExitNodePeer[] = [];
+    initialPeerIds.forEach((peer_id) =>
+      drafts.push({
+        peer_id,
+        metric: String(
+          getNextMetric(drafts.map((p) => ({ metric: Number(p.metric) }))),
+        ),
+        enabled: true,
+      }),
+    );
+    return drafts;
+  });
   const [name, setName] = useState(exitNode?.name ?? "");
   const [description, setDescription] = useState(exitNode?.description ?? "");
   const [autoApply, setAutoApply] = useState(exitNode?.auto_apply ?? true);

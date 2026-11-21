@@ -157,6 +157,15 @@ export const arePeersValid = (
   peers.some((p) => p.enabled) &&
   peers.every((p) => isValidMetric(p.metric));
 
+/** The exit node the peer belongs to; a peer is in one exit node at most. */
+export const getPeerExitNode = <T extends Pick<ExitNode, "peers">>(
+  exitNodes: T[] = [],
+  peerId?: string,
+) =>
+  peerId
+    ? exitNodes.find((n) => n.peers.some((p) => p.peer_id === peerId))
+    : undefined;
+
 /** Peer ids used by other exit nodes than `currentId`, mapped to that node's name. */
 export const getPeersUsedByOtherExitNodes = (
   exitNodes: ExitNode[] = [],

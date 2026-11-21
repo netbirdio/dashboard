@@ -9,6 +9,7 @@ import {
   getExitNodeSearchText,
   getHighAvailability,
   getNextMetric,
+  getPeerExitNode,
   getPeersUsedByOtherExitNodes,
   getPrimaryPeer,
   isExitNodePolicy,
@@ -303,6 +304,22 @@ describe("names", () => {
   it("limits the length", () => {
     expect(getExitNodeNameError("x".repeat(40), [])).toBe("");
     expect(getExitNodeNameError("x".repeat(41), [])).toMatch(/40/);
+  });
+});
+
+describe("getPeerExitNode", () => {
+  const nodes = [
+    node([["fra", 100, true]], { id: "en1" }),
+    node([["ams", 100, false]], { id: "en2", name: "NL" }),
+  ];
+  it("finds the exit node a peer belongs to, enabled in it or not", () => {
+    expect(getPeerExitNode(nodes, "fra")?.id).toBe("en1");
+    expect(getPeerExitNode(nodes, "ams")?.id).toBe("en2");
+  });
+  it("returns nothing for a peer in no exit node, or no peer", () => {
+    expect(getPeerExitNode(nodes, "ber")).toBeUndefined();
+    expect(getPeerExitNode(nodes, undefined)).toBeUndefined();
+    expect(getPeerExitNode(undefined, "fra")).toBeUndefined();
   });
 });
 
