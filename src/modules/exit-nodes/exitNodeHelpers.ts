@@ -157,6 +157,13 @@ export const arePeersValid = (
   peers.some((p) => p.enabled) &&
   peers.every((p) => isValidMetric(p.metric));
 
+/**
+ * A network route to the whole internet: how exit nodes were set up before
+ * they had their own API. These still exist until they are converted.
+ */
+export const isLegacyExitNodeRoute = (route?: { network?: string }) =>
+  route?.network === "0.0.0.0/0" || route?.network === "::/0";
+
 /** The exit node the peer belongs to; a peer is in one exit node at most. */
 export const getPeerExitNode = <T extends Pick<ExitNode, "peers">>(
   exitNodes: T[] = [],

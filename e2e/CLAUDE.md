@@ -243,7 +243,7 @@ shared owner page must clear that key again.
 |---------|--------|----------|
 | (top) | Control Center, Peers, Users (its page has Users / Service Users tabs: `users-tab-users`, `users-tab-service-users`), Groups | — |
 | Networking | Access Control | Policies, Posture Checks |
-| Networking | Network Routing | Networks, Routes, Exit Nodes |
+| Networking | Network Routing | Networks, Exit Nodes, Routes |
 | Networking | Reverse Proxy | Services, Custom Domains, Clusters, Access Logs |
 | Networking | DNS | Nameservers, Zones, DNS Settings |
 | Networking | Traffic Events | — |

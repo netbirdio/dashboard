@@ -1,9 +1,9 @@
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import * as React from "react";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import type { Peer } from "@/interfaces/Peer";
-import { PeerExitNodeButton } from "@/modules/exit-nodes/PeerExitNodeButton";
+import { isLegacyExitNodeRoute } from "@/modules/exit-nodes/exitNodeHelpers";
 import AddRouteDropdownButton from "@/modules/peer/AddRouteDropdownButton";
 import usePeerRoutes from "@/modules/peer/usePeerRoutes";
 import InlineLink from "@components/InlineLink";
@@ -16,7 +16,12 @@ type Props = {
 };
 
 export const PeerNetworkRoutesSection = ({ peer }: Props) => {
-  const { peerRoutes, isLoading } = usePeerRoutes({ peer });
+  const { peerRoutes: allRoutes, isLoading } = usePeerRoutes({ peer });
+  // Exit node routes are listed in the Exit Node tab.
+  const peerRoutes = useMemo(
+    () => allRoutes?.filter((route) => !isLegacyExitNodeRoute(route)),
+    [allRoutes],
+  );
 
   return (
     <div className={"pb-10 px-8"}>
@@ -39,7 +44,6 @@ export const PeerNetworkRoutesSection = ({ peer }: Props) => {
           </div>
           <div className={"inline-flex gap-4 justify-end"}>
             <div className={"gap-4 flex"}>
-              <PeerExitNodeButton peer={peer} />
               <AddRouteDropdownButton />
             </div>
           </div>

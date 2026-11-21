@@ -13,6 +13,7 @@ import {
   getPeersUsedByOtherExitNodes,
   getPrimaryPeer,
   isExitNodePolicy,
+  isLegacyExitNodeRoute,
   isValidMetric,
   sortPeersByMetric,
 } from "@/modules/exit-nodes/exitNodeHelpers";
@@ -304,6 +305,16 @@ describe("names", () => {
   it("limits the length", () => {
     expect(getExitNodeNameError("x".repeat(40), [])).toBe("");
     expect(getExitNodeNameError("x".repeat(41), [])).toMatch(/40/);
+  });
+});
+
+describe("isLegacyExitNodeRoute", () => {
+  it("matches routes to the whole internet only", () => {
+    expect(isLegacyExitNodeRoute({ network: "0.0.0.0/0" })).toBe(true);
+    expect(isLegacyExitNodeRoute({ network: "::/0" })).toBe(true);
+    expect(isLegacyExitNodeRoute({ network: "10.0.0.0/8" })).toBe(false);
+    expect(isLegacyExitNodeRoute({})).toBe(false);
+    expect(isLegacyExitNodeRoute(undefined)).toBe(false);
   });
 });
 

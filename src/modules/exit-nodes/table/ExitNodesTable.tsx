@@ -49,7 +49,7 @@ import ExitNodePolicyCell from "@/modules/exit-nodes/table/ExitNodePolicyCell";
 import { useExitNodePermissions } from "@/modules/exit-nodes/useExitNodePermissions";
 
 /** An exit node with the fields its columns sort, filter and search by. */
-type ExitNodeRow = ExitNode & {
+export type ExitNodeRow = ExitNode & {
   search: string;
   location: string;
   active_peer_count: number;
@@ -58,7 +58,7 @@ type ExitNodeRow = ExitNode & {
 
 // Module-level so cells keep their identity when peers or policies reload;
 // recreated column definitions would remount every cell and close its menus.
-const ExitNodeTableColumns: ColumnDef<ExitNodeRow>[] = [
+export const ExitNodeTableColumns: ColumnDef<ExitNodeRow>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -126,21 +126,24 @@ const ExitNodeTableColumns: ColumnDef<ExitNodeRow>[] = [
   },
 ];
 
-type Props = {
-  headingTarget?: HTMLHeadingElement | null;
-};
-
-export default function ExitNodesTable({ headingTarget }: Readonly<Props>) {
-  const { mutate } = useSWRConfig();
-  const path = usePathname();
-  const { exitNodes, peers, policies, isLoading } = useExitNodes();
-
-  const [sorting, setSorting] = useLocalStorage<SortingState>(
-    "netbird-table-sort" + path,
-    [{ id: "name", desc: false }],
+/**
+ * The same columns for narrower places (the peer page): the Active toggle
+ * waits for a wider screen, as on the widest tables; the row menu has it.
+ */
+export const ExitNodeTableColumnsNarrow: ColumnDef<ExitNodeRow>[] =
+  ExitNodeTableColumns.map((column) =>
+    column.id === ENABLED_COLUMN_ID
+      ? {
+          ...column,
+          meta: { ...column.meta, className: ENABLED_COLUMN_CLASS["2xl"] },
+        }
+      : column,
   );
 
-  const data = useMemo<ExitNodeRow[] | undefined>(
+/** The table's rows: each exit node with the fields columns sort by. */
+export const useExitNodeRows = (exitNodes?: ExitNode[]) => {
+  const { peers, policies } = useExitNodes();
+  return useMemo<ExitNodeRow[] | undefined>(
     () =>
       exitNodes?.map((node) => ({
         ...node,
@@ -151,6 +154,23 @@ export default function ExitNodesTable({ headingTarget }: Readonly<Props>) {
       })),
     [exitNodes, peers, policies],
   );
+};
+
+type Props = {
+  headingTarget?: HTMLHeadingElement | null;
+};
+
+export default function ExitNodesTable({ headingTarget }: Readonly<Props>) {
+  const { mutate } = useSWRConfig();
+  const path = usePathname();
+  const { exitNodes, isLoading } = useExitNodes();
+
+  const [sorting, setSorting] = useLocalStorage<SortingState>(
+    "netbird-table-sort" + path,
+    [{ id: "name", desc: false }],
+  );
+
+  const data = useExitNodeRows(exitNodes);
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [

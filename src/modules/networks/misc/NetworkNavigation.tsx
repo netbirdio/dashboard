@@ -23,13 +23,6 @@ export const NetworkNavigation = () => {
         visible={permission.networks.read}
       />
       <SidebarItem
-        label={"Routes"}
-        isChild
-        href={"/network-routes"}
-        exactPathMatch={true}
-        visible={permission.routes.read}
-      />
-      <SidebarItem
         label={
           <div className={"flex items-center gap-2"}>
             {/* Its own element, so the label matches "Exit Nodes" exactly. */}
@@ -44,6 +37,13 @@ export const NetworkNavigation = () => {
         }
         isChild
         href={"/exit-nodes"}
+        exactPathMatch={true}
+        visible={permission.routes.read}
+      />
+      <SidebarItem
+        label={"Routes"}
+        isChild
+        href={"/network-routes"}
         exactPathMatch={true}
         visible={permission.routes.read}
       />

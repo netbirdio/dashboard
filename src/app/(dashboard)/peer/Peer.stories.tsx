@@ -71,10 +71,37 @@ export const NetworkRoutesTab: Story = {
   play: openTab(/Network Routes/),
 };
 
+// router-berlin is in "EU Egress": the tab shows that exit node.
+export const ExitNodeTab: Story = {
+  parameters: peer("peer-router-berlin"),
+  play: async () => {
+    await openTab(/Exit Node/)();
+    await text("EU Egress");
+  },
+};
+
+// Expanded, the exit node lists its peers.
+export const ExitNodeTabExpanded: Story = {
+  parameters: peer("peer-router-berlin"),
+  play: async () => {
+    await openTab(/Exit Node/)();
+    await clickText("EU Egress");
+    await text("dev-thinkpad");
+  },
+};
+
+// olivias-macbook-pro is in no exit node.
+export const ExitNodeTabEmpty: Story = {
+  play: async () => {
+    await openTab(/Exit Node/)();
+    await text("This peer is not part of an exit node");
+  },
+};
+
 // A peer in no exit node sets up a new one that starts with it.
 export const SetUpExitNodeModal: Story = {
   play: async () => {
-    await openTab(/Network Routes/)();
+    await openTab(/Exit Node/)();
     await clickText("Set Up Exit Node");
     await text("Add Exit Node");
     await dialog();

@@ -109,37 +109,40 @@ export default function ExitNodePeersTab({
                     <td className={"py-2.5 px-4 align-middle"}>
                       <div
                         className={cn(
-                          "flex items-start gap-2 transition-all",
+                          "flex flex-col min-w-0 transition-all",
                           !entry.enabled && "opacity-40",
                         )}
                       >
-                        <CircleIcon
-                          size={8}
-                          active={!!peer?.connected}
-                          className={"shrink-0 relative top-[7px]"}
-                        />
-                        <div className={"flex flex-col min-w-0"}>
+                        {/* The dot centres on the name line, so it lines up
+                            with or without the location below. */}
+                        <div className={"flex items-center gap-2 min-w-0"}>
+                          <CircleIcon
+                            size={8}
+                            active={!!peer?.connected}
+                            className={"shrink-0"}
+                          />
                           <span
                             className={
-                              "text-[13px] leading-normal font-medium text-nb-gray-300 whitespace-nowrap"
+                              "text-[13px] leading-normal font-medium text-nb-gray-300 whitespace-nowrap min-w-0"
                             }
                           >
                             <TextWithTooltip text={name} maxChars={28} />
                           </span>
-                          {peer?.country_code && (
-                            <span
-                              className={
-                                "flex items-center gap-1.5 text-xs font-light text-nb-gray-400 whitespace-nowrap"
-                              }
-                            >
-                              <RoundedFlag
-                                country={peer.country_code}
-                                size={10}
-                              />
-                              {location(peer)}
-                            </span>
-                          )}
                         </div>
+                        {peer?.country_code && (
+                          // Indented by the dot and the gap, under the name.
+                          <span
+                            className={
+                              "flex items-center gap-1.5 pl-4 text-xs font-light text-nb-gray-400 whitespace-nowrap"
+                            }
+                          >
+                            <RoundedFlag
+                              country={peer.country_code}
+                              size={10}
+                            />
+                            {location(peer)}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className={"py-2 pl-2 pr-4 align-middle w-[170px]"}>
