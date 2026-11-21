@@ -6,6 +6,7 @@ import { ExitNode } from "@/interfaces/ExitNode";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { PolicyRuleResource } from "@/interfaces/Policy";
+import { useExitNodePermissions } from "@/modules/exit-nodes/useExitNodePermissions";
 
 type Props = {
   resource?: PolicyRuleResource;
@@ -41,18 +42,27 @@ const AccessControlNetworkResourceCell = ({ resource }: Props) => {
 };
 
 const AccessControlExitNodeCell = ({ resource }: Props) => {
-  const { data: exitNodes, isLoading } = useFetchApi<ExitNode[]>("/exit-nodes");
+  const canRead = !!useExitNodePermissions()?.read;
+  const {
+    data: exitNodes,
+    error,
+    isLoading,
+  } = useFetchApi<ExitNode[]>("/exit-nodes", false, true, canRead);
 
   if (isLoading) return <Skeleton height={35} width={"50%"} />;
 
   const exitNode = exitNodes?.find((e) => e.id === resource?.id);
+  // "Deleted" only when the list loaded and the node isn't in it; a failed
+  // or skipped lookup says nothing about whether it still exists.
+  const loaded = canRead && !error && exitNodes !== undefined;
+  const fallback = loaded ? "Deleted exit node" : "Exit node";
 
   return (
-    <div className={"flex"}>
+    <div className={"flex"} data-testid={"policy-exit-node-destination"}>
       <ResourceBadge
         exitNode={{
           id: resource?.id ?? "",
-          name: exitNode?.name ?? "Deleted exit node",
+          name: exitNode?.name ?? fallback,
         }}
       />
     </div>

@@ -217,6 +217,19 @@ describe("getExitNodeLocations", () => {
     expect(result.countries).toEqual(["NL"]);
     expect(result.locations[0].primary).toBe(false);
   });
+
+  it("marks no backup location as primary when the preferred peer has none", () => {
+    const result = getExitNodeLocations(
+      node([
+        ["nogeo", 100, true],
+        ["fra", 150, true],
+        ["ams", 200, true],
+      ]),
+      peers,
+    );
+    expect(result.countries).toEqual(["DE", "NL"]);
+    expect(result.locations.every((l) => !l.primary)).toBe(true);
+  });
 });
 
 describe("policies", () => {
@@ -312,5 +325,19 @@ describe("getExitNodeSearchText", () => {
       [exitPolicy("p1", "en1")],
     );
     expect(text).toBe("EU Egress For EU teams fra-gw-01 Engineering");
+  });
+
+  it("reads source groups only from the rules that target the exit node", () => {
+    const policy = exitPolicy("p1", "en2");
+    policy.rules.push({
+      ...policy.rules[0],
+      sources: [{ id: "g2", name: "Sales" }],
+      destinationResource: { id: "en1", type: "exit_node" },
+    });
+    const text = getExitNodeSearchText(node([["fra", 100, true]]), peers, [
+      policy,
+    ]);
+    expect(text).toContain("Sales");
+    expect(text).not.toContain("Engineering");
   });
 });

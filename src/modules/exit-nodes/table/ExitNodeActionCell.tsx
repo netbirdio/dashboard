@@ -40,6 +40,7 @@ export default function ExitNodeActionCell({ exitNode }: Readonly<Props>) {
             className={"!px-3"}
             disabled={!canUpdate && !canDelete}
             aria-label={"Exit node actions"}
+            data-testid={"exit-node-actions"}
           >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
@@ -80,6 +81,7 @@ export default function ExitNodeActionCell({ exitNode }: Readonly<Props>) {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => deleteExitNode(exitNode)}
+            data-testid={"exit-node-delete"}
             variant={"danger"}
             disabled={!canDelete}
           >

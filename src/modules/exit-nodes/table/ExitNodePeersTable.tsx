@@ -70,21 +70,32 @@ const PeerLocationCell = ({ row }: CellProps) => {
 
 const usePeerChanges = (exitNode: ExitNode) => {
   const { updateExitNode } = useExitNodes();
-  const update = (peers: ExitNodePeer[], message: string) =>
-    updateExitNode(exitNode, { peers }, message);
+  // Built from the node's latest state when the write runs, so a change made
+  // meanwhile (another toggle, or one that landed while a dialog was open)
+  // isn't reverted.
+  const update = (
+    getPeers: (peers: ExitNodePeer[]) => ExitNodePeer[],
+    message: string,
+  ) =>
+    updateExitNode(
+      exitNode,
+      (latest) => ({ peers: getPeers(latest.peers) }),
+      message,
+    );
   return {
     toggle: (row: Row) =>
       update(
-        exitNode.peers.map((p) =>
-          p.peer_id === row.peer_id ? { ...p, enabled: !p.enabled } : p,
-        ),
+        (peers) =>
+          peers.map((p) =>
+            p.peer_id === row.peer_id ? { ...p, enabled: !row.enabled } : p,
+          ),
         `Peer ${row.peer?.name ?? row.peer_id} was ${
           row.enabled ? "disabled" : "enabled"
         } for the exit node`,
       ),
     remove: (row: Row) =>
       update(
-        exitNode.peers.filter((p) => p.peer_id !== row.peer_id),
+        (peers) => peers.filter((p) => p.peer_id !== row.peer_id),
         `Peer ${row.peer?.name ?? row.peer_id} was removed from the exit node`,
       ),
   };

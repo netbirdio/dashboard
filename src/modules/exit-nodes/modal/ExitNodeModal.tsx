@@ -26,7 +26,7 @@ import {
   ShieldCheck,
   Text,
 } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePolicies } from "@/contexts/PoliciesProvider";
@@ -118,6 +118,20 @@ export function ExitNodeModalContent({
   const [description, setDescription] = useState(exitNode?.description ?? "");
   const [autoApply, setAutoApply] = useState(exitNode?.auto_apply ?? true);
   const [newPolicies, setNewPolicies] = useState<Policy[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  // A new exit node that was saved while one of its policies failed. Retrying
+  // updates it instead of creating a second one.
+  const [savedNode, setSavedNode] = useState<ExitNode>();
+
+  // A save that finishes after this modal was closed must not close the
+  // modal opened since (possibly for another exit node).
+  const isMounted = useRef(false);
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const existingPolicies = useMemo(
     () => getPolicies(exitNode),
@@ -172,31 +186,52 @@ export function ExitNodeModalContent({
     });
   };
 
-  const save = async () => {
-    if (!allValid) return;
-    if (!(await confirmMissingPolicies())) return;
-    const body = toRequest();
-    const promise = (
-      isEdit ? request.put(body, `/${exitNode.id}`) : request.post(body)
-    ).then(async (saved) => {
-      await createPoliciesForResource(newPolicies, {
-        id: saved.id,
-        type: "exit_node",
-      });
-      mutate("/exit-nodes");
-      onSaved?.(saved);
-    });
+  // Creates the draft policies one by one and drops the ones that were
+  // created, so a retry only sends what is still missing.
+  const createDraftPolicies = async (node: ExitNode) => {
+    const target = { id: node.id, type: "exit_node" as const };
+    const results = await Promise.allSettled(
+      newPolicies.map((policy) => createPoliciesForResource([policy], target)),
+    );
+    const failed = newPolicies.filter(
+      (_, i) => results[i].status === "rejected",
+    );
+    if (isMounted.current) setNewPolicies(failed);
+    const error = results.find((r) => r.status === "rejected");
+    if (error) throw (error as PromiseRejectedResult).reason;
+  };
 
-    notify({
-      title: body.name,
-      description: isEdit
-        ? "The exit node was successfully updated"
-        : "The exit node was successfully created",
-      loadingMessage: isEdit
-        ? "Updating exit node..."
-        : "Creating exit node...",
-      promise,
-    });
+  const save = async () => {
+    if (!allValid || isSaving) return;
+    setIsSaving(true);
+    try {
+      if (!(await confirmMissingPolicies())) return;
+      const body = toRequest();
+      const target = exitNode ?? savedNode;
+      const promise = (async () => {
+        const saved = target
+          ? await request.put(body, `/${target.id}`)
+          : await request.post(body);
+        mutate("/exit-nodes");
+        if (!isEdit && isMounted.current) setSavedNode(saved);
+        await createDraftPolicies(saved);
+        if (isMounted.current) onSaved?.(saved);
+      })();
+
+      notify({
+        title: body.name,
+        description: isEdit
+          ? "The exit node was successfully updated"
+          : "The exit node was successfully created",
+        loadingMessage: isEdit
+          ? "Updating exit node..."
+          : "Creating exit node...",
+        promise,
+      });
+      await promise.catch(() => undefined);
+    } finally {
+      if (isMounted.current) setIsSaving(false);
+    }
   };
 
   const tabIcon =
@@ -338,7 +373,7 @@ export function ExitNodeModalContent({
               <Button
                 variant={"primary"}
                 onClick={save}
-                disabled={!allValid}
+                disabled={!allValid || isSaving}
                 data-testid={"submit-exit-node"}
               >
                 Save Changes
@@ -362,7 +397,7 @@ export function ExitNodeModalContent({
                 <Button
                   variant={"primary"}
                   onClick={save}
-                  disabled={!allValid}
+                  disabled={!allValid || isSaving}
                   data-testid={"submit-exit-node"}
                 >
                   <PlusCircle size={16} />

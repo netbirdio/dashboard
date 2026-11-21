@@ -60,12 +60,21 @@ export const getExitNodeLocations = (
   const enabled = sorted.filter((p) => p.enabled);
   const source = enabled.length > 0 ? enabled : sorted;
 
+  const locate = (peerId?: string) => {
+    const peer = peers.find((p) => p.id === peerId);
+    return {
+      country_code: peer?.country_code?.toUpperCase() ?? "",
+      city_name: peer?.city_name ?? "",
+    };
+  };
+  // The primary is the preferred peer's location; when that peer has no
+  // known location, no location is marked rather than a backup one.
+  const preferred = locate(source[0]?.peer_id);
+
   const rows: Omit<ExitNodeLocation, "primary">[] = [];
   source.forEach((entry) => {
-    const peer = peers.find((p) => p.id === entry.peer_id);
-    const country_code = peer?.country_code?.toUpperCase();
+    const { country_code, city_name } = locate(entry.peer_id);
     if (!country_code) return;
-    const city_name = peer?.city_name ?? "";
     const exists = rows.some(
       (r) => r.country_code === country_code && r.city_name === city_name,
     );
@@ -79,9 +88,12 @@ export const getExitNodeLocations = (
 
   return {
     countries,
-    locations: rows.map((r, i) => ({
+    locations: rows.map((r) => ({
       ...r,
-      primary: countries.length > 1 && i === 0,
+      primary:
+        countries.length > 1 &&
+        r.country_code === preferred.country_code &&
+        r.city_name === preferred.city_name,
     })),
   };
 };
@@ -170,11 +182,13 @@ export const getExitNodeSearchText = (
   const peerNames = node.peers.map(
     (p) => peers.find((peer) => peer.id === p.peer_id)?.name ?? "",
   );
+  // Only the rules that target this exit node: a policy can have others.
   const sourceGroups = getExitNodePolicies(node.id, policies).flatMap(
     (policy) =>
-      (policy.rules?.[0]?.sources ?? []).map((s) =>
-        typeof s === "string" ? "" : (s as Group).name,
-      ),
+      (policy.rules ?? [])
+        .filter((rule) => ruleTargetsExitNode(rule, node.id))
+        .flatMap((rule) => (rule.sources ?? []) as (Group | string)[])
+        .map((s) => (typeof s === "string" ? "" : (s as Group).name)),
   );
   return [node.name, node.description, ...peerNames, ...sourceGroups]
     .filter(Boolean)

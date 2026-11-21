@@ -2,6 +2,7 @@ import {
   deleteExitNodesByPrefix,
   deleteGroupsByPrefix,
   deletePoliciesBySubstring,
+  supportsExitNodes,
 } from "../helpers/api";
 import { navigateTo } from "../helpers/auth";
 import { expect, test } from "../helpers/fixtures";
@@ -28,6 +29,11 @@ test.describe.serial("Exit Nodes @network", () => {
   test("Should create an exit node with a peer and a policy, then delete it", async ({
     dashboardAsOwner: page,
   }) => {
+    test.skip(
+      !(await supportsExitNodes(page)),
+      "management build does not serve the exit nodes API",
+    );
+
     await deleteExitNodesByPrefix(page, PREFIX);
     await deletePoliciesBySubstring(page, PREFIX);
     await deleteGroupsByPrefix(page, PREFIX);
@@ -48,10 +54,11 @@ test.describe.serial("Exit Nodes @network", () => {
       // Peers: the peer selector refetches the peers when it mounts.
       await page.getByTestId("exit-node-add-peer").click();
       await registered;
+      await page.getByTestId("peer-selector-search").fill(host);
       await page
-        .getByPlaceholder("Search for peers by name or ip...")
-        .fill(host);
-      await page.getByText(host, { exact: true }).click();
+        .getByTestId("peer-selector-item")
+        .filter({ hasText: host })
+        .click();
       await expect(page.getByTestId("exit-node-peer-metric")).toHaveValue(
         "100",
       );
@@ -87,7 +94,10 @@ test.describe.serial("Exit Nodes @network", () => {
         .locator("tr")
         .filter({ hasText: `${name} Access` });
       await expect(policyRow).toBeVisible();
-      await expect(policyRow).toContainText(name);
+      // The destination is this exit node, not just a name in the policy's.
+      await expect(
+        policyRow.getByTestId("policy-exit-node-destination"),
+      ).toHaveText(name);
 
       // Deleting the exit node deletes its policy too.
       await visitByNavigation(page, "Network Routing");
@@ -95,9 +105,9 @@ test.describe.serial("Exit Nodes @network", () => {
       await page
         .locator("tr")
         .filter({ hasText: name })
-        .getByLabel("Exit node actions")
+        .getByTestId("exit-node-actions")
         .click();
-      await page.getByRole("menuitem", { name: "Delete" }).click();
+      await page.getByTestId("exit-node-delete").click();
       await page.getByTestId("confirmation.confirm").click();
       await expect(
         page.locator("tr").filter({ hasText: name }),

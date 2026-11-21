@@ -43,6 +43,7 @@ import Skeleton from "react-loading-skeleton";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useElementSize } from "@/hooks/useElementSize";
 import type { ExitNode } from "@/interfaces/ExitNode";
+import { useExitNodePermissions } from "@/modules/exit-nodes/useExitNodePermissions";
 import type { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
@@ -214,13 +215,16 @@ export function PeerGroupSelector({
   clusters,
   selectedCluster,
   onClusterChange,
-  showExitNodes = false,
+  showExitNodes: showExitNodesProp = false,
   additionalExitNodes,
 }: Readonly<MultiSelectProps>) {
   // Network resources sit behind the networks permission; callers without
   // it (e.g. agent_network_admin opening the policy modal) get a plain
   // group selector instead of a 403.
   const { permission } = usePermissions();
+  // Exit nodes follow their own read permission, like resources above.
+  const canReadExitNodes = !!useExitNodePermissions()?.read;
+  const showExitNodes = showExitNodesProp && canReadExitNodes;
   const { data: fetchedResources, isLoading: isResourcesLoading } = useFetchApi<
     NetworkResource[]
   >("/networks/resources", false, true, !!permission?.networks?.read);
@@ -243,7 +247,7 @@ export function PeerGroupSelector({
     "/exit-nodes",
     false,
     true,
-    showExitNodes || resource?.type === "exit_node",
+    canReadExitNodes && (showExitNodes || resource?.type === "exit_node"),
   );
 
   const exitNodes = useMemo(() => {

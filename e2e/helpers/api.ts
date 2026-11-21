@@ -316,6 +316,19 @@ type ExitNode = {
   name: string;
 };
 
+/**
+ * Whether the management build under test serves /exit-nodes. Builds without
+ * the exit nodes API answer 404 with a plain-text body.
+ */
+export async function supportsExitNodes(page: Page): Promise<boolean> {
+  const { token, origin } = await getApiContext(page);
+  const resp = await page.request.get(`${origin}/api/exit-nodes`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!resp.ok()) return false;
+  return Array.isArray(await resp.json().catch(() => null));
+}
+
 export async function listExitNodes(page: Page): Promise<ExitNode[]> {
   return apiGet<ExitNode[]>(page, "/exit-nodes");
 }

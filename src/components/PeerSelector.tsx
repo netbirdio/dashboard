@@ -166,6 +166,7 @@ export function PeerSelector({
             value={search}
             onChange={setSearch}
             placeholder={"Search for peers by name or ip..."}
+            data-testid={"peer-selector-search"}
           />
 
           {unfilteredItems.length == 0 && !search && (
@@ -229,6 +230,7 @@ export function PeerSelector({
                     }
                   >
                     <div
+                      data-testid={"peer-selector-item"}
                       className={cn(
                         "flex items-center gap-2.5 text-sm",
                         value && value.id == option.id

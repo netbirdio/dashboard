@@ -260,6 +260,9 @@ export function AccessControlModalContent({
 
   const handleProtocolChange = (p: Protocol) => {
     setProtocol(p);
+    // NetBird SSH can't target an exit node; its picker hides the tab.
+    if (p === "netbird-ssh" && destinationResource?.type === "exit_node")
+      setDestinationResource(undefined);
     if (!hasPortSupport(p)) {
       setPorts([]);
       setPortRanges([]);

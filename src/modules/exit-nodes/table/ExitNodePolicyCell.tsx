@@ -36,6 +36,12 @@ export default function ExitNodePolicyCell({ exitNode }: Readonly<Props>) {
   const openAccessControl = () =>
     openExitNodeModal(exitNode, { tab: "access-control" });
 
+  const activate = () => {
+    if (!canConfigure) return;
+    if (tooltipOpen) setTooltipOpen(false);
+    openAccessControl();
+  };
+
   const policyBadge = (
     <Badge
       variant={"gray"}
@@ -44,12 +50,20 @@ export default function ExitNodePolicyCell({ exitNode }: Readonly<Props>) {
       className={
         "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] !px-2 min-w-[50px] hover:bg-nb-gray-930 dark:hover:bg-nb-gray-930 transition-all"
       }
+      role={"button"}
+      tabIndex={canConfigure ? 0 : -1}
+      aria-disabled={!canConfigure}
+      aria-label={`${displayCount} access control policies, configure`}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!canConfigure) return;
-        if (tooltipOpen) setTooltipOpen(false);
-        openAccessControl();
+        activate();
+      }}
+      onKeyDown={(e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        e.stopPropagation();
+        activate();
       }}
       data-testid={"exit-node-policies"}
     >

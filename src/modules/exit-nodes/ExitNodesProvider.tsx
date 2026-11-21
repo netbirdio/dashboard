@@ -1,6 +1,13 @@
 import { notify } from "@components/Notification";
 import useFetchApi, { useApiCall } from "@utils/api";
-import React, { useCallback, useContext, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -19,6 +26,15 @@ type OpenModalOptions = {
   addPeer?: boolean;
 };
 
+/**
+ * The fields to change, or a function that computes them from the exit node's
+ * latest state (use it when the change depends on the current value, e.g. the
+ * peers list).
+ */
+export type ExitNodeChanges =
+  | Partial<ExitNodeRequest>
+  | ((latest: ExitNode) => Partial<ExitNodeRequest>);
+
 type ExitNodesContextValue = {
   exitNodes?: ExitNode[];
   peers?: Peer[];
@@ -27,7 +43,7 @@ type ExitNodesContextValue = {
   openExitNodeModal: (exitNode?: ExitNode, options?: OpenModalOptions) => void;
   updateExitNode: (
     exitNode: ExitNode,
-    changes: Partial<ExitNodeRequest>,
+    changes: ExitNodeChanges,
     message: string,
   ) => Promise<ExitNode | void>;
   deleteExitNode: (exitNode: ExitNode) => Promise<void>;
@@ -88,17 +104,45 @@ function ExitNodesProviderContent({ children }: Readonly<Props>) {
     [],
   );
 
+  // A PUT replaces the whole exit node, so writes to one node run one after
+  // the other, each built on the state the previous one saved. Otherwise a
+  // second toggle sent before the refetch would carry the row's stale values
+  // and undo the first.
+  const exitNodesRef = useRef(exitNodes);
+  useEffect(() => {
+    exitNodesRef.current = exitNodes;
+  }, [exitNodes]);
+  const writes = useRef(new Map<string, Promise<unknown>>());
+  const saved = useRef(new Map<string, ExitNode>());
+
   const updateExitNode = useCallback(
-    async (
-      exitNode: ExitNode,
-      changes: Partial<ExitNodeRequest>,
-      message: string,
-    ) => {
-      const promise = request
-        .put({ ...toExitNodeRequest(exitNode), ...changes }, `/${exitNode.id}`)
-        .then((updated) => {
-          mutate("/exit-nodes");
+    async (exitNode: ExitNode, changes: ExitNodeChanges, message: string) => {
+      const id = exitNode.id;
+      const previous = writes.current.get(id) ?? Promise.resolve();
+      const promise = previous
+        .catch(() => undefined)
+        .then(async () => {
+          const latest =
+            saved.current.get(id) ??
+            exitNodesRef.current?.find((n) => n.id === id) ??
+            exitNode;
+          const delta =
+            typeof changes === "function" ? changes(latest) : changes;
+          const updated = await request.put(
+            { ...toExitNodeRequest(latest), ...delta },
+            `/${id}`,
+          );
+          saved.current.set(id, updated);
           return updated;
+        });
+      writes.current.set(id, promise);
+      promise
+        .catch(() => undefined)
+        .finally(() => {
+          if (writes.current.get(id) !== promise) return;
+          writes.current.delete(id);
+          saved.current.delete(id);
+          mutate("/exit-nodes");
         });
       notify({
         title: exitNode.name,
