@@ -2,25 +2,14 @@ import Button from "@components/Button";
 import HelpText from "@components/HelpText";
 import { Label } from "@components/Label";
 import { Modal } from "@components/modal/Modal";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@components/DropdownMenu";
-import { Edit2, MoreVertical, PlusIcon, Trash2 } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import { usePolicies } from "@/contexts/PoliciesProvider";
 import { NetworkResource } from "@/interfaces/Network";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
-import { cn } from "@utils/helpers";
-import { usePolicies } from "@/contexts/PoliciesProvider";
-import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
-import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { AccessControlModalContent } from "@/modules/access-control/AccessControlModal";
-import CircleIcon from "@/assets/icons/CircleIcon";
-import AccessControlProtocolCell from "@/modules/access-control/table/AccessControlProtocolCell";
-import AccessControlPortsCell from "@/modules/access-control/table/AccessControlPortsCell";
-import TruncatedText from "@components/ui/TruncatedText";
+import AccessControlPolicyList from "@/modules/access-control/AccessControlPolicyList";
+import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
 type Props = {
   existingPolicies: Policy[];
@@ -132,132 +121,11 @@ export default function NetworkResourceAccessControl({
           policies access to this resource will not be possible.
         </HelpText>
 
-        {allPolicies.length > 0 && (
-          <div
-            className={
-              "mt-3 mb-3 overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30 py-1 px-1 rounded-md"
-            }
-          >
-            <table className="w-full">
-              <thead>
-                <tr>
-                  <th className="py-2 px-4 text-left text-[11px] uppercase tracking-wider text-nb-gray-400 font-medium">
-                    Name
-                  </th>
-                  <th className="py-2 pl-5 pr-2 text-left text-[11px] uppercase tracking-wider text-nb-gray-400 font-medium">
-                    Source Groups
-                  </th>
-                  <th className="py-2 px-4 text-left text-[11px] uppercase tracking-wider text-nb-gray-400 font-medium">
-                    Protocol & Ports
-                  </th>
-                  <th className="py-2 pr-4 pl-2" />
-                </tr>
-              </thead>
-              <tbody>
-                {allPolicies.map((policy, index) => {
-                  return (
-                    <tr
-                      key={policy.id || `new-${index}`}
-                      onClick={() => openEditPolicy(policy)}
-                      className="rounded-md hover:bg-nb-gray-900/30 cursor-pointer transition-all"
-                    >
-                      <td className="py-2.5 px-4 align-middle">
-                        <div
-                          className={
-                            "text-[13px] mt-1 flex items-center gap-2 leading-none font-medium text-nb-gray-300 group-hover:text-nb-gray-200 whitespace-nowrap"
-                          }
-                        >
-                          <div className={"self-start flex"}>
-                            <CircleIcon
-                              size={8}
-                              active={policy.enabled}
-                              className={cn("shrink-0 relative top-[5px]")}
-                            />
-                          </div>
-                          <div
-                            className={
-                              "flex flex-col items-start justify-start"
-                            }
-                          >
-                            <TruncatedText
-                              text={policy.name}
-                              maxWidth={"130px"}
-                              className={"leading-normal"}
-                            />
-                            {policy.description && (
-                              <div className={"text-nb-gray-400 text-xs"}>
-                                <TruncatedText
-                                  text={policy.description}
-                                  maxWidth={"130px"}
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-2.5 pl-5 pr-2 align-middle">
-                        <AccessControlSourcesCell
-                          policy={policy}
-                          hideEdit
-                          disableRedirect
-                        />
-                      </td>
-                      <td className="py-2.5 pl-3 pr-2 align-middle">
-                        <div className={"flex items-center gap-2"}>
-                          <AccessControlProtocolCell policy={policy} />
-                          <AccessControlPortsCell
-                            policy={policy}
-                            visiblePorts={1}
-                          />
-                        </div>
-                      </td>
-
-                      <td className="py-2.5 pl-2 pr-3">
-                        <div
-                          className="flex items-center gap-6 justify-end"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <DropdownMenu modal={false}>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="default-outline"
-                                className="!px-3"
-                              >
-                                <MoreVertical size={16} className="shrink-0" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              className="w-auto min-w-[200px]"
-                              align="end"
-                            >
-                              <DropdownMenuItem
-                                onClick={() => openEditPolicy(policy)}
-                              >
-                                <div className="flex gap-3 items-center">
-                                  <Edit2 size={14} className="shrink-0" />
-                                  Edit Policy
-                                </div>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                variant={"danger"}
-                                onClick={() => handleDeletePolicy(policy)}
-                              >
-                                <div className="flex gap-3 items-center">
-                                  <Trash2 size={14} className="shrink-0" />
-                                  Delete Policy
-                                </div>
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <AccessControlPolicyList
+          policies={allPolicies}
+          onEdit={openEditPolicy}
+          onDelete={handleDeletePolicy}
+        />
 
         <Button
           variant="dotted"

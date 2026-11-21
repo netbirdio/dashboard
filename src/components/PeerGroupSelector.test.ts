@@ -97,6 +97,44 @@ describe("getOpeningTab", () => {
     ).toBe("peers");
   });
 
+  it("snaps to the exit nodes tab when an exit node is picked", () => {
+    expect(
+      getOpeningTab({
+        ...base,
+        currentTab: "groups",
+        hasResource: true,
+        resourceType: "exit_node",
+        showResources: true,
+        showExitNodes: true,
+      }),
+    ).toBe("exit-nodes");
+  });
+
+  it("falls back to the default tab for an exit node without the tab", () => {
+    expect(
+      getOpeningTab({
+        ...base,
+        currentTab: "peers",
+        hasResource: true,
+        resourceType: "exit_node",
+        showResources: true,
+      }),
+    ).toBe("groups");
+  });
+
+  it("keeps the exit nodes tab only while it is shown", () => {
+    expect(
+      getOpeningTab({
+        ...base,
+        currentTab: "exit-nodes",
+        showExitNodes: true,
+      }),
+    ).toBe("exit-nodes");
+    expect(getOpeningTab({ ...base, currentTab: "exit-nodes" })).toBe(
+      "groups",
+    );
+  });
+
   it("uses the values-independent default on first open", () => {
     expect(getOpeningTab({ ...base, currentTab: "groups" })).toBe("groups");
   });
