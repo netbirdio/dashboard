@@ -66,8 +66,6 @@ export const PlanCard = ({
     if (currentSubscription && !currentSubscription.updated_at) return true;
     if (currentSubscription && currentSubscription.plan_tier === PlanTier.FREE)
       return true;
-    if (currentSubscription && currentSubscription.plan_tier === PlanTier.TRIAL)
-      return true;
     const updatedAt = dayjs(currentSubscription?.updated_at);
     const now = dayjs();
     const diff = now.diff(updatedAt, "hour");
