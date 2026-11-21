@@ -33,12 +33,20 @@ export const CrowdSecMode = {
 
 export type CrowdSecMode = (typeof CrowdSecMode)[keyof typeof CrowdSecMode];
 
+export const AllowMatch = {
+  ALL: "all",
+  ANY: "any",
+} as const;
+
+export type AllowMatch = (typeof AllowMatch)[keyof typeof AllowMatch];
+
 export interface AccessRestrictions {
   allowed_cidrs?: string[];
   blocked_cidrs?: string[];
   allowed_countries?: string[];
   blocked_countries?: string[];
   crowdsec_mode?: CrowdSecMode;
+  allow_match?: AllowMatch;
 }
 
 export interface ReverseProxyMeta {
