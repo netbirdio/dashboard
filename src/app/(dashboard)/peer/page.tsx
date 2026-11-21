@@ -70,6 +70,7 @@ import ReverseProxiesProvider, {
 import { ReverseProxyFlatTargetsTabContent } from "@/modules/reverse-proxy/targets/flat/ReverseProxyFlatTargetsTabContent";
 import { PeerEditIPModal } from "@/modules/peer/PeerEditIPModal";
 import { PeerSSHToggle } from "@/modules/peer/PeerSSHToggle";
+import { isSSHSupportedOnOS } from "@/modules/remote-access/osSupport";
 import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
 import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
 import { PeerExpirationSettings } from "@/modules/peer/PeerExpirationSettings";
@@ -430,6 +431,7 @@ const PeerOverviewTabContent = () => {
   const { peer } = usePeer();
   const { permission } = usePermissions();
   const { selectedGroups, setSelectedGroups } = usePeerSettings();
+  const isSSHSupported = isSSHSupportedOnOS(peer?.os);
 
   return (
     <div className={"px-8"}>
@@ -458,11 +460,14 @@ const PeerOverviewTabContent = () => {
             </div>
           )}
 
-          <PeerSSHToggle />
+          {isSSHSupported && <PeerSSHToggle />}
 
           <div>
             <Label>Remote Access</Label>
-            <HelpText>Connect directly to this peer via SSH or RDP.</HelpText>
+            <HelpText>
+              Connect directly to this peer via{" "}
+              {isSSHSupported ? "SSH or RDP" : "RDP"}.
+            </HelpText>
             <div className="flex gap-3">
               <SSHButton peer={peer} />
               <RDPButton peer={peer} />

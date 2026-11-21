@@ -1,10 +1,8 @@
 import Button from "@components/Button";
 import { DropdownMenuItem } from "@components/DropdownMenu";
-import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { CircleHelpIcon, MonitorIcon } from "lucide-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
 import { RDPTooltip } from "@/modules/remote-access/rdp/RDPTooltip";
 
@@ -13,17 +11,8 @@ type Props = {
   isDropdown?: boolean;
 };
 
-const RDP_SUPPORTED_OS = new Set([
-  OperatingSystem.WINDOWS,
-  OperatingSystem.LINUX,
-  OperatingSystem.FREEBSD,
-]);
-
 export const RDPButton = ({ peer, isDropdown = false }: Props) => {
   const { permission } = usePermissions();
-
-  const os = getOperatingSystem(peer?.os);
-  if (!RDP_SUPPORTED_OS.has(os)) return null;
 
   const disabled = !peer.connected || !permission.peers.update;
   const hasPermission = permission.peers.update;
