@@ -29,6 +29,7 @@ import { Network } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
 import { User } from "@/interfaces/User";
 import { useAccount } from "@/modules/account/useAccount";
+import { AgentBusyOverlay } from "@/modules/control-center/agent/AgentBusyOverlay";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { FlowView } from "@/modules/control-center/header/FlowSelector";
@@ -120,6 +121,7 @@ export function useIsContextMenuTarget(nodeId: string): boolean {
 interface CanvasUIState {
   placeholderIp: string;
   groupUserCounts: Map<string, number>;
+  selectedGroup: string;
 }
 
 const CanvasUIContext = createContext<CanvasUIState | null>(null);
@@ -317,8 +319,9 @@ export function CanvasStateProvider({
     () => ({
       placeholderIp,
       groupUserCounts,
+      selectedGroup,
     }),
-    [placeholderIp, groupUserCounts],
+    [placeholderIp, groupUserCounts, selectedGroup],
   );
 
   const destinationGroupValue = useMemo(
@@ -469,6 +472,7 @@ export function ControlCenterUIProvider({
   return (
     <ControlCenterUIContext.Provider value={value}>
       <div className={"relative h-full w-full flex overflow-hidden"}>
+        <AgentBusyOverlay />
         {sidebar}
         <div className={"w-full h-full relative overflow-hidden"}>
           {children}

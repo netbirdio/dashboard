@@ -37,6 +37,11 @@ import { useGroups } from "@/contexts/GroupsProvider";
 import { SentinelOneIntegration } from "@/interfaces/EDR";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import {
+  DEFAULT_STALE_GRACE,
+  EDRStaleGraceInput,
+  isValidStaleGrace,
+} from "@/modules/integrations/edr/EDRStaleGraceInput";
+import {
   DEFAULT_SYNC_INTERVAL,
   EDRSyncIntervalInput,
   isValidSyncInterval,
@@ -103,6 +108,15 @@ export function ConfigurationContent({
   const [syncInterval, setSyncInterval] = useState(
     (config.sync_interval ?? DEFAULT_SYNC_INTERVAL).toString(),
   );
+  const [staleGraceEnabled, setStaleGraceEnabled] = useState(
+    config.stale_grace_minutes > 0,
+  );
+  const [staleGrace, setStaleGrace] = useState(
+    (config.stale_grace_minutes || DEFAULT_STALE_GRACE).toString(),
+  );
+  const [staleGraceNewPeers, setStaleGraceNewPeers] = useState(
+    config.stale_grace_new_peers ?? false,
+  );
   const [matchAttributes, dispatchMatchAttributes] = useReducer(
     matchAttributesReducer,
     config.match_attributes,
@@ -150,6 +164,8 @@ export function ConfigurationContent({
           groups: savedGroups.map((group) => group.id) || [],
           last_synced_interval: Number(lastSyncedInterval || 24),
           sync_interval: Number(syncInterval),
+          stale_grace_minutes: staleGraceEnabled ? Number(staleGrace) : 0,
+          stale_grace_new_peers: staleGraceEnabled && staleGraceNewPeers,
           match_attributes: matchAttributes,
           enabled: config.enabled,
         })
@@ -168,9 +184,15 @@ export function ConfigurationContent({
     groups,
     lastSyncedInterval,
     syncInterval,
+    staleGraceEnabled,
+    staleGrace,
+    staleGraceNewPeers,
   ]);
   const canSave =
-    hasChanges && groups.length && isValidSyncInterval(syncInterval);
+    hasChanges &&
+    groups.length &&
+    isValidSyncInterval(syncInterval) &&
+    isValidStaleGrace(staleGraceEnabled, staleGrace);
 
   return (
     <ModalContent
@@ -354,6 +376,16 @@ export function ConfigurationContent({
             name={"SentinelOne"}
             value={syncInterval}
             onChange={setSyncInterval}
+            className={"mt-6"}
+          />
+          <EDRStaleGraceInput
+            name={"SentinelOne"}
+            enabled={staleGraceEnabled}
+            onEnabledChange={setStaleGraceEnabled}
+            value={staleGrace}
+            onChange={setStaleGrace}
+            newPeers={staleGraceNewPeers}
+            onNewPeersChange={setStaleGraceNewPeers}
             className={"mt-6"}
           />
         </TabsContent>

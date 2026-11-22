@@ -1,20 +1,29 @@
-import Button from "@components/Button";
-import {
-  Modal,
-  ModalClose,
-  ModalContent,
-  ModalFooter,
-} from "@components/modal/Modal";
-import ModalHeader from "@components/modal/ModalHeader";
+import { Modal } from "@components/modal/Modal";
+import { notify } from "@components/Notification";
 import { useReactFlow } from "@xyflow/react";
-import { Share2Icon } from "lucide-react";
 import * as React from "react";
 import { useSWRConfig } from "swr";
 import { Network, NetworkRouter } from "@/interfaces/Network";
-import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { Peer } from "@/interfaces/Peer";
+import {
+  DraftChange,
+  useDraftChangeset,
+} from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
-import { RoutingPeerModalContent } from "@/modules/networks/routing-peers/NetworkRoutingPeerModal";
+import {
+  getNetworkRef,
+  useDraftNetworkActions,
+} from "@/modules/control-center/hooks/useDraftNetworkActions";
+import { getPlaceholderPeer } from "@/modules/control-center/utils/helpers";
+import {
+  RoutingPeerModalContent,
+  RoutingPeerModalResult,
+} from "@/modules/networks/routing-peers/NetworkRoutingPeerModal";
+
+type PendingRouter = Extract<
+  DraftChange,
+  { type: "create-router" | "update-router" }
+>;
 
 // The networks page's routing-peer modal, run in pure-data mode for draft
 // targets: the result lands in the changeset instead of a live PUT.
@@ -41,23 +50,94 @@ export const DraftRoutingPeerModal = () => {
           c.id === routingPeerModal.editChangeId && c.type === "create-router",
       )
     : undefined;
-  // The placeholder is not listable in the peer dropdown and the modal refuses to
-  // save without a selection, so editing is blocked until the peer installs.
-  const isPlaceholderBound =
-    editChange?.type === "create-router" &&
-    !!editChange.peerId?.startsWith("draft-");
-
   const routerPreset: NetworkRouter | undefined =
     editChange?.type === "create-router"
       ? {
           id: editChange.clientId,
-          peer: !isPlaceholderBound ? editChange.peerId ?? "" : "",
+          peer: editChange.peerId ?? "",
           peer_groups: editChange.groupId ? [editChange.groupId] : [],
           metric: editChange.metric ?? 9999,
           masquerade: editChange.masquerade ?? true,
           enabled: editChange.enabled ?? true,
         }
       : routingPeerModal?.router;
+
+  const placeholderPeers = React.useMemo(
+    () =>
+      isDraft
+        ? reactFlow.getNodes().flatMap((n) => {
+            const absorbed = (n.data?.draftPeers as Peer[] | undefined) ?? [];
+            const standalone = getPlaceholderPeer(n);
+            return standalone ? [standalone, ...absorbed] : absorbed;
+          })
+        : [],
+    // Read once per modal open, so the selection does not shift under the user.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isDraft, !!routingPeerModal],
+  );
+
+  // A placeholder can finish installing while the modal is open,
+  // and by then the changeset no longer knows its draft id.
+  const installed = (peer?: Peer): Peer | undefined => {
+    const install = changes.find(
+      (c) => c.type === "install-peer" && c.clientId === peer?.id,
+    );
+    return peer && install?.type === "install-peer" && install.installedPeerId
+      ? { ...peer, id: install.installedPeerId, name: install.name }
+      : peer;
+  };
+
+  // The changeset keeps one pending router per peer or group of a network,
+  // and the API does not list these yet.
+  // A pending edit of a live router counts too: it moves that router onto its new peer.
+  const frameRef = getNetworkRef(
+    reactFlow.getNodes().find((n) => n.id === networkNodeId),
+  );
+  const networkKey =
+    (editChange?.type === "create-router"
+      ? editChange.networkId ?? editChange.networkClientId
+      : undefined) ||
+    network?.id ||
+    frameRef?.networkId ||
+    frameRef?.networkClientId;
+  const pendingRouters = changes.flatMap((c): PendingRouter[] => {
+    if (!networkKey) return [];
+    if (c.type === "create-router")
+      return c.id !== editChange?.id &&
+        (c.networkId ?? c.networkClientId) === networkKey
+        ? [c]
+        : [];
+    if (c.type === "update-router")
+      return c.routerId !== routingPeerModal?.router?.id &&
+        c.networkId === networkKey
+        ? [c]
+        : [];
+    return [];
+  });
+  const pendingPeerIds = pendingRouters.flatMap((c) =>
+    c.peerId ? [c.peerId] : [],
+  );
+  const isTaken = (result: RoutingPeerModalResult) => {
+    const peerId = installed(result.peer)?.id;
+    const group = result.peerGroups[0];
+    const groupId = group ? group.id ?? group.name : undefined;
+    return pendingRouters.some(
+      (c) => c.peerId === peerId && c.groupId === groupId,
+    );
+  };
+  // Recording a duplicate would be dropped or deploy two routers for one peer,
+  // so the editor stays open for another choice.
+  const refuseTaken = (result: RoutingPeerModalResult) => {
+    if (!isTaken(result)) return false;
+    notify({
+      title: "Routing Peer",
+      description: result.peer
+        ? `${result.peer.name} is already a routing peer of this network in the draft.`
+        : "This group already routes for this network in the draft.",
+      backgroundColor: "bg-red-500",
+    });
+    return true;
+  };
 
   // An existing API router with no draft create-router behind it: live edits
   // PUT through the modal, draft records an update-router change.
@@ -81,27 +161,7 @@ export const DraftRoutingPeerModal = () => {
       onOpenChange={(open) => !open && setRoutingPeerModal(null)}
     >
       {routingPeerModal &&
-        (isPlaceholderBound ? (
-          <ModalContent maxWidthClass={"max-w-md"}>
-            <ModalHeader
-              icon={<Share2Icon size={20} />}
-              color={"netbird"}
-              title={"Routing peer not installed yet"}
-              description={
-                "This routing peer uses a peer that hasn't been installed. " +
-                "Install it to edit these settings, or remove this change " +
-                "and add the routing peer again."
-              }
-            />
-            <ModalFooter>
-              <ModalClose asChild={true}>
-                <Button variant={"primary"} className={"w-full"}>
-                  Got it
-                </Button>
-              </ModalClose>
-            </ModalFooter>
-          </ModalContent>
-        ) : isLiveApiEdit ? (
+        (isLiveApiEdit ? (
           <RoutingPeerModalContent
             network={network as Network}
             router={routingPeerModal.router}
@@ -115,13 +175,17 @@ export const DraftRoutingPeerModal = () => {
             network={network as Network}
             router={routingPeerModal.router}
             useSave={false}
+            additionalPeers={placeholderPeers}
+            assignedPeers={pendingPeerIds}
             onSaved={(result) => {
+              if (refuseTaken(result)) return;
               if (network?.id && routingPeerModal.router) {
                 updateRouterFromSelection({
                   networkId: network.id,
                   networkName: network.name,
                   routerId: routingPeerModal.router.id,
                   ...result,
+                  peer: installed(result.peer),
                 });
               }
               setRoutingPeerModal(null);
@@ -140,11 +204,22 @@ export const DraftRoutingPeerModal = () => {
             network={{ id: "", name: network?.name ?? "" } as Network}
             router={routerPreset}
             useSave={false}
+            additionalPeers={placeholderPeers}
+            assignedPeers={pendingPeerIds}
             onSaved={(result) => {
+              // The check runs before the edited change is removed,
+              // or a refused edit would lose the router it replaces.
+              if (refuseTaken(result)) return;
               if (networkNodeId) {
                 // Editing replaces the change so the dedup rules re-apply.
-                if (editChange) removeChange(editChange.id);
-                addRouterFromSelection({ networkNodeId, ...result });
+                if (editChange) {
+                  removeChange(editChange.id, { replaced: true });
+                }
+                addRouterFromSelection({
+                  networkNodeId,
+                  ...result,
+                  peer: installed(result.peer),
+                });
               }
               setRoutingPeerModal(null);
             }}

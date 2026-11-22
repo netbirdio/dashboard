@@ -5,6 +5,7 @@ import Paragraph from "@components/Paragraph";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import dayjs from "dayjs";
 import { ExternalLinkIcon } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import React, { useMemo } from "react";
 import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -15,6 +16,7 @@ import { usePortalElement } from "@hooks/usePortalElement";
 import { REVERSE_PROXY_EVENTS_DOCS_LINK } from "@/interfaces/ReverseProxy";
 
 export default function ProxyLogsPage() {
+  const linkedSearch = useSearchParams().get("search") ?? "";
   const { permission } = usePermissions();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
@@ -48,9 +50,11 @@ export default function ProxyLogsPage() {
         hasAccess={permission?.services?.read}
       >
         <ServerPaginationProvider
+          key={linkedSearch}
           url="/events/proxy"
           defaultPageSize={25}
           defaultFilters={defaultFilters}
+          initialSearch={linkedSearch}
         >
           <PeersProvider>
             <ReverseProxyEventsTable headingTarget={portalTarget} />

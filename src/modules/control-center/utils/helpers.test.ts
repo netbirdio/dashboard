@@ -647,6 +647,35 @@ describe("canDropGroupIntoNetwork — group → frame eligibility", () => {
   });
 });
 
+describe("canDropGroupIntoNetwork with a carried draft resource", () => {
+  const frame = (id: string): Node =>
+    node(`network-${id}`, { frame: true, network: { id, name: id } });
+  const carried = { id: "new-r1", name: "API", address: "10.0.0.1/32" };
+  const group = node("group-g1", {
+    group: { id: "g1", name: "Servers", resources_count: 1 },
+    addedMembers: new Set(["new-r1"]),
+    draftResources: [carried],
+  });
+  const card = (parentId: string): Node => ({
+    ...node("resource-new-r1", {
+      resource: carried,
+      resourceGroupIds: ["g1"],
+    }),
+    parentId,
+  });
+
+  it("drops anywhere while the resource has no card of its own", () => {
+    const nodes = [frame("n1"), frame("n2")];
+    expect(canDropGroupIntoNetwork(group, frame("n2"), nodes, [])).toBe(true);
+  });
+
+  it("drops only into the network that holds the resource's card", () => {
+    const nodes = [frame("n1"), frame("n2"), card("network-n1")];
+    expect(canDropGroupIntoNetwork(group, frame("n1"), nodes, [])).toBe(true);
+    expect(canDropGroupIntoNetwork(group, frame("n2"), nodes, [])).toBe(false);
+  });
+});
+
 describe("getFirstGroup", () => {
   const group = (id: string, name: string, peers_count = 0): Group =>
     ({ id, name, peers_count }) as Group;

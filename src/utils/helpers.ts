@@ -3,10 +3,10 @@ import { type ClassValue, clsx } from "clsx";
 import deepClone from "lodash/cloneDeep";
 import { extendTailwindMerge } from "tailwind-merge";
 
-// Font sizes added to the theme in globals.css. Unregistered, tailwind-merge
-// reads them as text colours and drops them next to a real colour class.
+// Custom `text-*` sizes must be declared here,
+// or tailwind-merge takes them for colours and drops them.
 const twMerge = extendTailwindMerge({
-  extend: { theme: { text: ["xsm", "smd"] } },
+  extend: { theme: { text: ["xsm", "smd", "chat"] } },
 });
 
 export function cn(...inputs: ClassValue[]) {
@@ -276,3 +276,19 @@ export const formatDuration = (ms: number): string => {
   if (ms < 3600000) return `${(ms / 60000).toFixed(1)}m`;
   return `${(ms / 3600000).toFixed(1)}h`;
 };
+
+export const textOf = (value: unknown): string | undefined =>
+  typeof value === "string" && value.trim() ? value.trim() : undefined;
+
+export const nonEmptyString = (value: unknown): string | undefined =>
+  typeof value === "string" && value.trim() ? value : undefined;
+
+export const humanize = (value: string): string =>
+  value
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((word) => word[0].toUpperCase() + word.slice(1))
+    .join(" ");
+
+export const quoted = (value?: string): string | undefined =>
+  value ? `'${value}'` : undefined;
