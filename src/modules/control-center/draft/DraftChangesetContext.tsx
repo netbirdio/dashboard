@@ -19,17 +19,27 @@ import type { AgentPolicy } from "@/modules/agent-network/data/mockData";
 import {
   deletedGroupRefs,
   detachChangesFromDraftNetwork,
+  dropGroupIdsFromAgentPolicy,
   isEmptiedPolicy,
   isNoopGroupUpdate,
-  dropGroupIdsFromAgentPolicy,
   isPendingPolicyWrite,
   mergeAgentGroupDeletions,
   mergeGroupDeletions,
   pendingGroupDeletions,
   reduceRemoveChange,
 } from "@/modules/control-center/utils/change-cascade";
-import { draftUid } from "@/modules/control-center/utils/helpers";
+import {
+  draftUid,
+  isDraftPeerId,
+} from "@/modules/control-center/utils/helpers";
 import { e2eHooksEnabled } from "@utils/netbird";
+import { useAgentBusy } from "@/modules/assistant/hooks/useAgentBusy";
+import {
+  agentPolicyEntityKey,
+  markAssistantChanges,
+  policyEntityKey,
+  presentAssistantChanges,
+} from "@/modules/control-center/utils/assistant-changes";
 
 export {
   isEmptiedPolicy,
@@ -145,7 +155,6 @@ export interface CreateResourceChange {
   enabled?: boolean;
 }
 
-// Routers on a placeholder peer stay OUT until it installs with a real id.
 export interface CreateRouterChange {
   id: string;
   type: "create-router";
@@ -665,6 +674,22 @@ export const getChangeIssue = (
       } — take the group off this change, or discard the deletion.`,
     };
   }
+  // Orphan guard: removing the placeholder drops its install-peer step while
+  // the router stays, and a draft id must never be POSTed.
+  if (
+    (change.type === "create-router" || change.type === "update-router") &&
+    isDraftPeerId(change.peerId) &&
+    !changes?.some(
+      (c) => c.type === "install-peer" && c.clientId === change.peerId,
+    )
+  ) {
+    return {
+      label: "Install",
+      message: `Routing peer “${
+        change.peerName ?? "peer"
+      }” must be installed before ${change.networkName} can be deployed, and it is no longer on the canvas — re-add it, or remove this routing peer.`,
+    };
+  }
   if (
     change.type === "create-agent-policy" ||
     change.type === "update-agent-policy"
@@ -882,6 +907,7 @@ type GroupRef = {
 interface DraftChangesetContextType {
   changes: DraftChange[];
   changeCount: number;
+  assistantChangeIds: ReadonlySet<string>;
   trackCreateGroup: (params: {
     clientId: string;
     name: string;
@@ -958,13 +984,18 @@ interface DraftChangesetContextType {
   trackCreateRouter: (params: Omit<CreateRouterChange, "id" | "type">) => void;
   // Supersedes an earlier edit of the same router.
   trackUpdateRouter: (params: Omit<UpdateRouterChange, "id" | "type">) => void;
-  trackCreatePolicy: (params: { clientId: string; policy: Policy }) => void;
+  trackCreatePolicy: (params: {
+    clientId: string;
+    policy: Policy;
+    byAssistant?: boolean;
+  }) => void;
   // `groupDeletion` marks a write forced by a group deletion. An ordinary edit
   // leaves it unset, which REBASES the tag onto the edit — see mergeGroupDeletions.
   trackUpdatePolicy: (params: {
     policyId: string;
     policy: Policy;
     groupDeletion?: PolicyGroupDeletion;
+    byAssistant?: boolean;
   }) => void;
   // Re-records a PENDING update-policy; a no-op when none exists. Unlike
   // trackUpdatePolicy it never reads an emptied policy as a deletion.
@@ -1004,6 +1035,7 @@ interface DraftChangesetContextType {
   trackCreateAgentPolicy: (params: {
     clientId: string;
     policy: Omit<AgentPolicy, "id">;
+    byAssistant?: boolean;
   }) => void;
   trackUpdateAgentPolicy: (params: {
     agentPolicyId: string;
@@ -1011,6 +1043,7 @@ interface DraftChangesetContextType {
     policy: Partial<AgentPolicy>;
     origin?: "toggle" | "edit";
     groupDeletion?: AgentGroupDeletion;
+    byAssistant?: boolean;
   }) => void;
   trackDeleteAgentPolicy: (params: {
     agentPolicyId: string;
@@ -1038,7 +1071,7 @@ interface DraftChangesetContextType {
     peer: { id: string; name?: string },
   ) => void;
   untrackInstallPeer: (clientId: string) => void;
-  removeChange: (id: string) => void;
+  removeChange: (id: string, options?: { replaced?: boolean }) => void;
   clearChanges: () => void;
   replaceChanges: (changes: DraftChange[]) => void;
 }
@@ -1138,6 +1171,38 @@ export function DraftChangesetProvider({
 }) {
   // Changes live only in React state: a reload loses the draft.
   const [changes, setChanges] = useState<DraftChange[]>([]);
+
+  // Updated during render, not in an effect, so the marks never lag the changes.
+  const assistantActing = useAgentBusy();
+  const [assistantMarks, setAssistantMarks] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const [replacedChangeIds, setReplacedChangeIds] = useState<
+    ReadonlySet<string>
+  >(() => new Set());
+  const [markedChanges, setMarkedChanges] = useState(changes);
+  if (markedChanges !== changes) {
+    setMarkedChanges(changes);
+    setAssistantMarks((marked) =>
+      markAssistantChanges(
+        markedChanges,
+        changes,
+        marked,
+        assistantActing,
+        replacedChangeIds,
+      ),
+    );
+    if (replacedChangeIds.size > 0) setReplacedChangeIds(new Set());
+  }
+  const assistantChangeIds = useMemo(
+    () => presentAssistantChanges(changes, assistantMarks),
+    [changes, assistantMarks],
+  );
+  const markAssistantEntity = useCallback((entityKey: string) => {
+    setAssistantMarks((marked) =>
+      marked.has(entityKey) ? marked : new Set(marked).add(entityKey),
+    );
+  }, []);
 
   useEffect(() => {
     if (e2eHooksEnabled()) {
@@ -1401,7 +1466,10 @@ export function DraftChangesetProvider({
     (oldId: string, newId: string, newName?: string) => {
       setChanges((prev) => {
         const mapped = prev.map((c) => {
-          if (c.type === "create-router" && c.peerId === oldId) {
+          if (
+            (c.type === "create-router" || c.type === "update-router") &&
+            c.peerId === oldId
+          ) {
             return { ...c, peerId: newId, peerName: newName ?? c.peerName };
           }
           if (c.type !== "create-group" && c.type !== "update-group") return c;
@@ -1728,7 +1796,16 @@ export function DraftChangesetProvider({
   );
 
   const trackCreatePolicy = useCallback(
-    ({ clientId, policy }: { clientId: string; policy: Policy }) => {
+    ({
+      clientId,
+      policy,
+      byAssistant,
+    }: {
+      clientId: string;
+      policy: Policy;
+      byAssistant?: boolean;
+    }) => {
+      if (byAssistant) markAssistantEntity(policyEntityKey(clientId));
       setChanges((prev) => [
         ...prev,
         {
@@ -1740,7 +1817,7 @@ export function DraftChangesetProvider({
         },
       ]);
     },
-    [],
+    [markAssistantEntity],
   );
 
   const trackUpdatePolicy = useCallback(
@@ -1748,11 +1825,14 @@ export function DraftChangesetProvider({
       policyId,
       policy,
       groupDeletion,
+      byAssistant,
     }: {
       policyId: string;
       policy: Policy;
       groupDeletion?: PolicyGroupDeletion;
+      byAssistant?: boolean;
     }) => {
+      if (byAssistant) markAssistantEntity(policyEntityKey(policyId));
       setChanges((prev) => {
         const isDraftPolicy = policyId.startsWith("new-");
         const supersededCreate = isDraftPolicy
@@ -1852,7 +1932,7 @@ export function DraftChangesetProvider({
         ];
       });
     },
-    [],
+    [markAssistantEntity],
   );
 
   const patchPendingPolicyUpdate = useCallback(
@@ -2211,10 +2291,13 @@ export function DraftChangesetProvider({
     ({
       clientId,
       policy,
+      byAssistant,
     }: {
       clientId: string;
       policy: Omit<AgentPolicy, "id">;
+      byAssistant?: boolean;
     }) => {
+      if (byAssistant) markAssistantEntity(agentPolicyEntityKey(clientId));
       setChanges((prev) => [
         ...prev,
         {
@@ -2226,7 +2309,7 @@ export function DraftChangesetProvider({
         },
       ]);
     },
-    [],
+    [markAssistantEntity],
   );
 
   const trackUpdateAgentPolicy = useCallback(
@@ -2236,13 +2319,16 @@ export function DraftChangesetProvider({
       policy,
       origin = "edit",
       groupDeletion,
+      byAssistant,
     }: {
       agentPolicyId: string;
       name: string;
       policy: Partial<AgentPolicy>;
       origin?: "toggle" | "edit";
       groupDeletion?: AgentGroupDeletion;
+      byAssistant?: boolean;
     }) => {
+      if (byAssistant) markAssistantEntity(agentPolicyEntityKey(agentPolicyId));
       setChanges((prev) => {
         const create = prev.find(
           (c): c is CreateAgentPolicyChange =>
@@ -2298,7 +2384,7 @@ export function DraftChangesetProvider({
           : [...rest, merged];
       });
     },
-    [],
+    [markAssistantEntity],
   );
 
   const trackDeleteAgentPolicy = useCallback(
@@ -2387,12 +2473,20 @@ export function DraftChangesetProvider({
     [],
   );
 
-  const removeChange = useCallback((id: string) => {
-    setChanges((prev) => prev.filter((c) => c.id !== id));
-  }, []);
+  const removeChange = useCallback(
+    (id: string, options?: { replaced?: boolean }) => {
+      if (options?.replaced) {
+        setReplacedChangeIds((ids) => new Set(ids).add(id));
+      }
+      setChanges((prev) => prev.filter((c) => c.id !== id));
+    },
+    [],
+  );
 
   const clearChanges = useCallback(() => {
     setChanges([]);
+    setAssistantMarks(new Set());
+    setReplacedChangeIds(new Set());
   }, []);
 
   const replaceChanges = useCallback((next: DraftChange[]) => {
@@ -2403,6 +2497,7 @@ export function DraftChangesetProvider({
     () => ({
       changes,
       changeCount: changes.length,
+      assistantChangeIds,
       trackCreateGroup,
       trackRenameGroup,
       trackAddGroupMembers,
@@ -2447,6 +2542,7 @@ export function DraftChangesetProvider({
     }),
     [
       changes,
+      assistantChangeIds,
       trackCreateGroup,
       trackRenameGroup,
       trackAddGroupMembers,

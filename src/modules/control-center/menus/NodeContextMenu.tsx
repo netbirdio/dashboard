@@ -52,17 +52,14 @@ import {
   isNewGroup,
   useDraftGroupActions,
 } from "@/modules/control-center/hooks/useDraftGroupActions";
-import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
+import { useDraftNodeActions } from "@/modules/control-center/hooks/useDraftNodeActions";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
 import { useEdgeAwareMenuPosition } from "@/modules/control-center/hooks/useEdgeAwareMenuPosition";
 import { useNodeRemoval } from "@/modules/control-center/hooks/useNodeRemoval";
 import { menuItemSlug } from "@/modules/control-center/menus/menuItemTestId";
 import { getNodeRect } from "@/modules/control-center/utils/canvas-transition";
 import {
-  DraftNetworkRef,
   getPlaceholderPeer,
-  getResourceDraftGroupIds,
-  getResourceLiveBaseline,
   getResourceNodeEnabled,
   isDraftNetworkNode,
   isFocusWorthy,
@@ -142,9 +139,6 @@ export const NodeContextMenu = ({
     changes,
     trackSetPolicyEnabled,
     trackDeletePolicy,
-    trackUpdateResource,
-    trackDeleteResource,
-    trackInstallPeer,
     trackUpdateProvider,
     trackDeleteProvider,
     trackUpdateAgentPolicy,
@@ -158,7 +152,6 @@ export const NodeContextMenu = ({
     removeNodeWithEdges,
   } = useDraftGroupActions();
   const { addResourceGroupToFrame } = useDraftNodeCreation();
-  const { syncDraftResource } = useDraftNetworkActions();
   const deleteNetwork = useDeleteNetwork();
 
   // The rename target outlives both the menu closing (position → null) and the
@@ -213,113 +206,17 @@ export const NodeContextMenu = ({
     return Array.from(names);
   }, [groups, nodes, renameTarget]);
 
-  // Placeholder names live only on the canvas node; an installed peer takes its
-  // name from the machine.
-  const renamePlaceholder = useCallback(
-    (id: string, name: string) => {
-      setNodes((prev) =>
-        prev.map((n) =>
-          n.id === id
-            ? { ...n, data: { ...n.data, placeholderName: name } }
-            : n,
-        ),
-      );
-      const kind = nodes.find((n) => n.id === id)?.data?.placeholderKind as
-        | "user-device"
-        | "server"
-        | "agent"
-        | undefined;
-      if (kind) {
-        trackInstallPeer({ clientId: id.replace("peer-", ""), name, kind });
-      }
-    },
-    [setNodes, nodes, trackInstallPeer],
-  );
-
-  const renameResource = useCallback(
-    (id: string, name: string) => {
-      setNodes((prev) =>
-        prev.map((n) =>
-          n.id === id
-            ? {
-                ...n,
-                data: {
-                  ...n.data,
-                  resource: {
-                    ...(n.data.resource as object),
-                    name,
-                  },
-                },
-              }
-            : n,
-        ),
-      );
-      setTimeout(() => syncDraftResource(id), 0);
-    },
-    [setNodes, syncDraftResource],
-  );
+  const {
+    renamePlaceholder,
+    renameResource,
+    setResourceEnabled,
+    isResourceEnabled,
+    deleteResource: applyDeleteResource,
+  } = useDraftNodeActions();
 
   const toggleResourceEnabled = useCallback(
-    (id: string) => {
-      const target = nodes.find((n) => n.id === id);
-      const enabled = !getResourceNodeEnabled(target);
-      const isDraftResource = id.startsWith("resource-new-");
-      setNodes((prev) =>
-        prev.map((n) =>
-          n.id === id
-            ? {
-                ...n,
-                // A draft resource has no live twin, so there the flag IS the
-                // state; an existing one needs its own key to stay separable.
-                data: isDraftResource
-                  ? { ...n.data, enabled }
-                  : { ...n.data, resourceEnabled: enabled },
-              }
-            : n,
-        ),
-      );
-      // Draft resources carry their enabled state via their create-resource
-      // change, so they only need a re-sync after the canvas update.
-      if (isDraftResource) {
-        setTimeout(() => syncDraftResource(id), 0);
-        return;
-      }
-      const resource = (target?.data as { resource?: NetworkResource })
-        ?.resource;
-      const net = (target?.data as { draftNetwork?: DraftNetworkRef })
-        ?.draftNetwork;
-      if (resource?.id && net?.networkId) {
-        // trackUpdateResource replaces the pending change wholesale, so this must
-        // carry the CURRENT groups; the live ones would revert a pending edit.
-        const groupIds = getResourceDraftGroupIds(target);
-        const live = getResourceLiveBaseline(target);
-        const originalGroupIds = (
-          (live?.groups as (string | { id?: string })[]) ?? []
-        )
-          .map((g) => (typeof g === "string" ? g : g.id ?? ""))
-          .filter(Boolean);
-        trackUpdateResource({
-          resourceId: resource.id,
-          networkId: net.networkId,
-          name: resource.name,
-          networkName: net.name,
-          address: resource.address,
-          description: resource.description,
-          enabled,
-          groupIds,
-          // Live state, so toggling back to it drops the change. Not `resource`:
-          // that already holds any earlier name/address edit.
-          original: {
-            enabled: live?.enabled ?? true,
-            name: live?.name ?? resource.name,
-            address: live?.address ?? resource.address,
-            description: live?.description,
-            groupIds: originalGroupIds,
-          },
-        });
-      }
-    },
-    [nodes, setNodes, trackUpdateResource, syncDraftResource],
+    (id: string) => setResourceEnabled(id, !isResourceEnabled(id)),
+    [setResourceEnabled, isResourceEnabled],
   );
 
   const deleteResource = useCallback(
@@ -338,21 +235,9 @@ export const NodeContextMenu = ({
         dismissOnOutsideClick: true,
       });
       if (!choice) return;
-      const resource = (target?.data as { resource?: NetworkResource })
-        ?.resource;
-      const net = (target?.data as { draftNetwork?: DraftNetworkRef })
-        ?.draftNetwork;
-      if (resource?.id && net?.networkId) {
-        trackDeleteResource({
-          resourceId: resource.id,
-          networkId: net.networkId,
-          name: resource.name,
-          networkName: net.name,
-        });
-      }
-      removeNodeWithEdges(id);
+      applyDeleteResource(id);
     },
-    [nodes, confirm, trackDeleteResource, removeNodeWithEdges],
+    [nodes, confirm, applyDeleteResource],
   );
 
   const node = useMemo(

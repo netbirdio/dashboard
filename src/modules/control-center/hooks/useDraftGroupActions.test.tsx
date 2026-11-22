@@ -943,3 +943,89 @@ describe("group removal and deletion reach agent policies", () => {
     expect(trackUpdateAgentPolicy).not.toHaveBeenCalled();
   });
 });
+
+describe("removing a draft group a resource card still lists", () => {
+  const draftGroupNode = (id: string, name: string) =>
+    ({
+      id,
+      type: "groupNode",
+      position: { x: 0, y: 0 },
+      data: { group: { name } },
+    }) as unknown as Node;
+  const card = (id: string, resourceGroupIds: string[]) =>
+    ({
+      id,
+      type: "resourceNode",
+      position: { x: 0, y: 0 },
+      data: { resource: { name: "db" }, resourceGroupIds },
+    }) as unknown as Node;
+  const cardGroups = (id: string) =>
+    (nodes.find((n) => n.id === id)?.data as { resourceGroupIds?: string[] })
+      ?.resourceGroupIds;
+
+  it("takes the group off the card and leaves an unrelated card untouched", () => {
+    const unrelated = card("resource-new-2", ["g0"]);
+    nodes = [
+      draftGroupNode("group-new-1", "Databases"),
+      card("resource-new-1", ["g0", "Databases"]),
+      unrelated,
+    ];
+    const { result } = renderHook(() => useDraftGroupActions());
+    act(() => result.current.removeGroup(nodes[0]));
+
+    expect(untrackNewGroup).toHaveBeenCalledWith("Databases");
+    expect(cardGroups("resource-new-1")).toEqual(["g0"]);
+    expect(nodes.find((n) => n.id === "resource-new-2")).toBe(unrelated);
+  });
+
+  it("keeps the group on the card while another instance of it survives", () => {
+    const listing = card("resource-new-1", ["Databases"]);
+    nodes = [
+      draftGroupNode("group-new-1", "Databases"),
+      draftGroupNode("dest-group-new-1", "Databases"),
+      listing,
+    ];
+    const { result } = renderHook(() => useDraftGroupActions());
+    act(() => result.current.removeGroup(nodes[0]));
+
+    expect(untrackNewGroup).not.toHaveBeenCalled();
+    expect(nodes.find((n) => n.id === "resource-new-1")).toBe(listing);
+  });
+
+  it("keeps an existing group on the card when only its node is removed", () => {
+    const listing = card("resource-new-1", ["g1"]);
+    nodes = [
+      {
+        id: "group-g1",
+        type: "groupNode",
+        position: { x: 0, y: 0 },
+        data: { group: { id: "g1", name: "Servers" } },
+      } as unknown as Node,
+      listing,
+    ];
+    const { result } = renderHook(() => useDraftGroupActions());
+    act(() => result.current.removeGroup(nodes[0]));
+
+    expect(nodes.find((n) => n.id === "resource-new-1")).toBe(listing);
+  });
+
+  it("takes a removed resource-group row off the card too", () => {
+    const unrelated = card("resource-new-2", ["g0"]);
+    nodes = [
+      {
+        id: "resourcegroup-new-1",
+        type: "resourceGroupNode",
+        position: { x: 0, y: 0 },
+        data: { group: { name: "Databases" } },
+      } as unknown as Node,
+      card("resource-new-1", ["g0", "Databases"]),
+      unrelated,
+    ];
+    const { result } = renderHook(() => useDraftGroupActions());
+    act(() => result.current.removeNodeWithEdges("resourcegroup-new-1"));
+
+    expect(untrackNewGroup).toHaveBeenCalledWith("Databases");
+    expect(cardGroups("resource-new-1")).toEqual(["g0"]);
+    expect(nodes.find((n) => n.id === "resource-new-2")).toBe(unrelated);
+  });
+});

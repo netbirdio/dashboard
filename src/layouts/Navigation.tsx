@@ -31,6 +31,7 @@ import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { headerHeight } from "@/layouts/Header";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
+import { useAssistantSidebar } from "@/modules/assistant/AssistantSidebarProvider";
 import { NavigationUsageInfo } from "@/modules/billing/NavigationUsageInfo";
 import {
   accountPageAccess,
@@ -69,6 +70,7 @@ export default function Navigation({
   // custom delegated roles), so it is the one surface switch here.
   const { only: agentNetworkOnly, enabled: agentNetworkEnabled } =
     useAgentNetworkMode();
+  const { inset } = useAssistantSidebar();
   // Caller-scoped: true whenever the caller's own policies grant access to
   // at least one provider, independent of any agent_network permission —
   // this is what lets plain users (limited view included) reach Connect Agent
@@ -105,31 +107,36 @@ export default function Navigation({
         hideOnMobile ? "hidden md:block" : "",
         fullWidth
           ? "w-auto max-w-[22rem]"
-          : "w-[15rem] max-w-[15rem] min-w-[15rem] overflow-y-auto",
+          : "w-[15rem] max-w-[15rem] min-w-[15rem] overflow-hidden",
+        // Absolute, not fixed: a fixed rail escapes the card's `overflow-hidden`
+        // and paints over its rounded edge.
         isNavigationCollapsed &&
-          "md:w-[64px] md:min-w-[64px] md:fixed md:overflow-hidden md:hover:w-[15rem] md:hover:max-w-[15rem] md:hover:min-w-[15rem] md:z-50",
+          "md:w-[64px] md:min-w-[64px] md:absolute md:left-0 md:top-0 md:overflow-hidden md:hover:w-[15rem] md:hover:max-w-[15rem] md:hover:min-w-[15rem] md:z-50",
       )}
       style={{
-        height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
+        height: `calc(100vh - ${headerHeight + bannerHeight + inset * 2}px)`,
       }}
     >
-      <div className={cn(fullWidth ? "w-10/12" : "fixed z-0")}>
+      <div className={cn(fullWidth ? "w-10/12" : "relative z-0")}>
         <ScrollArea
+          scrollbars={"vertical"}
           style={{
             height: !fullWidth
-              ? `calc(100vh - ${headerHeight + bannerHeight}px)`
+              ? `calc(100vh - ${headerHeight + bannerHeight + inset * 2}px)`
               : "100%",
           }}
         >
           <div
             className={cn(
-              "flex flex-col pt-3 w-[15rem] max-w-[15rem] min-w-[15rem] transition-all",
+              // Clipped even when expanded: a long nowrap label would otherwise
+              // widen the `ScrollArea`'s content box.
+              "flex flex-col pt-3 w-[15rem] max-w-[15rem] min-w-[15rem] overflow-x-clip transition-all",
               isNavigationCollapsed &&
-                "md:w-[64px] md:min-w-[64px] md:group-hover/navigation:w-[15rem] md:group-hover/navigation:max-w-[15rem] md:group-hover/navigation:min-w-[15rem] md:overflow-x-clip",
+                "md:w-[64px] md:min-w-[64px] md:group-hover/navigation:w-[15rem] md:group-hover/navigation:max-w-[15rem] md:group-hover/navigation:min-w-[15rem]",
             )}
             style={{
               minHeight: !fullWidth
-                ? `calc(100vh - ${headerHeight + bannerHeight}px)`
+                ? `calc(100vh - ${headerHeight + bannerHeight + inset * 2}px)`
                 : "100%",
             }}
           >

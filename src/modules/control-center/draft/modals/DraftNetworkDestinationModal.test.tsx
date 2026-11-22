@@ -8,6 +8,7 @@ import type { PolicyRuleResource } from "@/interfaces/Policy";
 // A pick the connect guards cannot apply must not close the modal as if it had
 // succeeded: the incompatible pick disables Connect and says why.
 let nodes: unknown[] = [];
+let storeNodes: unknown[] | undefined;
 let networkDestinationPicker: {
   networkNodeId: string;
   policyNodeId: string;
@@ -27,6 +28,11 @@ vi.mock("@components/PeerGroupSelector", () => ({
     pickResource = props.onResourceChange;
     return <div data-testid={"selector"} />;
   },
+}));
+vi.mock("@xyflow/react", () => ({
+  useReactFlow: () => ({
+    getNode: (id: string) => ((storeNodes ?? nodes) as { id: string }[]).find((n) => n.id === id),
+  }),
 }));
 vi.mock("@/modules/control-center/contexts/ControlCenterContext", () => ({
   useCanvasState: () => ({ nodes }),
@@ -91,6 +97,7 @@ const connectButton = () =>
 
 afterEach(cleanup);
 beforeEach(() => {
+  storeNodes = undefined;
   setNetworkDestinationPicker.mockClear();
   updateDraftPolicy.mockClear();
   networkDestinationPicker = {
@@ -161,5 +168,43 @@ describe("a policy that already has a resource destination", () => {
     });
     expect(connectButton().disabled).toBe(true);
     expect(updateDraftPolicy).not.toHaveBeenCalled();
+  });
+});
+
+describe("a policy narrowed while the picker is open", () => {
+  it("keeps the protocol and ports it has when Connect is clicked", async () => {
+    const sources = [{ id: "g0", name: "Src" }];
+    nodes = buildNodes({ sources, destinations: [], protocol: "all", ports: [] });
+    render(<DraftNetworkDestinationModal />);
+    storeNodes = buildNodes({ sources, destinations: [], protocol: "tcp", ports: ["443"] });
+    await act(async () => {
+      pickResource({ id: "new-r1", type: "host" } as PolicyRuleResource);
+    });
+    await act(async () => {
+      connectButton().click();
+    });
+    const saved = updateDraftPolicy.mock.calls[0][0];
+    expect(saved.rules[0]).toMatchObject({ protocol: "tcp", ports: ["443"], destinationResource: { id: "new-r1" } });
+  });
+
+  it("keeps a destination it gained when groups are connected", async () => {
+    const sources = [{ id: "g0", name: "Src" }];
+    nodes = buildNodes({ sources, destinations: [{ id: "g1", name: "Dest" }] });
+    render(<DraftNetworkDestinationModal />);
+    storeNodes = buildNodes({
+      sources,
+      destinations: [
+        { id: "g1", name: "Dest" },
+        { id: "g3", name: "Added meanwhile" },
+      ],
+    });
+    await act(async () => {
+      pickGroups([{ id: "g2", name: "More" } as Group]);
+    });
+    await act(async () => {
+      connectButton().click();
+    });
+    const saved = updateDraftPolicy.mock.calls[0][0];
+    expect(saved.rules[0].destinations.map((g: Group) => g.id)).toEqual(["g1", "g3", "g2"]);
   });
 });

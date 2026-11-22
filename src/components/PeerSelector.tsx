@@ -14,6 +14,10 @@ import * as React from "react";
 import { memo, useEffect, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
 import { Peer } from "@/interfaces/Peer";
+import {
+  getIpPlaceholderFromRange,
+  isPlaceholderPeer,
+} from "@/modules/control-center/utils/helpers";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 
 const MapPinIcon = memo(() => <MapPin size={12} />);
@@ -26,15 +30,22 @@ interface MultiSelectProps {
   disabledPeers?: string[];
   disabledPeerReason?: string;
   disabled?: boolean;
+  additionalPeers?: Peer[];
 }
 
 const searchPredicate = (item: Peer, query: string) => {
   const lowerCaseQuery = query.toLowerCase();
   if (item.name.toLowerCase().includes(lowerCaseQuery)) return true;
-  if (item.hostname.toLowerCase().includes(lowerCaseQuery)) return true;
+  if (item.hostname?.toLowerCase().includes(lowerCaseQuery)) return true;
   if (item.ip.toLowerCase().startsWith(lowerCaseQuery)) return true;
   return !!item.ipv6?.toLowerCase().startsWith(lowerCaseQuery);
 };
+
+const addressOf = (peer: Peer) =>
+  isPlaceholderPeer(peer) ? getIpPlaceholderFromRange() : peer.ip;
+
+const supportsRouting = (peer: Peer) =>
+  isPlaceholderPeer(peer) || isRoutingPeerSupported(peer.version, peer.os);
 
 export function PeerSelector({
   onChange,
@@ -43,6 +54,7 @@ export function PeerSelector({
   disabledPeers,
   disabledPeerReason,
   disabled = false,
+  additionalPeers,
 }: MultiSelectProps) {
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
@@ -54,10 +66,13 @@ export function PeerSelector({
     { filter: true, debounce: 150 },
   );
 
+  const additionalKey = (additionalPeers ?? [])
+    .map((p) => `${p.id}:${p.name}`)
+    .join("|");
   useEffect(() => {
-    if (!peers) return;
+    if (!peers && !additionalPeers?.length) return;
 
-    let options = sortBy([...peers], "name") as Peer[];
+    let options = sortBy([...(peers ?? [])], "name") as Peer[];
 
     if (excludedPeers) {
       options = options.filter((peer) => {
@@ -66,9 +81,11 @@ export function PeerSelector({
       });
     }
 
-    setUnfilteredItems(unionBy(options, unfilteredItems, "id"));
+    setUnfilteredItems(
+      unionBy([...(additionalPeers ?? []), ...options], unfilteredItems, "id"),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [peers]);
+  }, [peers, additionalKey]);
 
   const togglePeer = (peer: Peer) => {
     const isSelected = value && value.id == peer.id;
@@ -126,7 +143,7 @@ export function PeerSelector({
                     "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-1 font-mono text-[10px]"
                   }
                 >
-                  {value.ip}
+                  {addressOf(value)}
                 </div>
               </div>
             ) : (
@@ -173,10 +190,7 @@ export function PeerSelector({
               items={filteredItems}
               estimatedItemHeight={37}
               onSelect={(item) => {
-                const isSupported = isRoutingPeerSupported(
-                  item.version,
-                  item.os,
-                );
+                const isSupported = supportsRouting(item);
                 if (
                   !isSupported ||
                   (!!item.id && disabledPeers?.includes(item.id))
@@ -185,10 +199,7 @@ export function PeerSelector({
                 togglePeer(item);
               }}
               renderItem={(option) => {
-                const isSupported = isRoutingPeerSupported(
-                  option.version,
-                  option.os,
-                );
+                const isSupported = supportsRouting(option);
                 const isDisabled =
                   isSupported &&
                   !!option.id &&
@@ -255,7 +266,7 @@ export function PeerSelector({
                         isDisabled && "opacity-40",
                       )}
                     >
-                      {option.ip}
+                      {addressOf(option)}
                     </div>
                   </FullTooltip>
                 );
