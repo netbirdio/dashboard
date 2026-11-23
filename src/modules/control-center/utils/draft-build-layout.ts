@@ -161,7 +161,8 @@ export const applyDraftBuildLayout = (
         n.type === "groupNode" ||
         n.type === "resourceNode" ||
         n.type === "peerNode" ||
-        n.type === "providerNode"),
+        n.type === "providerNode" ||
+        n.type === "exitNodeNode"),
   );
   if (destColumn.length > 0) {
     // Ordered by the first policy that targets the node, NOT creation order.

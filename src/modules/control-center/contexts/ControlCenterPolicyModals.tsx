@@ -35,6 +35,10 @@ import {
 } from "@/modules/agent-network/data/mockData";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import {
+  buildExitNodeNodeData,
+  exitNodeNodeId,
+} from "@/modules/control-center/hooks/views/types";
 import { EditExitNodeModal } from "@/modules/exit-nodes/PeerExitNodeModal";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
@@ -102,7 +106,7 @@ export function ControlCenterPolicyProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { policies, peers, networkResources, networks, groups } =
+  const { policies, peers, networkResources, networks, groups, exitNodes } =
     useControlCenterData();
   const { nodes, refreshLiveViewRef } = useCanvasState();
   const { isDraft } = useDraftMode();
@@ -622,7 +626,22 @@ export function ControlCenterPolicyProvider({
 
     const destResource = rule.destinationResource;
     if (destResource?.id) {
-      if (destResource.type === "peer") {
+      if (destResource.type === "exit_node") {
+        // The card stays even for an unknown exit node, so the edge always
+        // has a target (as in the live views).
+        const nodeId = exitNodeNodeId(destResource.id);
+        if (
+          ensureNode(
+            nodeId,
+            "exitNodeNode",
+            buildExitNodeNodeData(destResource.id, exitNodes, peers),
+            nextDestPosition(),
+          )
+        ) {
+          newDestCount++;
+        }
+        destNodeIds.push(nodeId);
+      } else if (destResource.type === "peer") {
         const peer = peers?.find((p) => p.id === destResource.id);
         if (peer) {
           const nodeId = `peer-${peer.id}`;

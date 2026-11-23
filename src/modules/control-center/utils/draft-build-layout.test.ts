@@ -109,6 +109,7 @@ describe("applyDraftBuildLayout", () => {
     ["peer", "peerNode"],
     ["group", "destinationGroupNode"],
     ["resource", "resourceNode"],
+    ["exit node", "exitNodeNode"],
   ];
 
   cases.forEach(([label, type]) => {

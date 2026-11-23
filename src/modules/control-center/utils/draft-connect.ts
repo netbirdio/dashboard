@@ -52,9 +52,12 @@ type NodeInfo =
   | { kind: "network"; id: string }
   | { kind: "policy"; id: string }
   | { kind: "agentPolicy"; id: string }
-  | { kind: "provider"; id: string };
+  | { kind: "provider"; id: string }
+  | { kind: "exitNode"; id: string };
 
 export const parseNodeId = (id: string): NodeInfo | undefined => {
+  if (id.startsWith("exit-node-"))
+    return { kind: "exitNode", id: id.replace("exit-node-", "") };
   if (id.startsWith("peer-"))
     return { kind: "peer", id: id.replace("peer-", "") };
   if (id.startsWith("dest-group-")) return { kind: "group", id };
@@ -126,6 +129,17 @@ export function handleDraftConnect(
   const findResource = (id: string): NetworkResource | undefined =>
     networkResources?.find((r) => r.id === id) ??
     getDraftResource(currentNodes.find((n) => n.id === `resource-${id}`));
+
+  // Exit nodes resolve from their card: its data carries the name, and a
+  // draft-created exit node exists nowhere else yet.
+  const findExitNode = (
+    id: string,
+  ): { id: string; name: string } | undefined => {
+    const data = currentNodes.find((n) => n.id === `exit-node-${id}`)?.data as
+      | { id?: string; name?: string }
+      | undefined;
+    return data?.id ? { id: data.id, name: data.name ?? "" } : undefined;
+  };
 
   const scopeForFrame = (frameId: string) => {
     const resourceIdSet = new Set<string>();
@@ -370,6 +384,33 @@ export function handleDraftConnect(
     });
   };
 
+  // Exit nodes are destinations only, like resources.
+  const addExitNodeToPolicy = (
+    policyNodeId: string,
+    exitNodeId: string,
+    side: "sources" | "destinations",
+  ) => {
+    if (side !== "destinations") return;
+    const policyNode = currentNodes.find((n) => n.id === policyNodeId);
+    const policy = (policyNode?.data as any)?.policy as Policy | undefined;
+    const rule = policy?.rules?.[0];
+    if (!policy || !rule) return;
+    if (rule.destinationResource) return;
+    if (((rule.destinations as unknown[]) ?? []).length > 0) return;
+    const exitNode = findExitNode(exitNodeId);
+    if (!exitNode) return;
+    updateDraftPolicy({
+      ...policy,
+      rules: [
+        {
+          ...rule,
+          destinationResource: { id: exitNode.id, type: "exit_node" },
+        },
+        ...(policy.rules?.slice(1) ?? []),
+      ],
+    });
+  };
+
   // The policy's left handle ("sl") adds a source, the right one a destination.
   if (sourceInfo.kind === "policy") {
     const side = connection.sourceHandle?.startsWith("sl")
@@ -381,6 +422,8 @@ export function handleDraftConnect(
       addPeerToPolicy(source, targetInfo.id, side);
     else if (targetInfo.kind === "resource")
       addResourceToPolicy(source, targetInfo.id, side);
+    else if (targetInfo.kind === "exitNode")
+      addExitNodeToPolicy(source, targetInfo.id, side);
     return;
   }
 
@@ -395,8 +438,51 @@ export function handleDraftConnect(
       addPeerToPolicy(target, sourceInfo.id, side);
     else if (sourceInfo.kind === "resource")
       addResourceToPolicy(target, sourceInfo.id, side);
+    else if (sourceInfo.kind === "exitNode")
+      addExitNodeToPolicy(target, sourceInfo.id, side);
     return;
   }
+
+  // Exit nodes are destinations only, so this drag opens the modal with the
+  // roles flipped, as for resources below.
+  if (sourceInfo.kind === "exitNode") {
+    if (targetInfo.kind !== "peer" && targetInfo.kind !== "group") return;
+    const exitNode = findExitNode(sourceInfo.id);
+    if (!exitNode) return;
+
+    setPolicySourceResource(undefined);
+    setPolicySourceGroups([]);
+    setPolicyDestinationGroups([]);
+    deps.setPolicyDestinationScope?.(undefined);
+    setPolicyDestinationResource({ id: exitNode.id, type: "exit_node" });
+
+    let flipSourceName: string | undefined;
+    if (targetInfo.kind === "peer") {
+      const peer = findPeer(targetInfo.id);
+      if (!peer?.id) return;
+      setPolicySourceResource({ id: peer.id, type: "peer" });
+      flipSourceName = peer.name;
+    } else {
+      const group = findGroup(targetInfo.id);
+      if (!group) return;
+      setPolicySourceGroups([group]);
+      flipSourceName = group.name;
+    }
+    setPolicyInitialName(
+      flipSourceName && exitNode.name
+        ? `${flipSourceName} to ${exitNode.name}`
+        : "",
+    );
+    setCreatePolicyModal(true);
+    return;
+  }
+  // Nothing else connects to an exit node from the left of a policy.
+  if (
+    targetInfo.kind === "exitNode" &&
+    sourceInfo.kind !== "peer" &&
+    sourceInfo.kind !== "group"
+  )
+    return;
 
   // Resources are destinations only, so this drag opens the modal with the
   // roles flipped.
@@ -489,6 +575,12 @@ export function handleDraftConnect(
         type: resource.type ?? "host",
       });
       destName = resource.name;
+    }
+  } else if (targetInfo.kind === "exitNode") {
+    const exitNode = findExitNode(targetInfo.id);
+    if (exitNode) {
+      setPolicyDestinationResource({ id: exitNode.id, type: "exit_node" });
+      destName = exitNode.name;
     }
   }
 

@@ -814,3 +814,79 @@ describe("handleDraftConnect — agent network", () => {
     expect(deps.updateDraftAgentPolicy).not.toHaveBeenCalled();
   });
 });
+
+describe("exit nodes in policies (destination only)", () => {
+  const exitNodeCard = node("exit-node-en1", "exitNodeNode", {
+    id: "en1",
+    name: "EU Egress",
+  });
+  const blankPolicyNode = () =>
+    node("policy-new-1", "policyNode", { policy: makePolicy("new-1") });
+
+  it("group → exit node prefills it as the destination", () => {
+    const deps = makeDeps([exitNodeCard]);
+    handleDraftConnect(connect("group-g-dev", "exit-node-en1"), deps);
+    expect(deps.setPolicySourceGroups).toHaveBeenLastCalledWith([groupDev]);
+    expect(deps.setPolicyDestinationResource).toHaveBeenLastCalledWith({
+      id: "en1",
+      type: "exit_node",
+    });
+    expect(deps.setPolicyInitialName).toHaveBeenCalledWith(
+      "Developers to EU Egress",
+    );
+    expect(deps.setCreatePolicyModal).toHaveBeenCalledWith(true);
+  });
+
+  it("an exit node dragged toward a peer still lands as the DESTINATION", () => {
+    const deps = makeDeps([exitNodeCard]);
+    handleDraftConnect(connect("exit-node-en1", "peer-a"), deps);
+    expect(deps.setPolicySourceResource).toHaveBeenLastCalledWith({
+      id: "a",
+      type: "peer",
+    });
+    expect(deps.setPolicyDestinationResource).toHaveBeenLastCalledWith({
+      id: "en1",
+      type: "exit_node",
+    });
+    expect(deps.updateDraftPolicy).not.toHaveBeenCalled();
+  });
+
+  it("policy's right handle → exit node sets the destination", () => {
+    const deps = makeDeps([exitNodeCard, blankPolicyNode()]);
+    handleDraftConnect(connect("policy-new-1", "exit-node-en1", "sr"), deps);
+    const updated = deps.updateDraftPolicy.mock.calls[0][0] as Policy;
+    expect(updated.rules[0].destinationResource).toEqual({
+      id: "en1",
+      type: "exit_node",
+    });
+  });
+
+  it("an exit node never lands on a policy's source side", () => {
+    const deps = makeDeps([exitNodeCard, blankPolicyNode()]);
+    handleDraftConnect(connect("exit-node-en1", "policy-new-1", "sr"), deps);
+    handleDraftConnect(connect("policy-new-1", "exit-node-en1", "sl"), deps);
+    expect(deps.updateDraftPolicy).not.toHaveBeenCalled();
+  });
+
+  it("doesn't replace a destination the policy already has", () => {
+    const policy = makePolicy("new-1", { destinations: [groupAll] });
+    const deps = makeDeps([
+      exitNodeCard,
+      node("policy-new-1", "policyNode", { policy }),
+    ]);
+    handleDraftConnect(connect("policy-new-1", "exit-node-en1", "sr"), deps);
+    expect(deps.updateDraftPolicy).not.toHaveBeenCalled();
+  });
+
+  it("ignores exit node ↔ resource and exit node ↔ exit node", () => {
+    const deps = makeDeps([
+      exitNodeCard,
+      node("exit-node-en2", "exitNodeNode", { id: "en2", name: "US" }),
+    ]);
+    handleDraftConnect(connect("exit-node-en1", "resource-res-1"), deps);
+    handleDraftConnect(connect("exit-node-en1", "exit-node-en2"), deps);
+    handleDraftConnect(connect("resource-res-1", "exit-node-en1"), deps);
+    expect(deps.setCreatePolicyModal).not.toHaveBeenCalled();
+    expect(deps.updateDraftPolicy).not.toHaveBeenCalled();
+  });
+});
