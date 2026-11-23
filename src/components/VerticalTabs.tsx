@@ -134,7 +134,7 @@ function List({ children }: { children: React.ReactNode }) {
           <div
             className={cn(
               "flex flex-nowrap gap-[1px] whitespace-nowrap items-start",
-              "px-4 pt-4 pb-3 lg:p-4 lg:flex-col lg:gap-1",
+              "px-4 pt-3 pb-3 lg:px-3 lg:pt-2.5 lg:pb-4 lg:flex-col lg:gap-0.75",
             )}
           >
             {children}
@@ -182,13 +182,13 @@ function Trigger({
       disabled={disabled}
       data-testid={dataTestId}
       className={cn(
-        "py-2 text-base rounded-md w-full transition-all data-[disabled]:opacity-10",
-        "lg:pl-6 lg:pr-8 pl-4 pr-4 text-center lg:text-left",
+        "py-1.25 text-smd rounded-md w-full transition-all data-[disabled]:opacity-10",
+        "lg:pl-3.5 lg:pr-6.5 px-3 text-center lg:text-left",
         value == currentValue
           ? "bg-nb-gray-920"
           : disabled
           ? ""
-          : "text-nb-gray-500 hover:bg-nb-gray-900/50",
+          : "text-nb-gray-500/85 dark:text-nb-gray-400/90 hover:bg-nb-gray-900/50",
       )}
       value={value}
       onClick={() => {

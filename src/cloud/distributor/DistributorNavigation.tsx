@@ -52,7 +52,7 @@ export const DistributorNavigation = () => {
       />
 
       <SidebarItem
-        icon={<MSPIcon size={17} />}
+        icon={<MSPIcon size={16} />}
         visible={isOwnerOrAdmin}
         label={"Customers"}
         href={"/customers"}

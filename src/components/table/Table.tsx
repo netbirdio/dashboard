@@ -150,7 +150,7 @@ const TableCell = React.forwardRef<
     ref={ref}
     className={cn(
       "align-middle [&:has([role=checkbox])]:pr-0",
-      minimal ? "px-6 pt-2 pb-3" : "p-4",
+      minimal ? "px-6 pt-2 pb-3" : "px-4 py-3",
       inset && "first:pl-[52px]",
       className,
     )}

@@ -24,6 +24,7 @@ import PoliciesProvider from "@/contexts/PoliciesProvider";
 import { Network } from "@/interfaces/Network";
 import PageContainer from "@/layouts/PageContainer";
 import AIProvidersProvider from "@/modules/agent-network/AIProvidersProvider";
+import { CanvasAgentBridge } from "@/modules/control-center/agent/CanvasAgentBridge";
 import {
   CanvasStateProvider,
   ControlCenterUIProvider,
@@ -53,6 +54,7 @@ import { PeersToolbar } from "@/modules/control-center/draft/PeersToolbar";
 import { ConnectionLine } from "@/modules/control-center/edges/ConnectionLine";
 import { ControlCenterEmptyStates } from "@/modules/control-center/header/ControlCenterEmptyStates";
 import { ControlCenterHeader } from "@/modules/control-center/header/ControlCenterHeader";
+import { useAssistantPanelPan } from "@/modules/control-center/hooks/useAssistantPanelPan";
 import { useDraft } from "@/modules/control-center/hooks/useDraft";
 import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
 import { useDrillDownBrowserHistory } from "@/modules/control-center/hooks/useDrillDownBrowserHistory";
@@ -126,6 +128,7 @@ function ControlCenterCanvas() {
   const { onNodeDragStart, onNodeDrag, onNodeDragStop } = useDragToGroup();
   useDrillDownBrowserHistory();
   useGroupFocusDim();
+  useAssistantPanelPan();
 
   const { mutate } = useSWRConfig();
   const onLiveNetworkCreated = React.useCallback(
@@ -266,6 +269,7 @@ function ControlCenterCanvas() {
       <DraftNetworkDestinationModal />
       <DraftNetworkEditModal />
       <DraftLeaveGuard />
+      <CanvasAgentBridge onConnect={draft.onNodeConnect} />
       <ReactFlow
         className={highlightArmed ? "cc-focus-armed" : undefined}
         edges={canvas.edges}

@@ -26,6 +26,8 @@ interface Config {
   // agentNetworkEnabled: the regular UI plus the Agent Network menu item (Beta).
   agentNetworkOnly: boolean;
   agentNetworkEnabled: boolean;
+  // Empty disables the assistant; there is no separate flag.
+  assistantApiOrigin: string;
   hubspotPortalId?: string;
   hubspotSignupFormId?: string;
   hubspotOnboardingFormId?: string;
@@ -95,6 +97,10 @@ const loadConfig = (): Config => {
     cloud: configJson?.cloud === "true",
     agentNetworkOnly: configJson?.agentNetworkOnly === "true",
     agentNetworkEnabled: configJson?.agentNetworkEnabled === "true",
+    assistantApiOrigin: (configJson?.assistantApiOrigin || "").replace(
+      /\/+$/,
+      "",
+    ),
     hubspotPortalId: configJson?.hubspotPortalId || undefined,
     hubspotSignupFormId: configJson?.hubspotSignupFormId || undefined,
     hubspotOnboardingFormId: configJson?.hubspotOnboardingFormId || undefined,
