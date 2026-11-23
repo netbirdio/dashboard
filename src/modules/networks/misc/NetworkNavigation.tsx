@@ -22,6 +22,13 @@ export const NetworkNavigation = () => {
         visible={permission.networks.read}
       />
       <SidebarItem
+        label={"Site-to-Site"}
+        isChild
+        href={"/site-to-site"}
+        exactPathMatch={true}
+        visible={permission.networks.read && permission.policies.read}
+      />
+      <SidebarItem
         label={"Routes"}
         isChild
         href={"/network-routes"}
