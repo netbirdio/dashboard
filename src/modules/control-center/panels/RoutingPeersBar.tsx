@@ -13,6 +13,7 @@ import Skeleton from "react-loading-skeleton";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { getIpPlaceholderFromRange } from "@/modules/control-center/utils/helpers";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 
 export const RoutingPeersIndicator = ({
@@ -61,6 +62,7 @@ export type RoutingPeerRow = {
   isGroup: boolean;
   peersCount?: number;
   enabled: boolean;
+  pendingInstall?: boolean;
   // Rows without one are read-only.
   onEdit?: () => void;
 };
@@ -173,7 +175,7 @@ export const RoutingPeersBar = ({
             }}
             className={cn(
               "flex items-center gap-2 pl-3.5 pr-3 text-xs text-gray-400 whitespace-nowrap outline-none",
-              "hover:text-white hover:bg-nb-gray-910 transition-colors",
+              "hover:text-nb-gray-50 dark:hover:text-white hover:bg-nb-gray-910 transition-colors",
             )}
           >
             <RoutingPeersIndicator
@@ -257,6 +259,15 @@ export const RoutingPeersBar = ({
                     {row.peersCount !== undefined &&
                       ` (${singularize("Peers", row.peersCount, true)})`}
                   </span>
+                  {row.pendingInstall && (
+                    <span
+                      className={
+                        "shrink-0 font-mono text-[10px] font-normal text-nb-gray-400"
+                      }
+                    >
+                      {getIpPlaceholderFromRange()}
+                    </span>
+                  )}
                   {row.onEdit && (
                     <SquarePenIcon
                       size={13}
@@ -283,7 +294,7 @@ export const RoutingPeersBar = ({
           className={cn(
             "flex items-center gap-1.5 px-3 text-xs whitespace-nowrap outline-none",
             "border-l border-gray-700/40 text-gray-400",
-            "hover:text-white hover:bg-nb-gray-910 transition-colors",
+            "hover:text-nb-gray-50 dark:hover:text-white hover:bg-nb-gray-910 transition-colors",
           )}
         >
           <CirclePlusIcon size={12} className={"shrink-0"} />

@@ -22,7 +22,7 @@ export const PolicyDirectionBadge = ({
       <LongArrowBidirectionalIcon
         size={60}
         autoHeight={true}
-        className={"fill-green-500"}
+        className={"fill-green-600 dark:fill-green-500"}
       />
     </Badge>
   ) : (
@@ -30,7 +30,10 @@ export const PolicyDirectionBadge = ({
       <LongArrowLeftIcon
         size={60}
         autoHeight={true}
-        className={cn("fill-sky-400", !reverse && "rotate-180")}
+        className={cn(
+          "fill-sky-600 dark:fill-sky-400",
+          !reverse && "rotate-180",
+        )}
       />
     </Badge>
   );

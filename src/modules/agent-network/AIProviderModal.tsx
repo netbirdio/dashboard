@@ -19,7 +19,6 @@ import Paragraph from "@components/Paragraph";
 import { SelectDropdown } from "@components/select/SelectDropdown";
 import SettingCard from "@components/SettingCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
-import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
 import {
   AlertCircleIcon,
@@ -46,11 +45,6 @@ import React, {
   useState,
 } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
-import { usePermissions } from "@/contexts/PermissionsProvider";
-import {
-  ReverseProxyDomain,
-  ReverseProxyDomainType,
-} from "@/interfaces/ReverseProxy";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import {
   type ProviderConnectInput,
@@ -61,6 +55,7 @@ import {
   AIProviderId,
   ProviderModel,
 } from "@/modules/agent-network/data/mockData";
+import { useBootstrapCluster } from "@/modules/agent-network/useBootstrapCluster";
 import { useDiscoveredModels } from "@/modules/agent-network/useDiscoveredModels";
 import { useProviderCatalog } from "@/modules/agent-network/useProviderCatalog";
 
@@ -216,11 +211,8 @@ export default function AIProviderModal({
     providers,
     addProvider,
     updateProvider,
-    settings,
-    settingsLoading,
     bootstrapAgentNetworkSettings,
   } = useAIProviders();
-  const { permission } = usePermissions();
   const { confirm } = useDialog();
 
   const isEdit = !!provider;
@@ -250,21 +242,13 @@ export default function AIProviderModal({
   // via an explicit POST. We auto-pick a proxy cluster from the live /domains
   // response and, when the account isn't bootstrapped yet, POST it as the
   // settings proxy_address right before the first provider create.
-  const settingsBootstrapped = !!settings;
-
-  // /reverse-proxies/domains is guarded by the Services module, which the
-  // delegated Agent Network roles don't hold — calling it for them only yields
-  // a 403. The list is needed for the one-time bootstrap cluster pick, so skip
-  // the request once the account is bootstrapped or the role can't read it.
-  const canReadDomains = !!permission.services?.read;
-  const { data: domains, isLoading: domainsLoading } = useFetchApi<
-    ReverseProxyDomain[]
-  >(
-    "/reverse-proxies/domains",
-    true,
-    true,
-    canReadDomains && !settingsBootstrapped && !settingsLoading,
-  );
+  const {
+    bootstrapped: settingsBootstrapped,
+    canReadDomains,
+    cluster: bootstrapCluster,
+    noClustersAvailable,
+    clustersLackPrivateCapability,
+  } = useBootstrapCluster();
   const { catalog: catalogList, getById } = useProviderCatalog();
 
   const [tab, setTab] = useState<string>("provider");
@@ -389,52 +373,6 @@ export default function AIProviderModal({
       setTab("provider");
     }
   }, [showMappings, tab]);
-
-  const validatedClusters = useMemo(
-    () =>
-      (domains ?? []).filter(
-        (d) => d.type === ReverseProxyDomainType.FREE && d.validated,
-      ),
-    [domains],
-  );
-  // Not every live cluster can host the endpoint. The agent network gateway is
-  // a private service — reachable only from connected peers, authenticated by
-  // their tunnel identity — so it needs a cluster with private capabilities.
-  // supports_private is the flag for that, the same one the Reverse Proxy
-  // modal gates NetBird-Only Access on, and management refuses a bootstrap
-  // onto a cluster reporting it false. Picking
-  // from the filtered list keeps the wizard from proposing a cluster the API
-  // rejects — and the endpoint it assigns is immutable, so a wrong pick is not
-  // something the operator can edit away afterwards.
-  //
-  // Only an explicit false disqualifies a cluster: a management build that
-  // predates the flag reports nothing at all, and dropping every cluster there
-  // would block setup on a backend that would have accepted it — the same
-  // "nothing to judge" reading the server applies to an unreported capability.
-  const bootstrapClusters = useMemo(
-    () => validatedClusters.filter((d) => d.supports_private !== false),
-    [validatedClusters],
-  );
-  // Wait for both requests before claiming there is nothing to pick, otherwise
-  // the warning flashes while the settings row is still loading.
-  const noClustersAvailable =
-    !settingsBootstrapped &&
-    !settingsLoading &&
-    !domainsLoading &&
-    bootstrapClusters.length === 0;
-  // Clusters exist, but none of them has private capabilities: a different
-  // problem from having no proxy at all, and a different fix, so it gets its
-  // own message rather than "connect a proxy".
-  const clustersLackPrivateCapability =
-    noClustersAvailable && validatedClusters.length > 0;
-
-  // The cluster the first create will bootstrap onto: the first usable one
-  // once the /domains response lands, empty until then. Derived rather than
-  // held in state — there is no picker, so state could only ever mirror this
-  // list, and an effect writing it back would just add a render pass. Only
-  // matters for the first-create flow; once settings is bootstrapped no
-  // further bootstrap happens (and /domains is not even fetched).
-  const bootstrapCluster = bootstrapClusters[0]?.domain ?? "";
 
   // Seed the upstream URL from the catalog entry once it lands — the
   // catalog is fetched async, so on first render `getById("openai_api")`
@@ -887,9 +825,12 @@ export default function AIProviderModal({
       <ModalContent
         maxWidthClass={"max-w-2xl"}
         data-testid={"agent-network-provider-modal"}
+        // A stray outside click must not discard the typed API key,
+        // which the API never returns.
+        onInteractOutside={(e) => e.preventDefault()}
       >
         <ModalHeader
-          icon={<Sparkles size={18} className={"text-netbird"} />}
+          icon={<Sparkles size={18} />}
           title={isEdit ? "Edit Provider" : "Connect Provider"}
           description={
             isEdit

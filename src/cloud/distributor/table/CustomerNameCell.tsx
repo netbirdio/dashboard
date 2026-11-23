@@ -1,3 +1,4 @@
+import { getAvatarStyle } from "@utils/avatar";
 import { cn, generateColorFromString } from "@utils/helpers";
 import { CircleAlertIcon, Clock } from "lucide-react";
 import * as React from "react";
@@ -19,11 +20,9 @@ export const CustomerNameCell = ({ customer }: Props) => {
     <div className={cn("flex gap-3 px-2 py-1 items-center")}>
       <div
         className={
-          "w-10 h-10 bg-nb-gray-900 border-nb-gray-800 flex items-center shrink-0 rounded-full justify-center text-sm font-medium relative uppercase"
+          "initials-avatar w-10 h-10 bg-nb-gray-900 border-nb-gray-800 flex items-center shrink-0 rounded-full justify-center text-sm font-medium relative uppercase"
         }
-        style={{
-          color: generateColorFromString(customer.name),
-        }}
+        style={getAvatarStyle(generateColorFromString(customer.name))}
       >
         <span>{customer.name.charAt(0)}</span>
         <AvatarBadge isActive={isActive} isTrialExpired={isTrialExpired} />

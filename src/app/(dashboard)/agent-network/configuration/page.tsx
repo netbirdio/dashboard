@@ -1,6 +1,5 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
@@ -10,7 +9,6 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { ExternalLinkIcon, Gauge, ScrollText, ServerIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { lazy, Suspense, useMemo } from "react";
-import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -87,7 +85,7 @@ export default function AgentNetworkConfigurationPage() {
           <GroupsProvider>
             <PeersProvider>
               <AIProvidersProvider>
-                <div className={"border-l border-nb-gray-930 w-full"}>
+                <div className={"w-full"}>
                   <Tabs.Content
                     value={TAB_BUDGET_SETTINGS}
                     className={"w-full"}
@@ -160,14 +158,6 @@ function ConfigTabHeader({
 }) {
   return (
     <div className={"p-default py-6"}>
-      <Breadcrumbs>
-        <Breadcrumbs.Item
-          href={"/agent-network/providers"}
-          label={"Agent Network"}
-          icon={<AgentNetworkIcon size={16} />}
-        />
-        <Breadcrumbs.Item href={href} label={label} active />
-      </Breadcrumbs>
       <h1>{label}</h1>
       {children && <Paragraph>{children}</Paragraph>}
     </div>

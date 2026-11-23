@@ -22,8 +22,16 @@ import ApplicationProvider, {
 import BillingProvider from "@/contexts/BillingProvider";
 import CountryProvider from "@/contexts/CountryProvider";
 import GroupsProvider from "@/contexts/GroupsProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import UsersProvider from "@/contexts/UsersProvider";
+import { PANEL_ON_LEFT, PANEL_WIDTH } from "@/interfaces/Assistant";
 import Navigation from "@/layouts/Navigation";
+import { AssistantChatContextProvider } from "@/modules/assistant/AssistantChatContextProvider";
+import {
+  AssistantSidebarProvider,
+  useAssistantSidebar,
+} from "@/modules/assistant/AssistantSidebarProvider";
+import AssistantChatPanel from "@/modules/assistant/chat/AssistantChatPanel";
 import { OnboardingProvider } from "@/modules/onboarding/OnboardingProvider";
 import Header, { headerHeight } from "./Header";
 
@@ -41,9 +49,13 @@ export default function DashboardLayout({
               <BillingProvider>
                 <GroupsProvider>
                   <CountryProvider>
-                    <NetBirdCloudProvider />
-                    {!isNetBirdCloud() && <OnboardingProvider />}
-                    <DashboardPageContent>{children}</DashboardPageContent>
+                    <AssistantSidebarProvider>
+                      <AssistantChatContextProvider>
+                        <NetBirdCloudProvider />
+                        {!isNetBirdCloud() && <OnboardingProvider />}
+                        <DashboardPageContent>{children}</DashboardPageContent>
+                      </AssistantChatContextProvider>
+                    </AssistantSidebarProvider>
                   </CountryProvider>
                 </GroupsProvider>
               </BillingProvider>
@@ -55,6 +67,28 @@ export default function DashboardLayout({
   );
 }
 
+function useIsResizing(): boolean {
+  const [resizing, setResizing] = React.useState(false);
+
+  React.useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+
+    const onResize = () => {
+      setResizing(true);
+      clearTimeout(timeout);
+      timeout = setTimeout(() => setResizing(false), 150);
+    };
+
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      clearTimeout(timeout);
+    };
+  }, []);
+
+  return resizing;
+}
+
 function DashboardPageContent({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -62,125 +96,169 @@ function DashboardPageContent({
   const { mobileNavOpen, toggleMobileNav } = useApplicationContext();
   const isSm = useIsSm();
   const isXs = useIsXs();
-  // The sidebar renders for every role: Peers is visible to all of them, so
-  // there is always at least one item, and each remaining item decides for
-  // itself in Navigation. Gating the sidebar itself here once emptied it for
-  // the limited (user role) view, whose items were the Agent Network ones.
+  const { isRestricted } = usePermissions();
+
   const navOpenPageWidth = isSm ? "45%" : isXs ? "60%" : "80%";
   const { bannerHeight } = useAnnouncement();
+  const { reveal, inset, open, overlay } = useAssistantSidebar();
+  const resizing = useIsResizing();
+
   return (
-    <div className={cn("flex flex-col h-screen", mobileNavOpen && "flex")}>
-      {mobileNavOpen && (
-        <motion.div
-          className={"h-screen bg-nb-gray-950 w-11/12 max-w-[22rem]"}
-          layout={true}
-          transition={{
-            type: "spring",
-            stiffness: 100,
-            bounce: 0.8,
-            damping: 10,
-            mass: 0.4,
-          }}
-          animate={{
-            x: 0,
-          }}
-          initial={{
-            x: -200,
-          }}
-        >
-          <div
-            className={
-              "flex items-center justify-between gap-3 pl-4 pr-8 pt-8 pb-3 w-11/12"
-            }
-          >
-            <div className={"flex items-center gap-3 max-w-[22rem]"}>
-              <UserAvatar size={"small"} />
-              <div className="flex flex-col space-y-1">
-                <p className="font-medium leading-none dark:text-gray-300">
-                  {user?.name}
-                </p>
-                <p className="text-xs leading-none dark:text-gray-400">
-                  {user?.email}
-                </p>
-              </div>
-            </div>
-            <Button
-              className={"!px-3"}
-              variant={"default-outline"}
-              size={"xs"}
-              onClick={toggleMobileNav}
-            >
-              <div>
-                <XIcon size={16} className={"relative"} />
-              </div>
-            </Button>
-          </div>
-          <Navigation fullWidth />
-        </motion.div>
-      )}
-      <AnimatePresence mode={"wait"}>
-        <motion.div
-          layout={"position"}
-          className={cn(
-            mobileNavOpen
-              ? "border border-nb-gray-900 shadow-inner overflow-hidden rounded-xl fixed scale-75"
-              : "",
-          )}
-          transition={{
-            type: "spring",
-            stiffness: 500,
-            damping: 25,
-            duration: 0.45,
-            mass: 0.1,
-          }}
-          animate={{
-            x: mobileNavOpen ? navOpenPageWidth : 0,
-            width: "100%",
-            height: mobileNavOpen ? "90vh" : "auto",
-            y: mobileNavOpen ? "6.5%" : 0,
-          }}
-        >
+    <>
+      {!isRestricted && <AssistantChatPanel />}
+
+      {/*
+        A sibling of the panel, not a parent: the animated subtree below applies
+        transforms, which would capture the panel's `position: fixed`.
+      */}
+      <div
+        // On a narrow screen the panel covers the whole page,
+        // and the controls under it must not take focus.
+        inert={!isRestricted && open && overlay ? true : undefined}
+        className={cn(
+          "relative z-10",
+          // Not `transition-all`: that also animates the border, which flashes
+          // as the panel opens.
+          "transition-[margin,height] duration-300 ease-out",
+          // The height derives from `100vh`, so a resize would otherwise lag
+          // behind the window edge.
+          resizing && "transition-none",
+          // Only while revealed, so the closed layout has no clipping that
+          // could cut off a non-portaled dropdown.
+          reveal &&
+            "overflow-hidden rounded-2xl border border-nb-gray-900 bg-nb-gray-950 shadow-2xl",
+        )}
+        style={{
+          marginTop: inset,
+          marginBottom: inset,
+          marginLeft: PANEL_ON_LEFT && reveal ? PANEL_WIDTH : inset,
+          marginRight: !PANEL_ON_LEFT && reveal ? PANEL_WIDTH : inset,
+          height: `calc(100vh - ${inset * 2}px)`,
+        }}
+      >
+        <div className={cn("flex flex-col h-full", mobileNavOpen && "flex")}>
           {mobileNavOpen && (
             <motion.div
-              onClick={toggleMobileNav}
               className={
-                "absolute w-full h-full bg-black z-[999] transition-all opacity-0"
+                "h-screen bg-nb-gray dark:bg-nb-gray-950 w-11/12 max-w-[22rem]"
               }
-              animate={{
-                opacity: 0.2,
+              layout={true}
+              transition={{
+                type: "spring",
+                stiffness: 100,
+                bounce: 0.8,
+                damping: 10,
+                mass: 0.4,
               }}
-            ></motion.div>
-          )}
-          <motion.div
-            layout={"position"}
-            className={"relative"}
-            animate={{
-              scale: mobileNavOpen ? 0.75 : 1,
-              height: mobileNavOpen ? "90vh" : "auto",
-              originX: 0,
-              originY: 0,
-            }}
-            transition={{
-              type: "spring",
-              duration: 0.45,
-              stiffness: 500,
-              damping: 25,
-              mass: 0.1,
-            }}
-          >
-            <Header />
-            <div
-              className={"flex flex-row flex-grow"}
-              style={{
-                height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
+              animate={{
+                x: 0,
+              }}
+              initial={{
+                x: -200,
               }}
             >
-              <Navigation hideOnMobile />
-              <React.Fragment key={"page"}>{children}</React.Fragment>
-            </div>
-          </motion.div>
-        </motion.div>
-      </AnimatePresence>
-    </div>
+              <div
+                className={
+                  "flex items-center justify-between gap-3 pl-4 pr-8 pt-8 pb-3 w-11/12"
+                }
+              >
+                <div className={"flex items-center gap-3 max-w-[22rem]"}>
+                  <UserAvatar size={"small"} />
+                  <div className="flex flex-col space-y-1">
+                    <p className="font-medium leading-none dark:text-gray-300">
+                      {user?.name}
+                    </p>
+                    <p className="text-xs leading-none dark:text-gray-400">
+                      {user?.email}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  className={"!px-3"}
+                  variant={"default-outline"}
+                  size={"xs"}
+                  onClick={toggleMobileNav}
+                >
+                  <div>
+                    <XIcon size={16} className={"relative"} />
+                  </div>
+                </Button>
+              </div>
+              <Navigation fullWidth />
+            </motion.div>
+          )}
+          <AnimatePresence mode={"wait"}>
+            <motion.div
+              layout={"position"}
+              className={cn(
+                mobileNavOpen
+                  ? "border border-nb-gray-900 shadow-inner overflow-hidden rounded-xl fixed scale-75"
+                  : "",
+              )}
+              transition={{
+                type: "spring",
+                stiffness: 500,
+                damping: 25,
+                duration: 0.45,
+                mass: 0.1,
+              }}
+              animate={{
+                x: mobileNavOpen ? navOpenPageWidth : 0,
+                width: "100%",
+                height: mobileNavOpen ? "90vh" : "auto",
+                y: mobileNavOpen ? "6.5%" : 0,
+              }}
+            >
+              {mobileNavOpen && (
+                <motion.div
+                  onClick={toggleMobileNav}
+                  className={
+                    "absolute w-full h-full bg-black z-[999] transition-all opacity-0"
+                  }
+                  animate={{
+                    opacity: 0.2,
+                  }}
+                ></motion.div>
+              )}
+              <motion.div
+                layout={"position"}
+                className={"relative"}
+                animate={{
+                  scale: mobileNavOpen ? 0.75 : 1,
+                  height: mobileNavOpen ? "90vh" : "auto",
+                  originX: 0,
+                  originY: 0,
+                }}
+                transition={{
+                  type: "spring",
+                  duration: 0.45,
+                  stiffness: 500,
+                  damping: 25,
+                  mass: 0.1,
+                }}
+              >
+                <Header />
+                <div
+                  className={"relative flex flex-row flex-grow"}
+                  style={{
+                    height: `calc(100vh - ${
+                      headerHeight + bannerHeight + inset * 2
+                    }px)`,
+                  }}
+                >
+                  {/*
+                    Renders for every role: Peers is visible to all of them, so
+                    there is always at least one item, and each remaining item
+                    decides for itself in Navigation.
+                  */}
+                  <Navigation hideOnMobile />
+                  <React.Fragment key={"page"}>{children}</React.Fragment>
+                </div>
+              </motion.div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+    </>
   );
 }

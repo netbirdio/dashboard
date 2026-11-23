@@ -41,7 +41,7 @@ export const PolicyCountBadge = ({
       useHover={false}
       disabled={!canConfigure}
       className={
-        "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] !px-2 min-w-[50px] hover:bg-nb-gray-930 transition-all"
+        "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] !px-2 min-w-[50px] hover:bg-nb-gray-930 dark:hover:bg-nb-gray-930 transition-all"
       }
       onClick={(e) => {
         e.preventDefault();

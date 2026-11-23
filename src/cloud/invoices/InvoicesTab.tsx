@@ -1,4 +1,3 @@
-import Breadcrumbs from "@components/Breadcrumbs";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable, {
   SkeletonTableHeader,
@@ -11,7 +10,6 @@ import { isNetBirdCloud } from "@utils/netbird";
 import { ReceiptTextIcon } from "lucide-react";
 import * as React from "react";
 import { Suspense } from "react";
-import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useDistributor } from "@/cloud/distributor/contexts/DistributorProvider";
 import InvoicesTable from "@/cloud/invoices/table/InvoicesTable";
 import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
@@ -69,20 +67,6 @@ const InvoicesTabContent = () => {
   return (
     <Tabs.Content value={"invoices"} data-testid="settings-content-invoices">
       <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/settings"}
-            label={"Settings"}
-            icon={<SettingsIcon size={13} />}
-          />
-          <Breadcrumbs.Item
-            href={"/settings?tab=invoices"}
-            label={"Invoices"}
-            icon={<ReceiptTextIcon size={14} />}
-            active
-          />
-        </Breadcrumbs>
-
         <div className={"max-w-3xl mb-4"}>
           <div className={"flex justify-between items-center mb-5"}>
             <div>

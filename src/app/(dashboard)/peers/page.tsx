@@ -1,6 +1,5 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
@@ -9,7 +8,6 @@ import { usePortalElement } from "@hooks/usePortalElement";
 import { ExternalLinkIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { lazy, Suspense, useMemo } from "react";
-import PeerIcon from "@/assets/icons/PeerIcon";
 import useDistributorRedirect from "@/cloud/distributor/useDistributorRedirect";
 import { useBypassedPeers } from "@/cloud/edr/useBypass";
 import PeersProvider, { usePeers } from "@/contexts/PeersProvider";
@@ -90,14 +88,6 @@ function PeersView() {
   return (
     <>
       <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/peers"}
-            label={"Peers"}
-            icon={<PeerIcon size={13} />}
-            active
-          />
-        </Breadcrumbs>
         <h1 ref={headingRef}>Peers</h1>
         <Paragraph>
             User devices and headless machines, such as servers and autonomous agents, connected to your network.{" "}

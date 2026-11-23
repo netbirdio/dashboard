@@ -1,6 +1,9 @@
 FROM alpine:3.24
 
-RUN apk add --no-cache bash ca-certificates gettext nginx tzdata && \
+# Minimum nginx with the fixes for the 2026-11-18 HTTP/2 advisories
+# (CVE-2026-123007, CVE-2026-123633). Fails the build instead of silently
+# installing an older package.
+RUN apk add --no-cache bash ca-certificates gettext 'nginx>=1.30.7' tzdata && \
     rm -rf /var/cache/apk/* && \
     mkdir -p /tmp/nginx
 
