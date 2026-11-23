@@ -1,3 +1,4 @@
+import { IconDirectionSign } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import {
   BotIcon,
@@ -58,6 +59,10 @@ export const changeIcon = (change: DraftChange, size = 14) => {
       return <ShieldIcon size={size} />;
     case "update-user-groups":
       return <UsersIcon size={size} />;
+    case "create-exit-node":
+    case "update-exit-node":
+    case "delete-exit-node":
+      return <IconDirectionSign size={size} />;
     case "install-peer":
       return change.kind === "agent" ? (
         <BotIcon size={size} />

@@ -50,6 +50,7 @@ let permission: Record<string, typeof allRights> = {
   users: { ...allRights },
   "agent_network.providers": { ...allRights },
   "agent_network.policies": { ...allRights },
+  routes: { ...allRights },
 };
 vi.mock("@/contexts/PermissionsProvider", () => ({
   usePermissions: () => ({ permission }),
@@ -142,6 +143,7 @@ beforeEach(() => {
     users: { ...allRights },
     "agent_network.providers": { ...allRights },
     "agent_network.policies": { ...allRights },
+    routes: { ...allRights },
   };
   agentCalls.length = 0;
   agentResults.addProvider = { id: "provider-created" };
@@ -1408,3 +1410,98 @@ function createProviderChange() {
     },
   } as unknown as DraftChange;
 }
+
+describe("exit node changes", () => {
+  const request = {
+    name: "EU Egress",
+    description: "",
+    enabled: true,
+    auto_apply: true,
+    peers: [{ peer_id: "fra", metric: 100, enabled: true }],
+  };
+  const createExitNode = (clientId: string): DraftChange =>
+    ({
+      id: `cen-${clientId}`,
+      type: "create-exit-node",
+      clientId,
+      name: request.name,
+      request,
+    }) as DraftChange;
+  const exitNodePolicy = (exitNodeId: string): DraftChange =>
+    ({
+      id: "cp-1",
+      type: "create-policy",
+      clientId: "new-policy",
+      name: "Devs exit",
+      policy: sidedPolicy("new-policy", {
+        destinations: [],
+        destinationResource: { id: exitNodeId, type: "exit_node" },
+      }),
+    }) as unknown as DraftChange;
+
+  it("creates the exit node before the policy that points at it", async () => {
+    handlers.set("POST /exit-nodes", () => ({ id: "en-real" }));
+    changes = [exitNodePolicy("new-en"), createExitNode("new-en")];
+    const { result } = renderHook(() => useDeployChangeset());
+    await act(async () => void (await result.current.deploy()));
+
+    expect(pathsOf("POST")).toEqual(["/exit-nodes", "/policies"]);
+    const policyCall = calls.find((c) => c.path === "/policies");
+    expect(
+      (policyCall?.body as { rules: { destinationResource: unknown }[] })
+        .rules[0].destinationResource,
+    ).toEqual({ id: "en-real", type: "exit_node" });
+  });
+
+  it("sends the whole exit node on update, and deletes it after its policies", async () => {
+    changes = [
+      {
+        id: "den",
+        type: "delete-exit-node",
+        exitNodeId: "en2",
+        name: "US Egress",
+      } as DraftChange,
+      {
+        id: "dp",
+        type: "delete-policy",
+        policyId: "p-us",
+        name: "US policy",
+      } as DraftChange,
+      {
+        id: "uen",
+        type: "update-exit-node",
+        exitNodeId: "en1",
+        name: request.name,
+        request,
+      } as DraftChange,
+    ];
+    const { result } = renderHook(() => useDeployChangeset());
+    await act(async () => void (await result.current.deploy()));
+
+    expect(calls.map((c) => `${c.method} ${c.path}`)).toEqual([
+      "PUT /exit-nodes/en1",
+      "DELETE /policies/p-us",
+      "DELETE /exit-nodes/en2",
+    ]);
+    expect(calls[0].body).toEqual(request);
+  });
+
+  it("refuses a policy whose draft exit node was never created", async () => {
+    changes = [exitNodePolicy("new-gone")];
+    const { result } = renderHook(() => useDeployChangeset());
+    await act(async () => void (await result.current.deploy()));
+
+    expect(pathsOf("POST")).toEqual([]);
+  });
+
+  it("needs the routes permission to write exit nodes", async () => {
+    permission.routes = { ...allRights, create: false };
+    changes = [createExitNode("new-en")];
+    const { result } = renderHook(() => useDeployChangeset());
+    let ok: boolean | undefined;
+    await act(async () => void (ok = await result.current.deploy()));
+
+    expect(ok).toBe(false);
+    expect(calls).toEqual([]);
+  });
+});

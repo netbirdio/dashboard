@@ -1,3 +1,4 @@
+import { ExitNode } from "@/interfaces/ExitNode";
 import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
 import { normalizeHostCIDR } from "@utils/ip";
@@ -80,6 +81,9 @@ export function useDeployChangeset() {
   const routerRequest = useApiCall<NetworkRouter>("/networks", true);
   const userRequest = useApiCall<User>("/users", true);
   const peerRequest = useApiCall<Peer>("/peers", true);
+  const exitNodeRequest = useApiCall<ExitNode>("/exit-nodes", true);
+  // Draft exit node client ids → real ids, like resources: policies name them.
+  const exitNodeClientToId = useRef(new Map<string, string>());
   const {
     addProvider,
     updateProvider: saveProvider,
@@ -193,12 +197,24 @@ export function useDeployChangeset() {
       });
     };
 
-    // Draft resources deploy before policies, so their "new-…" ids resolve here.
+    const exitNodeClientMap = exitNodeClientToId.current;
+
+    // Draft resources and exit nodes deploy before policies, so their "new-…"
+    // ids resolve here.
     const resolveResource = (
       r?: PolicyRuleResource,
     ): PolicyRuleResource | undefined => {
       if (!r) return undefined;
       if (!r.id.startsWith("new-")) return r;
+      if (r.type === "exit_node") {
+        const exitNodeId = exitNodeClientMap.get(r.id);
+        if (!exitNodeId) {
+          throw new Error(
+            "A referenced exit node is missing. It may have been removed from the draft.",
+          );
+        }
+        return { id: exitNodeId, type: "exit_node" };
+      }
       const created = resourceClientMap.get(r.id);
       if (!created) {
         throw new Error(
@@ -257,7 +273,9 @@ export function useDeployChangeset() {
     // Draft resources in THIS changeset resolve to real ids before policies deploy.
     const trackedResourceClientIds = new Set(
       changes.flatMap((c) =>
-        c.type === "create-resource" ? [c.clientId] : [],
+        c.type === "create-resource" || c.type === "create-exit-node"
+          ? [c.clientId]
+          : [],
       ),
     );
 
@@ -466,6 +484,26 @@ export function useDeployChangeset() {
           await networkRequest.del("", `/${change.networkId}`);
           return;
         }
+        case "create-exit-node": {
+          if (createdId) {
+            await exitNodeRequest.put(change.request, `/${createdId}`);
+            exitNodeClientMap.set(change.clientId, createdId);
+            return;
+          }
+          const saved = await exitNodeRequest.post(change.request);
+          if (!saved?.id) throw new Error("The exit node was not created.");
+          exitNodeClientMap.set(change.clientId, saved.id);
+          createdIds.current.set(change.id, { id: saved.id });
+          return;
+        }
+        case "update-exit-node": {
+          await exitNodeRequest.put(change.request, `/${change.exitNodeId}`);
+          return;
+        }
+        case "delete-exit-node": {
+          await exitNodeRequest.del("", `/${change.exitNodeId}`);
+          return;
+        }
         case "create-provider": {
           if (createdId) {
             const ok = await saveProvider(createdId, change.input);
@@ -665,6 +703,7 @@ export function useDeployChangeset() {
         mutate("/networks"),
         mutate("/networks/resources"),
         mutate("/users?service_user=false"),
+        mutate("/exit-nodes"),
       ]).catch(() => {});
       setIsDeploying(false);
       deployInFlight.current = false;
@@ -678,6 +717,7 @@ export function useDeployChangeset() {
     users,
     peers,
     peerRequest,
+    exitNodeRequest,
     groupRequest,
     policyRequest,
     networkRequest,

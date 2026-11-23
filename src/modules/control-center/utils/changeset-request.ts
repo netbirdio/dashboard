@@ -1,3 +1,5 @@
+import { ExitNode } from "@/interfaces/ExitNode";
+import { toExitNodeRequest } from "@/modules/exit-nodes/exitNodeHelpers";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import loadConfig from "@utils/config";
 import { normalizeHostCIDR } from "@utils/ip";
@@ -47,6 +49,7 @@ export interface LiveData {
   networks?: Network[];
   networkResources?: NetworkResource[];
   peers?: Peer[];
+  exitNodes?: ExitNode[];
   // Lets the preview name draft entities when building id placeholders.
   draftChanges?: DraftChange[];
 }
@@ -344,9 +347,12 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
     (live.groups ?? []).map((g) => g.id).filter(Boolean) as string[],
   );
   const draftResourceNames = new Map<string, string>();
+  const draftExitNodeNames = new Map<string, string>();
   live.draftChanges?.forEach((c) => {
     if (c.type === "create-resource")
       draftResourceNames.set(c.clientId, c.name);
+    if (c.type === "create-exit-node")
+      draftExitNodeNames.set(c.clientId, c.name);
   });
 
   const resolveGroupRef = (ref: string) => {
@@ -363,6 +369,11 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
       ),
     resolveResource: (r) => {
       if (!r || !r.id.startsWith("new-")) return r;
+      if (r.type === "exit_node")
+        return {
+          id: idPlaceholder("EXIT_NODE", draftExitNodeNames.get(r.id)),
+          type: r.type,
+        };
       return {
         id: idPlaceholder("RESOURCE", draftResourceNames.get(r.id)),
         type: r.type,
@@ -520,6 +531,10 @@ export function buildChangeRequest(
     }
     case "create-agent-policy":
       return { method, path, body: agentPolicyBody(change.policy, r) };
+    // The request already has the API's shape, and is the whole exit node.
+    case "create-exit-node":
+    case "update-exit-node":
+      return { method, path, body: change.request };
     case "update-agent-policy": {
       const policy = live.agentPolicies?.find(
         (p) => p.id === change.agentPolicyId,
@@ -547,6 +562,7 @@ export function buildChangeRequest(
     case "delete-network":
     case "delete-provider":
     case "delete-agent-policy":
+    case "delete-exit-node":
       return { method, path };
   }
 }
@@ -687,6 +703,16 @@ export function buildBeforeRequest(
         method: change.type === "delete-agent-policy" ? "DELETE" : "PUT",
         path: `/agent-network/policies/${change.agentPolicyId}`,
         body: toWire(policy, AGENT_POLICY_WIRE),
+      };
+    }
+    case "update-exit-node":
+    case "delete-exit-node": {
+      const exitNode = live.exitNodes?.find((n) => n.id === change.exitNodeId);
+      if (!exitNode) return null;
+      return {
+        method: change.type === "delete-exit-node" ? "DELETE" : "PUT",
+        path: `/exit-nodes/${change.exitNodeId}`,
+        body: toExitNodeRequest(exitNode),
       };
     }
     // Creates and install-peer have no "before".

@@ -1083,13 +1083,16 @@ export function ControlCenterPolicyProvider({
     drawPolicyOnCanvas(policy);
   };
 
-  // A policy on a draft resource is trackable only while that resource is.
+  // A policy on a draft resource or exit node is trackable only while that
+  // resource or exit node is.
   const trackedResourceClientIds = useMemo(
     () =>
       new Set(
-        changes
-          .filter((c) => c.type === "create-resource")
-          .map((c) => (c.type === "create-resource" ? c.clientId : "")),
+        changes.flatMap((c) =>
+          c.type === "create-resource" || c.type === "create-exit-node"
+            ? [c.clientId]
+            : [],
+        ),
       ),
     [changes],
   );

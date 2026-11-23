@@ -164,6 +164,19 @@ export const arePeersValid = (
 export const isLegacyExitNodeRoute = (route?: { network?: string }) =>
   route?.network === "0.0.0.0/0" || route?.network === "::/0";
 
+/** The writable fields of an exit node: what a PUT sends, in full. */
+export const toExitNodeRequest = (exitNode: ExitNode): ExitNodeRequest => ({
+  name: exitNode.name,
+  description: exitNode.description,
+  enabled: exitNode.enabled,
+  auto_apply: exitNode.auto_apply,
+  peers: exitNode.peers.map(({ peer_id, metric, enabled }) => ({
+    peer_id,
+    metric,
+    enabled,
+  })),
+});
+
 /** The exit node the peer belongs to; a peer is in one exit node at most. */
 export const getPeerExitNode = <T extends Pick<ExitNode, "peers">>(
   exitNodes: T[] = [],
