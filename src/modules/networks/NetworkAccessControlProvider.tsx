@@ -73,6 +73,8 @@ export const NetworkAccessControlProvider = ({ children }: Props) => {
           if (!rule) return false;
           if (resource && rule.destinationResource?.id === resource.id)
             return true;
+          // Site-to-site policies name the resource as their source.
+          if (resource && rule.sourceResource?.id === resource.id) return true;
           const destinations = (rule.destinations ?? []) as (Group | string)[];
           return destinations.some((d) => {
             const destId = toGroupId(d);

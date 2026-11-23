@@ -344,6 +344,14 @@ export const useAccessControl = ({
 
   const isDestinationPeer = destinationResource?.type === "peer";
 
+  // A network resource on both sides is site-to-site: each side has its own
+  // routing peers, so the rule may go both ways unless the destination is a
+  // domain, which can never start a connection.
+  const resourceToResource = isResourceToResource(
+    sourceResource,
+    destinationResource,
+  );
+
   const destinationHasResources = useMemo(() => {
     if (isDestinationPeer) return false;
     if (destinationResource) return true;
@@ -361,6 +369,7 @@ export const useAccessControl = ({
 
   const destinationOnlyResources = useMemo(() => {
     if (isDestinationPeer) return false;
+    if (resourceToResource) return false;
     if (destinationResource) return true;
 
     return (
@@ -382,7 +391,12 @@ export const useAccessControl = ({
         return hasResources && !hasPeers;
       })
     );
-  }, [destinationGroups, destinationResource, isDestinationPeer]);
+  }, [
+    destinationGroups,
+    destinationResource,
+    isDestinationPeer,
+    resourceToResource,
+  ]);
 
   useEffect(() => {
     if (destinationOnlyResources && direction !== "in" && !isDestinationPeer) {
@@ -421,6 +435,7 @@ export const useAccessControl = ({
     setDestinationResource,
     destinationHasResources,
     destinationOnlyResources,
+    resourceToResource,
     hasPortSupport,
     sshAccessType,
     setSshAccessType,
@@ -459,3 +474,16 @@ export const parsePortsToStrings = (rule?: PolicyRule): string[] => {
     ["asc"],
   );
 };
+
+/** True when the rule side names a network resource rather than a peer. */
+export const isNetworkResource = (resource?: PolicyRuleResource) =>
+  !!resource?.id && resource.type !== "peer";
+
+/** A rule from one network resource to another that can start connections. */
+export const isResourceToResource = (
+  source?: PolicyRuleResource,
+  destination?: PolicyRuleResource,
+) =>
+  isNetworkResource(source) &&
+  isNetworkResource(destination) &&
+  destination?.type !== "domain";

@@ -54,7 +54,10 @@ import { Policy, PolicyRuleResource, Protocol } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { SSHAccessType } from "@/modules/access-control/ssh/SSHAccessType";
 import { SSHAuthorizedGroups } from "@/modules/access-control/ssh/SSHAuthorizedGroups";
-import { useAccessControl } from "@/modules/access-control/useAccessControl";
+import {
+  isNetworkResource,
+  useAccessControl,
+} from "@/modules/access-control/useAccessControl";
 import { PostureCheckTab } from "@/modules/posture-checks/ui/PostureCheckTab";
 import { PostureCheckTabTrigger } from "@/modules/posture-checks/ui/PostureCheckTabTrigger";
 
@@ -74,6 +77,7 @@ type UpdateModalProps = {
   allowEditPeers?: boolean;
   additionalPeers?: Peer[];
   additionalResources?: NetworkResource[];
+  siteToSiteScope?: SiteToSiteScope;
 };
 
 export default function AccessControlModal({ children }: Readonly<Props>) {
@@ -99,6 +103,7 @@ export function AccessControlUpdateModal({
   allowEditPeers,
   additionalPeers,
   additionalResources,
+  siteToSiteScope,
 }: Readonly<UpdateModalProps>) {
   return (
     <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
@@ -116,6 +121,7 @@ export function AccessControlUpdateModal({
           allowEditPeers={allowEditPeers}
           additionalPeers={additionalPeers}
           additionalResources={additionalResources}
+          siteToSiteScope={siteToSiteScope}
         />
       )}
     </Modal>
@@ -149,11 +155,18 @@ type ModalProps = {
   destinationScope?: PolicyDestinationScope;
   // The policy is an unsaved duplicate: show the create wizard, seeded from it.
   isDuplicate?: boolean;
+  // Set for a site-to-site policy: each side picks a resource of its network.
+  siteToSiteScope?: SiteToSiteScope;
 };
 
 export type PolicyDestinationScope = {
   resourceIds: string[];
   groupIds: string[];
+};
+
+export type SiteToSiteScope = {
+  sourceResourceIds: string[];
+  destinationResourceIds: string[];
 };
 
 export function AccessControlModalContent({
@@ -178,6 +191,7 @@ export function AccessControlModalContent({
   additionalPeers,
   destinationScope,
   isDuplicate = false,
+  siteToSiteScope,
 }: Readonly<ModalProps>) {
   const { permission } = usePermissions();
   const { users } = useUsers();
@@ -190,6 +204,7 @@ export function AccessControlModalContent({
     sourceGroups,
     destinationHasResources,
     destinationOnlyResources,
+    resourceToResource,
     setSourceGroups,
     setDestinationGroups,
     setPorts,
@@ -234,6 +249,13 @@ export function AccessControlModalContent({
 
   // A duplicate carries a policy to seed the form but is saved as a new one.
   const isCreate = !policy || isDuplicate;
+
+  const sourceIsResource = isNetworkResource(sourceResource);
+  const isSiteToSite = !!siteToSiteScope;
+  const showSourceResources =
+    protocol !== "netbird-ssh" && (isSiteToSite || sourceIsResource);
+  const showPostureChecks = !isSiteToSite && !sourceIsResource;
+  const tabAfterPolicy = showPostureChecks ? "posture_checks" : "general";
 
   const [tab, setTab] = useState(() => {
     if (initialTab && initialTab !== "") return initialTab;
@@ -315,7 +337,9 @@ export function AccessControlModalContent({
             <ArrowRightLeft size={16} />
             Policy
           </TabsTrigger>
-          <PostureCheckTabTrigger disabled={!canContinueToPostureChecks} />
+          {showPostureChecks && (
+            <PostureCheckTabTrigger disabled={!canContinueToPostureChecks} />
+          )}
           <TabsTrigger value={"general"} disabled={!canContinueToPostureChecks}>
             <Text
               size={16}
@@ -404,10 +428,15 @@ export function AccessControlModalContent({
                 <PeerGroupSelector
                   data-testid={"source-group-selector"}
                   popoverWidth={500}
-                  placeholder={"Select source(s)..."}
+                  placeholder={
+                    isSiteToSite ? "Select source..." : "Select source(s)..."
+                  }
                   showRoutes={protocol !== "netbird-ssh"}
-                  showResources={false}
-                  showPeers={protocol !== "netbird-ssh"}
+                  showResources={showSourceResources}
+                  showPeers={!isSiteToSite && protocol !== "netbird-ssh"}
+                  hideGroupsTab={isSiteToSite}
+                  resourceIds={siteToSiteScope?.sourceResourceIds}
+                  groupResourcesByNetwork={true}
                   showResourceCounter={false}
                   showPeerCount={allowEditPeers}
                   disableInlineRemoveGroup={false}
@@ -428,7 +457,9 @@ export function AccessControlModalContent({
                 onChange={setDirection}
                 disabled={destinationOnlyResources || !!destinationScope}
                 protocol={protocol}
-                destinationResource={destinationResource}
+                destinationResource={
+                  resourceToResource ? undefined : destinationResource
+                }
               />
 
               <div className={"w-full self-start"}>
@@ -448,11 +479,20 @@ export function AccessControlModalContent({
                 <PeerGroupSelector
                   data-testid={"destination-group-selector"}
                   popoverWidth={500}
-                  placeholder={"Select destination(s)..."}
+                  placeholder={
+                    isSiteToSite
+                      ? "Select destination..."
+                      : "Select destination(s)..."
+                  }
                   showRoutes={true}
                   showResources={protocol !== "netbird-ssh"}
-                  showPeers={!destinationScope}
-                  resourceIds={destinationScope?.resourceIds}
+                  showPeers={!destinationScope && !isSiteToSite}
+                  hideGroupsTab={isSiteToSite}
+                  groupResourcesByNetwork={true}
+                  resourceIds={
+                    siteToSiteScope?.destinationResourceIds ??
+                    destinationScope?.resourceIds
+                  }
                   groupIds={destinationScope?.groupIds}
                   hideAllGroup={!!destinationScope}
                   showResourceCounter={true}
@@ -476,6 +516,7 @@ export function AccessControlModalContent({
 
             {destinationHasResources &&
               !destinationOnlyResources &&
+              !resourceToResource &&
               direction === "bi" && (
                 <Callout
                   variant={"warning"}
@@ -651,7 +692,7 @@ export function AccessControlModalContent({
                   </ModalClose>
                   <Button
                     variant={"primary"}
-                    onClick={() => setTab("posture_checks")}
+                    onClick={() => setTab(tabAfterPolicy)}
                     disabled={!canContinueToPostureChecks}
                     data-testid="policy-continue"
                   >
@@ -683,7 +724,9 @@ export function AccessControlModalContent({
                 <>
                   <Button
                     variant={"secondary"}
-                    onClick={() => setTab("posture_checks")}
+                    onClick={() =>
+                      setTab(showPostureChecks ? "posture_checks" : "policy")
+                    }
                   >
                     Back
                   </Button>
