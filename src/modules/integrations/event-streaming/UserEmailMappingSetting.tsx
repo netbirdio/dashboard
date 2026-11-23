@@ -74,7 +74,11 @@ export const UserEmailMappingSetting = ({ account }: Props) => {
             owner, target user) to streamed audit and traffic events. Emails are
             personal data; enable only if your destination is allowed to store
             them.{" "}
-            <InlineLink href={USER_EMAIL_MAPPING_DOC_LINK} target={"_blank"}>
+            <InlineLink
+              href={USER_EMAIL_MAPPING_DOC_LINK}
+              target={"_blank"}
+              onClick={(e) => e.stopPropagation()}
+            >
               Learn more
               <ExternalLinkIcon size={12} />
             </InlineLink>
