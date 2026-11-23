@@ -364,18 +364,18 @@ export const RoutingPeerDeployModal = ({
                 the following requirements:
                 <ul className={"list-disc pl-4 mt-2 flex flex-col gap-1"}>
                   <li>
-                    <span className={"text-white font-medium"}>
+                    <span className={"text-sky-900 dark:text-white font-medium"}>
                       Inside the network
                     </span>{" "}
                     and able to reach its IP ranges
                   </li>
                   <li>
-                    <span className={"text-white font-medium"}>Linux</span>
+                    <span className={"text-sky-900 dark:text-white font-medium"}>Linux</span>
                     {deployMethod === "linux" ? "" : " with Docker"} installed
                     and running
                   </li>
                   <li>
-                    <span className={"text-white font-medium"}>
+                    <span className={"text-sky-900 dark:text-white font-medium"}>
                       Outbound internet access
                     </span>{" "}
                     to reach NetBird

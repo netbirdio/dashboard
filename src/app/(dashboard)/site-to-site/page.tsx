@@ -1,6 +1,5 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
@@ -8,7 +7,6 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
 import React, { Suspense } from "react";
-import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
 import { SiteToSiteConnection } from "@/interfaces/SiteToSite";
@@ -34,13 +32,6 @@ export default function SiteToSite() {
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            label={"Network Routing"}
-            icon={<NetworkRoutesIcon size={13} />}
-          />
-          <Breadcrumbs.Item href={"/site-to-site"} label={"Site-to-Site"} />
-        </Breadcrumbs>
         <h1>{title}</h1>
         <Paragraph>
           Let hosts in one network reach resources in another, through each
