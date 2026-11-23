@@ -17,43 +17,68 @@ import {
   waitForPopup,
 } from "@/storybook/network";
 
-const S2S_POLICY_ID = "pol-s2s-aws-office";
-
-/* One site-to-site policy from the AWS VPC to the Berlin office LAN. */
-const s2sPolicy: Policy = {
-  id: S2S_POLICY_ID,
-  name: "AWS Production to Berlin Office",
+const s2sPolicy = (
+  id: string,
+  name: string,
+  source: { id: string; type: "subnet" | "host" },
+  destination: { id: string; type: "subnet" | "host" },
+  protocol: "tcp" | "all",
+  bidirectional: boolean,
+): Policy => ({
+  id,
+  name,
   description: "",
   enabled: true,
   source_posture_checks: [],
   rules: [
     {
-      name: "AWS Production to Berlin Office",
+      name,
       description: "",
       enabled: true,
       action: "accept",
-      bidirectional: false,
-      protocol: "tcp",
-      ports: ["443"],
+      bidirectional,
+      protocol,
+      ports: protocol === "tcp" ? ["443"] : [],
       sources: [],
       destinations: [],
-      sourceResource: { id: "res-aws-vpc", type: "subnet" },
-      destinationResource: { id: "res-office-lan", type: "subnet" },
+      sourceResource: source,
+      destinationResource: destination,
     },
   ],
-};
+});
+
+/* The AWS VPC reaches the Berlin office LAN over HTTPS, and the office LAN
+   and the production database reach each other both ways. */
+const s2sPolicies = [
+  s2sPolicy(
+    "pol-s2s-vpc-office",
+    "Production VPC to Office LAN",
+    { id: "res-aws-vpc", type: "subnet" },
+    { id: "res-office-lan", type: "subnet" },
+    "tcp",
+    false,
+  ),
+  s2sPolicy(
+    "pol-s2s-office-postgres",
+    "Office LAN to Production Postgres",
+    { id: "res-office-lan", type: "subnet" },
+    { id: "res-postgres", type: "host" },
+    "all",
+    true,
+  ),
+];
 
 const connections: SiteToSiteConnection[] = [
   {
     network_ids: [NETWORK.aws, NETWORK.office],
-    policy_ids: [S2S_POLICY_ID],
+    policy_ids: s2sPolicies.map((p) => p.id as string),
     enabled: true,
   },
 ];
 
 const api = {
   "GET /networks/site-to-site": connections,
-  "GET /policies": [...policies, s2sPolicy],
+  "GET /policies": [...policies, ...s2sPolicies],
 };
 
 const meta: Meta = {
@@ -89,6 +114,18 @@ const pickNetwork = async (testId: string, option: string) => {
 };
 
 export const List: Story = { play: ready };
+
+export const NoRoutingPeerOnline: Story = {
+  parameters: { api: { ...api, "GET /networks/routers": [] } },
+  play: ready,
+};
+
+export const Expanded: Story = {
+  play: async () => {
+    await user.click(await findRow("Berlin Office"));
+    await findText("Production Postgres");
+  },
+};
 
 export const Empty: Story = {
   parameters: { api: { "GET /networks/site-to-site": [] } },

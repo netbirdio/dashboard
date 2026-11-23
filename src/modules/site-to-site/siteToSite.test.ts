@@ -5,6 +5,7 @@ import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import {
   connectionKey,
+  connectionLinks,
   connectionNetworks,
   connectionPolicies,
   defaultSiteResource,
@@ -141,5 +142,69 @@ describe("routingPeerHostname", () => {
   it("turns the network name into a hostname", () => {
     expect(routingPeerHostname(berlin)).toBe("router-berlin-office");
     expect(routingPeerHostname({ id: "x", name: "  ¡¿ " })).toBe("router-network");
+  });
+});
+
+describe("connectionLinks", () => {
+  const rulePolicy = (
+    id: string,
+    source: string,
+    destination: string,
+    bidirectional = false,
+    enabled = true,
+  ) =>
+    ({
+      id,
+      name: id,
+      enabled,
+      rules: [
+        {
+          enabled: true,
+          bidirectional,
+          sourceResource: { id: source, type: "subnet" },
+          destinationResource: { id: destination, type: "subnet" },
+        },
+      ],
+    }) as unknown as Policy;
+
+  const connection = {
+    network_ids: ["aws", "berlin"],
+    policy_ids: ["p1", "p2", "p3"],
+    enabled: true,
+  };
+
+  it("joins policies over the same resources into one link, sides in network order", () => {
+    const policies = [
+      rulePolicy("p1", "aws-vpc", "berlin-lan"),
+      rulePolicy("p2", "berlin-lan", "aws-vpc", false, false),
+      rulePolicy("p3", "berlin-printer", "aws-vpc"),
+    ];
+    const links = connectionLinks(connection, policies, [berlin, aws], resources);
+
+    expect(links).toHaveLength(2);
+    expect(links[0]).toMatchObject({
+      a: { id: "aws-vpc" },
+      b: { id: "berlin-lan" },
+      bidirectional: true,
+      reverse: false,
+      enabled: true,
+    });
+    expect(links[0].policies.map((p) => p.id)).toEqual(["p1", "p2"]);
+    expect(links[1]).toMatchObject({
+      a: { id: "aws-vpc" },
+      b: { id: "berlin-printer" },
+      bidirectional: false,
+      reverse: true,
+    });
+  });
+
+  it("marks a link whose policies are all disabled", () => {
+    const links = connectionLinks(
+      { ...connection, policy_ids: ["p1"] },
+      [rulePolicy("p1", "aws-vpc", "berlin-lan", true, false)],
+      [berlin, aws],
+      resources,
+    );
+    expect(links[0]).toMatchObject({ bidirectional: true, enabled: false });
   });
 });

@@ -5,6 +5,7 @@ import * as React from "react";
 import { useCallback, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { usePolicies } from "@/contexts/PoliciesProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource, NetworkRouter } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
@@ -23,6 +24,7 @@ import {
   peerCountries,
   policySiteNetworks,
   proposedPolicyName,
+  SiteLink,
   siteToSiteScope,
   toRuleResource,
 } from "@/modules/site-to-site/siteToSite";
@@ -44,13 +46,18 @@ type PolicyModalState = {
 type ContextValue = {
   networks?: Network[];
   policies?: Policy[];
+  resources?: NetworkResource[];
   isLoading: boolean;
   countriesOf: (network: Network) => string[];
+  onlineRoutingPeers: (network: Network) => Peer[];
   openCreateConnection: () => void;
   openAddPolicy: (connection: SiteToSiteConnection) => void;
   openEditPolicy: (policy: Policy) => void;
   openDeployRoutingPeer: (networks: Network[]) => void;
   deleteConnection: (connection: SiteToSiteConnection) => Promise<void>;
+  openAddLinkPolicy: (link: SiteLink) => void;
+  setLinkEnabled: (link: SiteLink, enabled: boolean) => void;
+  deleteLink: (link: SiteLink) => Promise<void>;
 };
 
 const SiteToSiteContext = React.createContext({} as ContextValue);
@@ -63,6 +70,8 @@ export const SiteToSiteProvider = ({
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
   const deletePolicyCall = useApiCall("/policies").del;
+  const updatePolicyCall = useApiCall<Policy>("/policies").put;
+  const { serializeRules } = usePolicies();
 
   const { data: networks, isLoading: networksLoading } =
     useFetchApi<Network[]>("/networks");
@@ -82,6 +91,13 @@ export const SiteToSiteProvider = ({
   const countriesOf = useCallback(
     (network: Network) =>
       peerCountries(networkRoutingPeers(network, routers, groups, peers)),
+    [routers, groups, peers],
+  );
+  const onlineRoutingPeers = useCallback(
+    (network: Network) =>
+      networkRoutingPeers(network, routers, groups, peers).filter(
+        (p) => p.connected,
+      ),
     [routers, groups, peers],
   );
 
@@ -158,6 +174,73 @@ export const SiteToSiteProvider = ({
     if (unrouted.length > 0) setDeployNetworks(unrouted);
   };
 
+  const openAddLinkPolicy = (link: SiteLink) => {
+    const source = networks?.find((n) => n.resources?.includes(link.a.id));
+    const destination = networks?.find((n) => n.resources?.includes(link.b.id));
+    if (!source || !destination) return;
+    const [from, to] = link.reverse ? [link.b, link.a] : [link.a, link.b];
+    const [fromNet, toNet] = link.reverse
+      ? [destination, source]
+      : [source, destination];
+    setPolicyModal({
+      name: `${from.name} to ${to.name}`,
+      sourceResource: toRuleResource(from),
+      destinationResource: toRuleResource(to),
+      scope: siteToSiteScope(fromNet, toNet, resources),
+    });
+  };
+
+  const setLinkEnabled = (link: SiteLink, enabled: boolean) => {
+    const changed = link.policies.filter((p) => p.enabled !== enabled);
+    const promise = Promise.all(
+      changed.map((p) =>
+        updatePolicyCall(
+          {
+            name: p.name ?? "",
+            description: p.description ?? "",
+            enabled,
+            query: p.query ?? "",
+            rules: serializeRules(p.rules, enabled),
+            source_posture_checks: p.source_posture_checks ?? [],
+          },
+          `/${p.id}`,
+        ),
+      ),
+    ).then(() => refresh());
+    notify({
+      title: `${link.a.name} and ${link.b.name}`,
+      description: enabled
+        ? "Policies enabled successfully."
+        : "Policies disabled successfully.",
+      loadingMessage: enabled ? "Enabling policies..." : "Disabling policies...",
+      promise,
+    });
+  };
+
+  const deleteLink = async (link: SiteLink) => {
+    const count = link.policies.length;
+    const choice = await confirm({
+      title: `Delete ${count} polic${count === 1 ? "y" : "ies"}?`,
+      description: `Traffic between ${link.a.name} and ${link.b.name} stops (${link.policies
+        .map((p) => p.name)
+        .join(", ")}). This action cannot be undone.`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: "danger",
+    });
+    if (!choice) return;
+    const promise = Promise.all(
+      link.policies.map((p) => deletePolicyCall({}, `/${p.id}`)),
+    ).then(() => refresh());
+    notify({
+      title: `${link.a.name} and ${link.b.name}`,
+      description: "Policies deleted successfully.",
+      loadingMessage: "Deleting policies...",
+      promise,
+    });
+    await promise;
+  };
+
   const deleteConnection = async (connection: SiteToSiteConnection) => {
     const names = connectionNetworks(connection, networks).map((n) => n.name);
     const connectionPolicyList = connectionPolicies(connection, policies);
@@ -189,16 +272,29 @@ export const SiteToSiteProvider = ({
     () => ({
       networks,
       policies,
+      resources,
       isLoading: networksLoading || policiesLoading,
       countriesOf,
+      onlineRoutingPeers,
       openCreateConnection,
       openAddPolicy,
       openEditPolicy,
       openDeployRoutingPeer: setDeployNetworks,
       deleteConnection,
+      openAddLinkPolicy,
+      setLinkEnabled,
+      deleteLink,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [networks, policies, resources, networksLoading, policiesLoading, countriesOf],
+    [
+      networks,
+      policies,
+      resources,
+      networksLoading,
+      policiesLoading,
+      countriesOf,
+      onlineRoutingPeers,
+    ],
   );
 
   return (

@@ -7,39 +7,29 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
-import FullTooltip from "@components/FullTooltip";
-import InlineLink from "@components/InlineLink";
+import InlineLink, { InlineButtonLink } from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
-import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
-import {
-  formatRadioChip,
-  RadioOption,
-  RadioPicker,
-} from "@components/table/filters/RadioPicker";
-import {
-  TableFilterChips,
-  TableFilterDef,
-  TableFiltersButton,
-} from "@components/table/TableFilters";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { PolicyCountBadge } from "@components/ui/PolicyCountBadge";
+import { PolicyDirectionBadge } from "@components/ui/PolicyDirectionBadge";
+import ResourceBadge from "@components/ui/ResourceBadge";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { cn } from "@utils/helpers";
 import {
+  ChevronDown,
+  ChevronRightIcon,
   ExternalLinkIcon,
-  Link2,
   MoreVertical,
   PlusCircle,
+  Power,
   ServerIcon,
   Trash2,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
-import { useMemo } from "react";
-import { useSWRConfig } from "swr";
+import { useMemo, useState } from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -49,274 +39,425 @@ import { SiteToSiteConnection } from "@/interfaces/SiteToSite";
 import { NetworkInformationSquare } from "@/modules/networks/misc/NetworkInformationSquare";
 import {
   connectionKey,
+  connectionLinks,
   connectionNetworks,
-  connectionPolicies,
+  SITE_TO_SITE_DOCS_LINK,
+  SiteLink,
 } from "@/modules/site-to-site/siteToSite";
 import { useSiteToSite } from "@/modules/site-to-site/SiteToSiteProvider";
 
-const SITE_TO_SITE_DOCS_LINK = "https://docs.netbird.io/manage/networks";
+type Row = SiteToSiteConnection & {
+  id: string;
+  networks: Network[];
+  links: SiteLink[];
+  search: string;
+};
 
-type Row = SiteToSiteConnection & { id: string; networks: Network[] };
+// Connection rows and their link rows share column widths, so each network
+// sits over its resources.
+const COLUMN = {
+  first: "w-[34%]",
+  direction: "w-[14%]",
+  second: "w-[32%]",
+  count: "w-[12%]",
+  actions: "w-[8%]",
+};
 
-const NetworksCell = ({ row }: { row: Row }) => {
-  const router = useRouter();
-  const { countriesOf } = useSiteToSite();
+const plural = (count: number, word: string) =>
+  `${count} ${word}${count === 1 ? "" : "s"}`;
+
+const RoutingPeerLine = ({ network }: { network: Network }) => {
+  const { onlineRoutingPeers, countriesOf } = useSiteToSite();
+  const online = onlineRoutingPeers(network).length;
+  if (online === 0) {
+    return (
+      <span className={"text-xs text-yellow-400 text-left whitespace-nowrap"}>
+        {network.routing_peers_count
+          ? "No routing peer online"
+          : "No routing peer"}
+      </span>
+    );
+  }
   return (
-    <div className={"flex items-center gap-4 min-w-[420px]"}>
-      {row.networks.map((network, index) => (
-        <React.Fragment key={network.id}>
-          {index > 0 && (
-            <Link2 size={14} className={"text-nb-gray-500 shrink-0"} />
-          )}
-          <div className={"flex items-center gap-3 min-w-0"}>
-            <NetworkInformationSquare
-              name={network.name}
-              active={(network.routing_peers_count ?? 0) > 0}
-              onClick={() => router.push(`/network?id=${network.id}`)}
-            />
-            {countriesOf(network).length > 0 && (
-              <div className={"flex items-center gap-1"}>
-                {countriesOf(network).map((c) => (
-                  <RoundedFlag key={c} country={c} size={12} />
-                ))}
-              </div>
-            )}
-          </div>
-        </React.Fragment>
+    <span
+      className={
+        "flex items-center gap-1.5 text-xs text-nb-gray-400 whitespace-nowrap"
+      }
+    >
+      {countriesOf(network).map((c) => (
+        <RoundedFlag key={c} country={c} size={12} />
       ))}
-    </div>
+      {plural(online, "routing peer")} online
+    </span>
   );
 };
 
-const PoliciesCell = ({ row }: { row: Row }) => {
+const NetworkCell = ({ network }: { network?: Network }) => {
+  const router = useRouter();
   const { permission } = usePermissions();
-  const { policies, openEditPolicy, openAddPolicy } = useSiteToSite();
-  return (
-    <PolicyCountBadge
-      policies={connectionPolicies(row, policies)}
-      canConfigure={!!permission.policies.update}
-      onSelectPolicy={openEditPolicy}
-      onConfigure={() => openAddPolicy(row)}
-      configureLabel={"Add policy"}
-    />
-  );
-};
-
-const RoutingPeersCell = ({ row }: { row: Row }) => {
-  const { permission } = usePermissions();
-  const { openDeployRoutingPeer } = useSiteToSite();
-  const unrouted = row.networks.filter((n) => !n.routing_peers_count);
-  const total = row.networks.reduce(
-    (sum, n) => sum + (n.routing_peers_count ?? 0),
-    0,
-  );
-  const ready = unrouted.length === 0;
+  const { onlineRoutingPeers, openDeployRoutingPeer } = useSiteToSite();
+  if (!network) return null;
+  const online = onlineRoutingPeers(network).length;
 
   return (
-    <div className={"flex gap-3 items-center"}>
-      <FullTooltip
-        interactive={false}
-        content={
-          <div className={"max-w-xs text-xs flex flex-col gap-1"}>
-            {row.networks.map((n) => (
-              <div key={n.id}>
-                <span className={"text-white font-medium"}>{n.name}</span>:{" "}
-                {n.routing_peers_count ?? 0} routing peer(s)
-              </div>
-            ))}
-          </div>
-        }
-      >
-        <Badge
-          variant={"gray"}
-          className={
-            "inline-flex gap-2 min-w-[110px] font-medium items-center justify-center min-h-[34px]"
-          }
-          useHover={false}
+    <div className={"flex items-center gap-2 min-w-0"}>
+      <NetworkInformationSquare
+        name={network.name}
+        active={online > 0}
+        onClick={() => router.push(`/network?id=${network.id}`)}
+        subtitle={<RoutingPeerLine network={network} />}
+      />
+      {online === 0 && permission.networks.update && (
+        <InlineButtonLink
+          className={"text-xs whitespace-nowrap shrink-0 -ml-10"}
+          onClick={(e) => {
+            e.stopPropagation();
+            openDeployRoutingPeer([network]);
+          }}
         >
-          <div
-            className={cn(
-              "h-2 w-2 rounded-full",
-              ready ? "bg-green-500" : "bg-yellow-400",
-            )}
-          />
-          {total} Peer(s)
-        </Badge>
-      </FullTooltip>
-      {!ready && (
-        <Button
-          size={"xs"}
-          variant={"secondary"}
-          className={"!px-3"}
-          onClick={() => openDeployRoutingPeer(unrouted)}
-          disabled={!permission.networks.update}
-        >
-          <ServerIcon size={12} />
-          Deploy
-        </Button>
+          Add routing peer
+        </InlineButtonLink>
       )}
     </div>
   );
 };
 
-const ActionCell = ({ row }: { row: Row }) => {
+const FirstNetworkCell = ({ row }: { row: Row }) => (
+  <div className={"flex items-center gap-4 min-w-[300px]"}>
+    <ChevronRightIcon
+      size={20}
+      className={
+        "group-data-[accordion=opened]/accordion:hidden text-nb-gray-400 shrink-0"
+      }
+    />
+    <ChevronDown
+      size={20}
+      className={
+        "group-data-[accordion=closed]/accordion:hidden text-nb-gray-400 shrink-0"
+      }
+    />
+    <NetworkCell network={row.networks[0]} />
+  </div>
+);
+
+const RowMenu = ({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) => (
+  <div className={"flex justify-end pr-4"}>
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger
+        asChild={true}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+        }}
+      >
+        <Button
+          variant={"secondary"}
+          className={"!px-3"}
+          aria-label={label}
+          data-testid={"site-to-site-actions"}
+        >
+          <MoreVertical size={16} className={"shrink-0"} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        className="w-auto"
+        align="end"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  </div>
+);
+
+const MenuItem = ({
+  icon,
+  children,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuItem> & {
+  icon: React.ReactNode;
+}) => (
+  <DropdownMenuItem {...props}>
+    <div className={"flex gap-3 items-center"}>
+      {icon}
+      {children}
+    </div>
+  </DropdownMenuItem>
+);
+
+const ConnectionActions = ({ row }: { row: Row }) => {
   const { permission } = usePermissions();
   const { openAddPolicy, openDeployRoutingPeer, deleteConnection } =
     useSiteToSite();
+  const [a, b] = row.networks;
   return (
-    <div className={"flex justify-end pr-4"}>
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger
-          asChild={true}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-          }}
-        >
-          <Button
-            variant={"secondary"}
-            className={"!px-3"}
-            data-testid={"site-to-site-actions"}
-          >
-            <MoreVertical size={16} className={"shrink-0"} />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-auto" align="end">
-          <DropdownMenuItem
-            onClick={() => openAddPolicy(row)}
-            disabled={!permission.policies.create}
-          >
-            <div className={"flex gap-3 items-center"}>
-              <PlusCircle size={14} className={"shrink-0"} />
-              Add Policy
-            </div>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => openDeployRoutingPeer(row.networks)}
-            disabled={!permission.networks.update}
-          >
-            <div className={"flex gap-3 items-center"}>
-              <ServerIcon size={14} className={"shrink-0"} />
-              Deploy Routing Peer
-            </div>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => void deleteConnection(row)}
-            variant={"danger"}
-            disabled={!permission.policies.delete}
-          >
-            <div className={"flex gap-3 items-center"}>
-              <Trash2 size={14} className={"shrink-0"} />
-              Delete
-            </div>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+    <RowMenu
+      label={`Connection between ${a?.name ?? ""} and ${b?.name ?? ""}`}
+    >
+      <MenuItem
+        icon={<PlusCircle size={14} className={"shrink-0"} />}
+        onClick={() => openAddPolicy(row)}
+        disabled={!permission.policies.create}
+      >
+        Add Policy
+      </MenuItem>
+      <MenuItem
+        icon={<ServerIcon size={14} className={"shrink-0"} />}
+        onClick={() => openDeployRoutingPeer(row.networks)}
+        disabled={!permission.networks.update}
+      >
+        Deploy Routing Peer
+      </MenuItem>
+      <DropdownMenuSeparator />
+      <MenuItem
+        icon={<Trash2 size={14} className={"shrink-0"} />}
+        onClick={() => void deleteConnection(row)}
+        variant={"danger"}
+        disabled={!permission.policies.delete}
+      >
+        Delete Policies
+      </MenuItem>
+    </RowMenu>
   );
 };
 
 const columns: ColumnDef<Row>[] = [
   {
-    id: "networks",
-    accessorFn: (row) => row.networks.map((n) => n.name).join(" "),
+    id: "network_a",
+    accessorFn: (row) => row.search,
     header: ({ column }) => (
-      <DataTableHeader column={column}>Networks</DataTableHeader>
+      <DataTableHeader column={column} className={"pl-12"}>
+        Network A
+      </DataTableHeader>
     ),
+    meta: { className: COLUMN.first },
     sortingFn: "text",
-    cell: ({ row }) => <NetworksCell row={row.original} />,
+    cell: ({ row }) => <FirstNetworkCell row={row.original} />,
   },
   {
-    id: "policies",
-    accessorFn: (row) => row.policy_ids.length,
+    id: "direction",
+    header: "",
+    meta: { className: COLUMN.direction },
+    cell: () => null,
+  },
+  {
+    id: "network_b",
+    accessorFn: (row) => row.networks[1]?.name ?? "",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Policies</DataTableHeader>
+      <DataTableHeader column={column}>Network B</DataTableHeader>
     ),
-    cell: ({ row }) => <PoliciesCell row={row.original} />,
+    meta: { className: COLUMN.second },
+    sortingFn: "text",
+    cell: ({ row }) => <NetworkCell network={row.original.networks[1]} />,
   },
   {
-    id: "routing_peers",
-    accessorFn: (row) =>
-      row.networks.reduce((sum, n) => sum + (n.routing_peers_count ?? 0), 0),
+    id: "links",
+    accessorFn: (row) => row.links.length,
     header: ({ column }) => (
-      <DataTableHeader column={column}>Routing Peers</DataTableHeader>
+      <DataTableHeader column={column}>Links</DataTableHeader>
     ),
-    cell: ({ row }) => <RoutingPeersCell row={row.original} />,
-  },
-  {
-    id: "enabled",
-    accessorFn: (row) => row.enabled,
+    meta: { className: COLUMN.count },
+    cell: ({ row }) => (
+      <Badge variant={"gray"} useHover={false} className={"w-fit"}>
+        {plural(row.original.links.length, "Link")}
+      </Badge>
+    ),
   },
   {
     id: "actions",
     header: "",
-    cell: ({ row }) => <ActionCell row={row.original} />,
+    meta: { className: COLUMN.actions },
+    cell: ({ row }) => <ConnectionActions row={row.original} />,
   },
 ];
+
+const LinkEnd = ({ resource }: { resource: SiteLink["a"] }) => (
+  <div className={"flex flex-col items-start gap-1.5 min-w-0"}>
+    <ResourceBadge resource={resource} />
+    <span className={"font-mono text-xs text-nb-gray-400"}>
+      {resource.address}
+    </span>
+  </div>
+);
+
+const LinkPolicies = ({ link }: { link: SiteLink }) => {
+  const { permission } = usePermissions();
+  const { openEditPolicy, openAddLinkPolicy } = useSiteToSite();
+  return (
+    <PolicyCountBadge
+      policies={link.policies}
+      canConfigure={!!permission.policies.update}
+      onSelectPolicy={openEditPolicy}
+      onConfigure={() => openAddLinkPolicy(link)}
+      configureLabel={"Add policy"}
+    />
+  );
+};
+
+const LinkActions = ({ link }: { link: SiteLink }) => {
+  const { permission } = usePermissions();
+  const { setLinkEnabled, deleteLink } = useSiteToSite();
+  return (
+    <RowMenu label={"Link actions"}>
+      <MenuItem
+        icon={<Power size={14} className={"shrink-0"} />}
+        onClick={() => setLinkEnabled(link, !link.enabled)}
+        disabled={!permission.policies.update}
+      >
+        {link.enabled ? "Disable Policies" : "Enable Policies"}
+      </MenuItem>
+      <DropdownMenuSeparator />
+      <MenuItem
+        icon={<Trash2 size={14} className={"shrink-0"} />}
+        onClick={() => void deleteLink(link)}
+        variant={"danger"}
+        disabled={!permission.policies.delete}
+      >
+        Delete Policies
+      </MenuItem>
+    </RowMenu>
+  );
+};
+
+const linkColumns: ColumnDef<SiteLink & { id: string }>[] = [
+  {
+    id: "link_a",
+    header: ({ column }) => (
+      <DataTableHeader column={column} sorting={false} className={"pl-3"}>
+        Link A
+      </DataTableHeader>
+    ),
+    meta: { className: COLUMN.first },
+    cell: ({ row }) => (
+      <div className={"pl-3"}>
+        <LinkEnd resource={row.original.a} />
+      </div>
+    ),
+  },
+  {
+    id: "direction",
+    header: ({ column }) => (
+      <DataTableHeader column={column} sorting={false}>
+        Direction
+      </DataTableHeader>
+    ),
+    meta: { className: COLUMN.direction },
+    cell: ({ row }) => (
+      <PolicyDirectionBadge
+        bidirectional={row.original.bidirectional}
+        reverse={row.original.reverse}
+        className={"py-1.5"}
+      />
+    ),
+  },
+  {
+    id: "link_b",
+    header: ({ column }) => (
+      <DataTableHeader column={column} sorting={false}>
+        Link B
+      </DataTableHeader>
+    ),
+    meta: { className: COLUMN.second },
+    cell: ({ row }) => <LinkEnd resource={row.original.b} />,
+  },
+  {
+    id: "policies",
+    header: ({ column }) => (
+      <DataTableHeader column={column} sorting={false}>
+        Policies
+      </DataTableHeader>
+    ),
+    meta: { className: COLUMN.count },
+    cell: ({ row }) => <LinkPolicies link={row.original} />,
+  },
+  {
+    id: "actions",
+    header: "",
+    meta: { className: COLUMN.actions },
+    cell: ({ row }) => <LinkActions link={row.original} />,
+  },
+];
+
+const LinksTable = ({ row }: { row: Row }) => {
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const data = useMemo(
+    () => row.links.map((l) => ({ ...l, id: l.key })),
+    [row.links],
+  );
+  return (
+    <DataTable
+      uniqueKey={row.id}
+      keepStateInLocalStorage={false}
+      tableClassName={"mt-0"}
+      minimal={true}
+      showSearchAndFilters={false}
+      className={"bg-nb-gray-960 py-2"}
+      inset={true}
+      text={"Links"}
+      initialPageSize={data.length}
+      manualPagination={true}
+      sorting={sorting}
+      setSorting={setSorting}
+      rowClassName={(r) => (r.original.enabled ? "" : "opacity-50")}
+      columns={linkColumns}
+      data={data}
+    />
+  );
+};
 
 type Props = {
   data?: SiteToSiteConnection[];
   isLoading: boolean;
-  headingTarget?: HTMLHeadingElement | null;
 };
 
-export default function SiteToSiteTable({
-  data,
-  isLoading,
-  headingTarget,
-}: Readonly<Props>) {
-  const { mutate } = useSWRConfig();
+export default function SiteToSiteTable({ data, isLoading }: Readonly<Props>) {
   const path = usePathname();
-  const { networks, isLoading: contextLoading } = useSiteToSite();
+  const {
+    networks,
+    policies,
+    resources,
+    isLoading: contextLoading,
+  } = useSiteToSite();
 
   const [sorting, setSorting] = useLocalStorage<SortingState>(
     "netbird-table-sort" + path,
-    [{ id: "networks", desc: false }],
+    [{ id: "network_a", desc: false }],
   );
 
   const rows = useMemo<Row[] | undefined>(
     () =>
-      data?.map((connection) => ({
-        ...connection,
-        id: connectionKey(connection),
-        networks: connectionNetworks(connection, networks),
-      })),
-    [data, networks],
-  );
-
-  const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
-    () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Enabled", dotClass: "bg-green-500" },
-      { value: false, label: "Disabled", dotClass: "bg-nb-gray-700" },
-    ],
-    [],
-  );
-
-  const filterDefs = useMemo<TableFilterDef[]>(
-    () => [
-      {
-        id: "enabled",
-        label: "Status",
-        renderPicker: (p) => (
-          <RadioPicker
-            value={p.value as boolean | undefined}
-            onChange={p.onChange}
-            close={p.close}
-            options={statusOptions}
-          />
-        ),
-        formatChip: (v) =>
-          formatRadioChip(v as boolean | undefined, statusOptions),
-      },
-    ],
-    [statusOptions],
+      data?.map((connection) => {
+        const rowNetworks = connectionNetworks(connection, networks);
+        const links = connectionLinks(connection, policies, networks, resources);
+        const search = [
+          ...rowNetworks.map((n) => n.name),
+          ...links.flatMap((l) => [
+            l.a.name,
+            l.a.address,
+            l.b.name,
+            l.b.address,
+            ...l.policies.map((p) => p.name),
+          ]),
+        ].join(" ");
+        return {
+          ...connection,
+          id: connectionKey(connection),
+          networks: rowNetworks,
+          links,
+          search,
+        };
+      }),
+    [data, networks, policies, resources],
   );
 
   return (
     <DataTable
-      headingTarget={headingTarget}
       isLoading={isLoading || contextLoading}
       text={"Site-to-Site Connections"}
       sorting={sorting}
@@ -325,11 +466,11 @@ export default function SiteToSiteTable({
       data={rows}
       initialPageSize={25}
       showResetFilterButton={false}
-      searchPlaceholder={"Search by network name..."}
-      columnVisibility={{ enabled: false }}
-      aboveTable={(table) => (
-        <TableFilterChips table={table} filters={filterDefs} />
-      )}
+      searchPlaceholder={"Search by network, resource or policy..."}
+      rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
+      renderExpandedRow={(row) =>
+        row.links.length > 0 ? <LinksTable row={row} /> : undefined
+      }
       getStartedCard={
         <GetStartedTest
           icon={
@@ -341,9 +482,9 @@ export default function SiteToSiteTable({
               size={"large"}
             />
           }
-          title={"Connect Your Networks"}
+          title={"Create New Site-to-Site Connection"}
           description={
-            "It looks like you don't have any site-to-site connections yet. Let resources in one network reach resources in another, with a policy and a routing peer on each side."
+            "It looks like you don't have any site-to-site connections yet. Connect two networks so hosts in one can reach resources in the other."
           }
           button={
             <div className={"gap-x-4 flex items-center justify-center"}>
@@ -354,7 +495,7 @@ export default function SiteToSiteTable({
             <>
               Learn more about
               <InlineLink href={SITE_TO_SITE_DOCS_LINK} target={"_blank"}>
-                Networks
+                Site-to-Site
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </>
@@ -364,38 +505,12 @@ export default function SiteToSiteTable({
       rightSide={() =>
         rows &&
         rows.length > 0 && (
-          <div className={"gap-x-4 ml-auto flex"}>
+          <div className={cn("gap-x-4 ml-auto flex")}>
             <AddConnectionButton />
           </div>
         )
       }
-    >
-      {(table) => (
-        <>
-          <TableFiltersButton
-            table={table}
-            filters={filterDefs}
-            disabled={rows?.length == 0}
-          />
-          <DataTableRefreshButton
-            isDisabled={rows?.length == 0}
-            onClick={() => {
-              mutate("/networks/site-to-site");
-              mutate("/policies");
-              mutate("/networks");
-            }}
-          />
-          <DataTableResetFilterButton
-            table={table}
-            onClick={() => {
-              table.setPageIndex(0);
-              table.resetColumnFilters();
-              table.resetGlobalFilter();
-            }}
-          />
-        </>
-      )}
-    </DataTable>
+    />
   );
 }
 

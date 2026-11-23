@@ -5,6 +5,9 @@ import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { SiteToSiteConnection } from "@/interfaces/SiteToSite";
 import type { SiteToSiteScope } from "@/modules/access-control/AccessControlModal";
 
+export const SITE_TO_SITE_DOCS_LINK =
+  "https://docs.netbird.io/use-cases/remote-access/site-to-site";
+
 /** The resources the network lists, in the order of the resource list. */
 export const resourcesOfNetwork = (
   network: Network | undefined,
@@ -140,3 +143,66 @@ export const routingPeerHostname = (network: Network) => {
 /** The group whose members route for the network. */
 export const routingPeerGroupName = (network: Network) =>
   `${network.name} Routing Peers`;
+
+/** One pair of resources a connection's policies join. */
+export type SiteLink = {
+  key: string;
+  // The resource in the connection's first network, then in its second.
+  a: NetworkResource;
+  b: NetworkResource;
+  bidirectional: boolean;
+  // Traffic only goes from b to a.
+  reverse: boolean;
+  policies: Policy[];
+  enabled: boolean;
+};
+
+/**
+ * Groups a connection's policies by the pair of resources they join, with
+ * the direction traffic takes once all of them are counted.
+ */
+export const connectionLinks = (
+  connection: SiteToSiteConnection,
+  policies: Policy[] | undefined,
+  networks: Network[] | undefined,
+  resources: NetworkResource[] | undefined,
+): SiteLink[] => {
+  const networkA = networks?.find((n) => n.id === connection.network_ids[0]);
+  const byKey = new Map<
+    string,
+    SiteLink & { forward: boolean; backward: boolean }
+  >();
+
+  connectionPolicies(connection, policies).forEach((policy) => {
+    policy.rules?.forEach((rule) => {
+      const src = resources?.find((r) => r.id === rule.sourceResource?.id);
+      const dst = resources?.find((r) => r.id === rule.destinationResource?.id);
+      if (!src || !dst) return;
+      const srcInA = !!networkA?.resources?.includes(src.id);
+      const [a, b] = srcInA ? [src, dst] : [dst, src];
+      const key = `${a.id}:${b.id}`;
+      const link = byKey.get(key) ?? {
+        key,
+        a,
+        b,
+        bidirectional: false,
+        reverse: false,
+        policies: [],
+        enabled: false,
+        forward: false,
+        backward: false,
+      };
+      if (!link.policies.includes(policy)) link.policies.push(policy);
+      link.forward ||= srcInA || rule.bidirectional;
+      link.backward ||= !srcInA || rule.bidirectional;
+      link.enabled ||= policy.enabled && rule.enabled;
+      byKey.set(key, link);
+    });
+  });
+
+  return [...byKey.values()].map(({ forward, backward, ...link }) => ({
+    ...link,
+    bidirectional: forward && backward,
+    reverse: backward && !forward,
+  }));
+};

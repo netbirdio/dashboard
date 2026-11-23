@@ -10,6 +10,8 @@ type Props = {
   description?: string;
   active?: boolean;
   size?: "md" | "lg";
+  // Shown under the name instead of the description.
+  subtitle?: React.ReactNode;
 };
 export const NetworkInformationSquare = ({
   onClick,
@@ -17,6 +19,7 @@ export const NetworkInformationSquare = ({
   description,
   active = false,
   size = "md",
+  subtitle,
 }: Props) => {
   return (
     <button
@@ -69,11 +72,13 @@ export const NetworkInformationSquare = ({
             {name}
           </p>
         )}
-        <DescriptionWithTooltip
-          className={cn("text-left", size == "lg" && "text-md mt-0.5")}
-          maxChars={24}
-          text={description}
-        />
+        {subtitle ?? (
+          <DescriptionWithTooltip
+            className={cn("text-left", size == "lg" && "text-md mt-0.5")}
+            maxChars={24}
+            text={description}
+          />
+        )}
       </div>
       {onClick && (
         <div
