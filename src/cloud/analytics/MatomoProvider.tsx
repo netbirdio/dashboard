@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { useBilling } from "@/contexts/BillingProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { readTheme, type Theme, useTheme } from "@/contexts/ThemeProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
@@ -52,6 +53,8 @@ export const toKey = (value: unknown) => {
   return words.join("_").slice(0, 64) || "root";
 };
 
+const THEME_DIMENSION = 9;
+
 let started = false;
 let userIdSet = false;
 const queue: unknown[][] = [];
@@ -76,6 +79,10 @@ export const trackEvent = (
   push("trackEvent", parts[0], parts[1], parts.join("_"), value);
 };
 
+// Keeps people who follow their system apart from those who chose a theme.
+const themeKey = (theme: Theme, resolvedTheme: string) =>
+  theme === "system" ? `system_${resolvedTheme}` : theme;
+
 export const trackPageView = (path: string) => {
   const url = `${window.location.origin}${path}`;
   const referrer =
@@ -83,6 +90,10 @@ export const trackPageView = (path: string) => {
   push("setReferrerUrl", referrer);
   push("setCustomUrl", url);
   push("setDocumentTitle", path);
+  ignoreErrors(() => {
+    const { theme, resolvedTheme } = readTheme();
+    push("setCustomDimension", THEME_DIMENSION, themeKey(theme, resolvedTheme));
+  });
   push("trackPageView");
   lastUrl = url;
 };
@@ -312,6 +323,7 @@ const DIMENSIONS = {
   account: 6,
   product: 7,
   subscription: 8,
+  theme: THEME_DIMENSION,
 };
 
 const setDimension = (dimension: keyof typeof DIMENSIONS, value?: string) => {
@@ -356,6 +368,8 @@ const MatomoSession = () => {
   const [ready, setReady] = useState(false);
   const [accountTimedOut, setAccountTimedOut] = useState(false);
   const sentAccountId = useRef<string>(undefined);
+  const { theme, resolvedTheme } = useTheme();
+  const sentTheme = useRef<{ theme: Theme; key: string }>(undefined);
   const { data: peers } = useSWR<Peer[]>("/peers", null);
 
   const userId = loggedInUser?.id;
@@ -461,6 +475,18 @@ const MatomoSession = () => {
       setDimension("signupMonth", createdAt?.slice(0, 7));
     });
   }, [ready, role, tier, status, product, totalPeers, age, createdAt]);
+
+  useEffect(() => {
+    ignoreErrors(() => {
+      if (!ready) return;
+      // The first value goes out with the first page view.
+      const key = themeKey(theme, resolvedTheme);
+      const last = sentTheme.current;
+      if (last && last.key !== key) setDimension("theme", key);
+      if (last && last.theme !== theme) trackEvent("theme", "changed", theme);
+      sentTheme.current = { theme, key };
+    });
+  }, [ready, theme, resolvedTheme]);
 
   useEffect(() => {
     if (ready && pathname) ignoreErrors(() => trackPageView(pathname));

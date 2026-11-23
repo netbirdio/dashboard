@@ -15,6 +15,11 @@ const session = vi.hoisted(() => ({
   account: undefined as Record<string, unknown> | undefined,
   canReadAccounts: true,
   peers: undefined as { connected: boolean }[] | undefined,
+  theme: { theme: "dark", resolvedTheme: "dark" },
+}));
+vi.mock("@/contexts/ThemeProvider", () => ({
+  useTheme: () => session.theme,
+  readTheme: () => session.theme,
 }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/peers" }));
 vi.mock("swr", () => ({ default: () => ({ data: session.peers }) }));
@@ -71,6 +76,7 @@ beforeEach(() => {
   session.account = undefined;
   session.canReadAccounts = true;
   session.peers = undefined;
+  session.theme = { theme: "dark", resolvedTheme: "dark" };
   window._paq = [];
   document.head.innerHTML = "";
   document.body.innerHTML = "";
@@ -204,10 +210,12 @@ describe("setup", () => {
       ["setReferrerUrl", "https://login.netbird.io"],
       ["setCustomUrl", `${origin}/peers`],
       ["setDocumentTitle", "/peers"],
+      ["setCustomDimension", 9, "dark"],
       ["trackPageView"],
       ["setReferrerUrl", `${origin}/peers`],
       ["setCustomUrl", `${origin}/groups`],
       ["setDocumentTitle", "/groups"],
+      ["setCustomDimension", 9, "dark"],
       ["trackPageView"],
     ]);
   });
@@ -477,6 +485,21 @@ describe("hooks", () => {
     expect(urls().at(-1)).toBe(`${window.location.origin}/login_error`);
   });
 
+  it("gives a screen that starts Matomo the theme before its page view", async () => {
+    const matomo = await load();
+    session.theme = { theme: "light", resolvedTheme: "light" };
+    const Screen = () => {
+      matomo.useMatomoVirtualPage("login_error");
+      return null;
+    };
+    render(<Screen />);
+    const commands = sent().map(([command]) => command);
+    expect(sent()).toContainEqual(["setCustomDimension", 9, "light"]);
+    expect(commands.indexOf("setCustomDimension")).toBeLessThan(
+      commands.indexOf("trackPageView"),
+    );
+  });
+
   it("gives a full-screen view its own heatmap URL until it closes", async () => {
     const matomo = await start();
     matomo.trackPageView("/peers");
@@ -667,5 +690,32 @@ describe("MatomoSession", () => {
     expect(dimension(4).at(-1)?.[2]).toBe("2-5");
     expect(dimension(5).at(-1)?.[2]).toBe("2026-11");
     expect(dimension(7).at(-1)?.[2]).toBe("dashboard");
+  });
+
+  it("reports the theme before the first page view, and every switch after", async () => {
+    const { MatomoProvider } = await load();
+    session.user = user;
+    session.account = account;
+    session.theme = { theme: "system", resolvedTheme: "light" };
+    const { rerender } = render(<MatomoProvider />);
+    await waitFor(() => expect(commands("trackPageView")).toHaveLength(1));
+    const order = sent().map(([command, dim]) =>
+      command === "setCustomDimension" ? `dimension_${dim}` : command,
+    );
+    expect(order.indexOf("dimension_9")).toBeLessThan(
+      order.indexOf("trackPageView"),
+    );
+    expect(dimension(9).at(-1)?.[2]).toBe("system_light");
+    expect(names()).toEqual([]);
+
+    session.theme = { theme: "system", resolvedTheme: "dark" };
+    rerender(<MatomoProvider />);
+    expect(dimension(9).at(-1)?.[2]).toBe("system_dark");
+    expect(names()).toEqual([]);
+
+    session.theme = { theme: "light", resolvedTheme: "light" };
+    rerender(<MatomoProvider />);
+    expect(dimension(9).at(-1)?.[2]).toBe("light");
+    expect(names()).toEqual(["theme_changed_light"]);
   });
 });

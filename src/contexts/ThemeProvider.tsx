@@ -81,6 +81,18 @@ const getSystemTheme = (): ResolvedTheme =>
 
 const getServerSystemTheme = (): ResolvedTheme => "dark";
 
+/* For code that runs outside React, or before the store has hydrated. */
+export const readTheme = (): Pick<
+  ThemeContextValue,
+  "theme" | "resolvedTheme"
+> => {
+  const theme = getStoredTheme();
+  return {
+    theme,
+    resolvedTheme: theme === "system" ? getSystemTheme() : theme,
+  };
+};
+
 const subscribeSystemTheme = (onChange: () => void) => {
   const media = window.matchMedia(SYSTEM_QUERY);
   media.addEventListener("change", onChange);
