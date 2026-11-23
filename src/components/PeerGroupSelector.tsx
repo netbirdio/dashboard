@@ -43,9 +43,13 @@ import Skeleton from "react-loading-skeleton";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useElementSize } from "@/hooks/useElementSize";
 import type { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
-import { NetworkResource } from "@/interfaces/Network";
+import { Network, NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
+import {
+  NetworkResourceInNetwork,
+  withNetworkNames,
+} from "@/modules/networks/resources/resourceNetworks";
 import { User } from "@/interfaces/User";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
@@ -163,6 +167,8 @@ interface MultiSelectProps {
   // Extra peers alongside the fetched ones (e.g. draft placeholder peers).
   additionalPeers?: Peer[];
   policies?: Policy[];
+  // Head the Resources tab with each network's name and match it in search.
+  groupResourcesByNetwork?: boolean;
 }
 export function PeerGroupSelector({
   onChange,
@@ -199,6 +205,7 @@ export function PeerGroupSelector({
   additionalResources,
   additionalPeers,
   policies,
+  groupResourcesByNetwork = false,
   showClusters = false,
   clusters,
   selectedCluster,
@@ -211,6 +218,13 @@ export function PeerGroupSelector({
   const { data: fetchedResources, isLoading: isResourcesLoading } = useFetchApi<
     NetworkResource[]
   >("/networks/resources", false, true, !!permission?.networks?.read);
+
+  const { data: networks } = useFetchApi<Network[]>(
+    "/networks",
+    false,
+    true,
+    groupResourcesByNetwork && !!permission?.networks?.read,
+  );
 
   const resources = useMemo(() => {
     if (!additionalResources?.length) return fetchedResources;
@@ -804,6 +818,7 @@ export function PeerGroupSelector({
                     isLoading={isResourcesLoading}
                     value={resource}
                     onChange={selectResource}
+                    networks={groupResourcesByNetwork ? networks : undefined}
                   />
                 </TabsContent>
               )}
@@ -1056,9 +1071,13 @@ const PolicyCounter = ({
   );
 };
 
-const resourcesSearchPredicate = (item: NetworkResource, query: string) => {
+const resourcesSearchPredicate = (
+  item: NetworkResourceInNetwork,
+  query: string,
+) => {
   const lowerCaseQuery = query.toLowerCase();
   if (item.name.toLowerCase().includes(lowerCaseQuery)) return true;
+  if (item.networkName?.toLowerCase().includes(lowerCaseQuery)) return true;
   return item.address.toLowerCase().includes(lowerCaseQuery);
 };
 
@@ -1068,15 +1087,23 @@ const ResourcesList = ({
   isLoading,
   value,
   onChange,
+  networks,
 }: {
   search: string;
   resources?: NetworkResource[];
   isLoading: boolean;
   value?: PolicyRuleResource;
   onChange: (resource: NetworkResource) => void;
+  // When set, resources are grouped under their network's name.
+  networks?: Network[];
 }) => {
+  const items = useMemo<NetworkResourceInNetwork[]>(
+    () =>
+      networks ? withNetworkNames(resources || [], networks) : resources || [],
+    [resources, networks],
+  );
   const [filteredItems, _, setSearch] = useSearch(
-    resources || [],
+    items,
     resourcesSearchPredicate,
     { filter: true, debounce: 150 },
   );
@@ -1121,7 +1148,14 @@ const ResourcesList = ({
         items={filteredItems}
         onSelect={onChange}
         estimatedItemHeight={42}
+        estimatedHeadingHeight={32}
         itemClassName={"dark:aria-selected:bg-nb-gray-800/20"}
+        groupKey={networks ? (r) => r.networkId ?? "" : undefined}
+        renderHeading={(r) => (
+          <div className={"text-xs text-nb-gray-400 px-4 pt-2 pb-1"}>
+            {r.networkName}
+          </div>
+        )}
         renderItem={(res) => {
           return (
             <Fragment key={res.id}>
