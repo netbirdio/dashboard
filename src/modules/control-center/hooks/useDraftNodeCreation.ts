@@ -1,3 +1,7 @@
+import {
+  ExitNodeNodeData,
+  exitNodeNodeId,
+} from "@/modules/control-center/hooks/views/types";
 import { Node, useReactFlow, XYPosition } from "@xyflow/react";
 import { useCallback } from "react";
 import type { Network } from "@/interfaces/Network";
@@ -211,6 +215,23 @@ export function useDraftNodeCreation() {
           type: NodeType.ProviderNode,
           position: { x: 0, y: 0 },
           data: { ...provider },
+        },
+        position,
+      );
+    },
+    [placeNode],
+  );
+
+  // Places an exit node card; its data is built from the draft's view of the
+  // exit node (buildExitNodeNodeData).
+  const placeExitNodeNode = useCallback(
+    (data: ExitNodeNodeData, position?: XYPosition) => {
+      placeNode(
+        {
+          id: exitNodeNodeId(data.id),
+          type: NodeType.ExitNodeNode,
+          position: { x: 0, y: 0 },
+          data: { ...data },
         },
         position,
       );
@@ -551,6 +572,7 @@ export function useDraftNodeCreation() {
     addBlankPolicy,
     addBlankAgentPolicy,
     placeProviderNode,
+    placeExitNodeNode,
     placeAgentPolicyNode,
     addResourceToFrame,
     addResourceGroupToFrame,

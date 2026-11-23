@@ -3,6 +3,7 @@ import FullTooltip from "@components/FullTooltip";
 import { MemoizedScrollArea, ScrollAreaViewport } from "@components/ScrollArea";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { SmallBadge } from "@components/ui/SmallBadge";
+import { IconDirectionSign } from "@tabler/icons-react";
 import TruncatedText from "@components/ui/TruncatedText";
 import useFetchApi from "@utils/api";
 import { cn, singularize } from "@utils/helpers";
@@ -52,6 +53,14 @@ import {
   useDragAndDrop,
   useDragAndDropPosition,
 } from "@/modules/control-center/contexts/DragAndDropProvider";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import {
+  buildExitNodeNodeData,
+  exitNodeNodeId,
+} from "@/modules/control-center/hooks/views/types";
+import { applyExitNodeChanges } from "@/modules/control-center/utils/exit-node-draft";
+import { isExitNodePolicy } from "@/modules/exit-nodes/exitNodeHelpers";
+import { useExitNodePermissions } from "@/modules/exit-nodes/useExitNodePermissions";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterShortcuts } from "@/modules/control-center/hooks/useControlCenterShortcuts";
@@ -149,6 +158,7 @@ type PanelCategory =
   | "policies"
   | "groups"
   | "resources"
+  | "exit-nodes"
   | "agent-network";
 
 const CATEGORIES: {
@@ -160,6 +170,7 @@ const CATEGORIES: {
   { id: "policies", label: "Policies", icon: ShieldIcon },
   { id: "groups", label: "Groups", icon: FolderGit2 },
   { id: "resources", label: "Networks & Resources", icon: NetworkIcon },
+  { id: "exit-nodes", label: "Exit Nodes", icon: IconDirectionSign },
   { id: "agent-network", label: "Agent Network", icon: AgentNetworkIcon },
 ];
 
@@ -246,6 +257,7 @@ const PanelContent = React.memo(
       addBlankAgentPolicy,
       placeProviderNode,
       placeAgentPolicyNode,
+      placeExitNodeNode,
     } = useDraftNodeCreation();
     const { data: networks } = useFetchApi<Network[]>("/networks");
     const { data: resources } = useFetchApi<NetworkResource[]>(
@@ -255,6 +267,13 @@ const PanelContent = React.memo(
     const { changes } = useDraftChangeset();
     const { providers: agentProviders, policies: agentPolicies } =
       useAIProviders();
+    // The draft's exit nodes: pending edits applied, draft-created ones in.
+    const { exitNodes: liveExitNodes } = useControlCenterData();
+    const exitNodePermission = useExitNodePermissions();
+    const exitNodes = useMemo(
+      () => applyExitNodeChanges(liveExitNodes, changes),
+      [liveExitNodes, changes],
+    );
 
     const handlePeerTemplateDragStart = useCallback(
       (event: React.PointerEvent<HTMLDivElement>, tpl: PeerTemplate) => {
@@ -279,7 +298,7 @@ const PanelContent = React.memo(
 
     const { addNewGroup } = useDraftGroupActions();
     const { groupUserCounts } = useCanvasUI();
-    const { openProviderWizard, setAgentSourceGroup } =
+    const { openProviderWizard, setAgentSourceGroup, openExitNodeWizard } =
       useControlCenterPolicy();
     const {
       dropExistingPeer,
@@ -518,11 +537,13 @@ const PanelContent = React.memo(
         resource: new Set<string>(),
         provider: new Set<string>(),
         agentPolicy: new Set<string>(),
+        exitNode: new Set<string>(),
       };
       changes.forEach((c) => {
         if (c.type === "delete-group") ids.group.add(c.groupId);
         else if (c.type === "delete-policy") ids.policy.add(c.policyId);
         else if (c.type === "delete-provider") ids.provider.add(c.providerId);
+        else if (c.type === "delete-exit-node") ids.exitNode.add(c.exitNodeId);
         else if (c.type === "delete-agent-policy")
           ids.agentPolicy.add(c.agentPolicyId);
         else if (c.type === "delete-resource") ids.resource.add(c.resourceId);
@@ -602,6 +623,30 @@ const PanelContent = React.memo(
       const lower = query.toLowerCase();
       return groups.filter((g) => g.name?.toLowerCase().includes(lower));
     }, [groups, query, groupsCategory]);
+
+    const exitNodesCategory = categoryMatch([
+      "exit",
+      "exit node",
+      "exit nodes",
+      "egress",
+      "internet",
+    ]);
+    // Deleted ones too: they show with a Deleted badge, like providers.
+    const filteredExitNodes = useMemo(() => {
+      const all = [
+        ...exitNodes,
+        ...(liveExitNodes ?? []).filter((n) =>
+          pendingDeleteIds.exitNode.has(n.id),
+        ),
+      ];
+      if (!query || exitNodesCategory) return all;
+      const lower = query.toLowerCase();
+      return all.filter(
+        (n) =>
+          n.name.toLowerCase().includes(lower) ||
+          n.description?.toLowerCase().includes(lower),
+      );
+    }, [exitNodes, liveExitNodes, pendingDeleteIds, query, exitNodesCategory]);
 
     const agentNetworkCategory = categoryMatch([
       "agent",
@@ -776,6 +821,9 @@ const PanelContent = React.memo(
       [matchesSearch, resourcesCategory, networksCategory, drilled],
     );
     const showPolicyTemplate = policiesCategory || matchesSearch("Policy");
+    const showExitNodeTemplate =
+      !!exitNodePermission?.create &&
+      (exitNodesCategory || matchesSearch("Exit Node"));
     const showAgentProviderTemplate =
       agentNetworkCategory || matchesSearch("Provider");
     const showAgentPolicyTemplate =
@@ -1184,6 +1232,86 @@ const PanelContent = React.memo(
         );
       });
 
+    const buildExitNodeTemplateRows = () =>
+      showExitNodeTemplate
+        ? [
+            <TemplateItem
+              key={"exit-node-template"}
+              icon={IconDirectionSign}
+              label={"Exit Node"}
+              description={"Route internet traffic through peers"}
+              onPointerDown={(e) =>
+                handleAgentDragStart(e, (position) =>
+                  openExitNodeWizard(position),
+                )
+              }
+              data-testid={"cc-template-exit-node"}
+            />,
+          ]
+        : [];
+
+    // Dropping an existing exit node brings the policies pointing at it, so
+    // the card arrives with what it's used for.
+    const dropExitNode = (exitNodeId: string, position?: XYPosition) => {
+      placeExitNodeNode(
+        buildExitNodeNodeData(exitNodeId, exitNodes, peers),
+        position,
+      );
+      (policies ?? [])
+        .filter((p) => isExitNodePolicy(p, exitNodeId))
+        .filter((p) => !canvasNodeIds.has(`policy-${p.id}`))
+        .forEach((p) => handleExistingPolicyDrop(p));
+    };
+
+    const buildExitNodeRows = () =>
+      filteredExitNodes.map((exitNode) => {
+        const onCanvas = canvasNodeIds.has(exitNodeNodeId(exitNode.id));
+        const pendingDelete = pendingDeleteIds.exitNode.has(exitNode.id);
+        const activePeers = exitNode.peers.filter((p) => p.enabled).length;
+        return (
+          <PanelListItem
+            key={exitNode.id}
+            disabled={onCanvas || pendingDelete}
+            onCanvas={onCanvas}
+            onPointerDown={(e) =>
+              handleAgentDragStart(e, (position) =>
+                dropExitNode(exitNode.id, position),
+              )
+            }
+            data-testid={`cc-panel-exit-node-${exitNode.id}`}
+          >
+            <div className="flex items-center gap-2 flex-1 min-w-0 pl-2 py-0.5">
+              <div
+                className={
+                  "h-8 w-8 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0"
+                }
+              >
+                <IconDirectionSign size={14} className={"text-yellow-400"} />
+              </div>
+              <div className={"flex flex-col gap-0.5 leading-tight min-w-0"}>
+                <span
+                  className={
+                    "text-xs text-nb-gray-100 flex items-center gap-2 min-w-0"
+                  }
+                >
+                  <TruncatedText
+                    text={exitNode.name}
+                    maxWidth={"150px"}
+                    hideTooltip={true}
+                  />
+                  {exitNode.id.startsWith("new-") && <SmallBadge />}
+                  {pendingDelete && <DeletedBadge />}
+                </span>
+                <span className={"text-[0.72rem] text-nb-gray-400 truncate"}>
+                  {activePeers} of {exitNode.peers.length} peer
+                  {exitNode.peers.length !== 1 ? "s" : ""} active
+                </span>
+              </div>
+            </div>
+          </PanelListItem>
+        );
+      });
+
     const buildAgentPolicyRows = () =>
       filteredAgentPolicies.map((policy: AgentPolicy) => {
         const onCanvas = canvasNodeIds.has(`agent-policy-${policy.id}`);
@@ -1288,6 +1416,7 @@ const PanelContent = React.memo(
                   ...buildPolicyTemplateRows(),
                   ...buildGroupTemplateRows(),
                   ...buildResourceTemplateRows(),
+                  ...buildExitNodeTemplateRows(),
                   ...(agentNetworkEnabled ? buildAgentTemplateRows() : []),
                 ],
               },
@@ -1311,6 +1440,7 @@ const PanelContent = React.memo(
                 title: "Resources",
                 rows: [...buildDraftResourceRows(), ...buildResourceRows()],
               },
+              { title: "Exit Nodes", rows: buildExitNodeRows() },
               // The category tab is not reachable from a search, so its rows
               // have to be offered here or a provider can't be searched for.
               ...(agentNetworkEnabled
@@ -1335,6 +1465,11 @@ const PanelContent = React.memo(
                 title: "Existing Policies",
                 rows: [...buildDraftPolicyRows(), ...buildPolicyRows()],
               },
+            ]
+          : category === "exit-nodes"
+          ? [
+              { title: "Add New", rows: buildExitNodeTemplateRows() },
+              { title: "Existing Exit Nodes", rows: buildExitNodeRows() },
             ]
           : category === "agent-network" && agentNetworkEnabled
           ? [

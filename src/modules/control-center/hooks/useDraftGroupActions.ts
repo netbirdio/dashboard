@@ -451,9 +451,14 @@ export function useDraftGroupActions() {
             }[];
           }
         | undefined;
+      // An exit node card names its exit node by id; removing it strips the
+      // policies pointing at it, like a resource.
       const entityId =
         data?.peer?.id ??
         data?.resource?.id ??
+        (nodeId.startsWith("exit-node-")
+          ? nodeId.replace("exit-node-", "")
+          : undefined) ??
         (data?.placeholderKind
           ? nodeId.replace("peer-", "")
           : nodeId.startsWith("resource-new-")

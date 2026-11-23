@@ -15,8 +15,12 @@ const GROUP_NODE_TYPES = new Set<string>([
 // raw node deletion would skip the policy strips.
 export function useNodeRemoval() {
   const { removeGroups, removeNodeWithEdges } = useDraftGroupActions();
-  const { trackDeletePolicy, trackDeleteProvider, trackDeleteAgentPolicy } =
-    useDraftChangeset();
+  const {
+    trackDeletePolicy,
+    trackDeleteProvider,
+    trackDeleteAgentPolicy,
+    trackDeleteExitNode,
+  } = useDraftChangeset();
 
   const removeAgentNodeFromCanvas = useCallback(
     (node: Node) => {
@@ -38,6 +42,23 @@ export function useNodeRemoval() {
       removeNodeWithEdges(node.id);
     },
     [trackDeleteProvider, trackDeleteAgentPolicy, removeNodeWithEdges],
+  );
+
+  // A draft exit node leaves the draft with its card; an existing one only
+  // leaves the canvas, taking the policies pointing at it along (Delete is
+  // what deletes it).
+  const removeExitNodeFromCanvas = useCallback(
+    (node: Node) => {
+      const data = node.data as { id?: string; name?: string };
+      if (data?.id?.startsWith("new-")) {
+        trackDeleteExitNode({
+          exitNodeId: data.id,
+          name: data.name ?? "Exit node",
+        });
+      }
+      removeNodeWithEdges(node.id);
+    },
+    [trackDeleteExitNode, removeNodeWithEdges],
   );
 
   // Off the canvas a policy authorizes nothing, so it deploys as a deletion.
@@ -102,6 +123,10 @@ export function useNodeRemoval() {
           removeAgentNodeFromCanvas(node);
           return;
         }
+        if (node.type === NodeType.ExitNodeNode) {
+          removeExitNodeFromCanvas(node);
+          return;
+        }
         removeNodeWithEdges(node.id);
       });
     },
@@ -110,6 +135,7 @@ export function useNodeRemoval() {
       removeGroups,
       removePolicyFromCanvas,
       removeAgentNodeFromCanvas,
+      removeExitNodeFromCanvas,
       removeNodeWithEdges,
     ],
   );

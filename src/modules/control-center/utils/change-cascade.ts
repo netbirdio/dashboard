@@ -209,6 +209,11 @@ export function changeNodeId(change: DraftChange): string | undefined {
       return `resource-${change.resourceId}`;
     case "install-peer":
       return `peer-${change.clientId}`;
+    case "create-exit-node":
+      return `exit-node-${change.clientId}`;
+    case "update-exit-node":
+    case "delete-exit-node":
+      return `exit-node-${change.exitNodeId}`;
     default:
       return undefined;
   }
@@ -681,6 +686,15 @@ export function reduceRemoveChange(
             return clearResourceRef(c, clientId);
           })
           .filter((c) => !isSpentGroupUpdate(c)),
+      );
+    }
+
+    // Policies to the dropped exit node lose their destination, and drop out
+    // when that leaves them one-sided.
+    case "create-exit-node": {
+      const clientId = change.clientId;
+      return dropUntrackablePolicies(
+        withoutTarget.map((c) => clearResourceRef(c, clientId)),
       );
     }
 

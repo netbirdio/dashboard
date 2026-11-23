@@ -69,6 +69,12 @@ type Props = {
   // Peers a new exit node starts with, e.g. when set up from a peer.
   initialPeerIds?: string[];
   onSaved?: (exitNode: ExitNode) => void;
+  // Draft mode (Control Center): hands the request over instead of saving,
+  // without the Access Control tab, since the canvas draws the policies.
+  onDraftSubmit?: (request: ExitNodeRequest) => void;
+  // The exit nodes names and peers are checked against; defaults to the
+  // live ones. A draft passes its own, so draft-created ones count.
+  otherExitNodes?: ExitNode[];
 };
 
 export default function ExitNodeModal({
@@ -79,6 +85,8 @@ export default function ExitNodeModal({
   openPeerSelector,
   initialPeerIds,
   onSaved,
+  onDraftSubmit,
+  otherExitNodes,
 }: Readonly<Props>) {
   return (
     <Modal open={open} onOpenChange={setOpen}>
@@ -90,6 +98,8 @@ export default function ExitNodeModal({
           openPeerSelector={openPeerSelector}
           initialPeerIds={initialPeerIds}
           onSaved={onSaved}
+          onDraftSubmit={onDraftSubmit}
+          otherExitNodes={otherExitNodes}
         />
       )}
     </Modal>
@@ -104,9 +114,17 @@ export function ExitNodeModalContent({
   openPeerSelector = false,
   initialPeerIds = [],
   onSaved,
+  onDraftSubmit,
+  otherExitNodes,
 }: Readonly<ContentProps>) {
   const isEdit = !!exitNode;
-  const { exitNodes, peers, getPolicies } = useExitNodes();
+  const isDraft = !!onDraftSubmit;
+  const { exitNodes: liveExitNodes, peers, getPolicies } = useExitNodes();
+  const exitNodes = otherExitNodes ?? liveExitNodes;
+  // In draft the Access Control step doesn't exist: the canvas has it.
+  const tabOrder = isDraft
+    ? TAB_ORDER.filter((t) => t !== "access-control")
+    : TAB_ORDER;
   const { createPoliciesForResource } = usePolicies();
   const { confirm } = useDialog();
   const { mutate } = useSWRConfig();
@@ -166,8 +184,8 @@ export function ExitNodeModalContent({
   const nameValid = name.trim().length > 0 && nameError === "";
   const allValid = peersValid && nameValid;
 
-  const tabIndex = TAB_ORDER.indexOf(tab);
-  const isLastTab = tabIndex === TAB_ORDER.length - 1;
+  const tabIndex = tabOrder.indexOf(tab);
+  const isLastTab = tabIndex === tabOrder.length - 1;
 
   // While creating, a tab opens once the ones before it are complete.
   const isTabDisabled = (t: ExitNodeModalTab) => {
@@ -222,6 +240,10 @@ export function ExitNodeModalContent({
 
   const save = async () => {
     if (!allValid || isSaving) return;
+    if (onDraftSubmit) {
+      onDraftSubmit(toRequest());
+      return;
+    }
     setIsSaving(true);
     try {
       if (!(await confirmMissingPolicies())) return;
@@ -290,13 +312,15 @@ export function ExitNodeModalContent({
             <Settings2 size={16} className={tabIcon} />
             Additional Settings
           </TabsTrigger>
-          <TabsTrigger
-            value={"access-control"}
-            disabled={isTabDisabled("access-control")}
-          >
-            <ShieldCheck size={16} />
-            Access Control
-          </TabsTrigger>
+          {!isDraft && (
+            <TabsTrigger
+              value={"access-control"}
+              disabled={isTabDisabled("access-control")}
+            >
+              <ShieldCheck size={16} />
+              Access Control
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value={"peers"} className={"pb-8"}>
@@ -407,7 +431,7 @@ export function ExitNodeModalContent({
               ) : (
                 <Button
                   variant={"secondary"}
-                  onClick={() => setTab(TAB_ORDER[tabIndex - 1])}
+                  onClick={() => setTab(tabOrder[tabIndex - 1])}
                 >
                   Back
                 </Button>
@@ -425,7 +449,7 @@ export function ExitNodeModalContent({
               ) : (
                 <Button
                   variant={"primary"}
-                  onClick={() => setTab(TAB_ORDER[tabIndex + 1])}
+                  onClick={() => setTab(tabOrder[tabIndex + 1])}
                   disabled={!canContinue}
                   data-testid={"exit-node-continue"}
                 >

@@ -171,6 +171,14 @@ export function useRemoveChange() {
         case "create-policy":
           dropNodes(new Set([`policy-${change.clientId}`]));
           return;
+        case "create-exit-node":
+          dropNodes(new Set([`exit-node-${change.clientId}`]));
+          patchPolicyNodeData((p) =>
+            policyRefsResource(p, change.clientId)
+              ? clearPolicyResourceRef(p, change.clientId)
+              : p,
+          );
+          return;
         case "create-resource":
           dropNodes(new Set([`resource-${change.clientId}`]));
           patchPolicyNodeData((p) =>

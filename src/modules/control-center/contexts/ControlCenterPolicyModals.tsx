@@ -39,7 +39,12 @@ import {
   buildExitNodeNodeData,
   exitNodeNodeId,
 } from "@/modules/control-center/hooks/views/types";
-import { EditExitNodeModal } from "@/modules/exit-nodes/PeerExitNodeModal";
+import {
+  DraftExitNodeModal,
+  EditExitNodeModal,
+} from "@/modules/exit-nodes/PeerExitNodeModal";
+import { ExitNodeRequest } from "@/interfaces/ExitNode";
+import { applyExitNodeChanges } from "@/modules/control-center/utils/exit-node-draft";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
@@ -71,8 +76,10 @@ interface PolicyContextType {
   setPolicyDestinationScope: (scope?: PolicyDestinationScope) => void;
   openAgentPolicy: (id: string) => void;
   openProvider: (id: string) => void;
-  // Opens the exit node's edit modal (live views).
+  // Opens the exit node's edit modal; in draft the edit goes to the changeset.
   openExitNode: (id: string) => void;
+  // Draft only: a new exit node, placed at `position` once saved.
+  openExitNodeWizard: (position?: XYPosition) => void;
   updateDraftAgentPolicy: (policy: AgentPolicy) => void;
   setAgentSourceGroup: (policy: AgentPolicy, groupRef: string) => void;
   drawAgentPolicyOnCanvas: (
@@ -119,12 +126,15 @@ export function ControlCenterPolicyProvider({
     patchPendingPolicyUpdate,
     trackCreateProvider,
     trackUpdateProvider,
+    trackCreateExitNode,
+    trackUpdateExitNode,
     trackCreateAgentPolicy,
     trackUpdateAgentPolicy,
     trackDeleteAgentPolicy,
     patchPendingAgentPolicyUpdate,
   } = useDraftChangeset();
-  const { placeProviderNode, placeAgentPolicyNode } = useDraftNodeCreation();
+  const { placeProviderNode, placeAgentPolicyNode, placeExitNodeNode } =
+    useDraftNodeCreation();
   const { setDropdownOptions } = useGroups();
   const reactFlow = useReactFlow();
   const { confirm } = useDialog();
@@ -256,7 +266,32 @@ export function ControlCenterPolicyProvider({
   };
 
   const [editingExitNodeId, setEditingExitNodeId] = useState<string>();
-  const openExitNode = (id: string) => setEditingExitNodeId(id);
+  // Draft: the exit node being edited (its id) or created (no id).
+  const [exitNodeEditor, setExitNodeEditor] = useState<{
+    exitNodeId?: string;
+    position?: XYPosition;
+  } | null>(null);
+  const draftExitNodes = useMemo(
+    () => applyExitNodeChanges(exitNodes, changes),
+    [exitNodes, changes],
+  );
+  const openExitNode = (id: string) =>
+    isDraft ? setExitNodeEditor({ exitNodeId: id }) : setEditingExitNodeId(id);
+  const openExitNodeWizard = (position?: XYPosition) =>
+    setExitNodeEditor({ position });
+
+  const submitDraftExitNode = (request: ExitNodeRequest) => {
+    const editingId = exitNodeEditor?.exitNodeId;
+    const id = editingId ?? `new-${draftUid()}`;
+    const data = buildExitNodeNodeData(id, [{ id, ...request }], peers);
+    if (editingId) {
+      trackUpdateExitNode({ exitNodeId: id, request });
+      patchAgentNode(exitNodeNodeId(id), data);
+    } else {
+      trackCreateExitNode({ clientId: id, request });
+      placeExitNodeNode(data, exitNodeEditor?.position);
+    }
+  };
 
   const [providerWizard, setProviderWizard] = useState<{
     position?: XYPosition;
@@ -634,7 +669,11 @@ export function ControlCenterPolicyProvider({
           ensureNode(
             nodeId,
             "exitNodeNode",
-            buildExitNodeNodeData(destResource.id, exitNodes, peers),
+            buildExitNodeNodeData(
+              destResource.id,
+              isDraft ? draftExitNodes : exitNodes,
+              peers,
+            ),
             nextDestPosition(),
           )
         ) {
@@ -1168,6 +1207,7 @@ export function ControlCenterPolicyProvider({
       openAgentPolicyWizard,
       openProvider,
       openExitNode,
+      openExitNodeWizard,
       openProviderWizard,
       requestProvider,
     }),
@@ -1315,6 +1355,15 @@ export function ControlCenterPolicyProvider({
         exitNodeId={editingExitNodeId}
         open={!!editingExitNodeId}
         onClose={() => setEditingExitNodeId(undefined)}
+      />
+      <DraftExitNodeModal
+        exitNode={draftExitNodes.find(
+          (n) => n.id === exitNodeEditor?.exitNodeId,
+        )}
+        otherExitNodes={draftExitNodes}
+        open={!!exitNodeEditor}
+        onClose={() => setExitNodeEditor(null)}
+        onSubmit={submitDraftExitNode}
       />
       {children}
     </PolicyContext.Provider>

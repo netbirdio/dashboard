@@ -39,6 +39,8 @@ import {
 } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { applyExitNodeChanges } from "@/modules/control-center/utils/exit-node-draft";
+import { toExitNodeRequest } from "@/modules/exit-nodes/exitNodeHelpers";
 import { useExitNodePermissions } from "@/modules/exit-nodes/useExitNodePermissions";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { GroupRenameModal } from "@/modules/control-center/draft/modals/GroupRenameModal";
@@ -136,7 +138,7 @@ export const NodeContextMenu = ({
     togglePolicy: toggleAgentPolicy,
     deletePolicy: deleteAgentPolicy,
   } = useAIProviders();
-  const { groups, policies } = useControlCenterData();
+  const { groups, policies, exitNodes: liveExitNodes } = useControlCenterData();
   const { canDeleteGroup } = useCanDeleteGroup();
   const {
     changes,
@@ -146,6 +148,8 @@ export const NodeContextMenu = ({
     trackDeleteProvider,
     trackUpdateAgentPolicy,
     trackDeleteAgentPolicy,
+    trackUpdateExitNode,
+    trackDeleteExitNode,
   } = useDraftChangeset();
   const { confirm } = useDialog();
   const {
@@ -997,6 +1001,85 @@ export const NodeContextMenu = ({
       return [...focusItems(node), ...agentItems(node)];
     }
 
+    // Draft exit node: edits and the deletion go to the changeset.
+    if (node.type === "exitNodeNode") {
+      const data = node.data as {
+        id?: string;
+        name?: string;
+        missing?: boolean;
+      };
+      const id = data?.id;
+      const items: MenuItem[] = [...focusItems(node)];
+      if (!id || data.missing) return items;
+      const isNew = id.startsWith("new-");
+      const exitNode = applyExitNodeChanges(liveExitNodes, changes).find(
+        (n) => n.id === id,
+      );
+      const name = exitNode?.name ?? data.name ?? "Exit node";
+      const mayWrite = isNew
+        ? !!exitNodePermission?.create
+        : !!exitNodePermission?.update;
+      if (mayWrite && exitNode) {
+        items.push({
+          label: "Edit",
+          icon: <SquarePenIcon size={14} />,
+          onClick: () => openExitNode(id),
+        });
+        items.push({
+          label: exitNode.enabled ? "Disable" : "Enable",
+          icon: exitNode.enabled ? (
+            <PowerOffIcon size={14} />
+          ) : (
+            <PowerIcon size={14} />
+          ),
+          onClick: () => {
+            const enabled = !exitNode.enabled;
+            trackUpdateExitNode({
+              exitNodeId: id,
+              request: { ...toExitNodeRequest(exitNode), enabled },
+              origin: "toggle",
+            });
+            setNodes((prev) =>
+              prev.map((n) =>
+                n.id === node.id ? { ...n, data: { ...n.data, enabled } } : n,
+              ),
+            );
+          },
+        });
+      }
+      // Remove takes the card (and the policies to it) off the canvas; only
+      // Delete deletes an existing exit node.
+      items.push({
+        label: "Remove",
+        icon: <CircleMinusIcon size={14} />,
+        onClick: () => {
+          if (isNew) trackDeleteExitNode({ exitNodeId: id, name });
+          removeNodeWithEdges(node.id);
+        },
+      });
+      if (!isNew && exitNodePermission?.delete) {
+        items.push({
+          label: "Delete",
+          icon: <TrashIcon size={14} />,
+          danger: true,
+          onClick: async () => {
+            const choice = await confirm({
+              title: `Delete '${name}'?`,
+              description:
+                "Deploying deletes this exit node and its access control policies.",
+              confirmText: "Delete",
+              cancelText: "Cancel",
+              type: "danger",
+            });
+            if (!choice) return;
+            trackDeleteExitNode({ exitNodeId: id, name });
+            removeNodeWithEdges(node.id);
+          },
+        });
+      }
+      return items;
+    }
+
     if (node.type === "policyNode") {
       // Draft is deferred, not exempt: Approve & Deploy sends the same calls the live
       // branch gates. A DRAFT policy has no API object yet, so it needs `create`.
@@ -1238,6 +1321,13 @@ export const NodeContextMenu = ({
   }, [
     openExitNode,
     exitNodePermission,
+    liveExitNodes,
+    changes,
+    trackUpdateExitNode,
+    trackDeleteExitNode,
+    removeNodeWithEdges,
+    confirm,
+    setNodes,
     position,
     isDraft,
     node,

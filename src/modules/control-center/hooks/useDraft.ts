@@ -26,6 +26,7 @@ import {
   buildExitNodeNodeData,
   exitNodeNodeId,
 } from "@/modules/control-center/hooks/views/types";
+import { applyExitNodeChanges } from "@/modules/control-center/utils/exit-node-draft";
 import { applyDraftBuildLayout } from "@/modules/control-center/utils/draft-build-layout";
 import { handleDraftConnect } from "@/modules/control-center/utils/draft-connect";
 import { computeDrillDownKeepSet } from "@/modules/control-center/utils/frame-view";
@@ -364,7 +365,12 @@ export function useDraft() {
             addNode(allNodes, {
               id: nodeId,
               type: "exitNodeNode",
-              data: buildExitNodeNodeData(destResource.id, exitNodes, peers),
+              // The draft's view: a re-entered draft keeps its pending edits.
+              data: buildExitNodeNodeData(
+                destResource.id,
+                applyExitNodeChanges(exitNodes, draftChanges),
+                peers,
+              ),
               position: { x: 0, y: 0 },
             });
             addEdge(allEdges, {
