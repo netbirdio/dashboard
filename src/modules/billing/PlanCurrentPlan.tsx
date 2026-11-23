@@ -44,11 +44,11 @@ export const PlanCurrentPlan = ({
 
   return (
     <div
-      className={"bg-nb-gray-930/70 border border-nb-gray-900/70 rounded-md"}
+      className={"bg-white dark:bg-nb-gray-930/70 border border-nb-gray-900/70 rounded-md"}
     >
       <div
         className={
-          "flex justify-between gap-10 items-end p-4 bg-nb-gray-900/30"
+          "flex justify-between gap-10 items-end p-4 dark:bg-nb-gray-900/30"
         }
       >
         <div
@@ -133,7 +133,7 @@ export const PlanCurrentPlan = ({
           <div className={"flex gap-2 items-center text-sm"}>
             <Users2Icon size={18} />
             <div>
-              <span className={"font-medium text-white"}>
+              <span className={"font-medium text-neutral-900 dark:text-white"}>
                 {stats?.active_users}
               </span>
               {isFreePlan && !isTrial ? (
@@ -150,7 +150,7 @@ export const PlanCurrentPlan = ({
           <div className={"flex gap-2 items-center text-sm"}>
             <MonitorSmartphoneIcon size={18} />
             <div>
-              <span className={"font-medium text-white"}>
+              <span className={"font-medium text-neutral-900 dark:text-white"}>
                 {stats?.active_peers}
               </span>
 
@@ -170,7 +170,7 @@ export const PlanCurrentPlan = ({
             <div className={"flex gap-2 items-center text-sm"}>
               <CreditCardIcon size={18} />
               <div>
-                <span className={"font-medium text-white"}>
+                <span className={"font-medium text-neutral-900 dark:text-white"}>
                   {currentPlanPrice?.currency == Currency.USD && "$"}
                   {estimatedPrice}
                   {currentPlanPrice?.currency == Currency.EUR && "€"}

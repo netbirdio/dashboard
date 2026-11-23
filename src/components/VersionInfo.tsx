@@ -83,9 +83,11 @@ export const NavigationVersionInfo = () => {
     <div
       className={cn(
         "px-4 py-4 animate-fade-in",
+        // In the icon-only sidebar the card keeps its full-width height while
+        // hidden, so showing it on hover doesn't push the account area up.
         isNavigationCollapsed &&
           !mobileNavOpen &&
-          "hidden md:group-hover/navigation:block",
+          "max-md:hidden md:invisible md:w-56 md:group-hover/navigation:visible",
       )}
     >
       <NavigationVersionInfoContent />

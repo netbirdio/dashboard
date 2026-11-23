@@ -9,7 +9,13 @@ import {
   idp,
 } from "@/storybook/fixtures";
 import { cards, modalTab, openCard, walk } from "@/storybook/integrations";
-import { click, dialogCount, findText, settle } from "@/storybook/platform";
+import {
+  click,
+  clickText,
+  dialogCount,
+  findText,
+  settle,
+} from "@/storybook/platform";
 
 const meta: Meta = {
   title: "Pages/Platform/Cloud/Integrations",
@@ -150,6 +156,38 @@ const settings = (tab: Tab, card: number, modalTabIndex?: number): Story => ({
     if (modalTabIndex !== undefined) await modalTab(modalTabIndex);
     await settle(400);
   },
+});
+
+/* The EDR grace period switched on, so its duration field and the new peers
+   option show. The setup wizards switch it on at their last step; the settings
+   load a saved value. */
+const graceWizard = (card: number, steps: number): Story => ({
+  parameters: at("edr", unconfigured.edr),
+  play: async () => {
+    await loaded();
+    await openCard(card);
+    await walk(steps);
+    await clickText("Grace Period");
+    await settle(400);
+  },
+});
+
+const graceSettings = (
+  key: keyof typeof edr,
+  card: number,
+  modalTabIndex: number,
+  newPeers = false,
+): Story => ({
+  ...settings("edr", card, modalTabIndex),
+  parameters: at("edr", {
+    ...configured.edr,
+    [`GET /integrations/edr/${key}`]: {
+      ...edr[key],
+      enabled: false,
+      stale_grace_minutes: 45,
+      stale_grace_new_peers: newPeers,
+    },
+  }),
 });
 
 export const IdentityProvider = overview("identity-provider");
@@ -443,3 +481,40 @@ export const EDRFleetDMSettingsPeerApproval = settings("edr", 4, 0);
 export const EDRFleetDMSettingsCompliance = settings("edr", 4, 1);
 export const EDRFleetDMSettingsSettings = settings("edr", 4, 2);
 export const EDRFleetDMSettingsDangerZone = settings("edr", 4, 3);
+
+export const EDRCrowdStrikeSetup2GracePeriod = graceWizard(0, 2);
+export const EDRIntuneSetup6GracePeriod = graceWizard(1, 6);
+export const EDRSentinelOneSetup5GracePeriod = graceWizard(2, 5);
+export const EDRHuntressSetup4GracePeriod = graceWizard(3, 4);
+export const EDRFleetDMSetup5GracePeriod = graceWizard(4, 5);
+export const EDRCrowdStrikeSettingsSettingsGracePeriod = graceSettings(
+  "falcon",
+  0,
+  1,
+);
+export const EDRIntuneSettingsSettingsGracePeriod = graceSettings(
+  "intune",
+  1,
+  2,
+);
+export const EDRSentinelOneSettingsSettingsGracePeriod = graceSettings(
+  "sentinelone",
+  2,
+  2,
+);
+export const EDRHuntressSettingsSettingsGracePeriod = graceSettings(
+  "huntress",
+  3,
+  2,
+);
+export const EDRFleetDMSettingsSettingsGracePeriod = graceSettings(
+  "fleetdm",
+  4,
+  2,
+);
+export const EDRFleetDMSettingsSettingsGracePeriodNewPeers = graceSettings(
+  "fleetdm",
+  4,
+  2,
+  true,
+);

@@ -8,7 +8,7 @@ import { MinimalList } from "@components/ui/MinimalList";
 import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
 import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
-import { isAuth0 } from "@utils/netbird";
+import { getScimBaseUrl, isAuth0 } from "@utils/netbird";
 import { isEmpty, trim } from "lodash";
 import {
   BoxIcon,
@@ -323,7 +323,7 @@ export function SetupContent({
               },
               {
                 label: "Base URL",
-                value: "https://api.netbird.io/api/scim/v2",
+                value: getScimBaseUrl(),
               },
               {
                 label: "Token",

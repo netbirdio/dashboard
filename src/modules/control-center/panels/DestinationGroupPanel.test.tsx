@@ -1,3 +1,4 @@
+import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Group } from "@/interfaces/Group";
 
@@ -15,7 +16,7 @@ vi.mock("@utils/api", () => ({
 // missing config.
 vi.mock("@utils/config", () => ({ default: () => ({}) }));
 
-const { canEditGroupMembers } = await import(
+const { canEditGroupMembers, useInitialGroupTab } = await import(
   "@/modules/control-center/panels/DestinationGroupPanel"
 );
 
@@ -37,5 +38,68 @@ describe("canEditGroupMembers", () => {
   it("treats an unresolved group as existing", () => {
     expect(canEditGroupMembers(perms(false, true), undefined)).toBe(true);
     expect(canEditGroupMembers(perms(true, false), undefined)).toBe(false);
+  });
+});
+
+describe("useInitialGroupTab", () => {
+  type Props = { groupId: string; preferred: string; loaded: boolean };
+  const setup = (initialProps: Props) =>
+    renderHook(
+      (p: Props) => useInitialGroupTab(p.groupId, p.preferred, p.loaded),
+      { initialProps },
+    );
+
+  it("follows the preferred tab while the data is still loading", () => {
+    const { result, rerender } = setup({
+      groupId: "g1",
+      preferred: "peers",
+      loaded: false,
+    });
+    rerender({ groupId: "g1", preferred: "users", loaded: true });
+    expect(result.current.tab).toBe("users");
+  });
+
+  it("keeps the tab when the counts change after the data has loaded", () => {
+    const { result, rerender } = setup({
+      groupId: "g1",
+      preferred: "peers",
+      loaded: true,
+    });
+    rerender({ groupId: "g1", preferred: "resources", loaded: true });
+    expect(result.current.tab).toBe("peers");
+  });
+
+  it("chooses again for the next group", () => {
+    const { result, rerender } = setup({
+      groupId: "g1",
+      preferred: "peers",
+      loaded: true,
+    });
+    rerender({ groupId: "g2", preferred: "resources", loaded: true });
+    expect(result.current.tab).toBe("resources");
+    rerender({ groupId: "g2", preferred: "peers", loaded: true });
+    expect(result.current.tab).toBe("resources");
+  });
+
+  it("keeps the tab the user picked, even before the data has loaded", () => {
+    const { result, rerender } = setup({
+      groupId: "g1",
+      preferred: "peers",
+      loaded: false,
+    });
+    act(() => result.current.pickTab("resources"));
+    rerender({ groupId: "g1", preferred: "users", loaded: true });
+    expect(result.current.tab).toBe("resources");
+  });
+
+  it("stops following once a member is toggled before the data has loaded", () => {
+    const { result, rerender } = setup({
+      groupId: "g1",
+      preferred: "peers",
+      loaded: false,
+    });
+    act(() => result.current.lockTab());
+    rerender({ groupId: "g1", preferred: "resources", loaded: true });
+    expect(result.current.tab).toBe("peers");
   });
 });

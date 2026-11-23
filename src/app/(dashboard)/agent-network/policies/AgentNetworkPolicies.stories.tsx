@@ -70,6 +70,15 @@ export const Create = createStory();
 export const CreateLimits = createStory("Limits");
 export const CreateGuardrails = createStory("Guardrails");
 
+export const CreateProviderSelector: Story = {
+  play: async () => {
+    await Create.play!({} as never);
+    await clickRole("button", /Select provider/);
+    await waitForSelector("[cmdk-list]");
+    await settle();
+  },
+};
+
 const editStory = (tab?: "Limits" | "Guardrails"): Story => ({
   play: async () => {
     await openRowMenu();

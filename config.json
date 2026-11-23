@@ -27,5 +27,6 @@
   "matomoUrl": "$NETBIRD_MATOMO_URL",
   "matomoSiteId": "$NETBIRD_MATOMO_SITE_ID",
   "analyticsExcludedEmails": "$NETBIRD_ANALYTICS_EXCLUDED_EMAILS",
+  "assistantApiOrigin": "$NETBIRD_ASSISTANT_API_ENDPOINT",
   "announcement": "$NETBIRD_ANNOUNCEMENT"
 }

@@ -1,0 +1,202 @@
+"use client";
+
+import { usePathname, useSearchParams } from "next/navigation";
+import {
+  createContext,
+  Suspense,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import type { PageContextEntry, PageContextType } from "@/interfaces/Assistant";
+import { buildPageContextMarker } from "./lib/contract";
+
+interface AssistantChatContextState {
+  entry: PageContextEntry | null;
+  dismiss: () => void;
+  register: (entry: PageContextEntry) => () => void;
+}
+
+const ChatContext = createContext<AssistantChatContextState | null>(null);
+
+export function AssistantChatContextProvider({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const [stack, setStack] = useState<PageContextEntry[]>([]);
+  const [dismissed, setDismissed] = useState<string | null>(null);
+
+  const register = useCallback((entry: PageContextEntry) => {
+    const without = (list: PageContextEntry[]) =>
+      list.filter((e) => e.key !== entry.key);
+    setStack((prev) => [...without(prev), entry]);
+    return () => setStack(without);
+  }, []);
+
+  const top = stack.at(-1) ?? null;
+
+  // Reset during render: an effect would flash the dismissed chip for a frame.
+  const [lastKey, setLastKey] = useState<string | null>(top?.key ?? null);
+  if (lastKey !== (top?.key ?? null)) {
+    setLastKey(top?.key ?? null);
+    setDismissed(null);
+  }
+
+  const entry = top?.key === dismissed ? null : top;
+
+  const value = useMemo<AssistantChatContextState>(
+    () => ({
+      entry,
+      dismiss: () => setDismissed(top?.key ?? null),
+      register,
+    }),
+    [entry, top, register],
+  );
+
+  return (
+    <ChatContext.Provider value={value}>
+      {/* `useSearchParams` opts the tree out of static rendering without Suspense. */}
+      <Suspense fallback={null}>
+        <AssistantRouteWatcher />
+      </Suspense>
+      {children}
+    </ChatContext.Provider>
+  );
+}
+
+function useRegisterPageContext(entry: PageContextEntry | null): void {
+  const state = useContext(ChatContext);
+  const register = state?.register;
+
+  // Depend on the fields: callers build the entry inline on every render.
+  const { key, type, id, label } = entry ?? {};
+
+  useEffect(() => {
+    if (!register || !key || !type) return;
+    return register({ key, type, id, label });
+  }, [register, key, type, id, label]);
+}
+
+export function useActivePageContext(): {
+  entry: PageContextEntry | null;
+  dismiss: () => void;
+} {
+  const state = useContext(ChatContext);
+  return {
+    entry: state?.entry ?? null,
+    dismiss: state?.dismiss ?? (() => {}),
+  };
+}
+
+function describePageContext(
+  entry: PageContextEntry | null,
+  name?: string,
+): string | null {
+  if (!entry) return null;
+  if (entry.id) {
+    return buildPageContextMarker({
+      kind: entry.type,
+      ref: entry.id,
+      label: name ?? entry.label,
+    });
+  }
+  return entry.label
+    ? buildPageContextMarker({ kind: entry.type, label: entry.label })
+    : null;
+}
+
+// Read through a ref: the getter is captured once per conversation,
+// and the user can navigate between two messages.
+export function usePageContextString(name?: string): () => string | null {
+  const { entry } = useActivePageContext();
+  const current = useRef({ entry, name });
+  // eslint-disable-next-line react-hooks/refs -- written in render on purpose: see above
+  current.current = { entry, name };
+  return useCallback(
+    () => describePageContext(current.current.entry, current.current.name),
+    [],
+  );
+}
+
+interface RouteRule {
+  path: string;
+  type: PageContextType;
+  idParam?: string;
+  tabParam?: string;
+  label?: string;
+}
+
+const ROUTES: RouteRule[] = [
+  { path: "/peer", type: "peer", idParam: "id" },
+  { path: "/group", type: "group", idParam: "id" },
+  { path: "/network", type: "network", idParam: "id" },
+  { path: "/team/user", type: "user", idParam: "id" },
+  { path: "/settings", type: "settings", tabParam: "tab", label: "Settings" },
+  {
+    path: "/integrations",
+    type: "integration",
+    tabParam: "tab",
+    label: "Integrations",
+  },
+];
+
+const ACRONYMS = new Set(["edr", "idp", "sso", "dns", "api", "msp", "ssh"]);
+
+const prettyTab = (tab: string) =>
+  tab
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((word) =>
+      ACRONYMS.has(word.toLowerCase())
+        ? word.toUpperCase()
+        : word.charAt(0).toUpperCase() + word.slice(1),
+    )
+    .join(" ");
+
+// Query parameters reach the assistant's page marker, so anything outside
+// these shapes is dropped: a crafted link could otherwise inject its own words.
+const ID = /^[A-Za-z0-9_-]{1,64}$/;
+const TAB = /^[a-z0-9][a-z0-9-]{0,31}$/;
+
+function routeEntry(
+  pathname: string,
+  params: URLSearchParams,
+): PageContextEntry | null {
+  const rule = ROUTES.find((candidate) => candidate.path === pathname);
+  if (!rule) return null;
+
+  const id = rule.idParam ? params.get(rule.idParam) : null;
+  if (id) return ID.test(id) ? { key: `${rule.type}:${id}`, type: rule.type, id } : null;
+
+  const tab = rule.tabParam ? params.get(rule.tabParam) : null;
+  if (tab && TAB.test(tab)) {
+    return {
+      key: `${rule.type}:${tab}`,
+      type: rule.type,
+      label: `${rule.label ?? rule.type} · ${prettyTab(tab)}`,
+    };
+  }
+
+  if (rule.idParam) return null;
+
+  return rule.label
+    ? { key: rule.type, type: rule.type, label: rule.label }
+    : null;
+}
+
+function AssistantRouteWatcher() {
+  const pathname = usePathname();
+  const params = useSearchParams();
+
+  const entry = useMemo(
+    () => routeEntry(pathname ?? "", new URLSearchParams(params?.toString())),
+    [pathname, params],
+  );
+
+  useRegisterPageContext(entry);
+  return null;
+}

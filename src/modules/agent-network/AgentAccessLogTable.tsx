@@ -33,6 +33,7 @@ import {
 import GetStartedTest from "@components/ui/GetStartedTest";
 import MultipleGroups from "@components/ui/MultipleGroups";
 import ButtonGroup from "@components/ButtonGroup";
+import { getAvatarStyle } from "@utils/avatar";
 import { cn, formatDuration } from "@utils/helpers";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import dayjs from "dayjs";
@@ -806,7 +807,6 @@ export default function AgentAccessLogTable({
           />
           <ButtonGroup disabled={isLoading}>
             <ButtonGroup.Button
-              className={"h-[42px]"}
               variant={grouped ? "secondary" : "tertiary"}
               onClick={() => onGroupedChange?.(false)}
             >
@@ -815,7 +815,7 @@ export default function AgentAccessLogTable({
             <ButtonGroup.Button
               // Drop the left border so it doesn't stack with the first
               // button's right border into a doubled divider.
-              className={"h-[42px] !border-l-0"}
+              className={"!border-l-0"}
               variant={grouped ? "tertiary" : "secondary"}
               onClick={() => onGroupedChange?.(true)}
             >
@@ -1017,11 +1017,9 @@ function UserCell({ entry }: { entry: AIAccessLogEntry }) {
     <div className={"flex items-center gap-2 py-2 px-3"}>
       <div
         className={
-          "w-8 h-8 rounded-full flex items-center justify-center text-white uppercase text-xs font-medium bg-nb-gray-900 shrink-0"
+          "initials-avatar w-8 h-8 rounded-full flex items-center justify-center text-white uppercase text-xs font-medium bg-nb-gray-900 shrink-0"
         }
-        style={{
-          color: generateColorFromUser(identityForColor),
-        }}
+        style={getAvatarStyle(generateColorFromUser(identityForColor))}
       >
         {displayName?.charAt(0) || "?"}
       </div>

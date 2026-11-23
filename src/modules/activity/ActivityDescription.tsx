@@ -702,14 +702,36 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "integrated-validator.host-check.approved")
     return (
       <div className={"inline"}>
-        Peer approved by <Value>{m?.platform}</Value> integration
+        Peer <EDRPeerName name={m?.name} />
+        approved by <Value>{m?.platform}</Value> integration
       </div>
     );
 
   if (event.activity_code == "integrated-validator.host-check.denied")
     return (
       <div className={"inline"}>
-        Peer rejected by <Value>{m?.platform}</Value> integration
+        Peer <EDRPeerName name={m?.name} />
+        rejected by <Value>{m?.platform}</Value> integration
+        {m?.reason && (
+          <>
+            , reason: <Value>{edrRejectReason(m.reason)}</Value>
+          </>
+        )}
+      </div>
+    );
+
+  if (event.activity_code == "integrated-validator.peer.stale-grace-started")
+    return (
+      <div className={"inline"}>
+        Peer <EDRPeerName name={m?.name} />
+        keeps access
+        {graceDuration(m?.grace_minutes) && (
+          <>
+            {" "}
+            for <Value>{graceDuration(m?.grace_minutes)}</Value>
+          </>
+        )}{" "}
+        while it checks in with <Value>{m?.platform}</Value> again
       </div>
     );
 
@@ -1065,6 +1087,31 @@ function Value({
     >
       {children}
     </span>
+  ) : null;
+}
+
+const edrRejectReasons: Record<string, string> = {
+  NOT_FOUND_IN_EDR: "not found in EDR",
+  STALE_CHECK_IN: "no recent EDR check-in",
+  DUPLICATE_MATCH: "duplicate serial number",
+};
+
+// Vendor reasons are free text, so only own keys are translated: a reason such
+// as "constructor" must not resolve to an Object.prototype member.
+const edrRejectReason = (reason: string) =>
+  Object.hasOwn(edrRejectReasons, reason) ? edrRejectReasons[reason] : reason;
+
+const graceDuration = (minutes: unknown) => {
+  const n = Number(minutes);
+  if (!Number.isInteger(n) || n <= 0) return undefined;
+  return n === 1 ? "1 minute" : `${n} minutes`;
+};
+
+function EDRPeerName({ name }: { name?: string }) {
+  return name ? (
+    <>
+      <Value>{name}</Value>{" "}
+    </>
   ) : null;
 }
 

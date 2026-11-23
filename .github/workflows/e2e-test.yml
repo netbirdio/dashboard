@@ -25,6 +25,9 @@ env:
 
 jobs:
   playwright-run:
+    # Runs triggered by Dependabot have no access to CI_DOCKER_PULL_GITHUB_TOKEN,
+    # so the management-cloud image cannot be pulled.
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

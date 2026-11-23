@@ -40,8 +40,9 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
     "asc",
   );
 
-  const group = groups?.find((g) => g.id === data.currentGroup);
-  const { groupUserCounts } = useCanvasUI();
+  const { groupUserCounts, selectedGroup } = useCanvasUI();
+  const currentGroup = selectedGroup || data.currentGroup;
+  const group = groups?.find((g) => g.id === currentGroup);
   const countLabel = getGroupCountLabel(
     group,
     group ? groupUserCounts.get(group.id ?? group.name) : 0,
@@ -59,7 +60,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
       <SelectDropdown
         variant={"secondary"}
         deferChange
-        value={data.currentGroup}
+        value={currentGroup}
         onChange={data.onChange}
         options={groupOptions}
         showSearch={true}
@@ -120,7 +121,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
           height: 20,
           width: "1px",
           border: "none",
-          backgroundColor: "#3f444b",
+          backgroundColor: "rgb(var(--nb-gray-800))",
           borderRadius: "0px 4px 4px 0px",
           right: -2,
         }}
