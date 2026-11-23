@@ -101,6 +101,13 @@ const ready = async () => {
   await findRow("Berlin Office");
 };
 
+const openAddPolicy = async () => {
+  const row = await findRow("Berlin Office");
+  await user.click(row.querySelector("[data-testid='site-to-site-actions']")!);
+  await clickText("Add Policy");
+  await findText("Create New Access Control Policy");
+};
+
 /* Opens a network select in the connection modal and picks an option from
    its list, not the same name in the table behind the dialog. */
 const pickNetwork = async (testId: string, option: string) => {
@@ -130,7 +137,7 @@ export const Expanded: Story = {
 export const Empty: Story = {
   parameters: { api: { "GET /networks/site-to-site": [] } },
   play: async () => {
-    await findText("Connect Your Networks");
+    await findText("Create New Site-to-Site Connection");
   },
 };
 
@@ -179,17 +186,13 @@ export const AddConnectionNewNetwork: Story = {
 
 export const AddPolicy: Story = {
   play: async () => {
-    const row = await findRow("Berlin Office");
-    await user.click(row.querySelector("[aria-label='Add policy']")!);
-    await findText("Create New Access Control Policy");
+    await openAddPolicy();
   },
 };
 
 export const AddPolicySourceResources: Story = {
   play: async () => {
-    const row = await findRow("Berlin Office");
-    await user.click(row.querySelector("[aria-label='Add policy']")!);
-    await findText("Create New Access Control Policy");
+    await openAddPolicy();
     await clickSelector("[data-testid='source-group-selector']");
     await findText("Production VPC");
   },
