@@ -44,3 +44,45 @@ const OpenForPeer = ({ peerId }: { peerId: string }) => {
 
   return null;
 };
+
+type EditProps = {
+  exitNodeId?: string;
+  open: boolean;
+  onClose: () => void;
+};
+
+/** The edit modal of one exit node, for pages outside Exit Nodes. */
+export function EditExitNodeModal({
+  exitNodeId,
+  open,
+  onClose,
+}: Readonly<EditProps>) {
+  if (!open || !exitNodeId) return null;
+  return (
+    <ExitNodesProvider onModalClose={onClose}>
+      <OpenById exitNodeId={exitNodeId} onMissing={onClose} />
+    </ExitNodesProvider>
+  );
+}
+
+const OpenById = ({
+  exitNodeId,
+  onMissing,
+}: {
+  exitNodeId: string;
+  onMissing: () => void;
+}) => {
+  const { exitNodes, isLoading, openExitNodeModal } = useExitNodes();
+  const opened = useRef(false);
+
+  useEffect(() => {
+    if (opened.current || isLoading) return;
+    opened.current = true;
+    const exitNode = exitNodes?.find((n) => n.id === exitNodeId);
+    // Deleted meanwhile: nothing to edit.
+    if (exitNode) openExitNodeModal(exitNode);
+    else onMissing();
+  }, [exitNodes, isLoading, openExitNodeModal, exitNodeId, onMissing]);
+
+  return null;
+};

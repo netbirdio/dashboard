@@ -95,6 +95,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     setPolicyModalOpen,
     openAgentPolicy,
     openProvider,
+    openExitNode,
   } = useControlCenterPolicy();
   const { isDraft } = useDraftMode();
   const { confirm } = useDialog();
@@ -475,6 +476,10 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         const providerId = (_node.data as { id?: string })?.id;
         if (providerId) openProvider(providerId);
       }
+      if (_node.type === "exitNodeNode") {
+        const data = _node.data as { id?: string; missing?: boolean };
+        if (data?.id && !data.missing) openExitNode(data.id);
+      }
       // The live resource editor's save PUTs immediately, so confirm first.
       // Framed overview rows keep drilling into their network instead.
       const isResourceNode =
@@ -534,6 +539,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       setPolicyModalOpen,
       openAgentPolicy,
       openProvider,
+      openExitNode,
       setSelectedPeerPanel,
       setLiveResourceEditor,
       confirm,

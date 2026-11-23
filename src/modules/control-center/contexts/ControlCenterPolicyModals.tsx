@@ -34,6 +34,7 @@ import {
 } from "@/modules/agent-network/data/mockData";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { EditExitNodeModal } from "@/modules/exit-nodes/PeerExitNodeModal";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
@@ -59,6 +60,8 @@ interface PolicyContextType {
   setPolicyDestinationScope: (scope?: PolicyDestinationScope) => void;
   openAgentPolicy: (id: string) => void;
   openProvider: (id: string) => void;
+  // Opens the exit node's edit modal (live views).
+  openExitNode: (id: string) => void;
   updateDraftAgentPolicy: (policy: AgentPolicy) => void;
   setAgentSourceGroup: (policy: AgentPolicy, groupRef: string) => void;
   drawAgentPolicyOnCanvas: (policy: AgentPolicy) => void;
@@ -234,6 +237,9 @@ export function ControlCenterPolicyProvider({
       agentProviders?.find((p) => p.id === id) ?? draftProvider(id);
     if (provider) openProviderEdit(provider);
   };
+
+  const [editingExitNodeId, setEditingExitNodeId] = useState<string>();
+  const openExitNode = (id: string) => setEditingExitNodeId(id);
 
   const [providerWizard, setProviderWizard] = useState<{
     position?: XYPosition;
@@ -1085,6 +1091,7 @@ export function ControlCenterPolicyProvider({
       drawAgentPolicyOnCanvas,
       openAgentPolicyWizard,
       openProvider,
+      openExitNode,
       openProviderWizard,
     }),
     [
@@ -1219,6 +1226,11 @@ export function ControlCenterPolicyProvider({
           }}
         />
       )}
+      <EditExitNodeModal
+        exitNodeId={editingExitNodeId}
+        open={!!editingExitNodeId}
+        onClose={() => setEditingExitNodeId(undefined)}
+      />
       {children}
     </PolicyContext.Provider>
   );
