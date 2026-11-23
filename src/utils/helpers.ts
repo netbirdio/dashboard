@@ -6,7 +6,7 @@ import { extendTailwindMerge } from "tailwind-merge";
 // Custom `text-*` sizes must be declared here,
 // or tailwind-merge takes them for colours and drops them.
 const twMerge = extendTailwindMerge({
-  extend: { theme: { text: ["chat"] } },
+  extend: { theme: { text: ["xsm", "smd", "chat"] } },
 });
 
 export function cn(...inputs: ClassValue[]) {

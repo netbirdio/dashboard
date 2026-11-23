@@ -107,11 +107,11 @@ export default function Navigation({
         hideOnMobile ? "hidden md:block" : "",
         fullWidth
           ? "w-auto max-w-[22rem]"
-          : "w-[15rem] max-w-[15rem] min-w-[15rem] overflow-hidden",
+          : "w-[14rem] max-w-[14rem] min-w-[14rem] overflow-hidden",
         // Absolute, not fixed: a fixed rail escapes the card's `overflow-hidden`
         // and paints over its rounded edge.
         isNavigationCollapsed &&
-          "md:w-[64px] md:min-w-[64px] md:absolute md:left-0 md:top-0 md:overflow-hidden md:hover:w-[15rem] md:hover:max-w-[15rem] md:hover:min-w-[15rem] md:z-50",
+          "md:w-[60px] md:min-w-[60px] md:absolute md:left-0 md:top-0 md:overflow-hidden md:hover:w-[14rem] md:hover:max-w-[14rem] md:hover:min-w-[14rem] md:z-50",
       )}
       style={{
         height: `calc(100vh - ${headerHeight + bannerHeight + inset * 2}px)`,
@@ -130,9 +130,9 @@ export default function Navigation({
             className={cn(
               // Clipped even when expanded: a long nowrap label would otherwise
               // widen the `ScrollArea`'s content box.
-              "flex flex-col pt-3 w-[15rem] max-w-[15rem] min-w-[15rem] overflow-x-clip transition-all",
+              "flex flex-col pt-2 w-[14rem] max-w-[14rem] min-w-[14rem] overflow-x-clip transition-all",
               isNavigationCollapsed &&
-                "md:w-[64px] md:min-w-[64px] md:group-hover/navigation:w-[15rem] md:group-hover/navigation:max-w-[15rem] md:group-hover/navigation:min-w-[15rem]",
+                "md:w-[60px] md:min-w-[60px] md:group-hover/navigation:w-[14rem] md:group-hover/navigation:max-w-[14rem] md:group-hover/navigation:min-w-[14rem]",
             )}
             style={{
               minHeight: !fullWidth
@@ -211,7 +211,7 @@ export default function Navigation({
                 {...section("agent-network")}
               >
                 <SidebarItem
-                  icon={<AgentNetworkIcon size={16} />}
+                  icon={<AgentNetworkIcon />}
                   label="Agents"
                   collapsible
                   visible={
@@ -330,7 +330,7 @@ const NetworkingItems = () => {
       <NetworkNavigation />
 
       <SidebarItem
-        icon={<ReverseProxyIcon size={16} />}
+        icon={<ReverseProxyIcon />}
         labelClassName={"pr-0"}
         label={
           <div className={"flex items-center gap-2"}>
