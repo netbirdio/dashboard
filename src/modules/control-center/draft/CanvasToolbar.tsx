@@ -1,5 +1,4 @@
-import * as React from "react";
-import { useEffect } from "react";
+import { isMac } from "@hooks/useOperatingSystem";
 import { cn } from "@utils/helpers";
 import {
   ArrowBigUpIcon,
@@ -13,19 +12,15 @@ import {
   Redo2Icon,
   Undo2Icon,
 } from "lucide-react";
-import { useReactFlow } from "@xyflow/react";
+import * as React from "react";
+import { useEffect } from "react";
+import { useAgentBusy } from "@/modules/assistant/hooks/useAgentBusy";
+import { useDraftHistory } from "@/modules/control-center/draft/DraftHistoryContext";
 import {
   CanvasTool,
   useDraftMode,
 } from "@/modules/control-center/draft/DraftModeContext";
-import { useDraftHistory } from "@/modules/control-center/draft/DraftHistoryContext";
-import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
-import { applyDraftBuildLayout } from "@/modules/control-center/utils/draft-build-layout";
-import {
-  applyDrilledLayout,
-  getDrilledFrameAnchor,
-} from "@/modules/control-center/utils/drilled-layout";
-import { isMac } from "@hooks/useOperatingSystem";
+import { useAutoArrange } from "@/modules/control-center/hooks/useAutoArrange";
 
 // The big-arrow icon stands in for Shift in the shortcut badges.
 const UndoShortcut = isMac ? (
@@ -66,64 +61,15 @@ export const CanvasToolbar = () => {
     setActiveTool,
     componentsPanelOpen,
     setComponentsPanelOpen,
-    drillDownNetworkNodeId,
   } = useDraftMode();
-  const reactFlow = useReactFlow();
   const { undo, redo, canUndo, canRedo } = useDraftHistory();
-
-  const handleZoomIn = () => reactFlow.zoomIn({ duration: 200 });
-  const handleZoomOut = () => reactFlow.zoomOut({ duration: 200 });
-  const handleFitView = () =>
-    reactFlow.fitView({ padding: 0.1, duration: 500, maxZoom: 0.8 });
-
-  // Reads and writes through the ReactFlow instance, never useCanvasState: that
-  // context changes identity on every nodes update and re-renders the toolbar.
-  const handleArrange = () => {
-    const nodes = reactFlow.getNodes();
-    const edges = reactFlow.getEdges();
-    if (nodes.length === 0) return;
-
-    const refit = (arranged: typeof nodes) => {
-      setTimeout(() => {
-        reactFlow.fitView({
-          nodes: arranged.filter((n) => !n.hidden),
-          padding: 0.1,
-          duration: 500,
-          maxZoom: 0.8,
-          minZoom: DEFAULT_MIN_ZOOM,
-        });
-      }, 50);
-    };
-
-    // The frame is re-anchored so the resource grid lands on the layout's
-    // resource column, as in useNetworkDrillDown.
-    if (drillDownNetworkNodeId) {
-      const frameId = drillDownNetworkNodeId;
-      const keptTop = nodes
-        .filter((n) => !n.hidden && !n.parentId)
-        .map((n) => ({ ...n }));
-      const keptIds = new Set(keptTop.map((n) => n.id));
-      const keptEdges = edges.filter(
-        (e) => keptIds.has(e.source) && keptIds.has(e.target),
-      );
-      const { updatedNodes } = applyDrilledLayout(keptTop, keptEdges);
-      const drilledPos = new Map(updatedNodes.map((n) => [n.id, n.position]));
-      const childCount = nodes.filter((n) => n.parentId === frameId).length;
-      drilledPos.set(frameId, getDrilledFrameAnchor(childCount));
-      const arranged = nodes.map((n) => {
-        const position = drilledPos.get(n.id);
-        return position ? { ...n, position } : n;
-      });
-      reactFlow.setNodes(arranged);
-      refit(arranged);
-      return;
-    }
-
-    const { updatedNodes, updatedEdges } = applyDraftBuildLayout(nodes, edges);
-    reactFlow.setNodes(updatedNodes);
-    reactFlow.setEdges(updatedEdges);
-    refit(updatedNodes);
-  };
+  const agentBusy = useAgentBusy();
+  const {
+    arrange: handleArrange,
+    fitView: handleFitView,
+    zoomIn: handleZoomIn,
+    zoomOut: handleZoomOut,
+  } = useAutoArrange();
 
   useControlCenterShortcuts({
     c: () => setComponentsPanelOpen(!componentsPanelOpen),
@@ -139,7 +85,12 @@ export const CanvasToolbar = () => {
   const toolBeforeSpaceRef = React.useRef<CanvasTool | null>(null);
 
   useEffect(() => {
-    if (!isDraft) return;
+    // The keyup that would restore the tool is not heard while the assistant is busy.
+    if (agentBusy && toolBeforeSpaceRef.current) {
+      setActiveTool(toolBeforeSpaceRef.current);
+      toolBeforeSpaceRef.current = null;
+    }
+    if (!isDraft || agentBusy) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== " " || isInputFocused()) return;
@@ -163,7 +114,7 @@ export const CanvasToolbar = () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [isDraft, activeTool, setActiveTool]);
+  }, [isDraft, activeTool, setActiveTool, agentBusy]);
 
   return (
     <ToolbarContainer>

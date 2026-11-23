@@ -4,28 +4,42 @@ import * as React from "react";
 
 type AdditionalScrollAreaProps = {
   withoutViewport?: boolean;
+  // Radix derives the viewport's overflow from the mounted scrollbars,
+  // so dropping an axis clips its content instead of scrolling it.
+  scrollbars?: "both" | "vertical" | "horizontal";
 };
 
 const ScrollArea = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> &
     AdditionalScrollAreaProps
->(({ className, children, withoutViewport = false, ...props }, ref) => (
-  <ScrollAreaPrimitive.Root
-    ref={ref}
-    className={cn("relative overflow-hidden", className)}
-    {...props}
-  >
-    {withoutViewport ? (
-      children
-    ) : (
-      <ScrollAreaViewport>{children}</ScrollAreaViewport>
-    )}
-    <ScrollBar orientation="horizontal" />
-    <ScrollBar orientation="vertical" />
-    <ScrollAreaPrimitive.Corner />
-  </ScrollAreaPrimitive.Root>
-));
+>(
+  (
+    {
+      className,
+      children,
+      withoutViewport = false,
+      scrollbars = "both",
+      ...props
+    },
+    ref,
+  ) => (
+    <ScrollAreaPrimitive.Root
+      ref={ref}
+      className={cn("relative overflow-hidden", className)}
+      {...props}
+    >
+      {withoutViewport ? (
+        children
+      ) : (
+        <ScrollAreaViewport>{children}</ScrollAreaViewport>
+      )}
+      {scrollbars !== "vertical" && <ScrollBar orientation="horizontal" />}
+      {scrollbars !== "horizontal" && <ScrollBar orientation="vertical" />}
+      <ScrollAreaPrimitive.Corner />
+    </ScrollAreaPrimitive.Root>
+  ),
+);
 ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName;
 
 const ScrollAreaViewport = React.forwardRef<
