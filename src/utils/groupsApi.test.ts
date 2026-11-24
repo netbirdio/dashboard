@@ -49,6 +49,29 @@ describe("requestGroupsWithFallback", () => {
     expect(request).toHaveBeenCalledTimes(3);
   });
 
+  it("falls back on a JSON 404 body that carries no code", async () => {
+    const state = fresh();
+    const request = vi
+      .fn()
+      .mockRejectedValueOnce({ message: "no route", status: 404 })
+      .mockResolvedValue([]);
+    await requestGroupsWithFallback("/groups", request, state);
+    expect(request.mock.calls.map((c) => c[0])).toEqual([
+      "/v1alpha1/groups",
+      "/groups",
+    ]);
+    expect(state.v1alpha1Unavailable).toBe(true);
+  });
+
+  it("does not fall back on a non-404 status", async () => {
+    const err = { message: "bad gateway", status: 502 };
+    const request = vi.fn().mockRejectedValue(err);
+    await expect(
+      requestGroupsWithFallback("/groups", request, fresh()),
+    ).rejects.toBe(err);
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+
   it("does not fall back on other errors", async () => {
     const state = fresh();
     const err = { code: 500, message: "internal server error" };

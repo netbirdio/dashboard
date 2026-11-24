@@ -12,8 +12,10 @@ const GROUP_READ_PATH = /^\/groups(\/[^/?]+)?(\?.*)?$/;
 export const isGroupReadPath = (path: string): boolean =>
   GROUP_READ_PATH.test(path);
 
-const isNotFound = (err: unknown): boolean =>
-  (err as { code?: number } | null)?.code === 404;
+const isNotFound = (err: unknown): boolean => {
+  const e = err as { status?: number; code?: number } | null;
+  return e?.status === 404 || e?.code === 404;
+};
 
 /**
  * Runs a group read against v1alpha1 and falls back to the unversioned path

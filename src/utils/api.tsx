@@ -18,6 +18,8 @@ export type ErrorResponse = {
   code: number;
   message: string;
   requestId?: string;
+  // HTTP status of the response; the body's own `code` is absent behind proxies.
+  status?: number;
 };
 
 // Header set by newer management API servers to correlate a response with a
@@ -78,7 +80,7 @@ async function sendRequest<T>(
   try {
     if (!res.ok) {
       const error = (await res.json()) as ErrorResponse;
-      return Promise.reject({ ...error, requestId });
+      return Promise.reject({ ...error, requestId, status: res.status });
     }
     if (options?.blob) return (await res.blob()) as T;
     return (await res.json()) as T;
@@ -88,6 +90,7 @@ async function sendRequest<T>(
         code: res.status,
         message: res.statusText,
         requestId,
+        status: res.status,
       } as ErrorResponse;
       return Promise.reject(error);
     }

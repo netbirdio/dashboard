@@ -250,8 +250,15 @@ export const MobileDrawer: Story = {
   play: async () => {
     await peersLoaded();
     // Group cells fill in once /groups answers, a moment after the peers.
+    // Wait on one peer that has groups; other rows may legitimately show
+    // "Add Groups".
     await until(() => {
-      if (document.body.textContent?.includes("Add Groups"))
+      const cell = [
+        ...document.querySelectorAll<HTMLElement>("td, [role=cell]"),
+      ].find((el) => el.textContent?.includes("olivias-macbook-pro"));
+      const row = cell?.closest("tr, [role=row]");
+      if (!row) throw new Error("peer row missing");
+      if (row.textContent?.includes("Add Groups"))
         throw new Error("groups not loaded");
     });
     document
