@@ -30,6 +30,8 @@ type Props = {
   initialPorts?: number[];
   initialSourceResource?: PolicyRuleResource;
   initialDestinationResource?: PolicyRuleResource;
+  // For a new policy only; an existing one keeps its own direction.
+  initialDirection?: Direction;
 };
 
 // TODO add reducer
@@ -46,6 +48,7 @@ export const useAccessControl = ({
   initialPorts,
   initialSourceResource,
   initialDestinationResource,
+  initialDirection,
 }: Props = {}) => {
   const { data: allPostureChecks, isLoading: isPostureChecksLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
@@ -114,7 +117,7 @@ export const useAccessControl = ({
     firstRule ? firstRule.protocol : initialProtocol ?? "all",
   );
   const [direction, setDirection] = useState<Direction>(() => {
-    if (!firstRule) return "bi";
+    if (!firstRule) return initialDirection ?? "bi";
     if (firstRule.bidirectional) return "bi";
     return "in";
   });
@@ -217,7 +220,10 @@ export const useAccessControl = ({
     } as Policy;
   };
 
-  const submit = async () => {
+  // A caller that derives the name (the site-to-site wizard proposes one from
+  // the resources picked) passes it here rather than racing setName.
+  const submit = async (overrides?: { name?: string }) => {
+    const policyName = overrides?.name ?? name;
     const g1 = getSourceGroupsToUpdate();
     const g2 = getDestinationGroupsToUpdate();
     const createOrUpdateGroups = uniqBy([...g1, ...g2], "name").map(
@@ -290,7 +296,7 @@ export const useAccessControl = ({
     }
 
     const policyObj = {
-      name,
+      name: policyName,
       description,
       enabled,
       source_posture_checks: postureChecks
@@ -300,7 +306,7 @@ export const useAccessControl = ({
         {
           bidirectional: direction == "bi",
           description,
-          name,
+          name: policyName,
           action: "accept",
           protocol,
           enabled,

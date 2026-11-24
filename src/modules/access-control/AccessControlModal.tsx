@@ -1,10 +1,7 @@
 "use client";
 
 import Button from "@components/Button";
-import { Callout } from "@components/Callout";
-import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
-import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
@@ -17,43 +14,27 @@ import {
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import Paragraph from "@components/Paragraph";
-import { PeerGroupSelector } from "@components/PeerGroupSelector";
-import { PortSelector } from "@components/PortSelector";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@components/Select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Textarea } from "@components/Textarea";
-import PolicyDirection from "@components/ui/PolicyDirection";
-import { cn } from "@utils/helpers";
 import {
-  AlertCircleIcon,
   ArrowRightLeft,
   ExternalLinkIcon,
-  FolderDown,
-  FolderInput,
   PlusCircle,
-  Power,
-  Share2,
-  Shield,
-  SquareTerminalIcon,
   Text,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { useUsers } from "@/contexts/UsersProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy, PolicyRuleResource, Protocol } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
-import { SSHAccessType } from "@/modules/access-control/ssh/SSHAccessType";
-import { SSHAuthorizedGroups } from "@/modules/access-control/ssh/SSHAuthorizedGroups";
+import {
+  PolicyDestinationScope,
+  PolicyRuleFields,
+  SiteToSiteScope,
+} from "@/modules/access-control/PolicyRuleFields";
 import {
   isNetworkResource,
   useAccessControl,
@@ -159,15 +140,10 @@ type ModalProps = {
   siteToSiteScope?: SiteToSiteScope;
 };
 
-export type PolicyDestinationScope = {
-  resourceIds: string[];
-  groupIds: string[];
-};
-
-export type SiteToSiteScope = {
-  sourceResourceIds: string[];
-  destinationResourceIds: string[];
-};
+export type {
+  PolicyDestinationScope,
+  SiteToSiteScope,
+} from "@/modules/access-control/PolicyRuleFields";
 
 export function AccessControlModalContent({
   onSuccess,
@@ -194,46 +170,8 @@ export function AccessControlModalContent({
   siteToSiteScope,
 }: Readonly<ModalProps>) {
   const { permission } = usePermissions();
-  const { users } = useUsers();
 
-  const {
-    portDisabled,
-    destinationGroups,
-    direction,
-    ports,
-    sourceGroups,
-    destinationHasResources,
-    destinationOnlyResources,
-    resourceToResource,
-    setSourceGroups,
-    setDestinationGroups,
-    setPorts,
-    setDirection,
-    setProtocol,
-    enabled,
-    setEnabled,
-    setName,
-    setDescription,
-    setPostureChecks,
-    name,
-    protocol,
-    description,
-    postureChecks,
-    submit,
-    isPostureChecksLoading,
-    getPolicyData,
-    sourceResource,
-    setSourceResource,
-    destinationResource,
-    setDestinationResource,
-    portRanges,
-    setPortRanges,
-    hasPortSupport,
-    sshAccessType,
-    setSshAccessType,
-    sshAuthorizedGroups,
-    setSshAuthorizedGroups,
-  } = useAccessControl({
+  const accessControl = useAccessControl({
     policy,
     postureCheckTemplates,
     onSuccess,
@@ -246,15 +184,30 @@ export function AccessControlModalContent({
     initialSourceResource,
     initialDestinationResource,
   });
+  const {
+    direction,
+    sourceGroups,
+    destinationGroups,
+    setDirection,
+    setName,
+    setDescription,
+    setPostureChecks,
+    name,
+    description,
+    postureChecks,
+    submit,
+    isPostureChecksLoading,
+    getPolicyData,
+    sourceResource,
+    destinationResource,
+  } = accessControl;
 
   // A duplicate carries a policy to seed the form but is saved as a new one.
   const isCreate = !policy || isDuplicate;
 
-  const sourceIsResource = isNetworkResource(sourceResource);
-  const isSiteToSite = !!siteToSiteScope;
-  const showSourceResources =
-    protocol !== "netbird-ssh" && (isSiteToSite || sourceIsResource);
-  const showPostureChecks = !isSiteToSite && !sourceIsResource;
+  // Posture checks apply to source peers; a resource source has none.
+  const showPostureChecks =
+    !siteToSiteScope && !isNetworkResource(sourceResource);
   const tabAfterPolicy = showPostureChecks ? "posture_checks" : "general";
 
   const [tab, setTab] = useState(() => {
@@ -275,14 +228,6 @@ export function AccessControlModalContent({
     if (name.length == 0) return true;
     if (!canContinueToPostureChecks) return true;
   }, [name, canContinueToPostureChecks]);
-
-  const handleProtocolChange = (p: Protocol) => {
-    setProtocol(p);
-    if (!hasPortSupport(p)) {
-      setPorts([]);
-      setPortRanges([]);
-    }
-  };
 
   const close = () => {
     const data = getPolicyData();
@@ -352,276 +297,17 @@ export function AccessControlModalContent({
         </TabsList>
 
         <TabsContent value={"policy"} className={"pb-8"}>
-          <div className={"px-8 flex-col flex gap-6"}>
-            <div
-              className={"flex justify-between items-center gap-10"}
-              data-testid={"protocol-wrapper"}
-            >
-              <div className={"w-full"}>
-                <Label>Protocol</Label>
-                <HelpText className={"max-w-sm"}>
-                  Allow only specified network protocols. To change traffic
-                  direction and ports, select{" "}
-                  <b className={"text-nb-gray-100 dark:text-white"}>TCP</b> or{" "}
-                  <b className={"text-nb-gray-100 dark:text-white"}>UDP</b> protocol.
-                </HelpText>
-              </div>
-              <Select
-                value={protocol}
-                onValueChange={(v) => handleProtocolChange(v as Protocol)}
-                disabled={
-                  !permission.policies.update || !permission.policies.create
-                }
-              >
-                <SelectTrigger className="w-[280px]">
-                  <div
-                    className={"flex items-center gap-3"}
-                    data-testid={"protocol-select-button"}
-                  >
-                    <Share2 size={15} className={"text-nb-gray-300"} />
-                    <SelectValue placeholder="Select protocol..." />
-                  </div>
-                </SelectTrigger>
-                <SelectContent data-testid={"protocol-selection"}>
-                  <SelectItem value="all">ALL</SelectItem>
-                  <SelectItem value="tcp">TCP</SelectItem>
-                  <SelectItem value="udp">UDP</SelectItem>
-                  <SelectItem value="icmp">ICMP</SelectItem>
-                  <SelectItem
-                    value="netbird-ssh"
-                    extra={
-                      <HelpTooltip
-                        triggerClassName={"ml-[0.01rem]"}
-                        align={"center"}
-                        side={"right"}
-                        content={
-                          <>
-                            Select NetBird SSH for SSH-specific policies with
-                            fine-grained access control, or use TCP with port 22
-                            for basic network-level SSH access
-                          </>
-                        }
-                      />
-                    }
-                  >
-                    NetBird SSH
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className={"flex gap-6 items-center"}>
-              <div className={"w-full self-start"}>
-                <Label className={"mb-2"}>
-                  <FolderDown size={15} />
-                  Source
-                  <HelpTooltip
-                    content={
-                      <>
-                        Typically a group of user devices (e.g., Developers,
-                        Marketing) or individual devices in peer-to-peer
-                        connections that will access the destination.
-                      </>
-                    }
-                  />
-                </Label>
-                <PeerGroupSelector
-                  data-testid={"source-group-selector"}
-                  popoverWidth={500}
-                  placeholder={
-                    isSiteToSite ? "Select source..." : "Select source(s)..."
-                  }
-                  showRoutes={protocol !== "netbird-ssh"}
-                  showResources={showSourceResources}
-                  showPeers={!isSiteToSite && protocol !== "netbird-ssh"}
-                  hideGroupsTab={isSiteToSite}
-                  resourceIds={siteToSiteScope?.sourceResourceIds}
-                  groupResourcesByNetwork={true}
-                  showResourceCounter={false}
-                  showPeerCount={allowEditPeers}
-                  disableInlineRemoveGroup={false}
-                  values={sourceGroups}
-                  onChange={setSourceGroups}
-                  users={protocol === "netbird-ssh" ? users : undefined}
-                  resource={sourceResource}
-                  onResourceChange={setSourceResource}
-                  additionalPeers={additionalPeers}
-                  saveGroupAssignments={useSave}
-                  disabled={
-                    !permission.policies.update || !permission.policies.create
-                  }
-                />
-              </div>
-              <PolicyDirection
-                value={direction}
-                onChange={setDirection}
-                disabled={destinationOnlyResources || !!destinationScope}
-                protocol={protocol}
-                destinationResource={
-                  resourceToResource ? undefined : destinationResource
-                }
-              />
-
-              <div className={"w-full self-start"}>
-                <Label className={"mb-2"}>
-                  <FolderInput size={15} />
-                  Destination
-                  <HelpTooltip
-                    content={
-                      <>
-                        Typically a group of peers or resources (e.g., Servers,
-                        Databases, Internal Services) that will be accessed by
-                        the source. Can also be an individual peer or resource.
-                      </>
-                    }
-                  />
-                </Label>
-                <PeerGroupSelector
-                  data-testid={"destination-group-selector"}
-                  popoverWidth={500}
-                  placeholder={
-                    isSiteToSite
-                      ? "Select destination..."
-                      : "Select destination(s)..."
-                  }
-                  showRoutes={true}
-                  showResources={protocol !== "netbird-ssh"}
-                  showPeers={!destinationScope && !isSiteToSite}
-                  hideGroupsTab={isSiteToSite}
-                  groupResourcesByNetwork={true}
-                  resourceIds={
-                    siteToSiteScope?.destinationResourceIds ??
-                    destinationScope?.resourceIds
-                  }
-                  groupIds={destinationScope?.groupIds}
-                  hideAllGroup={!!destinationScope}
-                  showResourceCounter={true}
-                  showPeerCount={allowEditPeers}
-                  disableInlineRemoveGroup={false}
-                  values={destinationGroups}
-                  onChange={setDestinationGroups}
-                  resource={destinationResource}
-                  onResourceChange={setDestinationResource}
-                  additionalPeers={additionalPeers}
-                  saveGroupAssignments={useSave}
-                  additionalResources={additionalResources}
-                  disabled={
-                    disableDestinationSelector ||
-                    !permission.policies.update ||
-                    !permission.policies.create
-                  }
-                />
-              </div>
-            </div>
-
-            {destinationHasResources &&
-              !destinationOnlyResources &&
-              !resourceToResource &&
-              direction === "bi" && (
-                <Callout
-                  variant={"warning"}
-                  icon={
-                    <AlertCircleIcon
-                      size={14}
-                      className={"shrink-0 relative top-[3px] text-netbird"}
-                    />
-                  }
-                  className="mb-4"
-                >
-                  Some destination groups contain resources. Resources only
-                  support incoming traffic and cannot initiate connections.
-                </Callout>
-              )}
-
-            {protocol === "netbird-ssh" ? (
-              <div>
-                {destinationHasResources && (
-                  <Callout
-                    variant={"warning"}
-                    icon={
-                      <AlertCircleIcon
-                        size={14}
-                        className={"shrink-0 relative top-[3px] text-netbird"}
-                      />
-                    }
-                    className="mb-6"
-                  >
-                    SSH access only works on peers, not on routed resources.
-                    Please ensure your destination groups contain peers for SSH
-                    connectivity.
-                  </Callout>
-                )}
-                <div
-                  className={"flex justify-between items-center gap-10 mt-2"}
-                >
-                  <div className={"w-full"}>
-                    <Label className={"flex items-center gap-2"}>
-                      <SquareTerminalIcon size={15} />
-                      SSH Access
-                    </Label>
-                    <HelpText>
-                      Select {`'Full Access'`} to allow SSH as any local user,
-                      or {`'Limited Access'`} to specify which local users each
-                      group is allowed to use.
-                    </HelpText>
-                  </div>
-                  <SSHAccessType
-                    value={sshAccessType}
-                    onChange={setSshAccessType}
-                  />
-                </div>
-                <SSHAuthorizedGroups
-                  sourceGroups={sourceGroups}
-                  authorizedGroups={sshAuthorizedGroups}
-                  setAuthorizedGroups={setSshAuthorizedGroups}
-                  accessType={sshAccessType}
-                />
-              </div>
-            ) : (
-              <div
-                className={cn(
-                  "mb-2 mt-2",
-                  portDisabled && "opacity-30 pointer-events-none",
-                )}
-              >
-                <div>
-                  <Label className={"flex items-center gap-2"}>
-                    <Shield size={14} />
-                    Ports
-                  </Label>
-                  <HelpText>
-                    Allow network traffic and access only to specified ports.
-                    Select ports or port ranges between 1 and 65535.
-                  </HelpText>
-                </div>
-                <div className={""}>
-                  <PortSelector
-                    showAll={true}
-                    ports={ports}
-                    onPortsChange={setPorts}
-                    portRanges={portRanges}
-                    onPortRangesChange={setPortRanges}
-                    disabled={portDisabled}
-                  />
-                </div>
-              </div>
-            )}
-
-            <FancyToggleSwitch
-              value={enabled}
-              onChange={setEnabled}
-              disabled={
-                !permission.policies.update || !permission.policies.create
-              }
-              label={
-                <>
-                  <Power size={15} />
-                  Enable Policy
-                </>
-              }
-              helpText={"Use this switch to enable or disable the policy."}
-            />
-          </div>
+          <PolicyRuleFields
+            state={accessControl}
+            className={"px-8"}
+            allowEditPeers={allowEditPeers}
+            additionalPeers={additionalPeers}
+            additionalResources={additionalResources}
+            destinationScope={destinationScope}
+            siteToSiteScope={siteToSiteScope}
+            disableDestinationSelector={disableDestinationSelector}
+            useSave={useSave}
+          />
         </TabsContent>
         <PostureCheckTab
           isLoading={isPostureChecksLoading}
