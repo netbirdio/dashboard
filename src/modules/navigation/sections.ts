@@ -35,7 +35,7 @@ export const NAV_SECTION_ROUTES: Record<NavSectionId, readonly string[]> = {
     "/posture-checks",
     "/networks",
     "/network",
-    "/network-resources",
+    "/resources",
     "/network-routes",
     "/reverse-proxy",
     "/dns",

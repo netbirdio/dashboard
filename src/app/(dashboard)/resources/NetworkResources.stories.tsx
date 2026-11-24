@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import NetworkResourcesPage from "@/app/(dashboard)/network-resources/page";
+import NetworkResourcesPage from "@/app/(dashboard)/resources/page";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import {
   clickSelector,
@@ -14,7 +14,7 @@ import {
 const meta: Meta = {
   title: "Pages/Network/Resources",
   afterEach: settleMotion,
-  parameters: { nextjs: { navigation: { pathname: "/network-resources" } } },
+  parameters: { nextjs: { navigation: { pathname: "/resources" } } },
   render: () => (
     <DashboardLayout>
       <NetworkResourcesPage />

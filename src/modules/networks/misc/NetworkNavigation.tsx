@@ -24,7 +24,7 @@ export const NetworkNavigation = () => {
       <SidebarItem
         label={"Resources"}
         isChild
-        href={"/network-resources"}
+        href={"/resources"}
         exactPathMatch={true}
         visible={permission.networks.read}
       />

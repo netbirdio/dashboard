@@ -131,7 +131,7 @@ test.describe.serial("Networks @network", () => {
   test("Should add a resource from the Resources page by picking its network", async ({
     dashboardAsOwner: page,
   }) => {
-    await navigateTo(page, "/network-resources");
+    await navigateTo(page, "/resources");
     const name = generateRandomName("page-resource-");
 
     await page.getByTestId("add-resource").click();
@@ -157,7 +157,7 @@ test.describe.serial("Networks @network", () => {
   test("Should create a network from the resource modal and select it", async ({
     dashboardAsOwner: page,
   }) => {
-    await navigateTo(page, "/network-resources");
+    await navigateTo(page, "/resources");
     // Cleaned up with the other test networks by prefix.
     const newNetwork = generateRandomName("test-network-");
 
@@ -174,7 +174,7 @@ test.describe.serial("Networks @network", () => {
   test("Should list the resource with its network on the Resources page", async ({
     dashboardAsOwner: page,
   }) => {
-    await navigateTo(page, "/network-resources");
+    await navigateTo(page, "/resources");
     await page.getByTestId("table-search-input").fill(resourceName);
 
     const row = page.locator("tr").filter({ hasText: resourceName });

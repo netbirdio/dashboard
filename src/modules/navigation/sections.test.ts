@@ -31,7 +31,7 @@ describe("sectionsForPath", () => {
     ["/posture-checks", ["networking"]],
     ["/networks", ["networking"]],
     ["/network", ["networking"]],
-    ["/network-resources", ["networking"]],
+    ["/resources", ["networking"]],
     ["/network-routes", ["networking"]],
     ["/reverse-proxy/services", ["networking"]],
     ["/dns/zones", ["networking"]],
