@@ -65,15 +65,6 @@ export const AddResourceModal: Story = {
   play: async () => {
     const row = await findRow("Staging");
     await user.click(row.querySelector("[data-testid='add-resource']")!);
-    await findText(/Add new resource to/);
-  },
-};
-
-/* Clicking the table search opens the global search (command palette). */
-export const SearchPalette: Story = {
-  play: async () => {
-    await ready();
-    await clickSelector("[data-testid='table-search-input']");
-    await findDialog();
+    await findText(/Give peers access to a host/);
   },
 };

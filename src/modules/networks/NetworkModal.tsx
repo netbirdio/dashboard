@@ -116,7 +116,7 @@ export const NetworkModalContent = ({
       <Separator />
       <div className={"px-8 flex-col flex gap-6 py-6"}>
         <div>
-          <Label>Network Name</Label>
+          <Label>Name</Label>
           <HelpText>Provide a unique name for the network.</HelpText>
           <Input
             tabIndex={0}

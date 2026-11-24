@@ -1,7 +1,7 @@
 import DescriptionWithTooltip from "@components/ui/DescriptionWithTooltip";
+import { NameDescriptionStrut } from "@components/ui/NameDescriptionStrut";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { cn } from "@utils/helpers";
-import { ArrowRightIcon } from "lucide-react";
 import * as React from "react";
 
 type Props = {
@@ -10,6 +10,8 @@ type Props = {
   description?: string;
   active?: boolean;
   size?: "md" | "lg";
+  /** Truncate name and description at the available width instead of a fixed length. */
+  fluid?: boolean;
 };
 export const NetworkInformationSquare = ({
   onClick,
@@ -17,22 +19,26 @@ export const NetworkInformationSquare = ({
   description,
   active = false,
   size = "md",
+  fluid = false,
 }: Props) => {
   return (
     <button
       className={cn(
-        "flex w-full min-w-0 items-center max-w-[450px] gap-4 text-nb-gray-300 dark:text-neutral-300 transition-all group/network rounded-md",
+        "flex min-w-0 items-center gap-4 text-nb-gray-300 dark:text-neutral-300 transition-all group/network rounded-md",
+        fluid ? "w-fit max-w-full" : "w-full max-w-[450px]",
         onClick
-          ? "hover:text-nb-gray-100 dark:hover:text-neutral-100 hover:bg-nb-gray-900/60 cursor-pointer py-2 pl-3 pr-14 relative"
+          ? "hover:text-nb-gray-100 dark:hover:text-neutral-100 group-hover/table-row:text-nb-gray-100 dark:group-hover/table-row:text-neutral-100 cursor-pointer py-2 pl-3 pr-4"
           : "cursor-default",
       )}
       onClick={onClick}
     >
       <div
         className={cn(
-          "bg-nb-gray-800 text-nb-gray-100 rounded-md flex items-center justify-center font-medium relative",
+          "bg-nb-gray-800 text-nb-gray-100 rounded-md flex items-center justify-center font-medium relative transition-all",
+          onClick &&
+            "group-hover/network:bg-nb-gray-600 group-hover/table-row:bg-nb-gray-600",
           "uppercase",
-          size === "md" ? "h-10 w-10 text-md" : "h-12 w-12 text-lg",
+          size === "md" ? "h-[38px] w-[38px] text-md" : "h-12 w-12 text-lg",
           "shrink-0",
         )}
       >
@@ -47,18 +53,22 @@ export const NetworkInformationSquare = ({
           className={cn(
             "h-3 w-3 bg-nb-gray-950 rounded-tl-[8px] rounded-br absolute bottom-0 right-0 transition-all",
             onClick && "group-hover/table-row:bg-nb-gray-940",
-            onClick && "group-hover/network:!bg-nb-gray-910",
           )}
         ></div>
       </div>
+      {size === "md" && <NameDescriptionStrut className={"-ml-4"} />}
       <div
-        className={"mt-[0px] flex items-start flex-wrap flex-col min-w-0"}
+        className={cn(
+          "mt-[0px] flex items-start flex-col min-w-0",
+          !fluid && "flex-wrap",
+        )}
       >
         {size === "md" ? (
           <TextWithTooltip
             text={name}
             maxChars={25}
-            className={"font-medium text-left text-sm"}
+            fluid={fluid}
+            className={"font-normal text-left"}
           />
         ) : (
           <p
@@ -72,18 +82,10 @@ export const NetworkInformationSquare = ({
         <DescriptionWithTooltip
           className={cn("text-left", size == "lg" && "text-md mt-0.5")}
           maxChars={24}
+          fluid={fluid}
           text={description}
         />
       </div>
-      {onClick && (
-        <div
-          className={
-            "absolute right-0 top-0 h-full flex items-center pr-4 text-nb-gray-200 opacity-0 group-hover/network:opacity-100"
-          }
-        >
-          <ArrowRightIcon size={18} />
-        </div>
-      )}
     </button>
   );
 };

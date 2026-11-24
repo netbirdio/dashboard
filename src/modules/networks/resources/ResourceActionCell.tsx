@@ -51,6 +51,7 @@ export const ResourceActionCell = ({ resource }: Props) => {
           .filter((g) => g !== undefined),
         enabled: nextEnabled,
       }).then(() => {
+        mutate("/networks/resources");
         mutate(`/networks/${network?.id}/resources`);
       }),
     });

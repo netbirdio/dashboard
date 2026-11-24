@@ -1,5 +1,6 @@
 import Badge from "@components/Badge";
 import Button from "@components/Button";
+import { stopRowClick } from "@components/table/stopRowClick";
 import { LayersIcon, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -21,7 +22,7 @@ export const NetworkResourceCell = ({ network }: Props) => {
   const count = network?.resources?.length || 0;
 
   return hasResources ? (
-    <div className={"flex gap-3"}>
+    <div className={"flex gap-3 w-fit"} onClick={stopRowClick}>
       <Badge
         variant={"gray"}
         useHover={true}
@@ -51,7 +52,10 @@ export const NetworkResourceCell = ({ network }: Props) => {
         size={"xs"}
         variant={"secondary"}
         className={"!px-3"}
-        onClick={() => openResourceModal(network)}
+        onClick={(e) => {
+          stopRowClick(e);
+          openResourceModal(network);
+        }}
         data-testid={"add-resource"}
       >
         <PlusCircle size={12} />

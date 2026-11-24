@@ -1,8 +1,15 @@
 "use client";
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@components/Accordion";
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
 import HelpText from "@components/HelpText";
+import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink, { InlineButtonLink } from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
@@ -15,46 +22,49 @@ import {
 import ModalHeader from "@components/modal/ModalHeader";
 import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
-import { HelpTooltip } from "@components/HelpTooltip";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { useApiCall } from "@utils/api";
 import { normalizeHostCIDR } from "@utils/ip";
-import { useDialog } from "@/contexts/DialogProvider";
-import { usePolicies } from "@/contexts/PoliciesProvider";
-import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import {
   ExternalLinkIcon,
   PlusCircle,
   ShieldCheck,
   WorkflowIcon,
 } from "lucide-react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@components/Accordion";
 import React, { useMemo, useRef, useState } from "react";
+import { useSWRConfig } from "swr";
+import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
+import { usePolicies } from "@/contexts/PoliciesProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import {
+  NetworkSelect,
+  NetworkSelectOption,
+} from "@/modules/networks/misc/NetworkSelect";
+import NetworkModal from "@/modules/networks/NetworkModal";
+import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import NetworkResourceAccessControl from "@/modules/networks/resources/NetworkResourceAccessControl";
 import { ResourceSingleAddressInput } from "@/modules/networks/resources/ResourceSingleAddressInput";
 
 type Props = {
   open?: boolean;
   setOpen?: (open: boolean) => void;
-  network: Network;
+  network?: Network;
+  /** Lets the user pick the network of a new resource instead of fixing it to `network`. */
+  networks?: Network[];
   resource?: NetworkResource;
-  onCreated?: (r: NetworkResource) => void;
+  onCreated?: (r: NetworkResource, network: Network) => void;
   onUpdated?: (r: NetworkResource) => void;
   initialTab?: string;
 };
 
 export default function NetworkResourceModal({
   network,
+  networks,
   open,
   setOpen,
   resource,
@@ -67,6 +77,7 @@ export default function NetworkResourceModal({
       <ResourceModalContent
         key={open ? "1" : "0"}
         network={network}
+        networks={networks}
         resource={resource}
         onCreated={onCreated}
         onUpdated={onUpdated}
@@ -84,9 +95,11 @@ export type ResourceModalResult = {
 };
 
 type ModalProps = {
-  onCreated?: (r: NetworkResource) => void;
+  onCreated?: (r: NetworkResource, network: Network) => void;
   onUpdated?: (r: NetworkResource) => void;
-  network: Network;
+  /** The network the resource is in. Without it, the user picks one of `networks`. */
+  network?: Network;
+  networks?: Network[];
   resource?: NetworkResource;
   initialTab?: string;
   // false → no API calls: the data comes back via onSaved and the Access
@@ -100,19 +113,41 @@ type ModalProps = {
 export function ResourceModalContent({
   onCreated,
   onUpdated,
-  network,
+  network: fixedNetwork,
+  networks,
   resource,
   initialTab,
   useSave = true,
   onSaved,
   takenNames,
 }: ModalProps) {
-  const create = useApiCall<NetworkResource>(
-    `/networks/${network.id}/resources`,
-  ).post;
-  const update = useApiCall<NetworkResource>(
-    `/networks/${network.id}/resources/${resource?.id}`,
-  ).put;
+  // A lone network is preselected: there is nothing to choose between.
+  const [network, setNetwork] = useState<Network | undefined>(
+    fixedNetwork ?? (networks?.length === 1 ? networks[0] : undefined),
+  );
+  const canPickNetwork = !fixedNetwork && !resource && !!networks;
+  // The caller's list is a snapshot, so networks created from this modal
+  // are added to a local copy.
+  const [selectableNetworks, setSelectableNetworks] = useState<Network[]>(
+    networks ?? [],
+  );
+  const [createdIds, setCreatedIds] = useState<string[]>([]);
+  const [networkModal, setNetworkModal] = useState(false);
+  const { permission } = usePermissions();
+  const { mutate } = useSWRConfig();
+  const canCreateNetwork = canPickNetwork && permission.networks.create;
+  const networkOptions = useMemo<NetworkSelectOption[]>(
+    () =>
+      selectableNetworks.map((n) => ({
+        value: n.id,
+        name: n.name,
+        description: n.description,
+        isNew: createdIds.includes(n.id),
+      })),
+    [selectableNetworks, createdIds],
+  );
+
+  const request = useApiCall<NetworkResource>("/networks");
 
   const [name, setName] = useState(resource?.name || "");
   const [description, setDescription] = useState(resource?.description || "");
@@ -200,17 +235,23 @@ export function ResourceModalContent({
 
   const createResource = async () => {
     if (!(await confirmMissingPolicies())) return;
+    if (!network) return;
     const savedGroups = await saveGroups();
-    const promise = create({
-      name,
-      description,
-      address: normalizeHostCIDR(address),
-      groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
-      enabled,
-    }).then(async (r) => {
-      await createPoliciesForResource(policies, r, savedGroups);
-      onCreated?.(r);
-    });
+    const promise = request
+      .post(
+        {
+          name,
+          description,
+          address: normalizeHostCIDR(address),
+          groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
+          enabled,
+        },
+        `/${network.id}/resources`,
+      )
+      .then(async (r) => {
+        await createPoliciesForResource(policies, r, savedGroups);
+        onCreated?.(r, network);
+      });
 
     notify({
       title: "Resource Created",
@@ -224,17 +265,23 @@ export function ResourceModalContent({
 
   const updateResource = async () => {
     if (!(await confirmMissingPolicies())) return;
+    if (!network) return;
     const savedGroups = await saveGroups();
-    const promise = update({
-      name,
-      description,
-      address: normalizeHostCIDR(address),
-      groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
-      enabled,
-    }).then(async (r) => {
-      await createPoliciesForResource(policies, r, savedGroups);
-      onUpdated?.(r);
-    });
+    const promise = request
+      .put(
+        {
+          name,
+          description,
+          address: normalizeHostCIDR(address),
+          groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
+          enabled,
+        },
+        `/${network.id}/resources/${resource?.id}`,
+      )
+      .then(async (r) => {
+        await createPoliciesForResource(policies, r, savedGroups);
+        onUpdated?.(r);
+      });
     notify({
       title: "Resource Updated",
       description: `Resource "${name}" has been updated successfully.`,
@@ -244,8 +291,13 @@ export function ResourceModalContent({
   };
 
   const canCreate = useMemo(() => {
-    return name.length > 0 && isAddressValid && nameError === "";
-  }, [name, isAddressValid, nameError]);
+    return (
+      name.length > 0 &&
+      isAddressValid &&
+      nameError === "" &&
+      (!useSave || !!network)
+    );
+  }, [name, isAddressValid, nameError, useSave, network]);
 
   return (
     <ModalContent
@@ -261,9 +313,9 @@ export function ResourceModalContent({
           resource
             ? `${resource.name}`
             : network?.name
-            ? `Add new resource to "${network.name}"`
-            : // No network yet on the draft canvas, so avoid an empty string.
-              "Add a new resource"
+            ? `Give peers access to a host, subnet or domain in "${network.name}"`
+            : // No network picked yet, or none on the draft canvas.
+              "Give peers access to a host, subnet or domain"
         }
         color={"yellow"}
       />
@@ -287,6 +339,33 @@ export function ResourceModalContent({
 
         <TabsContent value={"resource"} className={"pb-4"}>
           <div className={"px-8 flex-col flex gap-6"}>
+            {canPickNetwork && (
+              <div>
+                <Label>Network</Label>
+                <HelpText>Select the network this resource belongs to</HelpText>
+                <NetworkSelect
+                  value={network?.id ?? ""}
+                  onChange={(id) =>
+                    setNetwork(selectableNetworks.find((n) => n.id === id))
+                  }
+                  options={networkOptions}
+                  onCreateNetwork={
+                    canCreateNetwork ? () => setNetworkModal(true) : undefined
+                  }
+                  data-testid={"resource-network-select"}
+                />
+                <NetworkModal
+                  open={networkModal}
+                  setOpen={setNetworkModal}
+                  onCreated={(created) => {
+                    setSelectableNetworks((prev) => [...prev, created]);
+                    setCreatedIds((prev) => [...prev, created.id]);
+                    setNetwork(created);
+                    mutate("/networks");
+                  }}
+                />
+              </div>
+            )}
             <div>
               <Label>Name</Label>
               <HelpText>
@@ -294,7 +373,7 @@ export function ResourceModalContent({
               </HelpText>
               <Input
                 ref={nameRef}
-                autoFocus={true}
+                autoFocus={!canPickNetwork || !!network}
                 tabIndex={0}
                 data-testid="resource-name-input"
                 placeholder={"e.g., Postgres Database"}

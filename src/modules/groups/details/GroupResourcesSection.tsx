@@ -68,12 +68,7 @@ const GroupResourcesColumns: ColumnDef<NetworkResourceWithNetwork>[] = [
         </DataTableHeader>
       );
     },
-    cell: ({ row }) => (
-      <ResourceEnabledCell
-        resource={row.original}
-        mutateAllResourcesOnUpdate={true}
-      />
-    ),
+    cell: ({ row }) => <ResourceEnabledCell resource={row.original} />,
   },
   {
     id: "groups",

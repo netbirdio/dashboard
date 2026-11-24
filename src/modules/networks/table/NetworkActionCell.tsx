@@ -6,6 +6,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
+import { stopRowClick } from "@components/table/stopRowClick";
 import { EyeIcon, MoreVertical, PencilLineIcon, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -35,7 +36,11 @@ export default function NetworkActionCell({ network }: Readonly<Props>) {
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-auto" align="end">
+        <DropdownMenuContent
+          className="w-auto"
+          align="end"
+          onClick={stopRowClick}
+        >
           <DropdownMenuItem
             onClick={() => router.push(`/network?id=${network.id}`)}
             data-testid="view-network-details"

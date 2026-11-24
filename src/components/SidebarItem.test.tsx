@@ -140,6 +140,23 @@ describe("SidebarItem parent", () => {
     expect(screen.queryByText("Networks")).not.toBeNull();
   });
 
+  it("opens for a detail page of a child without activating the child", () => {
+    const { container } = render(
+      <SidebarItem label={"Network Routing"} collapsible visible={true}>
+        <SidebarItem
+          label={"Networks"}
+          isChild
+          href={"/networks"}
+          exactPathMatch
+          openRoutes={["/control-center"]}
+          visible={true}
+        />
+      </SidebarItem>,
+    );
+    expect(screen.queryByText("Networks")).not.toBeNull();
+    expect(container.querySelector("[data-active='true']")).toBeNull();
+  });
+
   it("stays closed on unrelated pages", () => {
     render(
       <SidebarItem label={"Network Routing"} collapsible visible={true}>

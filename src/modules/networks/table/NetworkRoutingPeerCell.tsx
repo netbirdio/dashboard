@@ -1,6 +1,7 @@
 import Badge from "@components/Badge";
 import Button from "@components/Button";
 import FullTooltip from "@components/FullTooltip";
+import { stopRowClick } from "@components/table/stopRowClick";
 import { cn } from "@utils/helpers";
 import { HelpCircle, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -8,6 +9,7 @@ import * as React from "react";
 import { useMemo } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network } from "@/interfaces/Network";
+import { NoRoutingPeerBadge } from "@/modules/networks/misc/NoRoutingPeerBadge";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
 type Props = {
@@ -48,7 +50,7 @@ export default function NetworkRoutingPeerCell({ network }: Props) {
   );
 
   return (
-    <div className={"flex gap-3 items-center"}>
+    <div className={"flex gap-3 items-center w-fit"} onClick={stopRowClick}>
       <FullTooltip
         interactive={false}
         content={
@@ -96,6 +98,7 @@ export default function NetworkRoutingPeerCell({ network }: Props) {
           </Badge>
         )}
       </FullTooltip>
+      {!isActive && <NoRoutingPeerBadge network={network} />}
       <Button
         size={"xs"}
         variant={"secondary"}

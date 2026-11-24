@@ -2,13 +2,8 @@ import Button from "@components/Button";
 import { Modal, ModalContent, ModalFooter } from "@components/modal/Modal";
 import { ModalClose } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
-import {
-  SelectDropdown,
-  SelectOption,
-} from "@components/select/SelectDropdown";
 import Separator from "@components/Separator";
 import { useReactFlow } from "@xyflow/react";
-import { NetworkIcon, PlusCircle } from "lucide-react";
 import * as React from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { Network } from "@/interfaces/Network";
@@ -20,8 +15,11 @@ import {
   useDraftNetworkActions,
 } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
+import {
+  NetworkSelect,
+  NetworkSelectOption,
+} from "@/modules/networks/misc/NetworkSelect";
 import { NetworkModalContent } from "@/modules/networks/NetworkModal";
-import { SmallBadge } from "@components/ui/SmallBadge";
 
 // "No Network" picker for a standalone draft resource: assign it to an existing
 // network (a canvas frame or a real API network) or to a new draft network.
@@ -62,25 +60,15 @@ const PickerContent = ({
 
   // Values are prefixed so the pick can tell a canvas frame from a real
   // network.
-  const options: SelectOption[] = React.useMemo(() => {
+  const options: NetworkSelectOption[] = React.useMemo(() => {
     const frameNodes = reactFlow.getNodes().filter(isFrameNode);
     const frames = frameNodes.map((n) => {
       const name =
-        (n.data as { network?: { name?: string } })?.network?.name ??
-        "Network";
-      const isNew = n.id.startsWith("network-new-");
+        (n.data as { network?: { name?: string } })?.network?.name ?? "Network";
       return {
         value: `frame:${n.id}`,
-        searchValue: name,
-        label: isNew ? (
-          <span className={"flex items-center gap-2"}>
-            {name}
-            <SmallBadge />
-          </span>
-        ) : (
-          name
-        ),
-        icon: ({ size }: { size?: number }) => <NetworkIcon size={size} />,
+        name,
+        isNew: n.id.startsWith("network-new-"),
       };
     });
     // API networks not already present on the canvas as a frame (avoid dupes).
@@ -88,11 +76,7 @@ const PickerContent = ({
     const api = (networks ?? [])
       .filter((n): n is Network & { id: string } => !!n.id)
       .filter((n) => !framedIds.has(`network-${n.id}`))
-      .map((n) => ({
-        value: `api:${n.id}`,
-        label: n.name,
-        icon: ({ size }: { size?: number }) => <NetworkIcon size={size} />,
-      }));
+      .map((n) => ({ value: `api:${n.id}`, name: n.name }));
     return [...frames, ...api];
   }, [reactFlow, networks]);
 
@@ -178,32 +162,12 @@ const PickerContent = ({
         />
         <Separator />
         <div className={"px-8 py-6"}>
-          <SelectDropdown
+          <NetworkSelect
             value={selected}
             onChange={setSelected}
             options={options}
-            showSearch={true}
-            searchPlaceholder={"Search networks..."}
-            placeholder={"Select or create a network..."}
+            onCreateNetwork={() => setCreating(true)}
             maxHeight={190}
-            // Pinned below the options so scroll or search can't hide it.
-            footer={(close) => (
-              <div className={"p-2"}>
-                <button
-                  type={"button"}
-                  className={
-                    "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-nb-gray-200 hover:bg-nb-gray-800/60 w-full transition-colors"
-                  }
-                  onClick={() => {
-                    close();
-                    setCreating(true);
-                  }}
-                >
-                  <PlusCircle size={14} />
-                  Create New Network
-                </button>
-              </div>
-            )}
           />
         </div>
         {/* Same separator color as the header. */}

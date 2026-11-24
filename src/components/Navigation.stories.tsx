@@ -186,7 +186,7 @@ export const SidebarRelatedPages: StoryObj = {
       <SidebarItem
         visible
         href={"/team/users"}
-        activeRoutes={["/team/service-users", "/team/user"]}
+        activeRoutes={["/team/service-users"]}
         icon={<Users size={16} />}
         label={"Users"}
       />

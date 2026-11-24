@@ -343,7 +343,7 @@ export const AgentNetworkAdminRole: Story = {
   },
 };
 
-/* A network's own page: Network Routing opens with Networks active. */
+/* A network's own page: Network Routing opens, with no entry active. */
 export const NetworkDetail: Story = {
   parameters: nav("/network", { id: NETWORK.office }),
   render: inLayout(NetworkDetailPage),

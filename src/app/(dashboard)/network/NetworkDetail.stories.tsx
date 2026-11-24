@@ -69,7 +69,7 @@ export const AddResourceModal: Story = {
   play: async () => {
     await resourcesReady();
     await clickSelector("[data-testid='add-resource']");
-    await findText(/Add new resource to/);
+    await findText(/Give peers access to a host/);
   },
 };
 

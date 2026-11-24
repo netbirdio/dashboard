@@ -12,6 +12,7 @@ const DISTRIBUTOR_HIDDEN_NAV_ITEMS = [
   "/setup-keys",
   "/access-control",
   "/networks",
+  "/network-resources",
   "/network-routes",
   "/reverse-proxy",
   "/dns",
