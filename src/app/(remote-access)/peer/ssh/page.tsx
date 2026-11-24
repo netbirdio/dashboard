@@ -87,7 +87,7 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
   // IPv4 otherwise. peer.ip is always IPv4, so a request for "6" on a peer
   // without an IPv6 address has to fall back on the version too, or the dialer
   // is told to use a family the host doesn't belong to.
-  const requestedIPv6 = ipVersion === "6" ? peer.ipv6 : undefined;
+  const requestedIPv6 = ipVersion === "6" && peer.ipv6 ? peer.ipv6 : undefined;
   const sshHost = requestedIPv6 ?? peer.ip;
   const sshIpVersion =
     ipVersion === "6" ? (requestedIPv6 ? "6" : "4") : ipVersion;

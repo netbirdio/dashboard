@@ -22,6 +22,7 @@ const VALID_PARAMS = [
   "page_size",
   "user",
   "port",
+  "target",
   "ip_version",
   "mode",
   "quality",

@@ -3,7 +3,13 @@
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import useFetchApi from "@utils/api";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
 import { sendErrorNotification } from "@/modules/remote-access/errorNotification";
@@ -177,6 +183,10 @@ function VNCSession({
   });
   const { target, port: portNumber, mode, username, ipVersion: ipVer } = choice;
   const isExternal = target === "external";
+  const scope = useMemo(
+    () => temporaryAccessRules(target, portNumber).join(","),
+    [target, portNumber],
+  );
 
   // The setup screen is always shown first and after a failed attempt: any
   // peer may be running a third-party VNC server, so the choice between it and
@@ -191,7 +201,6 @@ function VNCSession({
     if (!peer?.id) return;
 
     const rules = temporaryAccessRules(target, portNumber);
-    const scope = rules.join(",");
 
     // The grant is scoped to the port it was asked for, so a different server
     // or port needs a fresh one. Without this the dial would be dropped by a
@@ -241,15 +250,21 @@ function VNCSession({
     } finally {
       setIsNetBirdConnecting(false);
     }
-  }, [peer?.id, client, sendErrorNotification, target, portNumber]);
+  }, [peer?.id, client, sendErrorNotification, target, portNumber, scope]);
 
   // Held back until the setup screen is done with, the way RDP and SSH hold
   // theirs until the credentials dialog is answered. Bringing the overlay up
   // registers a peer and opens a temporary access policy, so it waits for the
   // operator to have chosen what to open it for.
   useEffect(() => {
+    // A connected client whose grant covers a different server or port has to
+    // be brought back through connectNetBird, which drops it and asks again.
+    const grantOutdated =
+      client.status === NetBirdStatus.CONNECTED &&
+      grantedScope.current !== null &&
+      grantedScope.current !== scope;
     if (
-      client.status === NetBirdStatus.DISCONNECTED &&
+      (client.status === NetBirdStatus.DISCONNECTED || grantOutdated) &&
       !showSetup &&
       !isNetBirdConnecting &&
       !connected.current &&
@@ -263,6 +278,7 @@ function VNCSession({
     isNetBirdConnecting,
     connectFailed,
     showSetup,
+    scope,
   ]);
 
   // Start VNC session when NetBird is connected (auto-connect unless setup is shown).
@@ -274,6 +290,8 @@ function VNCSession({
       !isNetBirdConnecting &&
       !showSetup &&
       !connectFailed &&
+      // Never dial on a grant opened for a different server or port.
+      grantedScope.current === scope &&
       // Only the NetBird path is authenticated by a session key, so only it
       // waits for one. Requiring it for an external connection would hang
       // forever on a grant that never carries one.
@@ -323,6 +341,7 @@ function VNCSession({
     isExternal,
     target,
     portNumber,
+    scope,
     connectAttempt,
   ]);
 
@@ -338,6 +357,8 @@ function VNCSession({
     }
   }, [vnc.status, vnc.focus]);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- the failure handling reacts
+     to an error reported by the VNC hook, which has no callback to hang it on */
   useEffect(() => {
     if (vnc.error) {
       // The inline panel on the setup / disconnect screen carries the
@@ -374,6 +395,7 @@ function VNCSession({
       sendErrorNotification("NetBird Client Error", client.error);
     }
   }, [vnc.error, vnc.errorDetail, client.error, sendErrorNotification]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Backing out of the password prompt returns to the connection form, which
   // is the last point the operator actually chose anything. Tearing the window
@@ -423,6 +445,7 @@ function VNCSession({
   const [vncWaitElapsed, setVncWaitElapsed] = useState(false);
   useEffect(() => {
     if (isExternal || vnc.status !== VNCStatus.CONNECTING) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- resets the hint when the wait ends
       setVncWaitElapsed(false);
       return;
     }
@@ -447,6 +470,9 @@ function VNCSession({
   // shows the form instead, which carries the error itself.
   if (
     vnc.status === VNCStatus.DISCONNECTED &&
+    // connectedOnce is only written alongside a status change or a state
+    // update, so every render that matters sees its current value.
+    // eslint-disable-next-line react-hooks/refs
     (connectedOnce.current || connectFailed) &&
     !showSetup &&
     !isLoading

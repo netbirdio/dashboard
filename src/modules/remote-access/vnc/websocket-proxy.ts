@@ -59,6 +59,8 @@ export class VNCProxyWebSocket extends EventTarget {
     // handlers after the constructor returns. Without this, the open event fires
     // before noVNC is listening and the RFB state machine never initializes.
     setTimeout(() => {
+      // close() ran before the handler was attached: stay closed.
+      if (this.readyState !== VNCProxyWebSocket.CONNECTING) return;
       try {
         // handleVNCWebSocket_<proxyID> is registered on `window` by the Go
         // WASM side in client/wasm/internal/vnc/proxy.go when createVNCProxy

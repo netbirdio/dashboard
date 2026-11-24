@@ -140,10 +140,25 @@ export function useVNCQueryParams() {
       return;
     }
 
+    // SecureProvider stores {path, params}; a bare JSON string is the older
+    // form of the same value.
     let paramsString = storedParams;
-    if (storedParams.startsWith('"') && storedParams.endsWith('"')) {
+    if (storedParams.startsWith('"') || storedParams.startsWith("{")) {
       try {
-        paramsString = JSON.parse(storedParams);
+        const parsed: unknown = JSON.parse(storedParams);
+        if (typeof parsed === "string") {
+          paramsString = parsed;
+        } else if (
+          parsed &&
+          typeof parsed === "object" &&
+          (parsed as { path?: unknown }).path === "/peer/vnc" &&
+          typeof (parsed as { params?: unknown }).params === "string"
+        ) {
+          paramsString = (parsed as { params: string }).params;
+        } else {
+          setRestored({ ...emptyParams, ready: true });
+          return;
+        }
       } catch {
         setRestored({ ...emptyParams, ready: true });
         return;
