@@ -63,6 +63,42 @@ describe("requestGroupsWithFallback", () => {
     expect(state.v1alpha1Unavailable).toBe(true);
   });
 
+  it("falls back when the probe fails at the network level", async () => {
+    // A management without the route answers the CORS preflight with no
+    // CORS headers, so fetch rejects with a TypeError instead of a 404.
+    const state = fresh();
+    const request = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValue([]);
+    await requestGroupsWithFallback("/groups", request, state);
+    expect(request.mock.calls.map((c) => c[0])).toEqual([
+      "/v1alpha1/groups",
+      "/groups",
+    ]);
+    expect(state.v1alpha1Unavailable).toBe(true);
+  });
+
+  it("does not remember the fallback when the network is down", async () => {
+    const state = fresh();
+    const err = new TypeError("Failed to fetch");
+    const request = vi.fn().mockRejectedValue(err);
+    await expect(
+      requestGroupsWithFallback("/groups", request, state),
+    ).rejects.toBe(err);
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(state.v1alpha1Unavailable).toBe(false);
+  });
+
+  it("does not fall back when the request is aborted", async () => {
+    const abort = new DOMException("aborted", "AbortError");
+    const request = vi.fn().mockRejectedValue(abort);
+    await expect(
+      requestGroupsWithFallback("/groups", request, fresh()),
+    ).rejects.toBe(abort);
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+
   it("does not fall back on a non-404 status", async () => {
     const err = { message: "bad gateway", status: 502 };
     const request = vi.fn().mockRejectedValue(err);

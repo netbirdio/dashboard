@@ -1,5 +1,7 @@
 // Group reads go to the versioned endpoint, which returns members as peer IDs.
-// Management versions that predate it answer 404 and keep serving /groups.
+// Management versions that predate it keep serving /groups. Their router adds
+// CORS headers only to matched routes, so a cross-origin probe fails as a
+// network error rather than a readable 404.
 const V1_GROUPS = "/v1alpha1/groups";
 
 type FallbackState = { v1alpha1Unavailable: boolean };
@@ -17,11 +19,17 @@ const isNotFound = (err: unknown): boolean => {
   return e?.status === 404 || e?.code === 404;
 };
 
+// fetch rejects with a TypeError when the browser blocks or loses the request.
+const isNetworkError = (err: unknown): boolean => err instanceof TypeError;
+
+const v1alpha1Missing = (err: unknown): boolean =>
+  isNotFound(err) || isNetworkError(err);
+
 /**
  * Runs a group read against v1alpha1 and falls back to the unversioned path
- * only when v1alpha1 answers 404. Other errors are rethrown. The fallback is
- * remembered once it succeeds, so later reads skip the probe. A 404 on a
- * single group is not remembered unless the unversioned path then succeeds.
+ * when v1alpha1 answers 404 or the request fails at the network level. Other
+ * errors are rethrown. The fallback is remembered only once the unversioned
+ * read succeeds, so a real outage or a missing single group keeps surfacing.
  */
 export async function requestGroupsWithFallback<T>(
   path: string,
@@ -34,7 +42,7 @@ export async function requestGroupsWithFallback<T>(
   try {
     return await request(path.replace(/^\/groups/, V1_GROUPS));
   } catch (err) {
-    if (!isNotFound(err)) throw err;
+    if (!v1alpha1Missing(err)) throw err;
   }
   const result = await request(path);
   state.v1alpha1Unavailable = true;
