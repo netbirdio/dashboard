@@ -195,6 +195,19 @@ export function useDraftPeerUpgrade() {
           !onCanvas.has(`peer-${p.id}`),
       );
 
+    // /peers and /groups are separate requests, so a bound group can lag the
+    // peer. Hostname matching would then pick a same-named peer and the
+    // upgraded set would keep it, so wait for the group to confirm the peer.
+    const findPeerFor = (p: {
+      boundGroupId?: string;
+      installHostname?: string;
+      installStartedAt?: number;
+    }) => {
+      if (p.boundGroupId) return findByGroup(p.boundGroupId);
+      if (!p.installHostname) return undefined;
+      return findMatch(p.installHostname, p.installStartedAt);
+    };
+
     nodes.forEach((node) => {
       const data = node.data as {
         placeholderKind?: string;
@@ -216,11 +229,7 @@ export function useDraftPeerUpgrade() {
         if (!p.id) return;
         const pseudoNodeId = `peer-${p.id}`;
         if (upgraded.current.has(pseudoNodeId)) return;
-        const match =
-          (p.boundGroupId ? findByGroup(p.boundGroupId) : undefined) ??
-          (p.installHostname
-            ? findMatch(p.installHostname, p.installStartedAt)
-            : undefined);
+        const match = findPeerFor(p);
         if (!match?.id) return;
         upgraded.current.add(pseudoNodeId);
         upgrades.push({ nodeId: pseudoNodeId, peer: match });
@@ -239,11 +248,7 @@ export function useDraftPeerUpgrade() {
 
       if (!data?.placeholderKind || data.peer) return;
       if (upgraded.current.has(node.id)) return;
-      const match =
-        (data.boundGroupId ? findByGroup(data.boundGroupId) : undefined) ??
-        (data.installHostname
-          ? findMatch(data.installHostname, data.installStartedAt)
-          : undefined);
+      const match = findPeerFor(data);
       if (!match?.id) return;
       upgraded.current.add(node.id);
       upgrades.push({ nodeId: node.id, peer: match });
