@@ -4,7 +4,7 @@ import SiteToSitePage from "@/app/(dashboard)/site-to-site/page";
 import type { Policy } from "@/interfaces/Policy";
 import type { SiteToSiteConnection } from "@/interfaces/SiteToSite";
 import DashboardLayout from "@/layouts/DashboardLayout";
-import { NETWORK, policies } from "@/storybook/fixtures";
+import { NETWORK, networks, policies } from "@/storybook/fixtures";
 import {
   clickSelector,
   clickText,
@@ -171,16 +171,62 @@ export const AddConnectionNewNetwork: Story = {
     await ready();
     await clickSelector("[data-testid='add-site-to-site-connection']");
     await findDialog();
-    await pickNetwork("source-network", "Berlin Office");
-    await pickNetwork("destination-network", "New network");
+    await pickNetwork("first-network", "Berlin Office");
+    await pickNetwork("second-network", "Add new network");
     await user.type(
-      await screen.findByPlaceholderText("e.g., Berlin Office"),
+      await screen.findByPlaceholderText("e.g., Lisbon Office"),
       "Lisbon Office",
     );
     await user.type(
-      await screen.findByPlaceholderText("e.g., 10.10.0.0/16"),
+      await screen.findByPlaceholderText("e.g., Lisbon LAN"),
+      "Lisbon LAN",
+    );
+    await user.type(
+      await screen.findByPlaceholderText("e.g., 10.30.0.0/24"),
       "10.30.0.0/24",
     );
+  },
+};
+
+/* Two networks that already have IP ranges, so Continue creates nothing and
+   opens the policy fields straight away. */
+const openAccessStep = async () => {
+  await ready();
+  await clickSelector("[data-testid='add-site-to-site-connection']");
+  await findDialog();
+  await pickNetwork("first-network", "Berlin Office");
+  await pickNetwork("second-network", "AWS Production VPC (eu-central-1)");
+  await clickSelector("[data-testid='site-to-site-continue']");
+  await findText("Name of the Rule");
+};
+
+export const AddConnectionAccess: Story = { play: openAccessStep };
+
+/* AWS reports no routing peer, so saving the policy leads to its setup. */
+export const AddConnectionRoutingPeers: Story = {
+  parameters: {
+    api: {
+      ...api,
+      "GET /networks": networks.map((n) =>
+        n.id === NETWORK.aws ? { ...n, routing_peers_count: 0 } : n,
+      ),
+      "POST /setup-keys": { id: "key-1", key: "A1B2C3D4-SETUP-KEY" },
+      "POST /groups": { id: "grp-aws-routing", name: "Routing Peers", peers: [] },
+      "GET /groups/:id": { id: "grp-aws-routing", name: "Routing Peers", peers: [] },
+      "POST /policies": s2sPolicy(
+        "pol-new",
+        "Office LAN (Berlin Office) to Production VPC (AWS Production VPC (eu-central-1))",
+        { id: "res-office-lan", type: "subnet" },
+        { id: "res-aws-vpc", type: "subnet" },
+        "all",
+        false,
+      ),
+    },
+  },
+  play: async () => {
+    await openAccessStep();
+    await clickSelector("[data-testid='submit-policy']");
+    await findText("Deployment Method");
   },
 };
 

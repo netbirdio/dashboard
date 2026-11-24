@@ -15,7 +15,7 @@ import {
   AccessControlModalContent,
   SiteToSiteScope,
 } from "@/modules/access-control/AccessControlModal";
-import { RoutingPeerDeployModal } from "@/modules/site-to-site/RoutingPeerDeployModal";
+import { RoutingPeerDeployModal } from "@/modules/site-to-site/routing-peer/RoutingPeerDeployModal";
 import {
   connectionNetworks,
   connectionPolicies,
@@ -28,10 +28,7 @@ import {
   siteToSiteScope,
   toRuleResource,
 } from "@/modules/site-to-site/siteToSite";
-import {
-  SiteToSiteNetworksModal,
-  SiteToSiteSelection,
-} from "@/modules/site-to-site/SiteToSiteNetworksModal";
+import { SiteToSiteWizard } from "@/modules/site-to-site/wizard/SiteToSiteWizard";
 
 type PolicyModalState = {
   policy?: Policy;
@@ -39,8 +36,6 @@ type PolicyModalState = {
   sourceResource?: PolicyRuleResource;
   destinationResource?: PolicyRuleResource;
   scope?: SiteToSiteScope;
-  // Networks to offer a routing peer for once a new connection's policy saves.
-  networksToRoute?: Network[];
 };
 
 type ContextValue = {
@@ -84,7 +79,7 @@ export const SiteToSiteProvider = ({
   const { data: groups } = useFetchApi<Group[]>("/groups");
   const { data: peers } = useFetchApi<Peer[]>("/peers");
 
-  const [networksModal, setNetworksModal] = useState(false);
+  const [wizard, setWizard] = useState(false);
   const [policyModal, setPolicyModal] = useState<PolicyModalState>();
   const [deployNetworks, setDeployNetworks] = useState<Network[]>();
 
@@ -108,31 +103,7 @@ export const SiteToSiteProvider = ({
     mutate("/networks/resources");
   }, [mutate]);
 
-  const openCreateConnection = () => setNetworksModal(true);
-
-  // Resources made in the first step are not in the cached lists yet, so the
-  // lists are refreshed before the policy modal limits each side to them.
-  const onNetworksChosen = async (selection: SiteToSiteSelection) => {
-    setNetworksModal(false);
-    const [freshNetworks, freshResources] = (await Promise.all([
-      mutate("/networks"),
-      mutate("/networks/resources"),
-    ])) as [Network[] | undefined, NetworkResource[] | undefined];
-    const source =
-      freshNetworks?.find((n) => n.id === selection.source.id) ??
-      selection.source;
-    const destination =
-      freshNetworks?.find((n) => n.id === selection.destination.id) ??
-      selection.destination;
-
-    setPolicyModal({
-      name: proposedPolicyName(source, destination),
-      sourceResource: toRuleResource(selection.sourceResource),
-      destinationResource: toRuleResource(selection.destinationResource),
-      scope: siteToSiteScope(source, destination, freshResources ?? resources),
-      networksToRoute: [source, destination],
-    });
-  };
+  const openCreateConnection = () => setWizard(true);
 
   const openAddPolicy = (connection: SiteToSiteConnection) => {
     const [source, destination] = connectionNetworks(connection, networks);
@@ -164,14 +135,8 @@ export const SiteToSiteProvider = ({
   };
 
   const onPolicySaved = () => {
-    const toRoute = policyModal?.networksToRoute ?? [];
     setPolicyModal(undefined);
     refresh();
-    const unrouted = toRoute.filter((n) => {
-      const current = networks?.find((c) => c.id === n.id) ?? n;
-      return !current.routing_peers_count;
-    });
-    if (unrouted.length > 0) setDeployNetworks(unrouted);
   };
 
   const openAddLinkPolicy = (link: SiteLink) => {
@@ -301,14 +266,7 @@ export const SiteToSiteProvider = ({
     <SiteToSiteContext.Provider value={value}>
       {children}
 
-      <SiteToSiteNetworksModal
-        open={networksModal}
-        onOpenChange={setNetworksModal}
-        networks={networks}
-        resources={resources}
-        countriesOf={countriesOf}
-        onContinue={(selection) => void onNetworksChosen(selection)}
-      />
+      <SiteToSiteWizard open={wizard} onOpenChange={setWizard} />
 
       <Modal
         open={!!policyModal}

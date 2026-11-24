@@ -140,6 +140,11 @@ export const routingPeerHostname = (network: Network) => {
   return `router-${slug || "network"}`.slice(0, 63).replace(/-+$/, "");
 };
 
+/** A hostname of letters, digits and dashes, as a routing peer registers with. */
+export const validRoutingPeerHostname = (hostname: string) =>
+  hostname === "" ||
+  /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/i.test(hostname.trim());
+
 /** The group whose members route for the network. */
 export const routingPeerGroupName = (network: Network) =>
   `${network.name} Routing Peers`;

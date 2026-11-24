@@ -15,7 +15,11 @@ export {
   POSTURE,
   USER,
 } from "../../.storybook/mocks/fixtures/ids";
-export { policies } from "../../.storybook/mocks/fixtures/network";
+export {
+  networkResources,
+  networks,
+  policies,
+} from "../../.storybook/mocks/fixtures/network";
 export {
   distributorInfo,
   edr,
