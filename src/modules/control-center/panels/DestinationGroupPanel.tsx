@@ -43,7 +43,10 @@ import {
   isNewGroup,
   useDraftGroupActions,
 } from "@/modules/control-center/hooks/useDraftGroupActions";
-import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
+import {
+  setDraftResourceCardGroup,
+  useDragToGroup,
+} from "@/modules/control-center/hooks/useDragToGroup";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
 import {
@@ -51,6 +54,7 @@ import {
   getGroupResources,
 } from "@/modules/control-center/utils/graph-builder";
 import {
+  getDraftResource,
   getIpPlaceholderFromRange,
   getPlaceholderPeer,
   pinByOrder,
@@ -351,13 +355,44 @@ const DraftPeerRowActions = ({ draftPeer }: { draftPeer: Peer }) => {
   );
 };
 
+export function useInitialGroupTab(
+  groupId: string | undefined,
+  preferred: string,
+  loaded: boolean,
+) {
+  const [tab, setTab] = useState(preferred);
+  const fixed = useRef(false);
+  useEffect(() => {
+    fixed.current = false;
+  }, [groupId]);
+  useEffect(() => {
+    if (fixed.current) return;
+    setTab(preferred);
+    fixed.current = loaded;
+  }, [groupId, preferred, loaded]);
+  const lockTab = useCallback(() => {
+    fixed.current = true;
+  }, []);
+  const pickTab = useCallback((value: string) => {
+    fixed.current = true;
+    setTab(value);
+  }, []);
+  return { tab, pickTab, lockTab };
+}
+
 export const DestinationGroupPanel = ({
   groupId,
   onClose,
 }: DestinationGroupPanelProps) => {
-  const { peers, networkResources, groups, users } = useControlCenterData();
+  const {
+    peers,
+    networkResources,
+    groups,
+    users,
+    isLoading: isDataLoading,
+  } = useControlCenterData();
   // Structural subscription: a nodes subscription re-renders the panel on every canvas update.
-  const nodes = useStructuralNodes();
+  const nodes = useStructuralNodes({ enabled: !!groupId });
   const { setNodes, setEdges } = useCanvasState();
   const { isDraft, setResourceNetworkPicker } = useDraftMode();
   const { permission } = usePermissions();
@@ -470,6 +505,16 @@ export const DestinationGroupPanel = ({
     return byId;
   }, [nodes]);
 
+  const canvasDraftResources = useMemo(() => {
+    const byId = new Map<string, { resource: NetworkResource; nodeId: string }>();
+    nodes.forEach((n) => {
+      if (!n.id.startsWith("resource-new-")) return;
+      const resource = getDraftResource(n);
+      if (resource?.id) byId.set(resource.id, { resource, nodeId: n.id });
+    });
+    return byId;
+  }, [nodes]);
+
   const groupPeers = useMemo(() => {
     const existing =
       peers && realGroupId
@@ -530,6 +575,9 @@ export const DestinationGroupPanel = ({
       return refs.includes(userGroupRef);
     });
   }, [users, userGroupRef, isDraft, changes]);
+
+  const preferUsersTab =
+    groupUsers.length > 0 && groupPeers.length === 0 && resources.length === 0;
 
   const canEditMembers =
     !isAllGroup(group) &&
@@ -594,7 +642,18 @@ export const DestinationGroupPanel = ({
     !setEquals(selectedResourceIds, memberResourceIds);
   const dirty = membersDirty || !setEquals(selectedUserIds, memberUserIds);
 
+  const preferredTab = () => {
+    if (preferUsersTab) return "users";
+    return preferResourcesTab ? "resources" : "peers";
+  };
+  const { tab, pickTab, lockTab } = useInitialGroupTab(
+    groupId,
+    preferredTab(),
+    !isDataLoading,
+  );
+
   const toggleId = (set: Set<string>, id: string) => {
+    lockTab();
     const next = new Set(set);
     if (next.has(id)) next.delete(id);
     else next.add(id);
@@ -810,12 +869,29 @@ export const DestinationGroupPanel = ({
       draftMemberResources.forEach((r) => {
         if (!selectedResourceIds.has(r.id)) {
           removeGroupMember(group, { resourceId: r.id });
+          setNodes((prev) =>
+            setDraftResourceCardGroup(
+              prev,
+              r.id,
+              group.id ?? group.name,
+              false,
+            ),
+          );
         }
       });
       // A checked canvas placeholder's node is absorbed, exactly like a drop.
       canvasPlaceholderPeers.forEach(({ peer, nodeId }, id) => {
         if (selectedPeerIds.has(id) && !memberPeerIds.has(id)) {
           addMemberToGroup(groupNode, { peer, draggedNodeId: nodeId });
+        }
+      });
+      canvasDraftResources.forEach(({ resource, nodeId }, id) => {
+        if (selectedResourceIds.has(id) && !memberResourceIds.has(id)) {
+          addMemberToGroup(groupNode, {
+            resource,
+            itemId: id,
+            draggedNodeId: nodeId,
+          });
         }
       });
       trackUserMembership();
@@ -981,16 +1057,13 @@ export const DestinationGroupPanel = ({
     }
   };
 
-  const [tab, setTab] = useState("peers");
   const [search, setSearch] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setSearch("");
-    setTab(preferResourcesTab ? "resources" : "peers");
     // autoFocus only fires on mount, so refocus when switching groups too.
     searchInputRef.current?.focus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- must reset only on group switch
   }, [groupId]);
 
   const query = search.trim().toLowerCase();
@@ -1021,6 +1094,9 @@ export const DestinationGroupPanel = ({
     return [
       ...draftMemberResources,
       ...(networkResources ?? []).filter((r) => memberResourceIds.has(r.id)),
+      ...[...canvasDraftResources.values()]
+        .map(({ resource }) => resource)
+        .filter((r) => !addedMembers.has(r.id)),
       ...(networkResources ?? []).filter((r) => !memberResourceIds.has(r.id)),
     ];
   }, [
@@ -1029,6 +1105,8 @@ export const DestinationGroupPanel = ({
     networkResources,
     memberResourceIds,
     draftMemberResources,
+    canvasDraftResources,
+    addedMembers,
   ]);
 
   // Row order frozen per open, so toggling and the post-save mutate don't reorder rows.
@@ -1206,7 +1284,7 @@ export const DestinationGroupPanel = ({
       <Tabs
         value={tab}
         onValueChange={(v) => {
-          setTab(v);
+          pickTab(v);
           searchInputRef.current?.focus();
         }}
         className={"flex-1 min-h-0 flex flex-col"}

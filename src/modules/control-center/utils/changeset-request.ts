@@ -1,8 +1,11 @@
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import loadConfig from "@utils/config";
 import { toIds } from "@utils/ids";
 import { normalizeHostCIDR } from "@utils/ip";
 import { Group, GroupResource } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
+import { Peer } from "@/interfaces/Peer";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import {
@@ -44,6 +47,7 @@ export interface LiveData {
   agentPolicies?: { id: string; [key: string]: unknown }[];
   networks?: Network[];
   networkResources?: NetworkResource[];
+  peers?: Peer[];
   // Lets the preview name draft entities when building id placeholders.
   draftChanges?: DraftChange[];
 }
@@ -68,6 +72,8 @@ export interface RequestResolvers {
     networkName: string;
   }) => string;
   groupIdForRef: (ref: string) => string;
+  peerIdForRef: (ref: string, label?: string) => string;
+  peerRequiresMasquerade: (ref: string) => boolean;
   normalizeAddress: (address: string) => string;
   // The group POST/PUT rejects bare resource ids; it wants {id, type} objects.
   resourceType: (id: string) => NetworkResource["type"] | undefined;
@@ -232,16 +238,35 @@ export function resourceUpdateBody(
   };
 }
 
+// A non-Linux peer only routes with masquerade on.
+// A placeholder had no OS when its router was saved,
+// so the peer it installed as is checked when the request is built.
+export const peerRequiresMasquerade = (
+  peers: Peer[] | undefined,
+  ref: string,
+): boolean => {
+  const peer = peers?.find((p) => p.id === ref);
+  return !!peer && getOperatingSystem(peer.os) != OperatingSystem.LINUX;
+};
+
+const routerMasquerade = (
+  change: CreateRouterChange | UpdateRouterChange,
+  r: RequestResolvers,
+) =>
+  change.peerId && r.peerRequiresMasquerade(change.peerId)
+    ? true
+    : change.masquerade ?? true;
+
 export function routerCreateBody(
   change: CreateRouterChange,
   r: RequestResolvers,
 ) {
   return {
     ...(change.peerId
-      ? { peer: change.peerId }
+      ? { peer: r.peerIdForRef(change.peerId, change.peerName) }
       : { peer_groups: [r.groupIdForRef(change.groupId ?? "")] }),
     metric: change.metric ?? 9999,
-    masquerade: change.masquerade ?? true,
+    masquerade: routerMasquerade(change, r),
     enabled: change.enabled ?? true,
   };
 }
@@ -252,10 +277,10 @@ export function routerUpdateBody(
 ) {
   return {
     ...(change.peerId
-      ? { peer: change.peerId }
+      ? { peer: r.peerIdForRef(change.peerId, change.peerName) }
       : { peer_groups: [r.groupIdForRef(change.groupId ?? "")] }),
     metric: change.metric ?? 9999,
-    masquerade: change.masquerade ?? true,
+    masquerade: routerMasquerade(change, r),
     enabled: change.enabled ?? true,
   };
 }
@@ -344,6 +369,9 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
     resolveNetworkId: (change) =>
       change.networkId ?? idPlaceholder("NETWORK", change.networkName),
     groupIdForRef: resolveGroupRef,
+    peerIdForRef: (ref, label) =>
+      ref.startsWith("draft-") ? idPlaceholder("PEER", label) : ref,
+    peerRequiresMasquerade: (ref) => peerRequiresMasquerade(live.peers, ref),
     normalizeAddress: (address) => normalizeHostCIDR(address),
     resourceType: (id) =>
       live.networkResources?.find((res) => res.id === id)?.type,

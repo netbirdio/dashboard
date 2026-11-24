@@ -15,6 +15,13 @@ export const getInstallUrl = () => {
   return window.location.origin + "/install";
 };
 
+// getScimBaseUrl returns the SCIM endpoint of this management server, so the
+// setup wizards show the self-hosted domain instead of NetBird Cloud's.
+export const getScimBaseUrl = () => {
+  const origin = config.apiOrigin || window.location.origin;
+  return origin.replace(/\/+$/, "") + "/api/scim/v2";
+};
+
 export type Edition = "cloud" | "licensed" | "oss";
 
 // testOnboardingEnabled lets e2e tests opt into rendering the onboarding flow,

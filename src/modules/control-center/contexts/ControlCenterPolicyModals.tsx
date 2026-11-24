@@ -8,6 +8,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
@@ -44,6 +45,12 @@ import {
   isTrackablePolicy,
 } from "@/modules/control-center/utils/helpers";
 
+export interface ProviderWizardOutcome {
+  providerId: string;
+  nodeId: string;
+  name: string;
+}
+
 interface PolicyContextType {
   setSelectedPolicy: (id: string) => void;
   setPolicyModalOpen: (open: boolean) => void;
@@ -61,8 +68,14 @@ interface PolicyContextType {
   openProvider: (id: string) => void;
   updateDraftAgentPolicy: (policy: AgentPolicy) => void;
   setAgentSourceGroup: (policy: AgentPolicy, groupRef: string) => void;
-  drawAgentPolicyOnCanvas: (policy: AgentPolicy) => void;
+  drawAgentPolicyOnCanvas: (
+    policy: AgentPolicy,
+    fallbackPosition?: XYPosition,
+  ) => void;
   openProviderWizard: (position?: XYPosition) => void;
+  requestProvider: (
+    position?: XYPosition,
+  ) => Promise<ProviderWizardOutcome | null>;
   openAgentPolicyWizard: (
     prefill: { sourceGroups: string[]; destinationProviderIds: string[] },
     position?: XYPosition,
@@ -238,8 +251,30 @@ export function ControlCenterPolicyProvider({
   const [providerWizard, setProviderWizard] = useState<{
     position?: XYPosition;
   } | null>(null);
-  const openProviderWizard = (position?: XYPosition) =>
+  // Read-and-cleared so the first exit wins: AIProviderModal fires a close
+  // right after a draft submit, which must not settle it again as a cancel.
+  const providerWizardResolve = useRef<
+    ((outcome: ProviderWizardOutcome | null) => void) | null
+  >(null);
+  const settleProviderWizard = (outcome: ProviderWizardOutcome | null) => {
+    const resolve = providerWizardResolve.current;
+    providerWizardResolve.current = null;
+    resolve?.(outcome);
+  };
+
+  const openProviderWizard = (position?: XYPosition) => {
+    settleProviderWizard(null);
     setProviderWizard({ position });
+  };
+
+  const requestProvider = (position?: XYPosition) =>
+    new Promise<ProviderWizardOutcome | null>((resolve) => {
+      settleProviderWizard(null);
+      providerWizardResolve.current = resolve;
+      setProviderWizard({ position });
+    });
+
+  useEffect(() => () => settleProviderWizard(null), []);
 
   const [createPolicyModal, setCreatePolicyModal] = useState(false);
   const [policyInitialName, setPolicyInitialName] = useState("");
@@ -675,17 +710,29 @@ export function ControlCenterPolicyProvider({
       pushEdge(`${policyNodeId}-${destId}`, policyNodeId, destId);
     }
 
+    // Write through `reactFlow.setNodes`/`setEdges` only: a direct write to the
+    // controlled array races React Flow's replay. The updaters must stay
+    // idempotent, since they can run against a partly updated array.
+    const byId = <T extends { id: string }>(items: T[]) => {
+      const seen = new Set<string>();
+      return items.filter((i) => !seen.has(i.id) && seen.add(i.id));
+    };
+
     reactFlow.setNodes((prev) =>
-      prev
-        .map((n) =>
-          n.id === policyNodeId ? { ...n, data: { ...n.data, policy } } : n,
-        )
-        .concat(newNodes),
+      byId(
+        prev
+          .map((n) =>
+            n.id === policyNodeId ? { ...n, data: { ...n.data, policy } } : n,
+          )
+          .concat(newNodes),
+      ),
     );
     reactFlow.setEdges((prev) =>
-      prev
-        .filter((e) => e.source !== policyNodeId && e.target !== policyNodeId)
-        .concat(policyEdges),
+      byId(
+        prev
+          .filter((e) => e.source !== policyNodeId && e.target !== policyNodeId)
+          .concat(policyEdges),
+      ),
     );
   };
 
@@ -889,6 +936,10 @@ export function ControlCenterPolicyProvider({
     );
   };
 
+  const drawnByAssistant = (policyNodeId: string): true | undefined =>
+    reactFlow.getNodes().find((n) => n.id === policyNodeId)?.data
+      ?.byAssistant === true || undefined;
+
   const ensureAgentDraftGroupChanges = (policy: AgentPolicy) => {
     policy.sourceGroups.forEach((ref) => {
       if (!isDraftGroupRef(ref)) return;
@@ -911,13 +962,15 @@ export function ControlCenterPolicyProvider({
       const hasCreateChange = changes.some(
         (c) => c.type === "create-agent-policy" && c.clientId === policy.id,
       );
+      const byAssistant = drawnByAssistant(`agent-policy-${policy.id}`);
       if (isDraftPolicy && !hasCreateChange) {
-        trackCreateAgentPolicy({ clientId: policy.id, policy });
+        trackCreateAgentPolicy({ clientId: policy.id, policy, byAssistant });
       } else {
         trackUpdateAgentPolicy({
           agentPolicyId: policy.id,
           name: policy.name,
           policy,
+          byAssistant,
         });
       }
     } else if (isDraftPolicy) {
@@ -1023,13 +1076,14 @@ export function ControlCenterPolicyProvider({
   const updateDraftPolicy = (policy: Policy) => {
     if (!policy.id) return;
     ensureDraftGroupChanges(policy);
+    const byAssistant = drawnByAssistant(`policy-${policy.id}`);
     if (policy.id.startsWith("new-")) {
       const hasCreateChange = changes.some(
         (c) => c.type === "create-policy" && c.clientId === policy.id,
       );
       if (!hasCreateChange) {
         if (isCompletePolicy(policy)) {
-          trackCreatePolicy({ clientId: policy.id, policy });
+          trackCreatePolicy({ clientId: policy.id, policy, byAssistant });
         }
         drawPolicyOnCanvas(policy);
         return;
@@ -1053,7 +1107,7 @@ export function ControlCenterPolicyProvider({
       drawPolicyOnCanvas(policy);
       return;
     }
-    trackUpdatePolicy({ policyId: policy.id, policy });
+    trackUpdatePolicy({ policyId: policy.id, policy, byAssistant });
     drawPolicyOnCanvas(policy);
   };
 
@@ -1086,6 +1140,7 @@ export function ControlCenterPolicyProvider({
       openAgentPolicyWizard,
       openProvider,
       openProviderWizard,
+      requestProvider,
     }),
     [
       selectedPolicy,
@@ -1198,7 +1253,10 @@ export function ControlCenterPolicyProvider({
           open={true}
           takenNames={isDraft ? draftProviderNames : undefined}
           onOpenChange={(o) => {
-            if (!o) setProviderWizard(null);
+            if (!o) {
+              settleProviderWizard(null);
+              setProviderWizard(null);
+            }
           }}
           useSave={!isDraft}
           onBeforeSave={isDraft ? undefined : confirmLiveAgentSave}
@@ -1215,6 +1273,11 @@ export function ControlCenterPolicyProvider({
               },
               providerWizard.position,
             );
+            settleProviderWizard({
+              providerId: clientId,
+              nodeId: `provider-${clientId}`,
+              name: input.name,
+            });
             setProviderWizard(null);
           }}
         />

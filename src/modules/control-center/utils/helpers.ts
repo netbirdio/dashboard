@@ -165,6 +165,18 @@ export const getPoliciesTargetingResources = (
   });
 };
 
+// A draft resource a group carries can still have its own card in a network frame
+// (the assistant keeps it there), and then it already belongs to that network.
+export const hasFramedCard = (
+  resourceId: string | undefined,
+  nodes: CanvasNode[],
+): boolean => {
+  const card = nodes.find((n) => n.id === `resource-${resourceId}`);
+  return (
+    !!card?.parentId && isFrameNode(nodes.find((n) => n.id === card.parentId))
+  );
+};
+
 // A group becomes a resource-group row only when empty, or when it owns a resource.
 export const canDropGroupIntoNetwork = (
   groupNode: CanvasNode,
@@ -187,7 +199,8 @@ export const canDropGroupIntoNetwork = (
   const carriedDraftResources = (
     groupNode.data as { draftResources?: NetworkResource[] }
   )?.draftResources;
-  if (carriedDraftResources?.length) return true;
+  if (carriedDraftResources?.some((r) => !hasFramedCard(r.id, nodes)))
+    return true;
 
   const groupKey = group.id ?? group.name;
   const network = (
@@ -218,12 +231,13 @@ export const canDropGroupIntoNetwork = (
   return Array.from(resourceIds).some((rid) => {
     const api = networkResources?.find((r) => r.id === rid);
     if (api && inGroup(api.groups as (Group | string)[])) return true;
-    const nodeResource = (
-      nodes.find((n) => n.id === `resource-${rid}`)?.data as {
-        resource?: { groups?: (Group | string)[] };
-      }
-    )?.resource;
-    return inGroup(nodeResource?.groups);
+    const card = nodes.find((n) => n.id === `resource-${rid}`)?.data as
+      | {
+          resource?: { groups?: (Group | string)[] };
+          resourceGroupIds?: string[];
+        }
+      | undefined;
+    return inGroup(card?.resource?.groups) || inGroup(card?.resourceGroupIds);
   });
 };
 
@@ -325,6 +339,18 @@ export const draftBoundGroupName = (
 
 export const kindHasBoundGroup = (kind?: string) =>
   kind === "server" || kind === "agent";
+
+export const isPlaceholderPeer = (peer?: {
+  id?: string;
+  os?: string;
+}): boolean =>
+  !!peer &&
+  (isDraftPeerId(peer.id) || !!peer.os?.startsWith(PLACEHOLDER_OS_PREFIX));
+
+export const PLACEHOLDER_OS_PREFIX = "draft-";
+
+export const isDraftPeerId = (id?: string): boolean =>
+  !!id && id.startsWith("draft-");
 
 // Pseudo-Peer so a not-yet-installed placeholder can take part in policies and selectors.
 export const getPlaceholderPeer = (node?: CanvasNode): Peer | undefined => {

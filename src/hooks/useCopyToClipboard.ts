@@ -1,7 +1,10 @@
 import { notify } from "@components/Notification";
 import { useRef, useState } from "react";
 
-export default function useCopyToClipboard(textToCopy?: string) {
+export default function useCopyToClipboard(
+  textToCopy?: string,
+  options?: { silent?: boolean },
+) {
   const wrapper = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
   const copyToClipboard = async (
@@ -13,10 +16,12 @@ export default function useCopyToClipboard(textToCopy?: string) {
       await navigator.clipboard.writeText(copy);
       setCopied(true);
 
-      notify({
-        title: "Copied to clipboard",
-        description: description,
-      });
+      if (!options?.silent) {
+        notify({
+          title: "Copied to clipboard",
+          description: description,
+        });
+      }
 
       const timeout = setTimeout(() => {
         setCopied(false);

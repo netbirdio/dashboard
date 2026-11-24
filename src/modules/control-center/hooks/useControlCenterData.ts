@@ -1,9 +1,8 @@
+import { SelectOption } from "@components/select/SelectDropdown";
 import useFetchApi from "@utils/api";
-import { useMemo } from "react";
 import { sortBy } from "lodash";
 import { LayoutGridIcon, NetworkIcon } from "lucide-react";
-import React from "react";
-import { SelectOption } from "@components/select/SelectDropdown";
+import React, { useMemo } from "react";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";

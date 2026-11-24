@@ -776,3 +776,39 @@ describe("the before side of the new change types", () => {
     ).toBeNull();
   });
 });
+
+describe("masquerade of a routing peer", () => {
+  const router = (over: Record<string, unknown> = {}) =>
+    ({
+      id: "c1",
+      type: "create-router",
+      clientId: "new-r1",
+      networkId: "n1",
+      networkName: "Office",
+      peerId: "p1",
+      masquerade: false,
+      ...over,
+    }) as DraftChange;
+  const peers = [
+    { id: "p1", name: "gateway", os: "Windows 11" },
+    { id: "p2", name: "router", os: "Linux Ubuntu" },
+  ] as never;
+  const masquerade = (change: DraftChange) =>
+    (buildChangeRequest(change, { peers }).body as { masquerade: boolean })
+      .masquerade;
+
+  it("is forced on for a peer that turned out not to run Linux", () => {
+    expect(masquerade(router())).toBe(true);
+    expect(masquerade(router({ type: "update-router", routerId: "r1" }))).toBe(
+      true,
+    );
+  });
+
+  it("stays as saved for a Linux peer, a peer not known yet and a group", () => {
+    expect(masquerade(router({ peerId: "p2" }))).toBe(false);
+    expect(masquerade(router({ peerId: "draft-1" }))).toBe(false);
+    expect(masquerade(router({ peerId: undefined, groupId: "g1" }))).toBe(
+      false,
+    );
+  });
+});

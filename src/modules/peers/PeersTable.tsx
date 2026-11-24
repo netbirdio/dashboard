@@ -550,7 +550,6 @@ export default function PeersTable({
 
             <ButtonGroup disabled={isLoading}>
               <ButtonGroup.Button
-                className={"h-[42px]"}
                 variant={kind === "users" ? "tertiary" : "secondary"}
                 onClick={() => {
                   // Reset to the first page: the new subset may have fewer
@@ -565,7 +564,7 @@ export default function PeersTable({
               <ButtonGroup.Button
                 // Drop the left border so it doesn't stack with the first
                 // button's right border into a doubled divider.
-                className={"h-[42px] !border-l-0"}
+                className={"!border-l-0"}
                 variant={kind === "servers" ? "tertiary" : "secondary"}
                 onClick={() => {
                   table.setPageIndex(0);

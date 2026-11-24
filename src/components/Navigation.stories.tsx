@@ -108,7 +108,7 @@ export const SidebarGroups: StoryObj = {
   decorators: [withAppProviders],
   parameters: { nextjs: { navigation: { pathname: "/agent-network/usage" } } },
   render: () => (
-    <div className={"w-[240px]"}>
+    <div className={"w-[224px]"}>
       <SidebarItemGroup>
         <SidebarItem
           visible

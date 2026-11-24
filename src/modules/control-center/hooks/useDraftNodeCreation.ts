@@ -1,7 +1,7 @@
 import { Node, useReactFlow, XYPosition } from "@xyflow/react";
 import { useCallback } from "react";
 import type { Network } from "@/interfaces/Network";
-import type { Policy } from "@/interfaces/Policy";
+import type { Policy, Protocol } from "@/interfaces/Policy";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import {
   type AgentPolicy,
@@ -111,9 +111,25 @@ export function useDraftNodeCreation() {
 
   // The setup key is generated later, in the install modal.
   const addPeerPlaceholder = useCallback(
-    (kind: PeerPlaceholderKind, position?: XYPosition) => {
+    (
+      kind: PeerPlaceholderKind,
+      position?: XYPosition,
+      // Name it here, not with a rename afterwards: the rename uses a different
+      // store and can land before the node, where it is silently dropped.
+      preferredName?: string,
+    ) => {
       const nodeId = `peer-draft-${draftUid()}`;
-      const name = getNextPlaceholderName(kind, reactFlow.getNodes());
+      const nodes = reactFlow.getNodes();
+      const wanted = preferredName?.trim();
+      const taken = new Set(
+        nodes
+          .map((n) => (n.data as { placeholderName?: string })?.placeholderName)
+          .filter(Boolean),
+      );
+      const name =
+        wanted && !taken.has(wanted)
+          ? wanted
+          : getNextPlaceholderName(kind, nodes);
       placeNode(
         {
           id: nodeId,
@@ -136,25 +152,40 @@ export function useDraftNodeCreation() {
 
   // No changeset entry yet: a policy without both sides isn't deployable.
   const addBlankPolicy = useCallback(
-    (position?: XYPosition) => {
-      const name = getNextPolicyName(policies, reactFlow.getNodes());
+    (
+      position?: XYPosition,
+      preset?: {
+        name?: string;
+        description?: string;
+        bidirectional?: boolean;
+        protocol?: Protocol;
+        ports?: string[];
+      },
+    ) => {
+      const name =
+        preset?.name?.trim() || getNextPolicyName(policies, reactFlow.getNodes());
+      const description = preset?.description ?? "";
       const clientId = `new-${draftUid()}`;
       const policy: Policy = {
         id: clientId,
         name,
-        description: "",
+        description,
         enabled: true,
         rules: [
           {
             name,
-            description: "",
+            description,
             enabled: true,
             sources: [],
             destinations: [],
-            bidirectional: true,
+            bidirectional: preset?.bidirectional ?? true,
             action: "accept",
-            protocol: "all",
-            ports: [],
+            protocol: preset?.protocol ?? "all",
+            // Ports mean nothing outside tcp/udp and the API rejects them there.
+            ports:
+              preset?.protocol === "tcp" || preset?.protocol === "udp"
+                ? (preset?.ports ?? [])
+                : [],
           },
         ],
         source_posture_checks: [],
@@ -208,20 +239,25 @@ export function useDraftNodeCreation() {
   );
 
   const addBlankAgentPolicy = useCallback(
-    (position?: XYPosition) => {
+    (
+      position?: XYPosition,
+      preset?: { name?: string; description?: string },
+    ) => {
       const clientId = `new-${draftUid()}`;
-      const name = getNextAgentName(
-        "Agent Policy",
-        agentPolicies,
-        reactFlow.getNodes(),
-        (n) =>
-          n.type === NodeType.AgentPolicyNode
-            ? (n.data as { name?: string })?.name
-            : undefined,
-      );
+      const name =
+        preset?.name?.trim() ||
+        getNextAgentName(
+          "Agent Policy",
+          agentPolicies,
+          reactFlow.getNodes(),
+          (n) =>
+            n.type === NodeType.AgentPolicyNode
+              ? (n.data as { name?: string })?.name
+              : undefined,
+        );
       const policy: Omit<AgentPolicy, "id"> = {
         name,
-        description: "",
+        description: preset?.description ?? "",
         enabled: true,
         sourceGroups: [],
         destinationProviderIds: [],
@@ -229,6 +265,7 @@ export function useDraftNodeCreation() {
         limits: EMPTY_POLICY_LIMITS,
       };
       placeAgentPolicyNode({ ...policy, id: clientId }, position);
+      return `agent-policy-${clientId}`;
     },
     [agentPolicies, placeAgentPolicyNode, reactFlow],
   );
@@ -271,10 +308,11 @@ export function useDraftNodeCreation() {
     [placeNode, reactFlow, networks, trackCreateNetwork],
   );
 
-  // Stays out of the changeset until a network is picked; it can't deploy
-  // without one.
   const addDraftResource = useCallback(
-    (position?: XYPosition) => {
+    (
+      position?: XYPosition,
+      preset?: { name?: string; address?: string; description?: string },
+    ) => {
       const takenResources = new Set<string>();
       networkResources?.forEach((r) => r.name && takenResources.add(r.name));
       reactFlow.getNodes().forEach((n) => {
@@ -282,7 +320,11 @@ export function useDraftNodeCreation() {
           ?.resource?.name;
         if (resourceName) takenResources.add(resourceName);
       });
-      const name = getNextUniqueName("Resource", takenResources);
+      const wanted = preset?.name?.trim();
+      const name =
+        wanted && !takenResources.has(wanted)
+          ? wanted
+          : getNextUniqueName("Resource", takenResources);
 
       const nodeId = `resource-new-${draftUid()}`;
       placeNode(
@@ -291,7 +333,11 @@ export function useDraftNodeCreation() {
           type: NodeType.ResourceNode,
           position: { x: 0, y: 0 },
           data: {
-            resource: { name },
+            resource: {
+              name,
+              ...(preset?.address ? { address: preset.address } : {}),
+              ...(preset?.description ? { description: preset.description } : {}),
+            },
             enabled: true,
             showHandles: true,
           },
