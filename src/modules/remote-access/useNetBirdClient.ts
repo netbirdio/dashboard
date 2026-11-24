@@ -335,7 +335,7 @@ export const useNetBirdClient = () => {
         throw error;
       }
     },
-    [connect, peerRequest],
+    [connect, peerRequest, initialize],
   );
 
   useEffect(() => {

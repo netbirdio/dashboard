@@ -44,7 +44,7 @@ export default function SSHPage() {
     <div className={"w-screen h-screen overflow-hidden"}>
       {peerId && peer && !isLoading && username && port ? (
         <SSHTerminal
-          key={peer.id}
+          key={`${peer.id}-${ipVersion ?? ""}`}
           peer={peer}
           username={username}
           port={port}
@@ -155,8 +155,11 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
     isSSHConnecting,
     isClientConnecting,
     peer.id,
+    peer.version,
     port,
     ssh,
+    sshHost,
+    sshIpVersion,
     username,
     client.connectTemporary,
     client.status,

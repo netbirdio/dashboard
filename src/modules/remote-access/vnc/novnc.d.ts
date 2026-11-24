@@ -41,6 +41,5 @@ declare module "@novnc/novnc" {
     machineReset(): void;
     clipboardPasteFrom(text: string): void;
 
-    _updateScale?(): void;
   }
 }
