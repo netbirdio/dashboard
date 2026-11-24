@@ -171,12 +171,34 @@ const usePeerSettings = () => {
   return context;
 };
 
+type PeerTabGate = (
+  permission: ReturnType<typeof usePermissions>["permission"],
+) => boolean;
+
+const PEER_TAB_GATES = new Map<string, PeerTabGate>([
+  ["overview", () => true],
+  ["network-routes", (permission) => !!permission.routes.read],
+  ["accessible-peers", () => true],
+  ["reverse-proxies", (permission) => !!permission.services?.read],
+  ["peer-job", (permission) => !!permission.peers.delete],
+  ["traffic-events", (permission) => !!permission.events.read],
+]);
+
 const PeerSettingsProvider = ({ children }: { children: React.ReactNode }) => {
   const { mutate } = useSWRConfig();
   const { peer, peerGroups, update } = usePeer();
   const { permission } = usePermissions();
   const [name, setName] = useState(peer.name);
-  const [tab, setTab] = useState("overview");
+  const requestedTab = useSearchParams().get("tab") ?? "";
+  const linkedTab = PEER_TAB_GATES.get(requestedTab)?.(permission)
+    ? requestedTab
+    : "";
+  const [tab, setTab] = useState(linkedTab || "overview");
+  const [appliedLinkedTab, setAppliedLinkedTab] = useState(linkedTab);
+  if (linkedTab !== appliedLinkedTab) {
+    setAppliedLinkedTab(linkedTab);
+    if (linkedTab) setTab(linkedTab);
+  }
   const [selectedGroups, setSelectedGroups, { getAllGroupCalls }] =
     useGroupHelper({
       initial: peerGroups?.filter((g) => g?.name !== "All"),
@@ -259,7 +281,7 @@ const PeerHeader = () => {
                   <ModalTrigger>
                     <div
                       className={
-                        "flex h-8 w-8 items-center justify-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 rounded-md cursor-pointer"
+                        "flex h-8 w-8 items-center justify-center gap-2 text-nb-gray-400 dark:text-neutral-300 hover:text-nb-gray-100 dark:hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 rounded-md cursor-pointer"
                       }
                     >
                       <PencilIcon size={16} />
@@ -771,7 +793,7 @@ function EditableValue({
       <span>{value}</span>
       {canEdit && (
         <button
-          className="flex w-7 h-7 items-center justify-center gap-2 text-nb-gray-400 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 rounded-md cursor-pointer"
+          className="flex w-7 h-7 items-center justify-center gap-2 text-nb-gray-400 hover:text-nb-gray-100 dark:hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 rounded-md cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
             onEdit();

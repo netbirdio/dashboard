@@ -1,7 +1,10 @@
 FROM alpine:3.24
 
+# Minimum nginx with the fixes for the 2026-11-18 HTTP/2 advisories
+# (CVE-2026-123007, CVE-2026-123633). Fails the build instead of silently
+# installing an older package.
 RUN apk add --no-cache bash curl less ca-certificates git tzdata zip gettext \
-    nginx curl supervisor certbot-nginx && \
+    'nginx>=1.30.7' curl supervisor certbot-nginx && \
     rm -rf /var/cache/apk/* && mkdir -p /run/nginx
 
 STOPSIGNAL SIGINT

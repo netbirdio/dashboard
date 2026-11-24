@@ -576,10 +576,11 @@ export default function ReverseProxyModal({
   return (
     <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
       <ModalContent
+        flow="reverse_proxy"
         maxWidthClass={tab === "service" ? "max-w-xl" : "max-w-2xl"}
       >
         <ModalHeader
-          icon={<ReverseProxyIcon className={"fill-netbird"} size={18} />}
+          icon={<ReverseProxyIcon className={"fill-current"} size={18} />}
           title={modalTitle}
           description={modalDescription}
           color={"netbird"}

@@ -20,7 +20,7 @@ npm run test:visual                         # affected stories: build, capture, 
 npm run test:visual -- --filter pages-core  # only stories whose id contains the text
 npm run test:visual -- --all                # every story, affected or not
 npm run test:visual -- --theme light        # the light theme instead of dark
-npm run storybook                           # browse stories; toolbar switches theme and self-hosted/cloud
+npm run storybook                           # browse stories; toolbar switches theme, self-hosted/cloud and Agent Network on/off
 ```
 
 Only stories whose import graph contains a file changed since the baseline are
@@ -75,7 +75,7 @@ runs with `actions/cache`.
 | Stories | `src/**/*.stories.tsx` | Colocated with what they cover: component stories next to the component (`src/components/Button.stories.tsx`), page stories next to the route's `page.tsx` (`src/app/(dashboard)/peers/Peers.stories.tsx`). Interactive states (open menus, modals, tabs) are `play` functions. |
 | Story helpers | `src/storybook/*` | Shared play helpers, the `settle()` wait and fixture re-exports, imported as `@/storybook/...`. |
 | Login | `.storybook/mocks/react-oidc.tsx` | Aliased in place of `@axa-fr/react-oidc`: always logged in as an owner with every permission. |
-| Config | `.storybook/mocks/config.ts` | Replaces the deployment `config.json` (`require()` calls rewritten by a Vite plugin in `main.ts`). The `cloud` story tag or toolbar switch selects the cloud flavour. |
+| Config | `.storybook/mocks/config.ts` | Replaces the deployment `config.json` (`require()` calls rewritten by a Vite plugin in `main.ts`). The `cloud` story tag or toolbar switch selects the cloud flavour; the `agent-network-off` tag or switch renders a deployment without Agent Network. |
 | API | `.storybook/mocks/api.ts`, `.storybook/mocks/fixtures/*` | A `fetch` interceptor answers `/api/*` from fixtures, keyed `"GET /peers/:id"`. A story can override endpoints, and external URLs by their full address, with `parameters.api`. Anything else is answered offline. |
 | Affected stories | `scripts/affected.mjs` | Walks the module graph from `storybook build --stats-json` from each changed file to the stories that import it. |
 | Capture | `scripts/capture.mjs` | Screenshots each story after render and `play`, with a frozen clock (2026-10-08 12:00 UTC), the `en-US` locale and finished animations. The `capture-hover` / `capture-focus` tags add real hover and keyboard-focus shots of the `[data-capture]` element. Lists API calls that had no fixture. |

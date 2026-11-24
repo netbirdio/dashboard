@@ -231,12 +231,27 @@ await visitByNavigation(page, "Access Control");  // Expand parent
 await visitByNavigation(page, "Policies");         // Click child
 ```
 
-| Parent | Children |
-|--------|----------|
-| Access Control | Policies, Groups, Posture Checks |
-| Team | Users, Service Users |
-| DNS | Nameservers, Zones, DNS Settings |
-| Reverse Proxy | Custom Domains, Services |
+The sidebar is one list for both products (`src/layouts/Navigation.tsx`):
+Control Center, Peers, Users and Groups at the top, the **Networking** and
+**Agent Network** sections, and the **Account** area at the bottom. Section
+headings have the test id `left-navigation-section` (not
+`left-navigation-item`) and are collapsible; their open state is kept in
+`localStorage` (`netbird-nav-sections`), so a spec that closes one on the
+shared owner page must clear that key again.
+
+| Section | Parent | Children |
+|---------|--------|----------|
+| (top) | Control Center, Peers, Users (its page has Users / Service Users tabs: `users-tab-users`, `users-tab-service-users`), Groups | — |
+| Networking | Access Control | Policies, Posture Checks |
+| Networking | Network Routing | Networks, Routes |
+| Networking | Reverse Proxy | Services, Custom Domains, Clusters, Access Logs |
+| Networking | DNS | Nameservers, Zones, DNS Settings |
+| Networking | Traffic Events | — |
+| Agent Network | Agents | Connect Agent, Providers, Agent Policies |
+| Agent Network | Usage & Logs, Configuration | — |
+| Account | Settings, Integrations, Audit Events | — |
+
+Documentation is in the header's help menu, not the sidebar.
 
 ## Test Coverage
 

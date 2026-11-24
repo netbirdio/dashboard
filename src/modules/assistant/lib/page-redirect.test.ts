@@ -1,0 +1,189 @@
+import { describe, expect, it, vi } from "vitest";
+import { navigateToPage, pageRedirect } from "@/modules/assistant/lib/page-redirect";
+import { redactResult, restoreToolInput, Vault } from "@/modules/assistant/lib/vault";
+
+let canvas: { mode: "live" | "draft"; changes: { type: string; name: string }[] } | null = null;
+let discards = false;
+const draftAction = vi.fn(async () => {
+  if (discards && canvas) canvas = { mode: "live", changes: [] };
+  return discards ? { ok: true, detail: "Left draft mode; the draft was discarded." } : { ok: false, detail: "The user chose to keep the draft — still in draft mode." };
+});
+vi.mock("@/modules/assistant/lib/canvas", () => ({
+  getCanvasAgent: () => (canvas ? { getSnapshot: () => canvas, draftAction } : null),
+}));
+
+describe("navigateToPage", () => {
+  it("builds a detail route from an id", () => {
+    expect(navigateToPage({ page: "peer", id: "p1" })).toEqual({
+      href: "/peer?id=p1",
+    });
+  });
+
+  it("refuses a page it doesn't know", () => {
+    expect(navigateToPage({ page: "billing" })).toHaveProperty("error");
+  });
+
+  it("refuses a detail page with no id", () => {
+    expect(navigateToPage({ page: "peer" })).toHaveProperty("error");
+  });
+
+  it("encodes the id into the route", () => {
+    expect(navigateToPage({ page: "peer", id: "a b" })).toEqual({
+      href: "/peer?id=a%20b",
+    });
+  });
+
+  it("opens the clusters tab, which is where a provider actually starts", () => {
+    expect(
+      navigateToPage({ page: "agent_network_configuration", tab: "clusters" }),
+    ).toEqual({ href: "/agent-network/configuration?tab=clusters" });
+  });
+
+  it("reaches the rest of the Agent Network section", () => {
+    expect(navigateToPage({ page: "agent_network_providers" })).toEqual({
+      href: "/agent-network/providers",
+    });
+    expect(navigateToPage({ page: "agent_network_policies" })).toEqual({
+      href: "/agent-network/policies",
+    });
+    expect(navigateToPage({ page: "agent_network_usage" })).toEqual({
+      href: "/agent-network/usage",
+    });
+  });
+
+  it("lands on the configuration page even with no tab", () => {
+    expect(navigateToPage({ page: "agent_network_configuration" })).toEqual({
+      href: "/agent-network/configuration",
+    });
+  });
+
+  it("builds plain and tabbed routes", () => {
+    expect(navigateToPage({ page: "dns" })).toEqual({
+      href: "/dns/nameservers",
+    });
+    expect(navigateToPage({ page: "settings", tab: "general" })).toEqual({
+      href: "/settings?tab=general",
+    });
+    expect(navigateToPage({ page: "settings" })).toEqual({
+      href: "/settings",
+    });
+  });
+
+  it("reaches each record page a security question ends on", () => {
+    expect(navigateToPage({ page: "traffic_events" })).toEqual({
+      href: "/events/traffic",
+    });
+    expect(navigateToPage({ page: "proxy_events" })).toEqual({
+      href: "/events/proxy",
+    });
+    expect(navigateToPage({ page: "reverse_proxy_logs" })).toEqual({
+      href: "/reverse-proxy/logs",
+    });
+    expect(navigateToPage({ page: "reverse_proxy_services" })).toEqual({
+      href: "/reverse-proxy/services",
+    });
+  });
+
+  it("opens a tab of a detail page", () => {
+    expect(
+      navigateToPage({ page: "peer", id: "abc", tab: "network-routes" }),
+    ).toEqual({ href: "/peer?id=abc&tab=network-routes" });
+  });
+
+  it("opens the audit log on one event", () => {
+    expect(navigateToPage({ page: "activity", id: "97309" })).toEqual({
+      href: "/events/audit?id=97309",
+    });
+  });
+
+  it("opens the paged logs on a search, not an id they cannot look up", () => {
+    expect(
+      navigateToPage({ page: "traffic_events", search: "100.84.7.16" }),
+    ).toEqual({ href: "/events/traffic?search=100.84.7.16" });
+    expect(
+      navigateToPage({ page: "reverse_proxy_logs", search: "app.test.com", id: "x" }),
+    ).toEqual({ href: "/reverse-proxy/logs?search=app.test.com" });
+  });
+
+  it.each(["constructor", "__proto__", "toString", "hasOwnProperty"])("refuses %s, which only Object.prototype has", (page) => {
+    expect(navigateToPage({ page, id: "p1", search: "x", tab: "y" })).toHaveProperty("error");
+  });
+
+  it("ignores a log param the page does not take", () => {
+    expect(navigateToPage({ page: "activity", search: "policy" })).toEqual({
+      href: "/events/audit",
+    });
+    expect(navigateToPage({ page: "peers", id: "abc" })).toEqual({
+      href: "/peers",
+    });
+  });
+});
+
+describe("pageRedirect", () => {
+  const ctx = (pushed: string[], onControlCenterPage = false) => ({
+    navigate: (href: string) => pushed.push(href),
+    onControlCenterPage: () => onControlCenterPage,
+  });
+
+  it("asks the user once, in the canvas's dialog, before leaving a draft with unsaved changes", async () => {
+    canvas = { mode: "draft", changes: [{ type: "create_group", name: "Build Servers" }, { type: "create_policy", name: "Build to DB" }] };
+    const pushed: string[] = [];
+    discards = false;
+    const kept = await pageRedirect({ page: "peers" }, ctx(pushed, true));
+    expect(draftAction).toHaveBeenCalledWith("exit");
+    expect(kept.ok).toBe(false);
+    expect(kept.content).toContain("chose to keep the draft");
+    expect(kept.content).toContain("2 unsaved changes");
+    expect(pushed).toEqual([]);
+
+    discards = true;
+    expect(await pageRedirect({ page: "peers" }, ctx(pushed, true))).toEqual({ ok: true, content: "Navigated to /peers." });
+    expect(pushed).toEqual(["/peers"]);
+    pushed.length = 0;
+    draftAction.mockClear();
+    canvas = { mode: "draft", changes: [{ type: "create_group", name: "Build Servers" }] };
+    expect((await pageRedirect({ page: "control_center" }, ctx(pushed, true))).ok).toBe(true);
+    canvas = { mode: "draft", changes: [] };
+    expect((await pageRedirect({ page: "peers" }, ctx(pushed, true))).ok).toBe(true);
+    canvas = { mode: "live", changes: [] };
+    expect((await pageRedirect({ page: "peers" }, ctx(pushed, true))).ok).toBe(true);
+    expect(draftAction).not.toHaveBeenCalled();
+    canvas = null;
+  });
+
+  it("pushes the route and reports it", async () => {
+    const pushed: string[] = [];
+    const outcome = await pageRedirect({ page: "peers" }, ctx(pushed));
+    expect(outcome).toEqual({ ok: true, content: "Navigated to /peers." });
+    expect(pushed).toEqual(["/peers"]);
+  });
+
+  it("fails without navigating on an unknown page", async () => {
+    const pushed: string[] = [];
+    const outcome = await pageRedirect({ page: "billing" }, ctx(pushed));
+    expect(outcome.ok).toBe(false);
+    expect(pushed).toEqual([]);
+  });
+
+  it("reports the path only, so a restored search value does not reach the model", async () => {
+    const vault = new Vault();
+    const email = vault.scrub("jane.doe@corp.example");
+    const name = vault.mint("user", "Jane Doe");
+    for (const [token, query] of [[name, "Jane%20Doe"], [email, "jane.doe%40corp.example"]]) {
+      const pushed: string[] = [];
+      const input = restoreToolInput(vault, "dashboard_page_redirect", { page: "traffic_events", search: token });
+      const outcome = await pageRedirect(input, ctx(pushed));
+      expect(pushed).toEqual([`/events/traffic?search=${query}`]);
+      expect(outcome).toEqual({ ok: true, content: "Navigated to /events/traffic." });
+      const sent = redactResult(vault, "dashboard_page_redirect", outcome.content);
+      expect(sent).not.toMatch(/jane/i);
+    }
+  });
+
+  it("does not navigate to a page name inherited from Object.prototype", async () => {
+    const pushed: string[] = [];
+    const outcome = await pageRedirect({ page: "constructor" }, ctx(pushed));
+    expect(outcome.ok).toBe(false);
+    expect(pushed).toEqual([]);
+  });
+});

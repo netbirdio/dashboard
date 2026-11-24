@@ -1,5 +1,6 @@
 "use client";
 
+import Badge from "@components/Badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
 import { Modal } from "@components/modal/Modal";
+import DarkModeToggle from "@components/ui/DarkModeToggle";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { UserAvatar } from "@components/ui/UserAvatar";
 import { isMac } from "@hooks/useOperatingSystem";
@@ -51,7 +53,12 @@ export default function UserDropdown() {
         open={dropdownOpen}
         onOpenChange={setDropdownOpen}
       >
-        <DropdownMenuTrigger data-testid="user-dropdown">
+        <DropdownMenuTrigger
+          data-testid="user-dropdown"
+          aria-label={"New: Light Mode - profile and theme settings"}
+          className={"flex cursor-pointer items-center gap-2"}
+        >
+          <Badge variant={"blueDark"}>New: Light Mode</Badge>
           <UserAvatar size={"medium"} />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -125,6 +132,10 @@ export default function UserDropdown() {
               )}
             </DropdownMenuShortcut>
           </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <DarkModeToggle />
         </DropdownMenuContent>
       </DropdownMenu>
     </>

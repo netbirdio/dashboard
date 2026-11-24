@@ -31,7 +31,9 @@ const canvasReady = async () => {
     if (document.querySelector(".cc-prefit"))
       throw new Error("viewport not fitted yet");
   });
-  await settle(600);
+  // Camera easing can outlast the pre-fit class; let the transform settle
+  // before a story samples node coordinates for a panel or context menu.
+  await settle(1500);
 };
 
 /* The draft toolbar slides in under the pointer; park the pointer and give

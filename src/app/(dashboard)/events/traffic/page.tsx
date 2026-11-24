@@ -1,14 +1,13 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import dayjs from "dayjs";
-import { ArrowLeftRightIcon, ExternalLinkIcon } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import React, { useMemo } from "react";
-import ActivityIcon from "@/assets/icons/ActivityIcon";
 import { useIsFeatureLocked } from "@/cloud/cloud-hooks/useIsFeatureLocked";
 import { TRAFFIC_EVENTS_DOC_LINK } from "@/cloud/traffic-events/TrafficEventSetting";
 import TrafficEventsTable from "@/cloud/traffic-events/TrafficEventsTable";
@@ -22,6 +21,7 @@ import { LockedFeatureOverlay } from "@/modules/billing/locked-feature/LockedFea
 import { EventStreamingCard } from "@/modules/integrations/event-streaming/EventStreamingCard";
 
 export default function NetworkTrafficPage() {
+  const linkedSearch = useSearchParams().get("search") ?? "";
   const account = useAccount();
   const { permission } = usePermissions();
   const { ref: headingRef, portalTarget } =
@@ -41,19 +41,6 @@ export default function NetworkTrafficPage() {
   return (
     <PageContainer>
       <div className="p-default py-6">
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            label="Activity"
-            disabled
-            icon={<ActivityIcon size={13} />}
-          />
-          <Breadcrumbs.Item
-            href="/events/traffic"
-            label="Traffic Events"
-            icon={<ArrowLeftRightIcon size={15} />}
-          />
-        </Breadcrumbs>
-
         <h1 ref={headingRef}>Traffic Events</h1>
 
         <Paragraph>
@@ -85,9 +72,11 @@ export default function NetworkTrafficPage() {
           <EventStreamingCard />
           <PeersProvider>
             <ServerPaginationProvider
+              key={linkedSearch}
               url={"/events/network-traffic"}
               defaultPageSize={10}
               defaultFilters={defaultFilters}
+              initialSearch={linkedSearch}
               enabled={!isTrafficEventsLocked}
             >
               <TrafficEventsTable

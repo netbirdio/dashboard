@@ -385,13 +385,13 @@ export function RouteModalContent({
   }, [routingPeer]);
 
   return (
-    <ModalContent maxWidthClass={"max-w-2xl"}>
+    <ModalContent flow="route" maxWidthClass={"max-w-2xl"}>
       <ModalHeader
         icon={
           exitNode ? (
             <IconDirectionSign size={20} />
           ) : (
-            <NetworkRoutesIcon className={"fill-netbird"} />
+            <NetworkRoutesIcon className={"fill-current"} />
           )
         }
         title={

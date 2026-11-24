@@ -8,6 +8,8 @@ import { ChevronDownIcon, ChevronUpIcon, DotIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useMemo } from "react";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
+import { useToggleAnimation } from "@/modules/navigation/useToggleAnimation";
+import { withDefaultIconSize } from "@/modules/navigation/withDefaultIconSize";
 
 export type SidebarItemProps = {
   onClick?: () => void;
@@ -21,8 +23,16 @@ export type SidebarItemProps = {
   exactPathMatch?: boolean;
   target?: string;
   labelClassName?: string;
+  /**
+   * Other pages this entry stands for, so it is active there too: pages
+   * reached through tabs on its page, or detail pages outside its route.
+   * Each covers itself and the pages below it.
+   */
+  activeRoutes?: readonly string[];
   visible: boolean;
 };
+
+const NO_ROUTES: readonly string[] = [];
 
 export default function SidebarItem({
   icon,
@@ -35,6 +45,7 @@ export default function SidebarItem({
   exactPathMatch = false,
   target = "_self",
   labelClassName,
+  activeRoutes = NO_ROUTES,
   visible,
 }: Readonly<SidebarItemProps>) {
   const path = usePathname();
@@ -50,6 +61,11 @@ export default function SidebarItem({
       if (props.href) {
         routes.push({ href: props.href, exact: !!props.exactPathMatch });
       }
+      // Pages a child stands for open the parent too, e.g. a network's
+      // detail page opens Network Routing.
+      props.activeRoutes?.forEach((route) =>
+        routes.push({ href: route, exact: false }),
+      );
     });
     return routes;
   }, [children]);
@@ -66,6 +82,7 @@ export default function SidebarItem({
   }, [collapsible, href, path, childRoutes]);
 
   const [open, setOpen] = React.useState(hasActiveChild);
+  const toggleAnimation = useToggleAnimation(open);
 
   // Open the collapsible if a child route becomes active
   useEffect(() => {
@@ -94,29 +111,41 @@ export default function SidebarItem({
 
   const isActive = useMemo(() => {
     if (collapsible) return false;
-    return href ? (exactPathMatch ? path == href : path.includes(href)) : false;
-  }, [path, href, exactPathMatch, collapsible]);
+    const own = href
+      ? exactPathMatch
+        ? path == href
+        : path.includes(href)
+      : false;
+    return (
+      own ||
+      activeRoutes.some(
+        (route) => path === route || path.startsWith(`${route}/`),
+      )
+    );
+  }, [path, href, exactPathMatch, collapsible, activeRoutes]);
 
   if (!visible) return;
 
   return (
     <Collapsible.Root
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={(next) => {
+        // Plain items toggle too when clicked, but have nothing to animate.
+        if (collapsible) toggleAnimation.onToggle(next);
+        setOpen(next);
+      }}
       data-nav-item={href || undefined}
     >
       <Collapsible.Trigger asChild>
         <li className={"px-3 cursor-pointer list-none"}>
           <button
             className={classNames(
-              "rounded-lg text-[.87rem] w-full relative font-normal",
+              "group/nav-item rounded-lg text-xsm w-full relative font-normal transition-colors duration-100",
               className,
-              isChild
-                ? "pl-7 pr-2 py-[.45rem] mt-1 mb-0.5"
-                : "py-[.45rem] px-3",
+              isChild ? "pl-6.5 pr-2 py-1.5 mt-px" : "py-1.5 pl-2.5 pr-3",
               isActive
                 ? "text-gray-900 bg-gray-200 dark:text-white dark:bg-nb-gray-900"
-                : "text-gray-600 hover:bg-gray-200 dark:text-nb-gray-400 dark:hover:bg-nb-gray-900/50",
+                : "text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:text-nb-gray-350/90 dark:hover:bg-nb-gray-900/50 dark:hover:text-nb-gray-300",
             )}
             onClick={handleClick}
             data-testid={"left-navigation-item"}
@@ -136,8 +165,22 @@ export default function SidebarItem({
                 href == "" ? "disabled pointer-events-none" : "",
               )}
             >
-              <span className="peer/icon" data-active={isActive} />
-              {icon}
+              <span data-active={isActive} />
+              {icon && (
+                // A fixed slot, so 14px and 16px icons centre in the
+                // icon-only sidebar and every label starts at the same place.
+                // Fills skip Lucide icons, which are outlines in the text colour.
+                <span
+                  className={cn(
+                    "flex w-[16px] shrink-0 justify-center [&>svg]:transition-colors [&>svg]:duration-100",
+                    isActive
+                      ? "[&>svg:not(.lucide)]:fill-gray-900 dark:[&>svg:not(.lucide)]:fill-white"
+                      : "dark:[&>svg:not(.lucide)]:fill-nb-gray-350/90 group-hover/nav-item:[&>svg:not(.lucide)]:fill-gray-700 dark:group-hover/nav-item:[&>svg:not(.lucide)]:fill-nb-gray-300",
+                  )}
+                >
+                  {withDefaultIconSize(icon)}
+                </span>
+              )}
 
               <span
                 className={cn(
@@ -176,7 +219,14 @@ export default function SidebarItem({
           </button>
         </li>
       </Collapsible.Trigger>
-      {collapsible && <Collapsible.Content>{children}</Collapsible.Content>}
+      {collapsible && (
+        <Collapsible.Content
+          className={cn("overflow-hidden", toggleAnimation.className)}
+          onAnimationEnd={toggleAnimation.onAnimationEnd}
+        >
+          {children}
+        </Collapsible.Content>
+      )}
     </Collapsible.Root>
   );
 }

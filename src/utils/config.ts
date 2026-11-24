@@ -26,10 +26,14 @@ interface Config {
   // agentNetworkEnabled: the regular UI plus the Agent Network menu item (Beta).
   agentNetworkOnly: boolean;
   agentNetworkEnabled: boolean;
+  // Empty disables the assistant; there is no separate flag.
+  assistantApiOrigin: string;
   hubspotPortalId?: string;
   hubspotSignupFormId?: string;
   hubspotOnboardingFormId?: string;
   hubspotSurveyFormId?: string;
+  matomoUrl?: string;
+  matomoSiteId?: string;
   analyticsExcludedEmails: string[];
   // announcement: text the operator wants every user of this deployment to
   // see in a permanent banner (NETBIRD_ANNOUNCEMENT), e.g. which environment
@@ -88,15 +92,21 @@ const loadConfig = (): Config => {
     googleTagManagerID: configJson?.googleTagManagerID || undefined,
     authServiceUrl: configJson?.authServiceUrl ?? undefined,
     wasmPath:
-      configJson?.wasmPath || "https://pkgs.netbird.io/wasm/client/v0.81.3",
+      configJson?.wasmPath || "https://pkgs.netbird.io/wasm/client/v0.83.2",
     licensed: configJson?.licensed === "true",
     cloud: configJson?.cloud === "true",
     agentNetworkOnly: configJson?.agentNetworkOnly === "true",
     agentNetworkEnabled: configJson?.agentNetworkEnabled === "true",
+    assistantApiOrigin: (configJson?.assistantApiOrigin || "").replace(
+      /\/+$/,
+      "",
+    ),
     hubspotPortalId: configJson?.hubspotPortalId || undefined,
     hubspotSignupFormId: configJson?.hubspotSignupFormId || undefined,
     hubspotOnboardingFormId: configJson?.hubspotOnboardingFormId || undefined,
     hubspotSurveyFormId: configJson?.hubspotSurveyFormId || undefined,
+    matomoUrl: configJson?.matomoUrl?.replace(/\/+$/, "") || undefined,
+    matomoSiteId: configJson?.matomoSiteId || undefined,
     analyticsExcludedEmails: (configJson?.analyticsExcludedEmails || "")
       .split(",")
       .map((email: string) => email.trim())

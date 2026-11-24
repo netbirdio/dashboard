@@ -197,10 +197,16 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     window.requestAnimationFrame(() => attempt(30));
   };
 
+  const knownSelectionRef = React.useRef("");
+
   const handleEntityChange = (id: string, config: EntityChangeConfig) => {
     const { selectNodeId, dataKey, selectedValue, setSelected, applyView } =
       config;
     const shouldRecalculate = selectedValue !== id;
+    const selectionKey = `${selectNodeId}:${id}`;
+    const setFromOutside =
+      !shouldRecalculate && knownSelectionRef.current !== selectionKey;
+    if (shouldRecalculate) knownSelectionRef.current = selectionKey;
 
     // Compute the layout ONCE, outside the setNodes updater: it's a synchronous
     // d3 simulation and React double-invokes updaters under StrictMode.
@@ -211,31 +217,35 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     if (result) {
       // The caller's setNodes([selectNode]) may not be committed yet, so patch
       // the select node from the updater's `prev`, not reactFlow.getNodes().
+      // Compared against the node, not `shouldRecalculate`: a selection set from
+      // outside is already in state while the selector shows the default pick.
       setNodes((prev) => {
         const source = prev.find((n) => n.id === selectNodeId);
         if (!source) return prev;
-        const selectNode = shouldRecalculate
-          ? { ...source, data: { ...source.data, [dataKey]: id } }
-          : source;
+        const selectNode =
+          source.data[dataKey] === id
+            ? source
+            : { ...source, data: { ...source.data, [dataKey]: id } };
         return [...result.updatedNodes, selectNode];
       });
       setEdges(result.updatedEdges);
       setLayoutInitialized(true);
+      knownSelectionRef.current = selectionKey;
       // fitView reads geometry from the store at rAF time, so a stub id works.
-      if (shouldRecalculate)
+      if (shouldRecalculate || setFromOutside)
         fitView([...result.updatedNodes, { id: selectNodeId } as Node]);
       return;
     }
 
-    if (shouldRecalculate) {
-      setNodes((prev) =>
-        prev.map((n) =>
-          n.id === selectNodeId
-            ? { ...n, data: { ...n.data, [dataKey]: id } }
-            : n,
-        ),
-      );
-    }
+    setNodes((prev) =>
+      prev.some((n) => n.id === selectNodeId && n.data[dataKey] !== id)
+        ? prev.map((n) =>
+            n.id === selectNodeId
+              ? { ...n, data: { ...n.data, [dataKey]: id } }
+              : n,
+          )
+        : prev,
+    );
   };
 
   const handleGroupChange = (id: string) =>
@@ -313,6 +323,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     const { flowView, resetState, selectNode, applyView } = config;
 
     resetState();
+    knownSelectionRef.current = `${selectNode.id}:${entityId}`;
     setCurrentView(flowView);
     setNodes([selectNode]);
 

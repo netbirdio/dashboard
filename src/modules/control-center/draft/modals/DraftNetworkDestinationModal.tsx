@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import {
   Modal,
   ModalClose,
@@ -7,6 +8,7 @@ import {
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
+import { useReactFlow } from "@xyflow/react";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
@@ -53,6 +55,7 @@ const PickerContent = ({
   const { nodes } = useCanvasState();
   const { groups: apiGroups, networkResources } = useControlCenterData();
   const { updateDraftPolicy } = useControlCenterPolicy();
+  const reactFlow = useReactFlow();
 
   const [pickedGroups, setPickedGroups] = useState<Group[]>([]);
   const [pickedResource, setPickedResource] = useState<
@@ -119,21 +122,28 @@ const PickerContent = ({
 
   const onConnect = () => {
     if (!policy || !rule || blockedReason) return;
+    // Re-read from the store: the policy can change while the picker is open,
+    // and writing back the rendered copy would revert that.
+    const latest =
+      (reactFlow.getNode(policyNodeId)?.data as { policy?: Policy })?.policy ?? policy;
+    const latestRule = latest.rules?.[0] ?? rule;
+    const latestDestinations =
+      (latestRule.destinations as (Group | string)[]) ?? [];
     const merged = [
-      ...existingDestinations,
+      ...latestDestinations,
       ...pickedGroups.filter(
-        (g) => !existingDestinations.some((e) => groupKey(e) === groupKey(g)),
+        (g) => !latestDestinations.some((e) => groupKey(e) === groupKey(g)),
       ),
     ] as Group[];
     updateDraftPolicy({
-      ...policy,
+      ...latest,
       rules: [
         {
-          ...rule,
+          ...latestRule,
           destinationResource: pickedResource,
           destinations: pickedResource ? [] : merged,
         },
-        ...(policy.rules?.slice(1) ?? []),
+        ...(latest.rules?.slice(1) ?? []),
       ],
     });
     onClose();
@@ -142,7 +152,7 @@ const PickerContent = ({
   return (
     <ModalContent maxWidthClass={"max-w-lg"}>
       <ModalHeader
-        icon={<NetworkRoutesIcon className={"fill-netbird"} />}
+        icon={<NetworkRoutesIcon className={"fill-current"} />}
         title={"Select Destination"}
         description={`Access ${network?.name ?? "this network"}${
           policy?.name ? ` via "${policy.name}"` : ""
@@ -151,9 +161,11 @@ const PickerContent = ({
       />
       <div className={"p-default flex flex-col"}>
         {resources.length === 0 && groupIds.length === 0 ? (
-          <div className={"text-sm text-nb-gray-400 text-center py-4"}>
-            This network has no resources yet.
-          </div>
+          <Callout variant={"info"}>
+            Connecting to a network needs something inside it to connect to.
+            Add a resource to {network?.name ?? "this network"} first, then
+            pick it here as the destination.
+          </Callout>
         ) : (
           <div className={"w-full"}>
             <PeerGroupSelector

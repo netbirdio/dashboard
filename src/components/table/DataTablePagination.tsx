@@ -40,10 +40,10 @@ export function DataTablePagination<TData>({
       >
         <div className="text-nb-gray-400">
           Showing{" "}
-          <span className={"font-medium text-white"}>
+          <span className={"font-medium text-nb-gray-100 dark:text-white"}>
             {showingFrom} to {showingTo}
           </span>{" "}
-          of <span className={"font-medium text-white"}>{totalRows}</span>{" "}
+          of <span className={"font-medium text-nb-gray-100 dark:text-white"}>{totalRows}</span>{" "}
           {text}
         </div>
         {pageCount > 1 && (

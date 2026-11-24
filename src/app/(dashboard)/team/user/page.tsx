@@ -15,7 +15,8 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import useRedirect from "@hooks/useRedirect";
 import { IconCirclePlus, IconSettings2 } from "@tabler/icons-react";
 import useFetchApi, { useApiCall } from "@utils/api";
-import { generateColorFromString } from "@utils/helpers";
+import { getAvatarStyle } from "@utils/avatar";
+import { cn, generateColorFromString } from "@utils/helpers";
 import dayjs from "dayjs";
 import {
   Ban,
@@ -29,7 +30,6 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
-import TeamIcon from "@/assets/icons/TeamIcon";
 import { UserMfaListItem } from "@/cloud/mfa/UserMFAListItem";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
@@ -154,27 +154,13 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
       <div className={"p-default py-6 mb-4"}>
         <Breadcrumbs>
           <Breadcrumbs.Item
-            href={"/team"}
-            label={"Team"}
+            href={isServiceUser ? "/team/service-users" : "/team/users"}
+            label={isServiceUser ? "Service Users" : "Users"}
             disabled={!permission.users.read}
-            icon={<TeamIcon size={13} />}
+            icon={
+              isServiceUser ? <IconSettings2 size={17} /> : <User2 size={16} />
+            }
           />
-
-          {isServiceUser ? (
-            <Breadcrumbs.Item
-              href={"/team/service-users"}
-              label={"Service Users"}
-              icon={<IconSettings2 size={17} />}
-            />
-          ) : (
-            <Breadcrumbs.Item
-              href={"/team/users"}
-              label={"Users"}
-              disabled={!permission.users.read}
-              icon={<User2 size={16} />}
-            />
-          )}
-
           <Breadcrumbs.Item label={user.name || user.id} active />
         </Breadcrumbs>
 
@@ -182,21 +168,18 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
           <div>
             <div className={"flex items-center gap-3"}>
               <div
-                className={
-                  "w-10 h-10 rounded-full relative flex items-center justify-center text-white uppercase text-md font-medium bg-nb-gray-900"
-                }
+                className={cn(
+                  "w-10 h-10 rounded-full relative flex items-center justify-center text-nb-gray-100 dark:text-white uppercase text-md font-medium bg-nb-gray-900",
+                  !isServiceUser && "initials-avatar",
+                )}
                 style={
                   isServiceUser
-                    ? {
-                        color: "white",
-                      }
-                    : {
-                        color: user?.name
+                    ? undefined
+                    : getAvatarStyle(user?.name
                           ? generateColorFromString(
                               user?.name || user?.id || "System User",
                             )
-                          : "#808080",
-                      }
+                          : "#808080")
                 }
               >
                 {isServiceUser ? (

@@ -17,6 +17,10 @@ import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { PeerSelector } from "@components/PeerSelector";
+import {
+  isDraftPeerId,
+  isPlaceholderPeer,
+} from "@/modules/control-center/utils/helpers";
 import { SegmentedTabs } from "@components/SegmentedTabs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
@@ -93,6 +97,9 @@ type ContentProps = {
   // false → no API calls; the data comes back via onSaved (draft mode).
   useSave?: boolean;
   onSaved?: (r: RoutingPeerModalResult) => void;
+  additionalPeers?: Peer[];
+  // Peers taken by routers the API does not list yet (draft mode).
+  assignedPeers?: string[];
 };
 
 export function RoutingPeerModalContent({
@@ -102,6 +109,8 @@ export function RoutingPeerModalContent({
   onUpdated,
   useSave = true,
   onSaved,
+  additionalPeers,
+  assignedPeers,
 }: ContentProps) {
   const isRoutingPeer = router ? router.peer != "" : true;
 
@@ -115,11 +124,12 @@ export function RoutingPeerModalContent({
     `/networks/${network.id}/routers/${router?.id}`,
   ).put;
 
+  const presetIsDraft = isDraftPeerId(router?.peer);
   const { data: peer, isLoading: peerLoading } = useFetchApi<Peer>(
     "/peers/" + router?.peer,
     true,
     false,
-    router ? router.peer != "" : false,
+    router ? router.peer != "" && !presetIsDraft : false,
   );
 
   const { data: networkRouters } = useFetchApi<NetworkRouter[]>(
@@ -131,17 +141,22 @@ export function RoutingPeerModalContent({
 
   // The router being edited keeps its own peer selectable.
   const assignedPeerIds = useMemo(
-    () =>
-      (networkRouters ?? [])
+    () => [
+      ...(networkRouters ?? [])
         .filter((r) => r.id !== router?.id && !!r.peer)
         .map((r) => r.peer as string),
-    [networkRouters, router?.id],
+      ...(assignedPeers ?? []),
+    ],
+    [networkRouters, router?.id, assignedPeers],
   );
 
   const [selectedPeer, setSelectedPeer] = useState<Peer | undefined | null>(
     null,
   );
-  const routingPeer = selectedPeer === null ? peer : selectedPeer;
+  const presetPeer = presetIsDraft
+    ? additionalPeers?.find((p) => p.id === router?.peer)
+    : peer;
+  const routingPeer = selectedPeer === null ? presetPeer : selectedPeer;
 
   const [
     routingPeerGroups,
@@ -164,6 +179,8 @@ export function RoutingPeerModalContent({
 
   const isNonLinuxRoutingPeer = useMemo(() => {
     if (!routingPeer) return false;
+    // A placeholder's OS is unknown; non-Linux would lock masquerade on.
+    if (isPlaceholderPeer(routingPeer)) return false;
     return getOperatingSystem(routingPeer.os) != OperatingSystem.LINUX;
   }, [routingPeer]);
 
@@ -239,7 +256,10 @@ export function RoutingPeerModalContent({
   };
 
   return (
-    <ModalContent maxWidthClass={"max-w-xl"}>
+    <ModalContent
+      flow={useSave ? "network_router" : undefined}
+      maxWidthClass={"max-w-xl"}
+    >
       <ModalHeader
         icon={<Share2Icon size={16} />}
         title={router ? "Update Routing Peer" : "Add Routing Peer"}
@@ -306,6 +326,7 @@ export function RoutingPeerModalContent({
                     <PeerSelector
                       onChange={setSelectedPeer}
                       value={routingPeer}
+                      additionalPeers={additionalPeers}
                       disabled={peerLoading}
                       disabledPeers={assignedPeerIds}
                       disabledPeerReason={

@@ -1,15 +1,13 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
-import { ExternalLinkIcon, ShieldCheck } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
-import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
@@ -31,19 +29,6 @@ export default function PostureChecksPage() {
     <PageContainer>
       <GroupsProvider>
         <div className={"p-default py-6"}>
-          <Breadcrumbs>
-            <Breadcrumbs.Item
-              href={"/access-control"}
-              label={"Access Control"}
-              icon={<AccessControlIcon size={14} />}
-            />
-            <Breadcrumbs.Item
-              href={"/posture-checks"}
-              label={"Posture Checks"}
-              active
-              icon={<ShieldCheck size={15} />}
-            />
-          </Breadcrumbs>
           <h1 ref={headingRef}>Posture Checks</h1>
           <Paragraph>
             Use posture checks to further restrict access in your network.{" "}
