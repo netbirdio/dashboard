@@ -53,8 +53,11 @@ type Row = SiteToSiteConnection & {
   search: string;
 };
 
-// Connection rows and their link rows share column widths, so each network
-// sits over its resources.
+// Connection rows and their link rows are separate tables. Both use a fixed
+// layout with these widths and the same cell padding, so each network sits
+// over its resources whatever the content.
+const TABLE_LAYOUT = "table-fixed min-w-[1040px]";
+const CELL_PADDING = "!px-4";
 const COLUMN = {
   first: "w-[34%]",
   direction: "w-[14%]",
@@ -123,7 +126,7 @@ const NetworkCell = ({ network }: { network?: Network }) => {
 };
 
 const FirstNetworkCell = ({ row }: { row: Row }) => (
-  <div className={"flex items-center gap-4 min-w-[300px]"}>
+  <div className={"flex items-center gap-4 min-w-0"}>
     <ChevronRightIcon
       size={20}
       className={
@@ -250,7 +253,9 @@ const columns: ColumnDef<Row>[] = [
     id: "network_b",
     accessorFn: (row) => row.networks[1]?.name ?? "",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Network B</DataTableHeader>
+      <DataTableHeader column={column} className={"pl-3"}>
+        Network B
+      </DataTableHeader>
     ),
     meta: { className: COLUMN.second },
     sortingFn: "text",
@@ -279,8 +284,8 @@ const columns: ColumnDef<Row>[] = [
 
 const LinkEnd = ({ resource }: { resource: SiteLink["a"] }) => (
   <div className={"flex flex-col items-start gap-1.5 min-w-0"}>
-    <ResourceBadge resource={resource} />
-    <span className={"font-mono text-xs text-nb-gray-400"}>
+    <ResourceBadge resource={resource} className={"max-w-full"} />
+    <span className={"font-mono text-xs text-nb-gray-400 truncate max-w-full"}>
       {resource.address}
     </span>
   </div>
@@ -329,13 +334,13 @@ const linkColumns: ColumnDef<SiteLink & { id: string }>[] = [
   {
     id: "link_a",
     header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false} className={"pl-3"}>
+      <DataTableHeader column={column} sorting={false} className={"pl-12"}>
         Link A
       </DataTableHeader>
     ),
     meta: { className: COLUMN.first },
     cell: ({ row }) => (
-      <div className={"pl-3"}>
+      <div className={"pl-12 min-w-0"}>
         <LinkEnd resource={row.original.a} />
       </div>
     ),
@@ -359,12 +364,16 @@ const linkColumns: ColumnDef<SiteLink & { id: string }>[] = [
   {
     id: "link_b",
     header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false}>
+      <DataTableHeader column={column} sorting={false} className={"pl-3"}>
         Link B
       </DataTableHeader>
     ),
     meta: { className: COLUMN.second },
-    cell: ({ row }) => <LinkEnd resource={row.original.b} />,
+    cell: ({ row }) => (
+      <div className={"pl-3 min-w-0"}>
+        <LinkEnd resource={row.original.b} />
+      </div>
+    ),
   },
   {
     id: "policies",
@@ -394,11 +403,12 @@ const LinksTable = ({ row }: { row: Row }) => {
     <DataTable
       uniqueKey={row.id}
       keepStateInLocalStorage={false}
-      tableClassName={"mt-0"}
+      tableClassName={cn("mt-0", TABLE_LAYOUT)}
+      tableCellClassName={CELL_PADDING}
+      tableHeadClassName={CELL_PADDING}
       minimal={true}
       showSearchAndFilters={false}
       className={"bg-nb-gray-960 py-2"}
-      inset={true}
       text={"Links"}
       initialPageSize={data.length}
       manualPagination={true}
@@ -458,6 +468,9 @@ export default function SiteToSiteTable({ data, isLoading }: Readonly<Props>) {
 
   return (
     <DataTable
+      tableClassName={TABLE_LAYOUT}
+      tableCellClassName={CELL_PADDING}
+      tableHeadClassName={CELL_PADDING}
       isLoading={isLoading || contextLoading}
       text={"Site-to-Site Connections"}
       sorting={sorting}
