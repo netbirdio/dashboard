@@ -3,10 +3,11 @@ import { orderBy, sortBy } from "lodash";
 import { useEffect, useRef } from "react";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
+import { isResourceToResource } from "@/modules/access-control/useAccessControl";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
-import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
   CanvasTool,
   useDraftMode,
@@ -202,8 +203,19 @@ export function useDraft() {
 
       // Same sort as the live build (disabled first) so the policy and
       // destination columns keep the live vertical order.
+      // A site-to-site policy has no group or peer source for the draft to
+      // draw, and a one-sided copy could be edited into a write the deploy
+      // would refuse, so it stays live-only.
       const visiblePolicies = sortBy(
-        policies?.filter((p) => p.id && livePolicyIds.has(p.id)) ?? [],
+        policies?.filter(
+          (p) =>
+            p.id &&
+            livePolicyIds.has(p.id) &&
+            !isResourceToResource(
+              p.rules?.[0]?.sourceResource,
+              p.rules?.[0]?.destinationResource,
+            ),
+        ) ?? [],
         "enabled",
       );
 
