@@ -175,6 +175,15 @@ export const useGroupsOfPeer = (peerId?: string): Group[] => {
   return (peerId && groupsByPeerId?.get(peerId)) || NO_GROUPS;
 };
 
+/**
+ * Whether the first `/groups` answer has landed. Without the groups grant the
+ * provider is an inert shell with nothing to wait for, so it reads as ready.
+ */
+export const useGroupsLoaded = (): boolean => {
+  const { isLoading } = useGroups();
+  return !isLoading;
+};
+
 /** Peer id to groups lookup, derived from `/groups`. */
 export const useGroupsByPeerId = (): Map<string, Group[]> => {
   const { groupsByPeerId } = useGroups();

@@ -1,5 +1,5 @@
 import useFetchApi from "@utils/api";
-import { useGroupsOfPeer } from "@/contexts/GroupsProvider";
+import { useGroupsLoaded, useGroupsOfPeer } from "@/contexts/GroupsProvider";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { isNativeSSHSupported } from "@utils/version";
@@ -10,6 +10,7 @@ export const usePeerSSHPolicyCheck = (peer?: Peer) => {
     true,
     false,
   );
+  const groupsLoaded = useGroupsLoaded();
   const peerGroupIds = useGroupsOfPeer(peer?.id).map((g) => g.id);
 
   const peerPolicies = policies?.filter((policy) => {
@@ -62,16 +63,17 @@ export const usePeerSSHPolicyCheck = (peer?: Peer) => {
     return hasNoPortRestrictions || hasExplicitPort22 || hasPort22InRange;
   });
 
+  const isCheckLoading = isLoading || !groupsLoaded;
   const hasSSHPolicy = (peerPolicies?.length ?? 0) > 0;
   const showSSHPolicyInfo =
     !hasSSHPolicy &&
-    !isLoading &&
+    !isCheckLoading &&
     !!peer?.ssh_enabled &&
     isNativeSSHSupported(peer.version);
 
   return {
     peerPolicies,
-    isCheckLoading: isLoading,
+    isCheckLoading,
     hasSSHPolicy,
     showSSHPolicyInfo,
   };
