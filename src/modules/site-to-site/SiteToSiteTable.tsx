@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -59,60 +59,31 @@ type Row = SiteToSiteConnection & {
 const TABLE_LAYOUT = "table-fixed min-w-[1040px]";
 const CELL_PADDING = "!px-4";
 const COLUMN = {
-  // Fits the widest network or link on the first side (useFirstColumnFit),
-  // so the direction column takes what is left before the second network
-  // and its arrow sits midway between the two.
-  first: "w-[var(--s2s-first,34%)]",
+  // The first side and the direction share one column, so the arrow can sit
+  // midway between where the first and the second side start.
+  first: "w-[52%]",
+  second: "w-[26%]",
   // Centered: the header's tooltip wrapper is inline, so only text-align
   // moves it; the cells center their content the same way.
-  direction: "text-center",
-  second: "w-[30%]",
   count: "w-[140px] text-center",
   actions: "w-[88px]",
 };
 
-const FIRST_COLUMN_VAR = "--s2s-first";
-const FIRST_COLUMN_MIN = 240;
-const FIRST_COLUMN_MAX = 440;
-// The cell's horizontal padding (CELL_PADDING) on both sides.
-const CELL_PADDING_X = 32;
+// The first side starts 48px into its cell (pl-12, past the chevron) and the
+// second 12px into its own (pl-3); both cells pad 16px. Measured from the
+// first cell's content box, the midpoint between the two starts is its
+// center plus half the difference: (48 + 16 + 16 + 12) / 2 = 46.
+const DIRECTION_CENTER = "calc(50% + 46px)";
 
-/**
- * Measures the first side's entries, connection rows and link rows alike,
- * and sets the first column's width on the container both tables share.
- * Rows expand inside the table, so a DOM observer re-measures them.
- */
-const useFirstColumnFit = (ref: React.RefObject<HTMLDivElement | null>) => {
-  useLayoutEffect(() => {
-    const container = ref.current;
-    if (!container) return;
-    const measure = () => {
-      let widest = 0;
-      container
-        .querySelectorAll<HTMLElement>("[data-s2s-first]")
-        .forEach((n) => {
-          const trim = Number(
-            n.querySelector<HTMLElement>("[data-s2s-trim]")?.dataset.s2sTrim,
-          );
-          widest = Math.max(
-            widest,
-            n.getBoundingClientRect().width - (trim || 0),
-          );
-        });
-      if (!widest) return;
-      const width = Math.min(
-        FIRST_COLUMN_MAX,
-        Math.max(FIRST_COLUMN_MIN, Math.ceil(widest) + CELL_PADDING_X),
-      );
-      container.style.setProperty(FIRST_COLUMN_VAR, `${width}px`);
-    };
-    measure();
-    const observer = new MutationObserver(measure);
-    observer.observe(container, { childList: true, subtree: true });
-    void document.fonts?.ready.then(measure);
-    return () => observer.disconnect();
-  }, [ref]);
-};
+/** Puts its child on the direction line, midway between the two sides. */
+const OnDirectionLine = ({ children }: { children: React.ReactNode }) => (
+  <div
+    className={"absolute top-1/2 -translate-x-1/2 -translate-y-1/2"}
+    style={{ left: DIRECTION_CENTER }}
+  >
+    {children}
+  </div>
+);
 
 const plural = (count: number, word: string) =>
   `${count} ${word}${count === 1 ? "" : "s"}`;
@@ -151,12 +122,7 @@ const NetworkCell = ({ network }: { network?: Network }) => {
   const online = onlineRoutingPeers(network).length;
 
   return (
-    <div
-      className={"flex items-center gap-2 min-w-0"}
-      // The square keeps room for its hover arrow; it may spill into the
-      // empty direction cell, so it doesn't count toward the column width.
-      data-s2s-trim={online === 0 && permission.networks.update ? 0 : 56}
-    >
+    <div className={"flex items-center gap-2 min-w-0"}>
       <NetworkInformationSquare
         name={network.name}
         active={online > 0}
@@ -179,7 +145,7 @@ const NetworkCell = ({ network }: { network?: Network }) => {
 };
 
 const FirstNetworkCell = ({ row }: { row: Row }) => (
-  <div data-s2s-first={true} className={"flex items-center gap-4 w-max"}>
+  <div className={"flex items-center gap-4 min-w-0"}>
     <ChevronRightIcon
       size={20}
       className={
@@ -295,12 +261,6 @@ const columns: ColumnDef<Row>[] = [
     cell: ({ row }) => <FirstNetworkCell row={row.original} />,
   },
   {
-    id: "direction",
-    header: "",
-    meta: { className: COLUMN.direction },
-    cell: () => null,
-  },
-  {
     id: "network_b",
     accessorFn: (row) => row.networks[1]?.name ?? "",
     header: ({ column }) => (
@@ -387,33 +347,30 @@ const linkColumns: ColumnDef<SiteLink & { id: string }>[] = [
   {
     id: "link_a",
     header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false} className={"pl-12"}>
-        Link A
-      </DataTableHeader>
+      <div className={"relative"}>
+        <DataTableHeader column={column} sorting={false} className={"pl-12"}>
+          Link A
+        </DataTableHeader>
+        <OnDirectionLine>
+          <DataTableHeader column={column} sorting={false}>
+            Direction
+          </DataTableHeader>
+        </OnDirectionLine>
+      </div>
     ),
     meta: { className: COLUMN.first },
     cell: ({ row }) => (
-      <div data-s2s-first={true} className={"pl-12 w-max"}>
-        <LinkEnd resource={row.original.a} />
-      </div>
-    ),
-  },
-  {
-    id: "direction",
-    header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false}>
-        Direction
-      </DataTableHeader>
-    ),
-    meta: { className: COLUMN.direction },
-    // Centered so the arrow sits midway between the two resources.
-    cell: ({ row }) => (
-      <div className={"flex justify-center"}>
-        <PolicyDirectionBadge
-          bidirectional={row.original.bidirectional}
-          reverse={row.original.reverse}
-          className={"py-1.5"}
-        />
+      <div className={"relative flex items-center min-h-[52px]"}>
+        <div className={"pl-12 min-w-0 max-w-[calc(50%-24px)]"}>
+          <LinkEnd resource={row.original.a} />
+        </div>
+        <OnDirectionLine>
+          <PolicyDirectionBadge
+            bidirectional={row.original.bidirectional}
+            reverse={row.original.reverse}
+            className={"py-1.5"}
+          />
+        </OnDirectionLine>
       </div>
     ),
   },
@@ -488,8 +445,6 @@ type Props = {
 
 export default function SiteToSiteTable({ data, isLoading }: Readonly<Props>) {
   const path = usePathname();
-  const containerRef = useRef<HTMLDivElement>(null);
-  useFirstColumnFit(containerRef);
   const {
     networks,
     policies,
@@ -534,65 +489,63 @@ export default function SiteToSiteTable({ data, isLoading }: Readonly<Props>) {
   );
 
   return (
-    <div ref={containerRef}>
-      <DataTable
-        tableClassName={TABLE_LAYOUT}
-        tableCellClassName={CELL_PADDING}
-        tableHeadClassName={CELL_PADDING}
-        isLoading={isLoading || contextLoading}
-        text={"Site-to-Site Connections"}
-        sorting={sorting}
-        setSorting={setSorting}
-        columns={columns}
-        data={rows}
-        initialPageSize={25}
-        showResetFilterButton={false}
-        searchPlaceholder={"Search by network, resource or policy..."}
-        rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
-        renderExpandedRow={(row) =>
-          row.links.length > 0 ? <LinksTable row={row} /> : undefined
-        }
-        getStartedCard={
-          <GetStartedTest
-            icon={
-              <SquareIcon
-                icon={
-                  <NetworkRoutesIcon className={"fill-nb-gray-200"} size={20} />
-                }
-                color={"gray"}
-                size={"large"}
-              />
-            }
-            title={"Create New Site-to-Site Connection"}
-            description={
-              "It looks like you don't have any site-to-site connections yet. Connect two networks so hosts in one can reach resources in the other."
-            }
-            button={
-              <div className={"gap-x-4 flex items-center justify-center"}>
-                <AddConnectionButton />
-              </div>
-            }
-            learnMore={
-              <>
-                Learn more about
-                <InlineLink href={SITE_TO_SITE_DOCS_LINK} target={"_blank"}>
-                  Site-to-Site
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </>
-            }
-          />
-        }
-        rightSide={() =>
-          rows &&
-          rows.length > 0 && (
-            <div className={cn("gap-x-4 ml-auto flex")}>
+    <DataTable
+      tableClassName={TABLE_LAYOUT}
+      tableCellClassName={CELL_PADDING}
+      tableHeadClassName={CELL_PADDING}
+      isLoading={isLoading || contextLoading}
+      text={"Site-to-Site Connections"}
+      sorting={sorting}
+      setSorting={setSorting}
+      columns={columns}
+      data={rows}
+      initialPageSize={25}
+      showResetFilterButton={false}
+      searchPlaceholder={"Search by network, resource or policy..."}
+      rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
+      renderExpandedRow={(row) =>
+        row.links.length > 0 ? <LinksTable row={row} /> : undefined
+      }
+      getStartedCard={
+        <GetStartedTest
+          icon={
+            <SquareIcon
+              icon={
+                <NetworkRoutesIcon className={"fill-nb-gray-200"} size={20} />
+              }
+              color={"gray"}
+              size={"large"}
+            />
+          }
+          title={"Create New Site-to-Site Connection"}
+          description={
+            "It looks like you don't have any site-to-site connections yet. Connect two networks so hosts in one can reach resources in the other."
+          }
+          button={
+            <div className={"gap-x-4 flex items-center justify-center"}>
               <AddConnectionButton />
             </div>
-          )
-        }
-      />
-    </div>
+          }
+          learnMore={
+            <>
+              Learn more about
+              <InlineLink href={SITE_TO_SITE_DOCS_LINK} target={"_blank"}>
+                Site-to-Site
+                <ExternalLinkIcon size={12} />
+              </InlineLink>
+            </>
+          }
+        />
+      }
+      rightSide={() =>
+        rows &&
+        rows.length > 0 && (
+          <div className={cn("gap-x-4 ml-auto flex")}>
+            <AddConnectionButton />
+          </div>
+        )
+      }
+    />
   );
 }
 
