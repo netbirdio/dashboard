@@ -2,7 +2,6 @@ import { expect } from "@playwright/test";
 import { test } from "../helpers/fixtures";
 import {
   deleteGroupsByPrefix,
-  deletePeersByPrefix,
   deleteSetupKeysByPrefix,
   listPeers,
 } from "../helpers/api";
@@ -15,10 +14,7 @@ import {
   resetDraftState,
   reviewButton,
 } from "../helpers/control-center";
-import {
-  removeDockerContainer,
-  runDockerPeerWithKey,
-} from "../helpers/docker-peer";
+import { routeMockPeer } from "../helpers/mock-peer";
 
 test.describe.serial("Control Center Draft Install @control-center", () => {
   test.beforeEach(async ({ dashboardAsOwner: page }) => {
@@ -76,11 +72,11 @@ test.describe.serial("Control Center Draft Install @control-center", () => {
     await expect(item).toHaveAttribute("data-state", "open");
   });
 
-  test("Full flow: a docker peer installs (upgrades) a Server placeholder @docker", async ({
+  test("Full flow: a registering peer upgrades a Server placeholder", async ({
     dashboardAsOwner: page,
   }) => {
-    test.setTimeout(180_000);
     const host = "cc-install-" + generateRandomName();
+    const peers = await routeMockPeer(page);
     try {
       // getApiContext's first call navigates to /team/users, which would drop the draft.
       await listPeers(page);
@@ -91,7 +87,6 @@ test.describe.serial("Control Center Draft Install @control-center", () => {
       const placeholder = canvasNode(page, "peer-");
       await expect(placeholder).toHaveCount(1);
 
-      // The plaintext key is only in the POST response, so capture it there.
       await placeholder.hover();
       await page.getByTestId("cc-peer-install").click({ force: true });
       await expect(page.getByTestId("setup-netbird-modal")).toBeVisible();
@@ -100,38 +95,33 @@ test.describe.serial("Control Center Draft Install @control-center", () => {
         (r) =>
           r.url().includes("/api/setup-keys") &&
           r.request().method() === "POST",
-        { timeout: 20_000 },
       );
       await page.getByTestId("setup-generate-key").click();
-      const created = await (await keyResponse).json();
-      const key: string = created.key;
-      expect(key?.length ?? 0).toBeGreaterThan(0);
+      const key: { id: string; auto_groups: string[] } = await (
+        await keyResponse
+      ).json();
+      // The key binds the placeholder's throwaway group; that group is what
+      // the registering peer lands in and what the upgrade matches on.
+      expect(key.auto_groups).toHaveLength(1);
+      const boundGroupId = key.auto_groups[0];
       await page.keyboard.press("Escape");
 
-      // The peer registers into the key's bound group.
-      await runDockerPeerWithKey(page, host, key);
+      // Once the peer is matched, the key and group are torn down for real.
+      const keyDeleted = page.waitForResponse(
+        (r) =>
+          r.url().endsWith(`/api/setup-keys/${key.id}`) &&
+          r.request().method() === "DELETE",
+      );
+      // Resolves on the app's own /peers poll while an install is waiting.
+      const peer = await peers.register(host, [
+        { id: boundGroupId, name: "Server (Draft)" },
+      ]);
 
-      // Revalidate via SWR's revalidateOnFocus; focus is throttled, so dispatch per poll.
-      await expect
-        .poll(
-          async () => {
-            await page.evaluate(() => {
-              window.dispatchEvent(new Event("focus"));
-              document.dispatchEvent(new Event("visibilitychange"));
-            });
-            return !(await page
-              .getByTestId("cc-peer-install")
-              .isVisible()
-              .catch(() => false));
-          },
-          { timeout: 90_000, intervals: [3000, 3000, 5000, 5000, 5000] },
-        )
-        .toBe(true);
-
-      expect((await listPeers(page)).some((p) => p.name === host)).toBe(true);
+      await expect(canvasNode(page, `peer-${peer.id}`)).toHaveCount(1);
+      await expect(page.getByTestId("cc-peer-install")).toBeHidden();
+      expect((await keyDeleted).ok()).toBe(true);
     } finally {
-      removeDockerContainer(host);
-      await deletePeersByPrefix(page, host);
+      await peers.dispose();
       await deleteSetupKeysByPrefix(page, "Draft Server");
       await deleteGroupsByPrefix(page, "Server (Draft)");
     }

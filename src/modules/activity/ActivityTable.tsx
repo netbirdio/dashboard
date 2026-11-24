@@ -21,7 +21,7 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import { uniqBy } from "lodash";
 import { ExternalLinkIcon } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { useSWRConfig } from "swr";
@@ -41,6 +41,12 @@ type Props = {
 };
 
 const ActivityFeedColumnsTable: ColumnDef<ActivityEvent>[] = [
+  {
+    id: "id",
+    accessorKey: "id",
+    filterFn: "exactMatch",
+    enableGlobalFilter: false,
+  },
   {
     accessorKey: "activity_code",
     header: ({ column }) => {
@@ -92,6 +98,24 @@ export default function ActivityTable({
 }: Props) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
+  const router = useRouter();
+  const params = useSearchParams();
+
+  const eventId = params.get("id") ?? undefined;
+  const removeEventParam = React.useCallback(() => {
+    if (!eventId) return;
+    // The single-event view keeps nothing in storage, so the table it returns to would restore what was saved before.
+    try {
+      ["columns", "search", "pagination"].forEach((state) =>
+        localStorage.removeItem(`netbird-table-${state}${path}`),
+      );
+    } catch {
+      // Storage is blocked, so nothing was saved to restore.
+    }
+    const newParams = new URLSearchParams(params.toString());
+    newParams.delete("id");
+    router.replace(`?${newParams.toString()}`, { scroll: false });
+  }, [eventId, params, path, router]);
 
   // Default sorting state of the table
   const [sorting, setSorting] = useState<SortingState>([
@@ -160,6 +184,7 @@ export default function ActivityTable({
 
   return (
     <DataTable
+      key={eventId ?? ""}
       headingTarget={headingTarget}
       paginationClassName={"max-w-[800px]"}
       as={"div"}
@@ -167,6 +192,8 @@ export default function ActivityTable({
       sorting={sorting}
       setSorting={setSorting}
       initialPageSize={25}
+      keepStateInLocalStorage={!eventId}
+      initialFilters={eventId ? [{ id: "id", value: eventId }] : undefined}
       showResetFilterButton={false}
       wrapperClassName={"gap-0 flex flex-col"}
       tableClassName={"px-8 pt-4"}
@@ -178,6 +205,7 @@ export default function ActivityTable({
         <TableFilterChips table={table} filters={filterDefs} />
       )}
       columnVisibility={{
+        id: false,
         timestamp: false,
         name: false,
         activity_text: false,
@@ -213,6 +241,7 @@ export default function ActivityTable({
         />
       }
       onFilterReset={() => {
+        removeEventParam();
         const date = { from: defaultFromDate, to: defaultToDate };
         setInitialDateRange(date);
         setDateRange(date);
@@ -237,9 +266,16 @@ export default function ActivityTable({
               filters={filterDefs}
               disabled={events?.length == 0}
             />
+            <DataTableRefreshButton
+              isDisabled={events?.length == 0}
+              onClick={() => {
+                mutate("/events/audit").then();
+              }}
+            />
             <DataTableResetFilterButton
               table={table}
               onClick={() => {
+                removeEventParam();
                 table.setPageIndex(0);
                 table.resetColumnFilters();
                 table.resetGlobalFilter();
@@ -249,12 +285,6 @@ export default function ActivityTable({
                 table
                   .getColumn("timestamp")
                   ?.setFilterValue([date.from, date.to]);
-              }}
-            />
-            <DataTableRefreshButton
-              isDisabled={events?.length == 0}
-              onClick={() => {
-                mutate("/events/audit").then();
               }}
             />
           </>

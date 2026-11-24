@@ -66,3 +66,82 @@ describe("ActivityDescription resource group events", () => {
     );
   });
 });
+
+describe("ActivityDescription EDR events", () => {
+  const edrEvent = (
+    activity_code: string,
+    meta: Record<string, string>,
+  ): ActivityEvent => ({
+    ...baseEvent,
+    target_id: "p1",
+    activity: "EDR event",
+    activity_code,
+    meta: { platform: "huntress", type: "endpoint_management", ...meta },
+  });
+
+  const describeEvent = (event: ActivityEvent) =>
+    textOf(render(<ActivityDescription event={event} />).container);
+
+  it("explains the integration's own rejection reasons in words", () => {
+    expect(
+      describeEvent(
+        edrEvent("integrated-validator.host-check.denied", {
+          name: "laptop-01",
+          reason: "STALE_CHECK_IN",
+        }),
+      ),
+    ).toBe(
+      "Peer laptop-01 rejected by huntress integration, reason: no recent EDR check-in",
+    );
+  });
+
+  it("shows a vendor's rejection reason as sent", () => {
+    expect(
+      describeEvent(
+        edrEvent("integrated-validator.host-check.denied", {
+          reason: "ZTA score 10 is below threshold",
+        }),
+      ),
+    ).toBe(
+      "Peer rejected by huntress integration, reason: ZTA score 10 is below threshold",
+    );
+  });
+
+  it("shows reasons that name object properties as sent", () => {
+    for (const reason of ["constructor", "__proto__", "toString"]) {
+      expect(
+        describeEvent(
+          edrEvent("integrated-validator.host-check.denied", { reason }),
+        ),
+      ).toBe(`Peer rejected by huntress integration, reason: ${reason}`);
+    }
+  });
+
+  it("keeps the old text for events without a name or reason", () => {
+    expect(
+      describeEvent(edrEvent("integrated-validator.host-check.denied", {})),
+    ).toBe("Peer rejected by huntress integration");
+    expect(
+      describeEvent(edrEvent("integrated-validator.host-check.approved", {})),
+    ).toBe("Peer approved by huntress integration");
+  });
+
+  it("describes a started grace period", () => {
+    const grace = (meta: Record<string, string>) =>
+      describeEvent(
+        edrEvent("integrated-validator.peer.stale-grace-started", {
+          name: "laptop-01",
+          ...meta,
+        }),
+      );
+    expect(grace({ grace_minutes: "45" })).toBe(
+      "Peer laptop-01 keeps access for 45 minutes while it checks in with huntress again",
+    );
+    expect(grace({ grace_minutes: "1" })).toBe(
+      "Peer laptop-01 keeps access for 1 minute while it checks in with huntress again",
+    );
+    expect(grace({})).toBe(
+      "Peer laptop-01 keeps access while it checks in with huntress again",
+    );
+  });
+});

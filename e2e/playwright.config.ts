@@ -7,6 +7,9 @@ import {
   isDeployedTarget,
 } from "./helpers/target";
 
+const ACCOUNT_SETTINGS_SPECS =
+  /settings-(authentication|clients|groups|networks|permissions)\.spec\.ts$/;
+
 const envPath = path.resolve(__dirname, "playwright.env.json");
 const env = fs.existsSync(envPath)
   ? JSON.parse(fs.readFileSync(envPath, "utf-8"))
@@ -57,8 +60,17 @@ export default defineConfig({
     },
     {
       name: "e2e",
-      testIgnore: "login.spec.ts",
+      testIgnore: ["login.spec.ts", ACCOUNT_SETTINGS_SPECS],
       dependencies: ["login"],
+    },
+    {
+      // Each settings tab saves the WHOLE account settings object from its own
+      // copy, so two of these on different workers revert each other's change.
+      // One worker runs them in turn while the rest of the suite stays parallel.
+      name: "account-settings",
+      testMatch: ACCOUNT_SETTINGS_SPECS,
+      dependencies: ["login"],
+      workers: 1,
     },
   ],
 });

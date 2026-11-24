@@ -3,6 +3,7 @@ import React from "react";
 import { describe, expect, it } from "vitest";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
+import { beginAgentActivity } from "@/modules/assistant/lib/canvas";
 import { reduceRemoveChange } from "@/modules/control-center/utils/change-cascade";
 import {
   DraftChange,
@@ -884,6 +885,27 @@ describe("network / resource / router changes", () => {
     });
   });
 
+  it("an update-router's placeholder peer is replaced on install too", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackUpdateRouter({
+        routerId: "router-1",
+        networkId: "net-1",
+        networkName: "Office",
+        peerId: "draft-a",
+        peerName: "Office Gateway",
+      }),
+    );
+    act(() =>
+      result.current.replacePeerIdInGroups("draft-a", "real-1", "office-gw"),
+    );
+    expect(result.current.changes[0]).toMatchObject({
+      type: "update-router",
+      peerId: "real-1",
+      peerName: "office-gw",
+    });
+  });
+
   it("group renames follow into resource groupIds and router group refs", () => {
     const { result } = setup();
     act(() =>
@@ -1227,6 +1249,50 @@ describe("getChangeIssue / hasBlockingIssues", () => {
     expect(issue?.label).toBe("Install");
     expect(issue?.message).toContain("must be installed");
     expect(hasBlockingIssues([server])).toBe(true);
+  });
+
+  const placeholderRouter = {
+    id: "r1",
+    type: "create-router",
+    clientId: "new-r1",
+    networkClientId: "new-net",
+    networkName: "Office Network",
+    peerId: "draft-9",
+    peerName: "Office Gateway",
+  } as DraftChange;
+  const installStep = {
+    id: "i9",
+    type: "install-peer",
+    clientId: "draft-9",
+    name: "Office Gateway",
+    kind: "server",
+  } as DraftChange;
+
+  it("says nothing on a router whose peer already has an install step", () => {
+    expect(
+      getChangeIssue(placeholderRouter, [installStep, placeholderRouter]),
+    ).toBeUndefined();
+    expect(hasBlockingIssues([installStep, placeholderRouter])).toBe(true);
+  });
+
+  it("flags an ORPHANED placeholder router (its peer left the canvas)", () => {
+    const issue = getChangeIssue(placeholderRouter, [placeholderRouter]);
+    expect(issue?.label).toBe("Install");
+    expect(issue?.message).toContain("Office Gateway");
+    expect(hasBlockingIssues([placeholderRouter])).toBe(true);
+  });
+
+  it("has no issue once the router points at a real peer", () => {
+    const realRouter = {
+      id: "r1",
+      type: "create-router",
+      clientId: "new-r1",
+      networkId: "net-1",
+      networkName: "Office Network",
+      peerId: "real-peer-1",
+      peerName: "office-gw",
+    } as DraftChange;
+    expect(getChangeIssue(realRouter, [realRouter])).toBeUndefined();
   });
 
   it("an installed placeholder peer carries no issue and doesn't block", () => {
@@ -2237,5 +2303,287 @@ describe("a group deletion blocks what still names the group", () => {
     } as never;
     const issue = getChangeIssue(change, withDelete(change));
     expect(issue?.label).toBe("Group deleted");
+  });
+});
+
+describe("changes made by the assistant", () => {
+  const router = {
+    clientId: "new-r1",
+    networkClientId: "new-n1",
+    networkName: "Office",
+    peerId: "p1",
+  };
+  const asAssistant = (run: () => void) => {
+    const release = beginAgentActivity();
+    act(run);
+    return release;
+  };
+
+  it("stops reporting a marked change once it has left the changeset", () => {
+    const { result, unmount } = setup();
+    act(() =>
+      result.current.trackCreateGroup({ clientId: "group-new-0", name: "Own" }),
+    );
+    const release = asAssistant(() =>
+      result.current.trackCreateGroup({ clientId: "group-new-1", name: "G" }),
+    );
+    const withChange = result.current.changes;
+    const id = withChange[1].id;
+    expect([...result.current.assistantChangeIds]).toEqual([id]);
+
+    act(() => result.current.replaceChanges(withChange.slice(0, 1)));
+    expect(result.current.assistantChangeIds.size).toBe(0);
+    release();
+    unmount();
+  });
+
+  it("re-marks a redone change once the assistant is idle", async () => {
+    const { result } = setup();
+    const release = asAssistant(() =>
+      result.current.trackCreateGroup({ clientId: "group-new-1", name: "G" }),
+    );
+    release();
+    await act(() => new Promise((r) => setTimeout(r, 450)));
+    const withChange = result.current.changes;
+    const id = withChange[0].id;
+
+    act(() => result.current.replaceChanges([]));
+    act(() => result.current.replaceChanges(withChange));
+
+    expect([...result.current.assistantChangeIds]).toEqual([id]);
+  });
+
+  it("carries the mark onto a router that is removed and re-added on edit", async () => {
+    const { result } = setup();
+    const release = asAssistant(() => result.current.trackCreateRouter(router));
+    release();
+    await act(() => new Promise((r) => setTimeout(r, 450)));
+    const oldId = result.current.changes[0].id;
+
+    act(() => {
+      result.current.removeChange(oldId, { replaced: true });
+      result.current.trackCreateRouter({
+        ...router,
+        clientId: "new-r2",
+        metric: 5,
+      });
+    });
+
+    const newId = result.current.changes[0].id;
+    expect(newId).not.toBe(oldId);
+    expect([...result.current.assistantChangeIds]).toEqual([newId]);
+  });
+
+  it("leaves a user's own edited router unmarked", () => {
+    const { result } = setup();
+    act(() => result.current.trackCreateRouter(router));
+    act(() => {
+      result.current.removeChange(result.current.changes[0].id, {
+        replaced: true,
+      });
+      result.current.trackCreateRouter({ ...router, metric: 5 });
+    });
+    expect(result.current.assistantChangeIds.size).toBe(0);
+  });
+
+  const accessPolicy = (id: string, rule: Record<string, unknown> = {}) =>
+    ({
+      id,
+      name: id,
+      description: "",
+      enabled: true,
+      source_posture_checks: [],
+      rules: [
+        {
+          name: id,
+          description: "",
+          enabled: true,
+          sources: [{ id: "g1", name: "A" }],
+          destinations: [{ id: "g2", name: "B" }],
+          bidirectional: true,
+          action: "accept",
+          protocol: "all",
+          ports: [],
+          ...rule,
+        },
+      ],
+    }) as never;
+  const idle = () => act(() => new Promise((r) => setTimeout(r, 450)));
+  const markedTypes = (current: ReturnType<typeof setup>["result"]["current"]) =>
+    current.changes
+      .filter((c) => current.assistantChangeIds.has(c.id))
+      .map((c) => c.type);
+
+  it("keeps the mark when the user's edit re-records the assistant's policy change under a new id", async () => {
+    const { result } = setup();
+    const release = asAssistant(() =>
+      result.current.trackUpdatePolicy({
+        policyId: "p1",
+        policy: accessPolicy("p1", { sources: [{ id: "all", name: "All" }] }),
+      }),
+    );
+    release();
+    await idle();
+    const assistantId = result.current.changes[0].id;
+
+    act(() =>
+      result.current.trackUpdatePolicy({
+        policyId: "p1",
+        policy: accessPolicy("p1", {
+          sources: [{ id: "all", name: "All" }],
+          protocol: "tcp",
+          ports: ["22"],
+        }),
+      }),
+    );
+
+    expect(result.current.changes[0].id).not.toBe(assistantId);
+    expect(markedTypes(result.current)).toEqual(["update-policy"]);
+  });
+
+  it("keeps the mark on a draft policy whose create is dropped and recorded again", async () => {
+    const { result } = setup();
+    const release = asAssistant(() =>
+      result.current.trackCreatePolicy({
+        clientId: "new-p1",
+        policy: accessPolicy("new-p1"),
+      }),
+    );
+    release();
+    await idle();
+
+    act(() =>
+      result.current.trackDeletePolicy({ policyId: "new-p1", name: "new-p1" }),
+    );
+    expect(result.current.changes).toHaveLength(0);
+    act(() =>
+      result.current.trackCreatePolicy({
+        clientId: "new-p1",
+        policy: accessPolicy("new-p1"),
+      }),
+    );
+
+    expect(markedTypes(result.current)).toEqual(["create-policy"]);
+  });
+
+  it("leaves the user's policies unmarked when the assistant renames a group they do not name", async () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackUpdatePolicy({
+        policyId: "p9",
+        policy: accessPolicy("p9"),
+      }),
+    );
+    act(() =>
+      result.current.trackCreateGroup({ clientId: "group-new-1", name: "G" }),
+    );
+    const release = asAssistant(() =>
+      result.current.trackRenameGroup({ from: "G", to: "H" }),
+    );
+    release();
+    await idle();
+
+    expect(markedTypes(result.current)).toEqual(["create-group"]);
+  });
+
+  it("marks a policy the assistant drew when the user completes it", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreatePolicy({
+        clientId: "new-p1",
+        policy: accessPolicy("new-p1"),
+        byAssistant: true,
+      }),
+    );
+    act(() =>
+      result.current.trackUpdatePolicy({
+        policyId: "p2",
+        policy: accessPolicy("p2"),
+        byAssistant: true,
+      }),
+    );
+    act(() =>
+      result.current.trackCreatePolicy({
+        clientId: "new-p3",
+        policy: accessPolicy("new-p3"),
+      }),
+    );
+
+    expect(markedTypes(result.current)).toEqual([
+      "create-policy",
+      "update-policy",
+    ]);
+  });
+
+  it("marks an agent policy the assistant drew when the user completes it", () => {
+    const { result } = setup();
+    const agentPolicy = {
+      name: "Agents",
+      description: "",
+      enabled: true,
+      sourceGroups: ["g1"],
+      destinationProviderIds: ["prov-1"],
+      guardrailIds: [],
+      limits: {},
+    } as never;
+    act(() =>
+      result.current.trackCreateAgentPolicy({
+        clientId: "new-a1",
+        policy: agentPolicy,
+        byAssistant: true,
+      }),
+    );
+    act(() =>
+      result.current.trackUpdateAgentPolicy({
+        agentPolicyId: "a2",
+        name: "Agents",
+        policy: agentPolicy,
+        byAssistant: true,
+      }),
+    );
+    act(() =>
+      result.current.trackUpdateAgentPolicy({
+        agentPolicyId: "a3",
+        name: "Agents",
+        policy: agentPolicy,
+      }),
+    );
+
+    expect(markedTypes(result.current)).toEqual([
+      "create-agent-policy",
+      "update-agent-policy",
+    ]);
+  });
+
+  it("drops a `byAssistant` mark with the draft too", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreatePolicy({
+        clientId: "new-p1",
+        policy: accessPolicy("new-p1"),
+        byAssistant: true,
+      }),
+    );
+    const stale = result.current.changes;
+
+    act(() => result.current.clearChanges());
+    act(() => result.current.replaceChanges(stale));
+
+    expect(result.current.assistantChangeIds.size).toBe(0);
+  });
+
+  it("ends the marks with the draft, so they cannot reach the next one", async () => {
+    const { result } = setup();
+    const release = asAssistant(() =>
+      result.current.trackCreateGroup({ clientId: "group-new-1", name: "G" }),
+    );
+    release();
+    await act(() => new Promise((r) => setTimeout(r, 450)));
+    const stale = result.current.changes;
+
+    act(() => result.current.clearChanges());
+    act(() => result.current.replaceChanges(stale));
+
+    expect(result.current.assistantChangeIds.size).toBe(0);
   });
 });

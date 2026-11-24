@@ -250,9 +250,9 @@ export function NameserverModalContent({
   }, [isUpdate, permission]);
 
   return (
-    <ModalContent maxWidthClass={"max-w-xl"}>
+    <ModalContent flow="dns_nameserver" maxWidthClass={"max-w-xl"}>
       <ModalHeader
-        icon={<DNSIcon className={"fill-netbird"} />}
+        icon={<DNSIcon className={"fill-current"} />}
         title={isUpdate ? preset?.name : "Add Nameserver"}
         description={"Use a nameserver to resolve domains in your network"}
         color={"netbird"}

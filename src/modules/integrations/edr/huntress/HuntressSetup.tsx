@@ -47,6 +47,16 @@ import {
   HUNTRESS_DOCUMENTATION_URL,
   matchAttributesReducer,
 } from "@/modules/integrations/edr/huntress/Huntress";
+import {
+  DEFAULT_STALE_GRACE,
+  EDRStaleGraceInput,
+  isValidStaleGrace,
+} from "@/modules/integrations/edr/EDRStaleGraceInput";
+import {
+  DEFAULT_SYNC_INTERVAL,
+  EDRSyncIntervalInput,
+  isValidSyncInterval,
+} from "@/modules/integrations/edr/EDRSyncIntervalInput";
 import { IntegrationModalHeader } from "@/modules/integrations/IntegrationModalHeader";
 import { HuntressMatchSettings } from "@/modules/integrations/edr/huntress/HuntressMatchSettings";
 
@@ -95,6 +105,12 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
   const [lastSyncedInterval, setLastSyncedInterval] = useState("24");
+  const [syncInterval, setSyncInterval] = useState(
+    DEFAULT_SYNC_INTERVAL.toString(),
+  );
+  const [staleGraceEnabled, setStaleGraceEnabled] = useState(false);
+  const [staleGrace, setStaleGrace] = useState(DEFAULT_STALE_GRACE.toString());
+  const [staleGraceNewPeers, setStaleGraceNewPeers] = useState(false);
 
   const [matchAttributes, dispatchMatchAttributes] = useReducer(
     matchAttributesReducer,
@@ -110,7 +126,11 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
   const allEntered = apiKeyEntered && apiSecretEntered;
 
   const isDisabled =
-    (step === 1 && !allEntered) || (step === 2 && groups.length === 0);
+    (step === 1 && !allEntered) ||
+    (step === 2 && groups.length === 0) ||
+    (step === 4 &&
+      (!isValidSyncInterval(syncInterval) ||
+        !isValidStaleGrace(staleGraceEnabled, staleGrace)));
 
   const connect = async () => {
     await settingsRequest.put({
@@ -135,6 +155,9 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
           api_secret: apiSecret,
           groups: savedGroups.map((group) => group.id) || [],
           last_synced_interval: Number(lastSyncedInterval || 24),
+          sync_interval: Number(syncInterval),
+          stale_grace_minutes: staleGraceEnabled ? Number(staleGrace) : 0,
+          stale_grace_new_peers: staleGraceEnabled && staleGraceNewPeers,
           match_attributes: matchAttributes,
         })
         .then(() => {
@@ -374,6 +397,22 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
               customSuffix={"Hours"}
             />
           </div>
+          <EDRSyncIntervalInput
+            name={"Huntress"}
+            value={syncInterval}
+            onChange={setSyncInterval}
+            className={"mt-6"}
+          />
+          <EDRStaleGraceInput
+            name={"Huntress"}
+            enabled={staleGraceEnabled}
+            onEnabledChange={setStaleGraceEnabled}
+            value={staleGrace}
+            onChange={setStaleGrace}
+            newPeers={staleGraceNewPeers}
+            onNewPeersChange={setStaleGraceNewPeers}
+            className={"mt-6"}
+          />
         </div>
       )}
 

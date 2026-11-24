@@ -149,6 +149,7 @@ const GlobalSearchModalContent = ({ open, setOpen }: Props) => {
         }}
       >
         <ModalContent
+          flow="search"
           showClose={false}
           className={"py-0 overflow-hidden"}
           maxWidthClass={"max-w-xl"}

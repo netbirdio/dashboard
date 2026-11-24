@@ -432,14 +432,6 @@ export default function UsersTable({
                 disabled={users?.length == 0}
               />
             )}
-            <DataTableResetFilterButton
-              table={table}
-              onClick={() => {
-                table.setPageIndex(0);
-                table.resetColumnFilters();
-                table.resetGlobalFilter();
-              }}
-            />
             <PendingApprovalFilter
               table={table}
               data={users}
@@ -450,6 +442,14 @@ export default function UsersTable({
               onClick={() => {
                 mutate("/users?service_user=false").then();
                 mutate("/groups").then();
+              }}
+            />
+            <DataTableResetFilterButton
+              table={table}
+              onClick={() => {
+                table.setPageIndex(0);
+                table.resetColumnFilters();
+                table.resetGlobalFilter();
               }}
             />
             {showInvitesToggle && (

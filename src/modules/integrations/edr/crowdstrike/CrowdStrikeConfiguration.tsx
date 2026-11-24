@@ -35,6 +35,16 @@ import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { CrowdStrikeRegionsData } from "@/modules/integrations/edr/crowdstrike/CrowdStrikeRegions";
 import { CrowdStrikeZtaScoreInput } from "@/modules/integrations/edr/crowdstrike/CrowdStrikeZtaScoreInput";
 import { CrowdStrikeZtaToggle } from "@/modules/integrations/edr/crowdstrike/CrowdStrikeZtaToggle";
+import {
+  DEFAULT_STALE_GRACE,
+  EDRStaleGraceInput,
+  isValidStaleGrace,
+} from "@/modules/integrations/edr/EDRStaleGraceInput";
+import {
+  DEFAULT_SYNC_INTERVAL,
+  EDRSyncIntervalInput,
+  isValidSyncInterval,
+} from "@/modules/integrations/edr/EDRSyncIntervalInput";
 import { IntegrationModalHeader } from "@/modules/integrations/IntegrationModalHeader";
 
 type Props = {
@@ -93,6 +103,18 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
       : "80",
   );
   const [ztaEnabled, setZtaEnabled] = useState(config.zta_score_threshold > 0);
+  const [syncInterval, setSyncInterval] = useState(
+    (config.sync_interval ?? DEFAULT_SYNC_INTERVAL).toString(),
+  );
+  const [staleGraceEnabled, setStaleGraceEnabled] = useState(
+    config.stale_grace_minutes > 0,
+  );
+  const [staleGrace, setStaleGrace] = useState(
+    (config.stale_grace_minutes || DEFAULT_STALE_GRACE).toString(),
+  );
+  const [staleGraceNewPeers, setStaleGraceNewPeers] = useState(
+    config.stale_grace_new_peers ?? false,
+  );
 
   const [groups, setGroups, { save: saveGroups }] = useGroupHelper({
     initial: config.groups.map((g) => {
@@ -138,6 +160,9 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
           client_id: secretPlaceholder == clientId ? undefined : clientId,
           secret: secretPlaceholder == secret ? undefined : secret,
           groups: savedGroups.map((group) => group.id) || [],
+          sync_interval: Number(syncInterval),
+          stale_grace_minutes: staleGraceEnabled ? Number(staleGrace) : 0,
+          stale_grace_new_peers: staleGraceEnabled && staleGraceNewPeers,
           enabled: config.enabled,
         })
         .then(() => {
@@ -155,13 +180,21 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
     clientId,
     secret,
     ztaEnabled,
+    syncInterval,
+    staleGraceEnabled,
+    staleGrace,
+    staleGraceNewPeers,
   ]);
 
   const ztaError =
     ztaEnabled && (parseInt(ztaScore) <= 0 || parseInt(ztaScore) > 100)
       ? "Score should be between 1 and 100"
       : undefined;
-  const canSave = hasChanges && !ztaError;
+  const canSave =
+    hasChanges &&
+    !ztaError &&
+    isValidSyncInterval(syncInterval) &&
+    isValidStaleGrace(staleGraceEnabled, staleGrace);
 
   return (
     <ModalContent
@@ -299,6 +332,20 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
                 />
               </div>
             </div>
+            <EDRSyncIntervalInput
+              name={"CrowdStrike"}
+              value={syncInterval}
+              onChange={setSyncInterval}
+            />
+            <EDRStaleGraceInput
+              name={"CrowdStrike"}
+              enabled={staleGraceEnabled}
+              onEnabledChange={setStaleGraceEnabled}
+              value={staleGrace}
+              onChange={setStaleGrace}
+              newPeers={staleGraceNewPeers}
+              onNewPeersChange={setStaleGraceNewPeers}
+            />
           </div>
         </TabsContent>
 

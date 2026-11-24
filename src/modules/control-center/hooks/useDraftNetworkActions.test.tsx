@@ -9,6 +9,10 @@ let nodes: Node[] = [];
 let apiNetworks: unknown[] | undefined;
 const trackUpdateResource = vi.fn();
 const trackCreateResource = vi.fn();
+const untrackResource = vi.fn();
+// React Flow queues setNodes and only commits it renders later; `queued` holds
+// those updates when a test opts in, and getNodes() keeps the committed list.
+let queued: ((n: Node[]) => Node[])[] | null = null;
 const notifyMock = vi.fn();
 
 vi.mock("@utils/api", () => ({
@@ -23,7 +27,8 @@ vi.mock("@xyflow/react", () => ({
     getNodes: () => nodes,
     getEdges: () => [],
     setNodes: (fn: (n: Node[]) => Node[]) => {
-      nodes = typeof fn === "function" ? fn(nodes) : fn;
+      if (queued) queued.push(fn);
+      else nodes = typeof fn === "function" ? fn(nodes) : fn;
     },
     setEdges: () => {},
     fitView: () => {},
@@ -47,7 +52,7 @@ vi.mock("@/modules/control-center/draft/DraftChangesetContext", async () => {
       trackCreateRouter: vi.fn(),
       trackUpdateRouter: vi.fn(),
       trackCreateResource,
-      untrackResource: vi.fn(),
+      untrackResource,
       trackUpdateResource,
       updateDraftNetwork: vi.fn(),
     }),
@@ -92,7 +97,9 @@ const save = (result: { current: ReturnType<typeof useDraftNetworkActions> }) =>
 beforeEach(() => {
   trackUpdateResource.mockClear();
   trackCreateResource.mockClear();
+  untrackResource.mockClear();
   notifyMock.mockClear();
+  queued = null;
   apiNetworks = undefined;
 });
 
@@ -256,5 +263,44 @@ describe("saveDraftResource without a draftNetwork stamp", () => {
     expect(
       (nodes[0].data as { resource?: { name?: string } }).resource?.name,
     ).toBe("db");
+  });
+});
+
+describe("saveDraftResource on a new standalone resource", () => {
+  it("tracks the create from the saved address even before setNodes commits", () => {
+    vi.useFakeTimers();
+    nodes = [
+      {
+        id: "resource-new-a",
+        type: "resourceNode",
+        position: { x: 0, y: 0 },
+        data: { resource: { name: "Resource" } },
+      } as unknown as Node,
+    ];
+    queued = [];
+    const { result } = renderHook(() => useDraftNetworkActions());
+    act(() =>
+      result.current.saveDraftResource({
+        nodeId: "resource-new-a",
+        name: "cc-res-0",
+        address: "10.99.0.1/32",
+        groupIds: [],
+        network: { name: "" },
+      }),
+    );
+    // The sync fires while the edit is still queued, as on a busy canvas.
+    act(() => vi.runAllTimers());
+    const pending = queued;
+    queued = null;
+    pending.forEach((fn) => (nodes = fn(nodes)));
+    vi.useRealTimers();
+
+    expect(untrackResource).not.toHaveBeenCalled();
+    expect(trackCreateResource).toHaveBeenCalledTimes(1);
+    expect(trackCreateResource.mock.calls[0][0]).toMatchObject({
+      clientId: "new-a",
+      address: "10.99.0.1/32",
+      networkName: "",
+    });
   });
 });

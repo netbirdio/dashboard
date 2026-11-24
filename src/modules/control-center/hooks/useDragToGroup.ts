@@ -1,9 +1,13 @@
-import { useCallback, useRef } from "react";
 import { Node, useReactFlow, XYPosition } from "@xyflow/react";
+import { useCallback, useRef } from "react";
+import { Group } from "@/interfaces/Group";
+import { NetworkResource } from "@/interfaces/Network";
+import { Peer } from "@/interfaces/Peer";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import {
   getNetworkRef,
   useDraftNetworkActions,
@@ -13,20 +17,17 @@ import {
   getDraftResource,
   getFrameChildPosition,
   getPlaceholderPeer,
-  getTopZIndex,
   getPolicyRegroupUpdates,
+  getTopZIndex,
+  hasFramedCard,
   isFrameNode,
   NETWORK_FRAME_CHILD_WIDTH,
 } from "@/modules/control-center/utils/helpers";
-import { NodeType } from "@/modules/control-center/utils/nodes";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import {
   DROPPABLE_INTO_GROUP_NODE_TYPES as DROPPABLE_NODE_TYPES,
   getGroupableEntityId,
 } from "@/modules/control-center/utils/node-capabilities";
-import { Peer } from "@/interfaces/Peer";
-import { NetworkResource } from "@/interfaces/Network";
-import { Group } from "@/interfaces/Group";
+import { NodeType } from "@/modules/control-center/utils/nodes";
 import {
   patchGroupInPolicies,
   sameGroupMatcher,
@@ -58,7 +59,7 @@ function getIntersectingFrame(
 
 const getDraggedItemId = getGroupableEntityId;
 
-function groupContainsItem(groupNode: Node, itemId: string): boolean {
+export function groupContainsItem(groupNode: Node, itemId: string): boolean {
   const group = groupNode.data?.group as Group | undefined;
   if (!group) return false;
 
@@ -84,6 +85,33 @@ function groupContainsItem(groupNode: Node, itemId: string): boolean {
   return addedMembers.has(itemId);
 }
 
+export function setDraftResourceCardGroup(
+  nodes: Node[],
+  resourceId: string,
+  groupRef: string,
+  member: boolean,
+): Node[] {
+  const cardId = `resource-${resourceId}`;
+  let changed = false;
+  const next = nodes.map((n) => {
+    if (n.id !== cardId) return n;
+    const refs =
+      (n.data as { resourceGroupIds?: string[] }).resourceGroupIds ?? [];
+    if (refs.includes(groupRef) === member) return n;
+    changed = true;
+    return {
+      ...n,
+      data: {
+        ...n.data,
+        resourceGroupIds: member
+          ? [...refs, groupRef]
+          : refs.filter((r) => r !== groupRef),
+      },
+    };
+  });
+  return changed ? next : nodes;
+}
+
 export function useDragToGroup() {
   const { isDraft, drillDownNetworkNodeId } = useDraftMode();
   const { setNodes, setEdges } = useCanvasState();
@@ -102,11 +130,13 @@ export function useDragToGroup() {
         resource,
         itemId: itemIdOverride,
         draggedNodeId,
+        keepFramedCard = false,
       }: {
         peer?: Peer;
         resource?: NetworkResource;
         itemId?: string;
         draggedNodeId?: string;
+        keepFramedCard?: boolean;
       },
     ) => {
       const itemId = itemIdOverride ?? peer?.id ?? resource?.id;
@@ -118,7 +148,16 @@ export function useDragToGroup() {
       // "All" is system-managed: every peer is in it implicitly.
       if (groupData.name === "All") return;
 
-      if (draggedNodeId) {
+      const framed = () => {
+        const all = reactFlow.getNodes();
+        const card = all.find((n) => n.id === draggedNodeId);
+        return (
+          !!card?.parentId &&
+          isFrameNode(all.find((n) => n.id === card.parentId))
+        );
+      };
+      const absorbsCard = !!draggedNodeId && !(keepFramedCard && framed());
+      if (absorbsCard) {
         setNodes((prev) => prev.filter((n) => n.id !== draggedNodeId));
         setEdges((prev) =>
           prev.filter(
@@ -201,6 +240,14 @@ export function useDragToGroup() {
         if (bumpsAll) {
           next = patchGroupInPolicies(next, isAllMatcher, bumpCounts);
         }
+        if (draftResourceMember && !absorbsCard) {
+          next = setDraftResourceCardGroup(
+            next,
+            itemId,
+            groupData.id ?? groupData.name,
+            true,
+          );
+        }
         return next;
       });
       setEdges((prev) => {
@@ -227,7 +274,7 @@ export function useDragToGroup() {
         addGroupToDraftResource(itemId, groupData.id ?? groupData.name);
       }
 
-      if (draggedNodeId) {
+      if (absorbsCard) {
         const policyUpdates = getPolicyRegroupUpdates(
           reactFlow.getNodes(),
           new Set([itemId]),
@@ -262,7 +309,7 @@ export function useDragToGroup() {
   const lastHighlightCheck = useRef<XYPosition | null>(null);
 
   const onNodeDragStart = useCallback(
-    (_event: React.MouseEvent, draggedNode: Node) => {
+    (_event: MouseEvent | TouchEvent, draggedNode: Node) => {
       frameDrag.current = null;
       lastHighlightCheck.current = null;
       if (!isDraft) return;
@@ -288,7 +335,7 @@ export function useDragToGroup() {
   );
 
   const onNodeDrag = useCallback(
-    (_event: React.MouseEvent, draggedNode: Node) => {
+    (_event: MouseEvent | TouchEvent, draggedNode: Node) => {
       if (!isDraft) return;
 
       const frame = frameDrag.current;
@@ -398,7 +445,7 @@ export function useDragToGroup() {
   );
 
   const onNodeDragStop = useCallback(
-    (_event: React.MouseEvent, draggedNode: Node) => {
+    (_event: MouseEvent | TouchEvent, draggedNode: Node) => {
       if (!isDraft) return;
 
       // Clear the highlight first: the branches below return early.
@@ -511,8 +558,11 @@ export function useDragToGroup() {
           const networkRef = getNetworkRef(targetFrame);
           const group = (draggedNode.data as { group?: Group })?.group;
           if (carried?.length && networkRef && group) {
+            const all = reactFlow.getNodes();
             carried.forEach((r) => {
               if (!r.id || !r.address) return;
+              // Its own card keeps it in the network it was created in.
+              if (hasFramedCard(r.id, all)) return;
               trackCreateResource({
                 clientId: r.id,
                 name: r.name,

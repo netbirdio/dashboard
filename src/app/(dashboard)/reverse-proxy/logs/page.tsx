@@ -1,12 +1,11 @@
 "use client";
 
-import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import dayjs from "dayjs";
 import { ExternalLinkIcon } from "lucide-react";
-import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
+import { useSearchParams } from "next/navigation";
 import React, { useMemo } from "react";
 import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -17,6 +16,7 @@ import { usePortalElement } from "@hooks/usePortalElement";
 import { REVERSE_PROXY_EVENTS_DOCS_LINK } from "@/interfaces/ReverseProxy";
 
 export default function ProxyLogsPage() {
+  const linkedSearch = useSearchParams().get("search") ?? "";
   const { permission } = usePermissions();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
@@ -34,19 +34,6 @@ export default function ProxyLogsPage() {
   return (
     <PageContainer>
       <div className="p-default py-6">
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            label="Reverse Proxy"
-            disabled
-            icon={<ReverseProxyIcon size={15} />}
-          />
-          <Breadcrumbs.Item
-            href="/reverse-proxy/logs"
-            label="Access Logs"
-            icon={<ReverseProxyIcon size={15} />}
-          />
-        </Breadcrumbs>
-
         <h1 ref={headingRef}>Access Logs</h1>
 
         <Paragraph>
@@ -63,9 +50,11 @@ export default function ProxyLogsPage() {
         hasAccess={permission?.services?.read}
       >
         <ServerPaginationProvider
+          key={linkedSearch}
           url="/events/proxy"
           defaultPageSize={25}
           defaultFilters={defaultFilters}
+          initialSearch={linkedSearch}
         >
           <PeersProvider>
             <ReverseProxyEventsTable headingTarget={portalTarget} />

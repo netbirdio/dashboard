@@ -48,6 +48,28 @@ const mockConfigPlugin = {
   },
 };
 
+/* Next.js 16.4's useRouter() reads parentRenderTree from the layout router
+   context, which the app router mock of @storybook/nextjs-vite 10.6 doesn't
+   provide, so every story crashes in Next's redirect boundary. The mock
+   renders above all decorators, so it's patched here.
+   Remove once Storybook provides parentRenderTree itself. */
+const layoutRouterPlugin = {
+  name: "netbird-layout-router-render-tree",
+  enforce: "pre" as const,
+  transform(code: string, id: string) {
+    if (!id.includes("@storybook/nextjs-vite/dist/")) return;
+    if (
+      !code.includes("parentTree: tree,") ||
+      code.includes("parentRenderTree")
+    )
+      return;
+    return code.replace(
+      "parentTree: tree,",
+      "parentTree: tree, parentRenderTree: { data: { bfcacheId: 0 } },",
+    );
+  },
+};
+
 const config: StorybookConfig = {
   stories: ["../src/**/*.stories.tsx"],
   framework: { name: "@storybook/nextjs-vite", options: {} },
@@ -71,7 +93,11 @@ const config: StorybookConfig = {
             replacement,
           }))),
     ];
-    viteConfig.plugins = [...(viteConfig.plugins ?? []), mockConfigPlugin];
+    viteConfig.plugins = [
+      ...(viteConfig.plugins ?? []),
+      mockConfigPlugin,
+      layoutRouterPlugin,
+    ];
     return viteConfig;
   },
 };

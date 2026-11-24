@@ -1,4 +1,3 @@
-import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import FullTooltip from "@components/FullTooltip";
@@ -28,13 +27,11 @@ import {
   CalendarClock,
   ExternalLinkIcon,
   KeyRound,
-  ShieldIcon,
   ShieldUserIcon,
   TimerResetIcon,
 } from "lucide-react";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
-import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { AccountMFASettings } from "@/cloud/mfa/AccountMFASettings";
 import {
   SignInDomainsSettings,
@@ -182,19 +179,6 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
   return (
     <Tabs.Content value={"authentication"}>
       <div className={"p-default py-6 max-w-2xl"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/settings"}
-            label={"Settings"}
-            icon={<SettingsIcon size={13} />}
-          />
-          <Breadcrumbs.Item
-            href={"/settings"}
-            label={"Authentication"}
-            icon={<ShieldIcon size={14} />}
-            active
-          />
-        </Breadcrumbs>
         <div className={"flex items-start justify-between -mt-1"}>
           <div>
             <h1>Authentication</h1>

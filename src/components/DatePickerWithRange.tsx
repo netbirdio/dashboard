@@ -136,7 +136,7 @@ export function DatePickerWithRange({
             id="date"
             variant={"secondary"}
             disabled={disabled}
-            className={cn("max-w-[260px] justify-start text-left font-normal")}
+            className={cn("max-w-[260px] text-left font-normal")}
           >
             <CalendarIcon size={16} className={"shrink-0"} />
             {displayDateValue}
@@ -220,7 +220,7 @@ function CalendarButton({
       className={cn(
         "py-1.5 leading-none px-2.5 rounded-md text-center text-xs transition-all flex gap-2",
         active
-          ? "bg-nb-gray-800 text-white"
+          ? "bg-nb-gray-800 text-nb-gray-100 dark:text-white"
           : "bg-transparent text-nb-gray-300 hover:bg-nb-gray-900 hover:text-nb-gray-100",
       )}
       onClick={onClick}

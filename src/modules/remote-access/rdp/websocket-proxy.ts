@@ -3,15 +3,31 @@
  * Provides WebSocket interface that routes through RDCleanPath proxy
  */
 
-import type { CertificateHandler, CertificateInfo, RDCleanPathResponse } from './rdp-certificate-handler';
+import type { RDCleanPathResponse } from "./useRDPCertificateHandler";
+
+interface CertificateHandler {
+  handleRDCleanPathResponse(response: RDCleanPathResponse): Promise<boolean>;
+}
 
 declare global {
   interface Window {
-    handleRDCleanPathWebSocket?: (ws: RDCleanPathProxyWebSocket, proxyID: string) => void;
-    createRDCleanPathProxy?: (hostname: string, port: number) => Promise<string>;
-    getRDCleanPathCertificate?: (proxyID: string) => Promise<RDCleanPathResponse | null>;
+    RDPCertificateHandler?: new () => CertificateHandler;
+    handleRDCleanPathWebSocket?: (
+      ws: RDCleanPathProxyWebSocket,
+      proxyID: string,
+    ) => void;
+    createRDCleanPathProxy?: (
+      hostname: string,
+      port: number,
+    ) => Promise<string>;
+    getRDCleanPathCertificate?: (
+      proxyID: string,
+    ) => Promise<RDCleanPathResponse | null>;
     RDCleanPathProxyWebSocket?: typeof RDCleanPathProxyWebSocket;
-    sendToRDCleanPathProxy?: (proxyID: string, data: ArrayBuffer | Uint8Array | string) => void;
+    sendToRDCleanPathProxy?: (
+      proxyID: string,
+      data: ArrayBuffer | Uint8Array | string,
+    ) => void;
     closeRDCleanPathProxy?: (proxyID: string) => void;
   }
 }
@@ -24,10 +40,10 @@ abstract class BaseWebSocketProxy extends EventTarget {
 
   url: string;
   readyState: number;
-  readonly protocol: string = '';
-  readonly extensions: string = '';
+  readonly protocol: string = "";
+  readonly extensions: string = "";
   readonly bufferedAmount: number = 0;
-  readonly binaryType: BinaryType = 'blob';
+  readonly binaryType: BinaryType = "blob";
 
   onopen: ((event: Event) => void) | null = null;
   onclose: ((event: CloseEvent) => void) | null = null;
@@ -42,38 +58,52 @@ abstract class BaseWebSocketProxy extends EventTarget {
     this.readyState = BaseWebSocketProxy.CONNECTING;
   }
 
-  get CONNECTING() { return BaseWebSocketProxy.CONNECTING; }
-  get OPEN() { return BaseWebSocketProxy.OPEN; }
-  get CLOSING() { return BaseWebSocketProxy.CLOSING; }
-  get CLOSED() { return BaseWebSocketProxy.CLOSED; }
+  get CONNECTING() {
+    return BaseWebSocketProxy.CONNECTING;
+  }
+  get OPEN() {
+    return BaseWebSocketProxy.OPEN;
+  }
+  get CLOSING() {
+    return BaseWebSocketProxy.CLOSING;
+  }
+  get CLOSED() {
+    return BaseWebSocketProxy.CLOSED;
+  }
 
   protected emitOpen(): void {
     this.readyState = BaseWebSocketProxy.OPEN;
-    const event = new Event('open');
+    const event = new Event("open");
     this.onopen?.(event);
     this.dispatchEvent(event);
   }
 
   protected emitError(error: any): void {
-    const event = new Event('error');
+    const event = new Event("error");
     this.onerror?.(event);
     this.dispatchEvent(event);
   }
 
   protected emitMessage(data: any): void {
-    const event = new MessageEvent('message', { data });
+    const event = new MessageEvent("message", { data });
     this.onmessage?.(event);
     this.dispatchEvent(event);
   }
 
-  protected emitClose(code = 1000, reason = ''): void {
+  protected emitClose(code = 1000, reason = ""): void {
     this.readyState = BaseWebSocketProxy.CLOSED;
-    const event = new CloseEvent('close', { code, reason, wasClean: code === 1000 });
+    const event = new CloseEvent("close", {
+      code,
+      reason,
+      wasClean: code === 1000,
+    });
     this.onclose?.(event);
     this.dispatchEvent(event);
   }
 
-  abstract send(data: ArrayBuffer | Uint8Array | string | Blob | ArrayBufferView): void;
+  abstract send(
+    data: ArrayBuffer | Uint8Array | string | Blob | ArrayBufferView,
+  ): void;
   abstract close(code?: number, reason?: string): void;
 }
 
@@ -87,7 +117,7 @@ export class RDCleanPathProxyWebSocket extends BaseWebSocketProxy {
   constructor(url: string) {
     super(url);
     const match = url.match(/rdcleanpath\.proxy\.local\/(.+)/);
-    this.proxyID = match?.[1] || 'default';
+    this.proxyID = match?.[1] || "default";
 
     if (window.RDPCertificateHandler) {
       this.certificateHandler = new window.RDPCertificateHandler();
@@ -102,16 +132,23 @@ export class RDCleanPathProxyWebSocket extends BaseWebSocketProxy {
 
   private async _connect(): Promise<void> {
     try {
-      const handler = (window as any)[`handleRDCleanPathWebSocket_${this.proxyID}`];
+      const handler = (window as any)[
+        `handleRDCleanPathWebSocket_${this.proxyID}`
+      ];
       if (!handler) {
-        throw new Error(`RDCleanPath WebSocket handler not available for proxy ${this.proxyID}`);
+        throw new Error(
+          `RDCleanPath WebSocket handler not available for proxy ${this.proxyID}`,
+        );
       }
       handler(this);
       this.emitOpen();
     } catch (error) {
-      console.error('RDCleanPath WebSocket connection failed:', error);
+      console.error("RDCleanPath WebSocket connection failed:", error);
       this.emitError(error);
-      this.emitClose(1006, error instanceof Error ? error.message : 'Connection failed');
+      this.emitClose(
+        1006,
+        error instanceof Error ? error.message : "Connection failed",
+      );
     }
   }
 
@@ -119,7 +156,7 @@ export class RDCleanPathProxyWebSocket extends BaseWebSocketProxy {
     if (this.onGoMessage) {
       this.onGoMessage(data);
     } else {
-      console.warn('onGoMessage not set for proxy', this.proxyID);
+      console.warn("onGoMessage not set for proxy", this.proxyID);
     }
   }
 
@@ -129,7 +166,7 @@ export class RDCleanPathProxyWebSocket extends BaseWebSocketProxy {
       return;
     }
     if (this.readyState !== BaseWebSocketProxy.OPEN) {
-      throw new Error('WebSocket is not open');
+      throw new Error("WebSocket is not open");
     }
     // Convert all data types to Uint8Array
     if (data instanceof Blob) {
@@ -138,27 +175,31 @@ export class RDCleanPathProxyWebSocket extends BaseWebSocketProxy {
         this._sendInternal(new Uint8Array(reader.result as ArrayBuffer));
       };
       reader.readAsArrayBuffer(data);
-    } else if (typeof data === 'string') {
+    } else if (typeof data === "string") {
       const encoder = new TextEncoder();
       this._sendInternal(encoder.encode(data));
     } else if (data instanceof ArrayBuffer) {
       this._sendInternal(new Uint8Array(data));
-    } else if ('buffer' in data && data.buffer instanceof ArrayBuffer) {
+    } else if ("buffer" in data && data.buffer instanceof ArrayBuffer) {
       const view = data as ArrayBufferView;
-      this._sendInternal(new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
+      this._sendInternal(
+        new Uint8Array(view.buffer, view.byteOffset, view.byteLength),
+      );
     } else {
       this._sendInternal(data as Uint8Array);
     }
   }
 
-  private async validateCertificate(certData: RDCleanPathResponse): Promise<boolean> {
+  private async validateCertificate(
+    certData: RDCleanPathResponse,
+  ): Promise<boolean> {
     if (!this.certificateHandler) {
       return false;
     }
     try {
       return await this.certificateHandler.handleRDCleanPathResponse(certData);
     } catch (error) {
-      console.error('Certificate validation error:', error);
+      console.error("Certificate validation error:", error);
       return false;
     }
   }
@@ -173,8 +214,11 @@ export class RDCleanPathProxyWebSocket extends BaseWebSocketProxy {
     this.emitClose(code, reason);
   }
 
-  close(code = 1000, reason = ''): void {
-    if (this.readyState === BaseWebSocketProxy.CLOSING || this.readyState === BaseWebSocketProxy.CLOSED) {
+  close(code = 1000, reason = ""): void {
+    if (
+      this.readyState === BaseWebSocketProxy.CLOSING ||
+      this.readyState === BaseWebSocketProxy.CLOSED
+    ) {
       return;
     }
     this.readyState = BaseWebSocketProxy.CLOSING;
@@ -195,12 +239,12 @@ export function installWebSocketProxy(): void {
     construct(_target, args) {
       const url = args[0] as string;
 
-      if (url?.includes('rdcleanpath.proxy.local')) {
+      if (url?.includes("rdcleanpath.proxy.local")) {
         window.RDCleanPathProxyWebSocket = RDCleanPathProxyWebSocket;
         return new RDCleanPathProxyWebSocket(url) as unknown as WebSocket;
       }
 
       return new OriginalWebSocket(url, args[1]);
-    }
+    },
   }) as typeof WebSocket;
 }

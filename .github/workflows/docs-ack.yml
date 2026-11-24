@@ -11,6 +11,8 @@ permissions:
 jobs:
   docs-ack:
     name: Require docs PR URL or explicit "not needed"
+    # Dependabot writes its own PR description, which never carries the docs checkboxes.
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
 
     steps:

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useAgentBusy } from "@/modules/assistant/hooks/useAgentBusy";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
 type ShortcutMap = Record<string, () => void>;
@@ -23,13 +24,14 @@ export function useControlCenterShortcuts(
   enabled: boolean = true,
 ) {
   const { isDraft } = useDraftMode();
+  const agentBusy = useAgentBusy();
   const shortcutsRef = useRef(shortcuts);
   useEffect(() => {
     shortcutsRef.current = shortcuts;
   });
 
   useEffect(() => {
-    if (!isDraft || !enabled) return;
+    if (!isDraft || !enabled || agentBusy) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isInputFocused()) return;
@@ -60,5 +62,5 @@ export function useControlCenterShortcuts(
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isDraft, enabled]);
+  }, [isDraft, enabled, agentBusy]);
 }

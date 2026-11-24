@@ -31,8 +31,11 @@ export async function openControlCenter(page: Page, tab?: FlowView) {
     page,
     tab ? `/control-center?tab=${tab}` : "/control-center",
   );
-  // The pane hides behind cc-prefit until the first fitView.
-  await expect(page.locator(".react-flow__pane")).toBeVisible();
+  // The pane hides behind cc-prefit until the first fitView. A deployed account
+  // another worker is mutating loads slower than the default 5s.
+  await expect(page.locator(".react-flow__pane")).toBeVisible({
+    timeout: 15_000,
+  });
   await dismissBlockingOverlays(page);
 }
 
@@ -70,10 +73,18 @@ export async function switchFlowView(page: Page, view: FlowView) {
   );
 }
 
-export async function enterDraft(page: Page) {
+/**
+ * `blank` starts an empty draft: nothing from the live account, so specs that
+ * only touch their own nodes don't see what the other worker just created.
+ */
+export async function enterDraft(page: Page, { blank = false } = {}) {
   await dismissBlockingOverlays(page);
   await page.getByTestId("cc-mode-draft").click({ force: true });
-  await page.getByTestId("cc-draft-use-current-option").click({ force: true });
+  await page
+    .getByTestId(
+      blank ? "cc-draft-start-blank-option" : "cc-draft-use-current-option",
+    )
+    .click({ force: true });
   // Waiting for the Add button also guarantees draft mode is fully active.
   await expect(page.getByTestId("cc-toolbar-add")).toBeVisible();
 }

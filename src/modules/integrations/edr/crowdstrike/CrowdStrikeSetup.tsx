@@ -36,6 +36,16 @@ import {
 } from "@/modules/integrations/edr/crowdstrike/CrowdStrikeRegions";
 import { CrowdStrikeZtaScoreInput } from "@/modules/integrations/edr/crowdstrike/CrowdStrikeZtaScoreInput";
 import { CrowdStrikeZtaToggle } from "@/modules/integrations/edr/crowdstrike/CrowdStrikeZtaToggle";
+import {
+  DEFAULT_STALE_GRACE,
+  EDRStaleGraceInput,
+  isValidStaleGrace,
+} from "@/modules/integrations/edr/EDRStaleGraceInput";
+import {
+  DEFAULT_SYNC_INTERVAL,
+  EDRSyncIntervalInput,
+  isValidSyncInterval,
+} from "@/modules/integrations/edr/EDRSyncIntervalInput";
 import { IntegrationModalHeader } from "@/modules/integrations/IntegrationModalHeader";
 
 type Props = {
@@ -103,6 +113,12 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
 
   const [ztaScore, setZtaScore] = useState("80");
   const [ztaEnabled, setZtaEnabled] = useState(false);
+  const [syncInterval, setSyncInterval] = useState(
+    DEFAULT_SYNC_INTERVAL.toString(),
+  );
+  const [staleGraceEnabled, setStaleGraceEnabled] = useState(false);
+  const [staleGrace, setStaleGrace] = useState(DEFAULT_STALE_GRACE.toString());
+  const [staleGraceNewPeers, setStaleGraceNewPeers] = useState(false);
 
   const connect = async () => {
     await settingsRequest.put({
@@ -131,6 +147,9 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
         groups: savedGroups.map((group) => group.id) || [],
         zta_score_threshold:
           ztaEnabled && score > 0 && score <= 100 ? score : 0,
+        sync_interval: Number(syncInterval),
+        stale_grace_minutes: staleGraceEnabled ? Number(staleGrace) : 0,
+        stale_grace_new_peers: staleGraceEnabled && staleGraceNewPeers,
       }).then(() => {
         mutate("/accounts");
         mutate("/integrations/edr/falcon");
@@ -148,7 +167,11 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
   const hasZtaError = ztaError != undefined;
 
   const isDisabled =
-    (step == 1 && !secretAndClientIDEntered) || (step == 2 && isEmpty(groups));
+    (step == 1 && !secretAndClientIDEntered) ||
+    (step == 2 &&
+      (isEmpty(groups) ||
+        !isValidSyncInterval(syncInterval) ||
+        !isValidStaleGrace(staleGraceEnabled, staleGrace)));
 
   return (
     <ModalContent
@@ -283,6 +306,20 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
                 onChange={setZtaScore}
               />
             </div>
+            <EDRSyncIntervalInput
+              name={"CrowdStrike"}
+              value={syncInterval}
+              onChange={setSyncInterval}
+            />
+            <EDRStaleGraceInput
+              name={"CrowdStrike"}
+              enabled={staleGraceEnabled}
+              onEnabledChange={setStaleGraceEnabled}
+              value={staleGrace}
+              onChange={setStaleGrace}
+              newPeers={staleGraceNewPeers}
+              onNewPeersChange={setStaleGraceNewPeers}
+            />
           </div>
         </div>
       )}

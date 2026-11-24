@@ -1,6 +1,6 @@
 import { Table } from "@tanstack/react-table";
 import * as React from "react";
-import { useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 type Props<TData> = {
@@ -19,6 +19,11 @@ export const DataTableHeadingPortal = function <TData>({
   hasActiveFilters,
 }: Props<TData>) {
   const hasMounted = useRef(false);
+  // One container for the component's lifetime: a new one per render would
+  // make React delete and recreate the count text on every table update.
+  const [portalContainer] = useState(() =>
+    typeof document === "undefined" ? null : document.createElement("span"),
+  );
   const initialTotalRecords = useRef<number | undefined>(undefined);
 
   if (
@@ -29,7 +34,13 @@ export const DataTableHeadingPortal = function <TData>({
     initialTotalRecords.current = totalRecords;
   }
 
-  if (!headingTarget) return;
+  useLayoutEffect(() => {
+    if (!headingTarget || !portalContainer) return;
+    headingTarget.prepend(portalContainer);
+    return () => portalContainer.remove();
+  }, [headingTarget, portalContainer]);
+
+  if (!headingTarget || !portalContainer) return;
   if (!hasMounted.current) hasMounted.current = true;
 
   const filteredItems = manualPagination
@@ -57,9 +68,6 @@ export const DataTableHeadingPortal = function <TData>({
         table?.getState().columnFilters.length <= 0 &&
         table?.getState().globalFilter === ""
       );
-
-  const portalContainer = document.createElement("span");
-  headingTarget.prepend(portalContainer);
 
   return createPortal(
     <Heading

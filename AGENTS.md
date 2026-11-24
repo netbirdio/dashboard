@@ -36,7 +36,7 @@ UI code:
 ## Keep the tests in step
 
 A change is done when the tests describe the new behaviour, not when the old
-ones still pass. Update all three suites as part of the same change.
+ones still pass. Update the suites the change touches, in the same change.
 
 | Suite | Lives in | Covers | Run |
 | --- | --- | --- | --- |
@@ -46,8 +46,9 @@ ones still pass. Update all three suites as part of the same change.
 
 When you:
 
-- **change logic** (helpers, hooks, validation, permission checks): add or
-  update the unit tests next to it;
+- **change logic** (helpers, hooks, validation, permission checks): update
+  the unit tests that cover it, and add new ones where they earn their place
+  (see below);
 - **add or change a user flow** (create, edit, delete, navigation): add or
   update the e2e spec for that feature;
 - **add a component, a variant or a prop**: add it to the component's
@@ -65,12 +66,30 @@ builds every story against the baseline as well; a story that can't build
 there (it imports something your branch adds) is left out of the baseline
 and listed under "New stories" in the report, so reviewers see the new UI.
 
+### Unit tests that earn their place
+
+Write one when it catches a bug that types, stories and e2e would miss:
+branching logic (permissions, validation, parsing), behaviour you can't see
+on screen, or a bug you just fixed. Skip one-line defaults, visual-only
+results and tests that restate the code. If you can't name the regression a
+test guards against, leave it out.
+
 ## Before you hand it over
 
 - `npm run lint`, and a type check (`npx tsc --noEmit`, or `npm run build`).
-- `npm run test:unit`.
+- `npm run test:unit`. If you changed logic without adding a test, say why.
 - `npm run test:visual` for UI changes, with every difference intended.
 - E2E specs for the flows you touched, or say plainly that you couldn't run
   them (they need the Docker environment from `npm run test:setup`).
 - Folder guides (`CLAUDE.md` files) updated when the architecture or rules
   they describe changed.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

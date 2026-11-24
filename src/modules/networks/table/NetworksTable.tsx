@@ -217,18 +217,18 @@ export default function NetworksTable({
                   filters={filterDefs}
                   disabled={data?.length == 0}
                 />
+                <DataTableRefreshButton
+                  isDisabled={data?.length == 0}
+                  onClick={() => {
+                    mutate("/networks").then();
+                  }}
+                />
                 <DataTableResetFilterButton
                   table={table}
                   onClick={() => {
                     table.setPageIndex(0);
                     table.resetColumnFilters();
                     table.resetGlobalFilter();
-                  }}
-                />
-                <DataTableRefreshButton
-                  isDisabled={data?.length == 0}
-                  onClick={() => {
-                    mutate("/networks").then();
                   }}
                 />
               </>

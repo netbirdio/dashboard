@@ -12,6 +12,8 @@ type Props = {
   className?: string;
   additionalInfo?: React.ReactNode;
   "data-testid"?: string;
+  /** Truncate the text at the available width instead of a fixed length. */
+  fluid?: boolean;
 };
 
 export default function ActiveInactiveRow({
@@ -23,17 +25,18 @@ export default function ActiveInactiveRow({
   className,
   additionalInfo,
   "data-testid": dataTestId,
+  fluid = false,
 }: Readonly<Props>) {
   return (
     <div
       className={cn(
-        "gap-3 dark:text-neutral-300 text-neutral-500 min-w-0",
+        "gap-3 text-nb-gray-300 dark:text-neutral-300 min-w-0",
         className,
       )}
       data-testid={dataTestId}
     >
       {leftSection}
-      <div className={"flex flex-col gap-1"}>
+      <div className={cn("flex flex-col gap-1", fluid && "min-w-0")}>
         <div className={"flex gap-2.5 items-start"}>
           <CircleIcon
             active={active}
@@ -45,7 +48,11 @@ export default function ActiveInactiveRow({
             <div
               className={"font-medium flex gap-2 items-center justify-start"}
             >
-              <TextWithTooltip text={text as string} maxChars={25} />
+              <TextWithTooltip
+                text={text as string}
+                maxChars={25}
+                fluid={fluid}
+              />
               {additionalInfo}
             </div>
             {children}
