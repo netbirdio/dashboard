@@ -35,7 +35,9 @@ export const List: Story = {
 };
 
 export const Empty: Story = {
-  parameters: { api: { "GET /groups": [] } },
+  parameters: {
+    api: { "GET /groups": [], "GET /v1alpha1/groups": [] },
+  },
 };
 
 export const FiltersOpen: Story = {

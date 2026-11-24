@@ -5,7 +5,7 @@
 // (groups, policies, setup keys) stays real; only the peer list is extended and
 // the groups the peer registered with are patched to list it as a member, since
 // the API no longer sends groups on a peer and the dashboard derives them from
-// GET /api/groups.
+// GET /api/v1alpha1/groups, or /api/groups on a management without it.
 import type { Page, Route } from "@playwright/test";
 
 type PeerGroup = { id: string; name: string };
@@ -66,7 +66,7 @@ function buildPeer(name: string): MockPeer {
 
 const isPeerList = (url: URL) => url.pathname.endsWith("/api/peers");
 const isGroupRequest = (url: URL) =>
-  /\/api\/groups(\/[^/]+)?$/.test(url.pathname);
+  /\/api\/(v1alpha1\/)?groups(\/[^/]+)?$/.test(url.pathname);
 
 type GroupBody = {
   id?: string;

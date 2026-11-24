@@ -4,6 +4,7 @@ import {
   useOidcIdToken,
 } from "@axa-fr/react-oidc";
 import loadConfig from "@utils/config";
+import { requestGroupsWithFallback } from "@utils/groupsApi";
 import { sleep } from "@utils/helpers";
 import { usePathname } from "next/navigation";
 import { isExpired } from "react-jwt";
@@ -39,6 +40,21 @@ type RequestOptions = {
 export type Params = Record<string, string | number | boolean>;
 
 async function apiRequest<T>(
+  oidcFetch: (input: RequestInfo, init?: RequestInit) => Promise<Response>,
+  method: Method,
+  url: string,
+  data?: any,
+  options?: RequestOptions,
+) {
+  if (method !== "GET" || options?.origin) {
+    return sendRequest<T>(oidcFetch, method, url, data, options);
+  }
+  return requestGroupsWithFallback(url, (path) =>
+    sendRequest<T>(oidcFetch, method, path, data, options),
+  );
+}
+
+async function sendRequest<T>(
   oidcFetch: (input: RequestInfo, init?: RequestInit) => Promise<Response>,
   method: Method,
   url: string,

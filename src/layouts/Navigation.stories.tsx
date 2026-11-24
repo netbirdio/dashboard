@@ -249,6 +249,11 @@ export const CollapsedSidebar: Story = {
 export const MobileDrawer: Story = {
   play: async () => {
     await peersLoaded();
+    // Group cells fill in once /groups answers, a moment after the peers.
+    await until(() => {
+      if (document.body.textContent?.includes("Add Groups"))
+        throw new Error("groups not loaded");
+    });
     document
       .querySelector<HTMLElement>("button.md\\:hidden, .md\\:hidden button")
       ?.click();
