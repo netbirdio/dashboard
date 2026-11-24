@@ -237,6 +237,12 @@ export default function ActivityTable({
               filters={filterDefs}
               disabled={events?.length == 0}
             />
+            <DataTableRefreshButton
+              isDisabled={events?.length == 0}
+              onClick={() => {
+                mutate("/events/audit").then();
+              }}
+            />
             <DataTableResetFilterButton
               table={table}
               onClick={() => {
@@ -249,12 +255,6 @@ export default function ActivityTable({
                 table
                   .getColumn("timestamp")
                   ?.setFilterValue([date.from, date.to]);
-              }}
-            />
-            <DataTableRefreshButton
-              isDisabled={events?.length == 0}
-              onClick={() => {
-                mutate("/events/audit").then();
               }}
             />
           </>

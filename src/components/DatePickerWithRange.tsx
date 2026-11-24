@@ -136,7 +136,7 @@ export function DatePickerWithRange({
             id="date"
             variant={"secondary"}
             disabled={disabled}
-            className={cn("max-w-[260px] justify-start text-left font-normal")}
+            className={cn("max-w-[260px] text-left font-normal")}
           >
             <CalendarIcon size={16} className={"shrink-0"} />
             {displayDateValue}

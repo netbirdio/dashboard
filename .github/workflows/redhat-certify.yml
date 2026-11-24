@@ -1,0 +1,150 @@
+name: Red Hat Certification
+
+# Certify the published UBI image in the Red Hat Ecosystem Catalog. Called by
+# build_and_push.yml on stable tags, or run by hand to (re)certify any released
+# version. preflight submits every architecture of the manifest list to Pyxis;
+# auto-publish on the component makes it public once certified.
+#
+# The Partner Connect component ID comes from the
+# REDHAT_CERT_ID_NETBIRD_DASHBOARD repository variable.
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
+    secrets:
+      PYXIS_API_TOKEN:
+        required: true
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Released version, e.g. v2.96.0"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  certify:
+    name: Certify dashboard UBI image
+    runs-on: ubuntu-24.04
+    env:
+      PREFLIGHT_VERSION: "1.21.0"
+      # sha256 of preflight-linux-amd64 from the 1.21.0 GitHub release.
+      # Red Hat publishes no checksum file, so the value is pinned here.
+      PREFLIGHT_SHA256: "5e653135503c72f8702bbe31d7643197d12937c68086879133dd6b9650a9a449"
+      COMPONENT_ID: ${{ vars.REDHAT_CERT_ID_NETBIRD_DASHBOARD }}
+    steps:
+      - name: Resolve image
+        id: resolve
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$COMPONENT_ID" ]]; then
+            echo "::error::Set the REDHAT_CERT_ID_NETBIRD_DASHBOARD repository variable to the Partner Connect component ID"
+            exit 1
+          fi
+          version="${INPUT_VERSION#v}"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Only stable x.y.z versions are certified, got '${INPUT_VERSION}'"
+            exit 1
+          fi
+          # Must match the docker/metadata-action ubi tags in build_and_push.yml.
+          tag="v${version}-ubi"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "ref=docker.io/netbirdio/dashboard:${tag}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify the multi-arch image is published
+        env:
+          IMAGE_REF: ${{ steps.resolve.outputs.ref }}
+        run: |
+          set -euo pipefail
+          docker buildx imagetools inspect "$IMAGE_REF" --raw > manifest.json
+          for arch in amd64 arm64; do
+            if ! jq -e --arg a "$arch" '.manifests[] | select(.platform.architecture == $a)' manifest.json > /dev/null; then
+              echo "::error::${IMAGE_REF} has no ${arch} manifest"
+              exit 1
+            fi
+          done
+          echo "Manifest list for ${IMAGE_REF}:"
+          jq -r '.manifests[] | "\(.platform.os)/\(.platform.architecture) \(.digest)"' manifest.json
+
+      - name: Install preflight
+        run: |
+          set -euo pipefail
+          curl -fsSL --proto '=https' --proto-redir '=https' -o preflight \
+            "https://github.com/redhat-openshift-ecosystem/openshift-preflight/releases/download/${PREFLIGHT_VERSION}/preflight-linux-amd64"
+          echo "${PREFLIGHT_SHA256}  preflight" | sha256sum -c -
+          chmod +x preflight
+          ./preflight --version
+
+      - name: Run preflight checks and submit to Red Hat
+        env:
+          IMAGE_REF: ${{ steps.resolve.outputs.ref }}
+          PFLT_PYXIS_API_TOKEN: ${{ secrets.PYXIS_API_TOKEN }}
+          PFLT_CERTIFICATION_COMPONENT_ID: ${{ env.COMPONENT_ID }}
+          PFLT_ARTIFACTS: artifacts
+          PFLT_LOGFILE: artifacts/preflight.log
+          PFLT_LOGLEVEL: info
+          PFLT_JUNIT: "true"
+        run: |
+          set -euo pipefail
+          # No --platform: preflight walks the manifest list and submits every
+          # architecture in one run, grouped under one manifest-list digest.
+          # preflight does not create the PFLT_LOGFILE directory, and --submit
+          # fails if the log file is missing.
+          mkdir -p artifacts
+          ./preflight check container "$IMAGE_REF" --submit
+
+      - name: Fail if any check did not pass
+        run: |
+          set -euo pipefail
+          shopt -s nullglob globstar
+          results=(artifacts/**/results.json)
+          if [[ ${#results[@]} -eq 0 ]]; then
+            echo "::error::preflight produced no results.json"
+            exit 1
+          fi
+          status=0
+          for f in "${results[@]}"; do
+            arch="$(basename "$(dirname "$f")")"
+            passed="$(jq -r '.passed' "$f")"
+            failed="$(jq -r '[.results.failed[]?.name] | join(", ")' "$f")"
+            echo "${arch}: passed=${passed} ${failed:+failed checks: ${failed}}"
+            [[ "$passed" == "true" ]] || status=1
+          done
+          exit $status
+
+      - name: Upload preflight artifacts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: redhat-preflight-dashboard-${{ steps.resolve.outputs.version }}
+          path: artifacts/
+          retention-days: 30
+
+      - name: Wait for Pyxis to mark both architectures certified
+        env:
+          TAG: ${{ steps.resolve.outputs.tag }}
+          PFLT_PYXIS_API_TOKEN: ${{ secrets.PYXIS_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Filter on the tag server-side so older versions are found past the first page.
+          url="https://catalog.redhat.com/api/containers/v1/projects/certification/id/${COMPONENT_ID}/images?filter=repositories.tags.name==${TAG}&page_size=100"
+          for attempt in $(seq 1 20); do
+            certified="$(curl -fsS --proto '=https' --proto-redir '=https' -H "X-API-KEY: ${PFLT_PYXIS_API_TOKEN}" "$url" \
+              | jq -r --arg t "$TAG" '[.data[] | select(.repositories[]?.tags[]?.name == $t) | select(.certified == true) | .architecture] | unique | join(",")')"
+            echo "attempt ${attempt}: certified architectures for ${TAG}: ${certified:-none}"
+            if [[ "$certified" == "amd64,arm64" ]]; then
+              echo "Both architectures certified. Auto-publish is enabled on the component, so the catalog updates on its own."
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "::error::Pyxis has not marked both architectures certified after 10 minutes. Check https://connect.redhat.com/component/view/${COMPONENT_ID}/images"
+          exit 1

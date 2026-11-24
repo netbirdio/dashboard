@@ -1,0 +1,52 @@
+name: WASM client version
+
+# Fails a pull request that moves the default WASM client in
+# src/utils/config.ts to an older release, as a merge resolved against an
+# older main once did, or points it at a prerelease. A deliberate change, say
+# a rollback away from a broken client release, carries the
+# allow-wasm-downgrade label. See scripts/wasm-client-version.mjs.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths:
+      - "src/utils/config.ts"
+      - "scripts/wasm-client-version.mjs"
+      - ".github/workflows/wasm-client-version.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  never-backwards:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # The merge commit and its first parent, the base it was merged into.
+          fetch-depth: 2
+          persist-credentials: false
+
+      # The checkout is GitHub's merge of the pull request into its base. It is
+      # compared with its own first parent rather than the base branch's tip,
+      # which may have moved on since the merge was made and would compare an
+      # old merge with a newer base.
+      - name: Compare the default WASM client with the base
+        env:
+          ALLOWED: ${{ contains(github.event.pull_request.labels.*.name, 'allow-wasm-downgrade') }}
+        run: |
+          git show HEAD^1:src/utils/config.ts > "$RUNNER_TEMP/base-config.ts"
+          result=$(node scripts/wasm-client-version.mjs compare "$RUNNER_TEMP/base-config.ts" src/utils/config.ts)
+          if [[ "$result" == "blocked" ]]; then
+            if [[ "$ALLOWED" == "true" ]]; then
+              echo "::notice::Default WASM client change allowed by the allow-wasm-downgrade label"
+            else
+              echo "::error file=src/utils/config.ts::The default WASM client moves to an older release or a prerelease. If that is deliberate, add the allow-wasm-downgrade label."
+              exit 1
+            fi
+          fi

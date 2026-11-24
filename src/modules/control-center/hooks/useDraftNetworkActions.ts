@@ -105,9 +105,8 @@ export function useDraftNetworkActions() {
     [reactFlow],
   );
 
-  const syncDraftResource = useCallback(
-    (nodeId: string) => {
-      const nodes = reactFlow.getNodes();
+  const trackDraftResource = useCallback(
+    (nodes: Node[], nodeId: string) => {
       const node = nodes.find((n) => n.id === nodeId);
       const resource = getDraftResource(node);
       if (!node || !resource?.id) return;
@@ -158,7 +157,20 @@ export function useDraftNetworkActions() {
         setTimeout(() => policyUpdates.forEach((p) => updateDraftPolicy(p)), 0);
       }
     },
-    [reactFlow, trackCreateResource, untrackResource, updateDraftPolicy],
+    [trackCreateResource, untrackResource, updateDraftPolicy],
+  );
+
+  // reactFlow.setNodes is queued and reaches getNodes() only renders later, so
+  // reading there could still see the node before the edit just made to it (and
+  // untrack it) while the canvas is busy re-rendering. A queued updater runs
+  // after every edit queued before it, on the nodes they produce.
+  const syncDraftResource = useCallback(
+    (nodeId: string) =>
+      reactFlow.setNodes((nodes) => {
+        trackDraftResource(nodes, nodeId);
+        return nodes;
+      }),
+    [reactFlow, trackDraftResource],
   );
 
   // A frame parent makes the resource a ReactFlow child; anything else falls

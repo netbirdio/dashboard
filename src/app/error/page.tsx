@@ -106,7 +106,7 @@ export default function ErrorPage() {
         If you believe this is an error, please contact your administrator.
       </Paragraph>
 
-      <div className="mt-5 space-y-3">
+      <div className="mt-5 [&>*+*]:mt-3">
         {!isBlockedUser && (
           <Button variant="default-outline" size="sm" onClick={handleRetry}>
             <RefreshCw size={16} className="mr-2" />

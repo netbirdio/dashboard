@@ -84,16 +84,16 @@ export default function IdentityProviderTab() {
               </>
             )}
           </div>
-            { isNetBirdCloud() && <Callout variant={"warning"} className={"max-w-lg mt-6"}>
-            Looking to enable a custom IdP like Keycloak? <br />
-            Please contact us at{" "}
+            { isNetBirdCloud() && <Callout variant={"info"} className={"max-w-lg mt-6"}>
+            Using Keycloak or another IdP? See our{" "}
             <InlineLink
-              href={"mailto:support@netbird.io"}
+              href={"https://docs.netbird.io/manage/team/idp-sync"}
+              target={"_blank"}
               className={"inline !text-netbird-500 font-medium"}
             >
-              {" "}
-              support@netbird.io
-            </InlineLink>{" "}
+              documentation
+            </InlineLink>
+            .
           </Callout>}
         </LockedFeatureOverlay>
       </div>
