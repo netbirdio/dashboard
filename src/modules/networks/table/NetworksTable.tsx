@@ -44,7 +44,7 @@ export const NetworkTableColumns: ColumnDef<Network>[] = [
       <DataTableHeader column={column}>Network</DataTableHeader>
     ),
     sortingFn: "text",
-    meta: { minWidth: 280 },
+    meta: { minWidth: 220, className: "group/name-cell" },
     cell: ({ row }) => <NetworkNameCell network={row.original} fluid={true} />,
   },
   {

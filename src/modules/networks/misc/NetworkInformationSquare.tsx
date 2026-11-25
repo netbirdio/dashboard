@@ -26,8 +26,15 @@ export const NetworkInformationSquare = ({
       className={cn(
         "flex min-w-0 items-center gap-4 text-nb-gray-300 dark:text-neutral-300 transition-all group/network rounded-md",
         fluid ? "w-fit max-w-full" : "w-full max-w-[450px]",
+        // The highlight spans the table cell, not just the text: it is drawn
+        // against the cell's content box and shown while the cell is hovered
+        // (the column sets `group/name-cell`).
+        onClick &&
+          (fluid
+            ? "before:absolute before:inset-0 before:-z-[1] before:rounded-md before:transition-all group-hover/name-cell:before:bg-nb-gray-900/60"
+            : "hover:bg-nb-gray-900/60"),
         onClick
-          ? "hover:text-nb-gray-100 dark:hover:text-neutral-100 group-hover/table-row:text-nb-gray-100 dark:group-hover/table-row:text-neutral-100 cursor-pointer py-2 pl-3 pr-4"
+          ? "hover:text-nb-gray-100 dark:hover:text-neutral-100 group-hover/table-row:text-nb-gray-100 dark:group-hover/table-row:text-neutral-100 cursor-pointer py-2 pl-2 pr-4"
           : "cursor-default",
       )}
       onClick={onClick}
@@ -53,6 +60,10 @@ export const NetworkInformationSquare = ({
           className={cn(
             "h-3 w-3 bg-nb-gray-950 rounded-tl-[8px] rounded-br absolute bottom-0 right-0 transition-all",
             onClick && "group-hover/table-row:bg-nb-gray-940",
+            onClick &&
+              (fluid
+                ? "group-hover/name-cell:!bg-nb-gray-910"
+                : "group-hover/network:!bg-nb-gray-910"),
           )}
         ></div>
       </div>

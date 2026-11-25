@@ -31,7 +31,7 @@ export default function ResourceNameCell({
     <button
       className={cn(
         "flex gap-4 items-center group",
-        inset && "py-2 pl-3 pr-4",
+        inset && "py-2 pl-2 pr-4",
         fluid && "min-w-0 max-w-full",
       )}
       onClick={() => {

@@ -16,11 +16,29 @@ type Props = {
   resource: NetworkResource;
 };
 
-export const ResourceExposeServiceCell = ({ resource }: Props) => {
-  const { permission } = usePermissions();
-  const { openModal, reverseProxies } = useReverseProxies();
+/** Opens the reverse proxy modal to expose the resource as a service. */
+export const useExposeResource = (resource: NetworkResource) => {
+  const { openModal } = useReverseProxies();
   const { network } = useNetworksContext();
   const router = useRouter();
+
+  return () =>
+    openModal({
+      initialResource: resource,
+      initialNetwork: network,
+      onSuccess: () => {
+        if (!network?.id) return;
+        router.push(`/network?id=${network.id}&tab=services`);
+      },
+    });
+};
+
+export const ResourceExposeServiceCell = ({ resource }: Props) => {
+  const { permission } = usePermissions();
+  const { reverseProxies } = useReverseProxies();
+  const { network } = useNetworksContext();
+  const router = useRouter();
+  const expose = useExposeResource(resource);
 
   const servicesCount = useMemo(() => {
     if (!reverseProxies) return 0;
@@ -39,7 +57,9 @@ export const ResourceExposeServiceCell = ({ resource }: Props) => {
         <Badge
           variant={"gray"}
           useHover={false}
-          className={"select-none hover:bg-nb-gray-910 dark:hover:bg-nb-gray-910 cursor-pointer"}
+          className={
+            "select-none hover:bg-nb-gray-910 dark:hover:bg-nb-gray-910 cursor-pointer"
+          }
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -61,14 +81,7 @@ export const ResourceExposeServiceCell = ({ resource }: Props) => {
         className={"!px-3"}
         onClick={(e) => {
           e.stopPropagation();
-          openModal({
-            initialResource: resource,
-            initialNetwork: network,
-            onSuccess: () => {
-              if (!network?.id) return;
-              router.push(`/network?id=${network.id}&tab=services`);
-            },
-          });
+          expose();
         }}
         disabled={!permission.services?.create}
       >

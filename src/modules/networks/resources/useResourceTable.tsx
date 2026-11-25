@@ -34,7 +34,10 @@ import {
 import { ResourceActionCell } from "@/modules/networks/resources/ResourceActionCell";
 import ResourceAddressCell from "@/modules/networks/resources/ResourceAddressCell";
 import { ResourceEnabledCell } from "@/modules/networks/resources/ResourceEnabledCell";
-import { ResourceExposeServiceCell } from "@/modules/networks/resources/ResourceExposeServiceCell";
+import {
+  ResourceExposeServiceCell,
+  useExposeResource,
+} from "@/modules/networks/resources/ResourceExposeServiceCell";
 import { ResourceGroupCell } from "@/modules/networks/resources/ResourceGroupCell";
 import ResourceNameCell from "@/modules/networks/resources/ResourceNameCell";
 import { ResourceNetworkCell } from "@/modules/networks/resources/ResourceNetworkCell";
@@ -234,7 +237,7 @@ export const useResourceTable = ({ resources, networks }: Options) => {
  * It is only as wide as its content,
  * so the rest of the cell still counts as a click on the row.
  */
-const ownClicks = (cell: React.ReactNode, className?: string) => (
+export const ownClicks = (cell: React.ReactNode, className?: string) => (
   <div
     className={cn("w-fit max-w-full min-w-0", className)}
     onClick={stopRowClick}
@@ -242,6 +245,12 @@ const ownClicks = (cell: React.ReactNode, className?: string) => (
     {cell}
   </div>
 );
+
+/** The row menu, with Expose for screens that hide the Expose column. */
+const ResourceRowActions = ({ resource }: { resource: NetworkResource }) => {
+  const expose = useExposeResource(resource);
+  return <ResourceActionCell resource={resource} onExpose={expose} />;
+};
 
 const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
   {
@@ -349,7 +358,8 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
     id: "expose_service",
     accessorKey: "id",
     header: "",
-    meta: { fit: true },
+    // Leaves with the Active column; the row menu offers Expose instead.
+    meta: { fit: true, className: ENABLED_COLUMN_CLASS.xl },
     cell: ({ row }) => {
       return ownClicks(<ResourceExposeServiceCell resource={row.original} />);
     },
@@ -361,7 +371,7 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
     meta: { fit: true },
     cell: ({ row }) => {
       return ownClicks(
-        <ResourceActionCell resource={row.original} />,
+        <ResourceRowActions resource={row.original} />,
         "ml-auto",
       );
     },

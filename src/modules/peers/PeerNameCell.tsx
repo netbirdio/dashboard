@@ -39,7 +39,14 @@ export default function PeerNameCell({
           "flex items-center gap-2 text-nb-gray-300 dark:text-neutral-300 transition-all py-2 px-3 rounded-md ",
           fluid ? "w-fit max-w-full min-w-0" : "max-w-[280px]",
           linkToPeer &&
-            "hover:text-nb-gray-100 dark:hover:text-neutral-100 hover:bg-nb-gray-900/60 cursor-pointer",
+            "hover:text-nb-gray-100 dark:hover:text-neutral-100 cursor-pointer",
+          // In a fluid column the highlight spans the table cell, not just
+          // the text: it is drawn against the cell's content box and shown
+          // while the cell is hovered (the column sets `group/name-cell`).
+          linkToPeer &&
+            (fluid
+              ? "before:absolute before:inset-0 before:-z-[1] before:rounded-md before:transition-all group-hover/name-cell:before:bg-nb-gray-900/60 group-hover/name-cell:text-nb-gray-100 dark:group-hover/name-cell:text-neutral-100"
+              : "hover:bg-nb-gray-900/60"),
         )}
         data-testid="peer-name-cell"
         aria-label={`View details of peer ${peer.name}`}

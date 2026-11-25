@@ -74,7 +74,7 @@ export default function NetworkRoutingPeerCell({ network }: Props) {
       >
         {isActive && (
           <Badge
-            variant={isHighlyAvailable ? "green" : "gray"}
+            variant={"gray"}
             className={cn(
               "inline-flex gap-2  min-w-[110px] font-medium items-center justify-center min-h-[34px] cursor-pointer",
             )}

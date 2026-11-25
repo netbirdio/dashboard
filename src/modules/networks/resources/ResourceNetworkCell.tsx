@@ -15,6 +15,7 @@ export const ResourceNetworkCell = ({ network }: Props) => {
 
   return (
     <div className={"flex gap-3"}>
+      {!network.routing_peers_count && <NoRoutingPeerBadge network={network} />}
       <Badge
         variant={"gray"}
         useHover={true}
@@ -29,7 +30,6 @@ export const ResourceNetworkCell = ({ network }: Props) => {
         <NetworkIcon size={12} className={"shrink-0"} />
         <TextWithTooltip text={network.name} maxChars={25} />
       </Badge>
-      {!network.routing_peers_count && <NoRoutingPeerBadge network={network} />}
     </div>
   );
 };
