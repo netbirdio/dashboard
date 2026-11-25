@@ -63,13 +63,17 @@ export default function Code({
         </ScrollArea>
       </div>
       {showCopyIcon && (
-        <span
+        <button
+          type={"button"}
           onClick={handleCopy}
-          className={"absolute right-0 top-0 pt-3 pr-3 cursor-pointer z-10"}
+          aria-label={"Copy to clipboard"}
+          className={
+            "absolute right-0 top-0 pt-3 pr-3 cursor-pointer z-10 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-netbird"
+          }
           data-testid="copy-to-clipboard"
         >
           {copied ? <CheckIcon size={16} /> : <CopyIcon size={16} />}
-        </span>
+        </button>
       )}
     </div>
   );

@@ -36,7 +36,6 @@ export default function MCPTab() {
         url,
         new URL(url, location.href).origin !== location.origin,
       ),
-    { revalidateOnFocus: false },
   );
   const clients = useMemo(() => getMcpClients(url), [url]);
   const [client, setClient] = useState<McpClient>();

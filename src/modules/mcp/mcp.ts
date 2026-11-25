@@ -25,23 +25,32 @@ const request = (url: string, init?: RequestInit) =>
 // 404 means MCP is off, 401 means it runs, with the WWW-Authenticate header
 // when sign-in runs too.
 // A request the browser could not complete means off only on another origin,
-// where the 404 is blocked for carrying no CORS headers. On the same origin it
-// is a network failure, so it throws and the caller can try again.
+// where the 404 is blocked for carrying no CORS headers. A blocked 404 looks
+// the same as a dropped request, so it is asked once more before it counts.
+// On the same origin it is a network failure, so it throws and the caller can
+// try again.
 export const fetchMcpStatus = async (
   url: string,
   crossOrigin: boolean,
+  retryDelayMs = 1000,
 ): Promise<McpStatus> => {
   const metadata = await request(`${url}/.well-known/oauth-protected-resource`);
   if (metadata?.ok) return "enabled";
 
-  const res = await request(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json, text/event-stream",
-    },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
-  });
+  const probe = () =>
+    request(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+      },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
+    });
+  let res = await probe();
+  if (!res && crossOrigin) {
+    await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+    res = await probe();
+  }
   if (!res) {
     if (crossOrigin) return "disabled";
     throw new Error("MCP endpoint could not be reached");

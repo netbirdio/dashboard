@@ -106,7 +106,18 @@ describe("fetchMcpStatus", () => {
 
   it("reads a blocked endpoint as disabled on another origin, where the 404 has no CORS headers", async () => {
     respond("fail", "fail");
-    await expect(fetchMcpStatus(url, true)).resolves.toBe("disabled");
+    await expect(fetchMcpStatus(url, true, 0)).resolves.toBe("disabled");
+    // Metadata once, then the endpoint twice: a blocked 404 is asked again before it counts.
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not call a server on another origin disabled for one dropped request", async () => {
+    const answers: Answer[] = ["fail", "fail", { status: 401 }];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => reply(answers.shift()!)),
+    );
+    await expect(fetchMcpStatus(url, true, 0)).resolves.toBe("token-only");
   });
 
   it("does not call a network failure on the same origin disabled", async () => {
