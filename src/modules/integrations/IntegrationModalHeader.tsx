@@ -6,13 +6,18 @@ import Image from "next/image";
 import * as React from "react";
 import netBirdLogo from "@/assets/netbird.svg";
 
-type Props = {
-  image: StaticImport | string;
+// The logo is an image file, or an icon component for integrations that have none.
+type Logo =
+  | { image: StaticImport | string; icon?: never }
+  | { icon: React.ReactNode; image?: never };
+
+type Props = Logo & {
   title: string;
   description: string;
 };
 export const IntegrationModalHeader = ({
   image,
+  icon,
   title,
   description,
 }: Props) => {
@@ -38,7 +43,11 @@ export const IntegrationModalHeader = ({
             "h-12 w-12 flex items-center justify-center rounded-md bg-nb-gray-900/70 p-2 border border-nb-gray-900/70"
           }
         >
-          <Image src={image} alt={""} className={"rounded-[4px]"} />
+          {image ? (
+            <Image src={image} alt={""} className={"rounded-[4px]"} />
+          ) : (
+            icon
+          )}
         </div>
       </div>
       <div

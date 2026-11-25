@@ -37,7 +37,7 @@ export default function SetupKeysTab() {
   return (
     <Tabs.Content value={"setup-keys"} className={"w-full"}>
       <div className={"p-default py-6"}>
-        <h1>Setup Keys</h1>
+        <h1 className={"mt-0"}>Setup Keys</h1>
         <Paragraph>
           Setup keys are pre-authentication keys that allow to register new
           machines in your network.{" "}

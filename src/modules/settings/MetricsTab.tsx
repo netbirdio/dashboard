@@ -49,7 +49,7 @@ export default function MetricsTab({ account }: Readonly<Props>) {
     <Tabs.Content value={"metrics"}>
       <div className={"p-default py-6 max-w-2xl"}>
         <div>
-          <h1>Metrics</h1>
+          <h1 className={"mt-0"}>Metrics</h1>
           <Paragraph className={"block"}>
             Share client performance metrics to help us improve NetBird.{" "}
             <InlineLink

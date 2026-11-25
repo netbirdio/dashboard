@@ -65,7 +65,7 @@ export default function DangerZoneTab({ account }: Props) {
   return (
     <Tabs.Content value={"danger-zone"}>
       <div className={"p-default py-6"}>
-        <h1>Danger Zone</h1>
+        <h1 className={"mt-0"}>Danger Zone</h1>
         <div className={"gap-6 mt-6 max-w-lg"}>
           <Card
             className={

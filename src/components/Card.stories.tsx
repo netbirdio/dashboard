@@ -159,6 +159,24 @@ export const Features: StoryObj = {
         }
       />
       <FeatureCard
+        icon={<KeyRound size={16} />}
+        title={"Title only"}
+        onClick={() => {}}
+      />
+      <FeatureCard
+        variant={"option"}
+        icon={<KeyRound size={16} />}
+        title={"Option"}
+        onClick={() => {}}
+      />
+      <FeatureCard
+        variant={"option"}
+        icon={<KeyRound size={16} />}
+        title={"Disabled option"}
+        onClick={() => {}}
+        disabled={true}
+      />
+      <FeatureCard
         variant={"plain"}
         title={"API base URL"}
         description={"https://api.netbird.io"}

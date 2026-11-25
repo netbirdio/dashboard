@@ -99,5 +99,9 @@ window.fetch = async (input, init) => {
     console.warn(`[storybook api] unmocked ${method} ${path}`);
   }
   const handler = match?.handler ?? (method === "GET" ? [] : {});
-  return json(answer(handler, path) ?? {});
+  // Awaited, so a handler can also hold a request open with a pending promise.
+  const result = await answer(handler, path);
+  // A handler can answer with a Response of its own, to mock a status other than 200.
+  if (result instanceof Response) return result;
+  return json(result ?? {});
 };
