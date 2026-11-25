@@ -70,7 +70,13 @@ export const SecureProvider = ({ children }: Props) => {
         if (stored && !window.location.search) {
           const data: StoredQueryParams = JSON.parse(stored);
           if (data?.path === currentPath && data?.params) {
-            localStorage.removeItem(QUERY_PARAMS_KEY);
+            // A remote-access path keeps its query persisted, as above, so a
+            // redirect started after the restore still brings it back.
+            if (PRESERVE_QUERY_PARAMS_PATHS.includes(currentPath)) {
+              storeQueryParams(currentPath, data.params);
+            } else {
+              localStorage.removeItem(QUERY_PARAMS_KEY);
+            }
             window.history.replaceState(
               null,
               "",

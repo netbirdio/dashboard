@@ -206,28 +206,41 @@ function VNCSession({
     // or port needs a fresh one. Without this the dial would be dropped by a
     // policy that covers the previous choice and the failure would look like
     // the peer's fault.
-    if (
+    const grantOutdated =
       client.status === NetBirdStatus.CONNECTED &&
       grantedScope.current !== null &&
-      grantedScope.current !== scope
-    ) {
-      try {
-        await client.disconnect();
-        grantedScope.current = null;
-      } catch (error) {
+      grantedScope.current !== scope;
+    if (!grantOutdated && client.status !== NetBirdStatus.DISCONNECTED) return;
+
+    // Held from before the old client is stopped until the new one settles, so
+    // the auto-connect effect cannot start a second connection while the first
+    // is still being torn down.
+    setIsNetBirdConnecting(true);
+    try {
+      if (grantOutdated) {
+        try {
+          await client.disconnect();
+          grantedScope.current = null;
+        } catch (error) {
+          sendErrorNotification(
+            "NetBird Connection Error",
+            (error as Error).message,
+          );
+          return;
+        }
+      }
+
+      const result = await client.connectTemporary(peer.id!, rules);
+      // connectTemporary reports a client that failed to start by resolving
+      // with connected: false rather than throwing.
+      if (!result.connected) {
+        setConnectFailed(true);
         sendErrorNotification(
           "NetBird Connection Error",
-          (error as Error).message,
+          "Could not connect to NetBird.",
         );
         return;
       }
-    }
-
-    if (client.status !== NetBirdStatus.DISCONNECTED) return;
-
-    try {
-      setIsNetBirdConnecting(true);
-      const result = await client.connectTemporary(peer.id!, rules);
       grantedScope.current = scope;
       // Only stash a non-null key: the early-exit path of connectTemporary
       // returns null, and overwriting an earlier good value with null would

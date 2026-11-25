@@ -47,7 +47,8 @@ export const VNCPasswordModal = ({
   const [stale, setStale] = useState(false);
 
   const submit = () => {
-    if (!password || stale) return;
+    // An empty password is a valid answer: VNCAuth servers can be set up with one.
+    if (stale) return;
     if (!onSubmit(password)) {
       setStale(true);
     }
@@ -111,7 +112,7 @@ export const VNCPasswordModal = ({
             </Button>
             <Button
               variant={"primary"}
-              disabled={!password || stale}
+              disabled={stale}
               onClick={submit}
             >
               Connect

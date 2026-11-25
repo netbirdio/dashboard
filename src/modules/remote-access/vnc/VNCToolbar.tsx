@@ -44,11 +44,23 @@ export default function VNCToolbar({
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       const parsed = stored ? parseFloat(stored) : NaN;
-      return isFinite(parsed) ? Math.max(5, Math.min(95, parsed)) : 50;
+      return isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : 50;
     } catch (e) {
       return 50;
     }
   });
+  // The toolbar is positioned by its center, so keeping it on screen depends
+  // on how wide it is. Its width is measured and applied as an edge clamp
+  // below; the stored position stays a plain percentage.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => setWidth(el.offsetWidth));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const draggingRef = useRef(false);
   // Mirrors xPercent so the pointerup handler below can persist the latest
   // value without the listeners being torn down and re-registered on every
@@ -62,7 +74,7 @@ export default function VNCToolbar({
     const onMove = (e: PointerEvent) => {
       if (!draggingRef.current) return;
       const pct = (e.clientX / window.innerWidth) * 100;
-      const clamped = Math.max(5, Math.min(95, pct));
+      const clamped = Math.max(0, Math.min(100, pct));
       setXPercent(clamped);
     };
     const onUp = () => {
@@ -95,8 +107,12 @@ export default function VNCToolbar({
 
   return (
     <div
+      ref={rootRef}
       className="fixed top-0 z-50 group px-4 pt-0 pb-4"
-      style={{ left: `${xPercent}%`, transform: "translateX(-50%)" }}
+      style={{
+        left: `clamp(${width / 2}px, ${xPercent}%, calc(100% - ${width / 2}px))`,
+        transform: "translateX(-50%)",
+      }}
     >
       {/* items-start, not items-center: both of these hang from the top edge
           of the window, and centering them against each other would push the

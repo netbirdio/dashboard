@@ -68,6 +68,16 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
   const client = useNetBirdClient();
   const connected = useRef(false);
   const sshConnectedOnce = useRef(false);
+  // The startup below awaits the overlay and the dial. A terminal that was
+  // replaced meanwhile (the IP version changed) must not leave a connection
+  // behind that nothing owns.
+  const unmounted = useRef(false);
+  useEffect(() => {
+    unmounted.current = false;
+    return () => {
+      unmounted.current = true;
+    };
+  }, []);
 
   const {
     connect: ssh,
@@ -134,12 +144,17 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
           : "tcp";
         const rules = [`${protocol}/${aclPort}`];
         await client?.connectTemporary(peer.id, rules);
+        if (unmounted.current) return;
         const res = await ssh({
           hostname: sshHost,
           port: Number(port),
           username,
           ipVersion: sshIpVersion || undefined,
         });
+        if (unmounted.current) {
+          disconnect();
+          return;
+        }
         if (res === SSHStatus.CONNECTED) {
           sshConnectedOnce.current = true;
         }
@@ -158,6 +173,7 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
     peer.version,
     port,
     ssh,
+    disconnect,
     sshHost,
     sshIpVersion,
     username,
