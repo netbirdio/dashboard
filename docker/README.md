@@ -7,8 +7,9 @@ NetBird Dashboard is NetBird's management server UI.
 Each published image tag also has a rootless variant with the `-rootless`
 suffix. For example, `main` is also published as `main-rootless`.
 
-Each tag also has a Red Hat UBI variant with the `-ubi` suffix (for example
-`main-ubi`). Stable releases are also tagged `ubi-latest`.
+Version, branch, and commit tags also have a Red Hat UBI variant with the
+`-ubi` suffix (for example `main-ubi`). The latest stable release is tagged
+`ubi-latest`.
 
 ## How to use this image
 
