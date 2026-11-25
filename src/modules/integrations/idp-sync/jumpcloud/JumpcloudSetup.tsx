@@ -34,7 +34,7 @@ import { GroupPrefixHelpText } from "@/modules/integrations/idp-sync/GroupPrefix
 import { GroupPrefixInput } from "@/modules/integrations/idp-sync/GroupPrefixInput";
 import { IntegrationModalHeader } from "@/modules/integrations/IntegrationModalHeader";
 import { useSSOConnections } from "@/modules/integrations/sso/useSSOConnections";
-import { isAuth0 } from "@utils/netbird";
+import { getScimBaseUrl, isAuth0 } from "@utils/netbird";
 
 type Props = {
   open: boolean;
@@ -367,7 +367,7 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
                   },
                   {
                     label: "Base URL",
-                    value: "https://api.netbird.io/api/scim/v2",
+                    value: getScimBaseUrl(),
                   },
                   {
                     label: "Token Key",
