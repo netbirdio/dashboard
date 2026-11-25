@@ -17,6 +17,7 @@ export const Mark = ({ children, copy = false }: Props) => {
         onClick={() => copy && copyToClipBoard()}
         // A copyable mark acts as a button, so it has to be reachable and usable by keyboard.
         role={copy ? "button" : undefined}
+        title={copy ? "Copy to clipboard" : undefined}
         tabIndex={copy ? 0 : undefined}
         onKeyDown={(e) => {
           if (!copy || (e.key !== "Enter" && e.key !== " ")) return;
