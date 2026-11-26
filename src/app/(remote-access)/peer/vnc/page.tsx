@@ -208,7 +208,6 @@ function VNCSession({
     // the peer's fault.
     const grantOutdated =
       client.status === NetBirdStatus.CONNECTED &&
-      grantedScope.current !== null &&
       grantedScope.current !== scope;
     if (!grantOutdated && client.status !== NetBirdStatus.DISCONNECTED) return;
 
@@ -285,11 +284,12 @@ function VNCSession({
   // registers a peer and opens a temporary access policy, so it waits for the
   // operator to have chosen what to open it for.
   useEffect(() => {
-    // A connected client whose grant covers a different server or port has to
-    // be brought back through connectNetBird, which drops it and asks again.
+    // A connected client whose grant covers a different server or port, or
+    // that has no recorded grant because the last one came back without its
+    // keys, has to be brought back through connectNetBird, which drops it and
+    // asks again.
     const grantOutdated =
       client.status === NetBirdStatus.CONNECTED &&
-      grantedScope.current !== null &&
       grantedScope.current !== scope;
     if (
       (client.status === NetBirdStatus.DISCONNECTED || grantOutdated) &&

@@ -120,12 +120,14 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
         : "tcp";
       const rules = [`${protocol}/${aclPort}`];
       await client?.connectTemporary(peer.id, rules);
+      if (unmounted.current) return;
       await ssh({
         hostname: sshHost,
         port: Number(port),
         username,
         ipVersion: sshIpVersion || undefined,
       });
+      if (unmounted.current) disconnect();
     } catch (error) {
       console.error("Reconnection failed:", error);
     } finally {
