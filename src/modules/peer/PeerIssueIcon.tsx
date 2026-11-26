@@ -17,7 +17,8 @@ import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
 //   yellow triangle → bypassed (admin override, watch it)
 //   red triangle    → non-compliant or approval required (admin action)
 //
-// Priority: bypassed → login_expired → non-compliant → approval_required.
+// Priority: bypassed → non-compliant → approval_required → login_expired.
+// Admin action wins over the routine re-authentication.
 export const usePeerIssueIcon = (peer: Peer): React.ReactNode | null => {
   const { isAnyIntegrationEnabled, activeIntegrationName } = useIntegrations();
   const { isBypassed: checkBypassed } = useBypassedPeers();
@@ -37,25 +38,6 @@ export const usePeerIssueIcon = (peer: Peer): React.ReactNode | null => {
         }
       >
         <AlertTriangle
-          size={ICON_SIZE}
-          className={"shrink-0 text-yellow-400 cursor-help"}
-        />
-      </FullTooltip>
-    );
-  }
-
-  if (peer.login_expired) {
-    return (
-      <FullTooltip
-        interactive={false}
-        content={
-          <div className={"text-xs max-w-xs"}>
-            This peer&apos;s login has expired. Re-authenticate from the
-            NetBird client on the device to bring it back online.
-          </div>
-        }
-      >
-        <Clock
           size={ICON_SIZE}
           className={"shrink-0 text-yellow-400 cursor-help"}
         />
@@ -98,6 +80,25 @@ export const usePeerIssueIcon = (peer: Peer): React.ReactNode | null => {
         <AlertTriangle
           size={ICON_SIZE}
           className={"shrink-0 text-red-500 cursor-help"}
+        />
+      </FullTooltip>
+    );
+  }
+
+  if (peer.login_expired) {
+    return (
+      <FullTooltip
+        interactive={false}
+        content={
+          <div className={"text-xs max-w-xs"}>
+            This peer&apos;s login has expired. Re-authenticate from the
+            NetBird client on the device to bring it back online.
+          </div>
+        }
+      >
+        <Clock
+          size={ICON_SIZE}
+          className={"shrink-0 text-yellow-400 cursor-help"}
         />
       </FullTooltip>
     );
