@@ -101,7 +101,7 @@ export default function MCPTab() {
                 variant={"option"}
                 icon={<McpClientIcon client={c.id} size={20} />}
                 title={c.name}
-                disabled={disabled}
+                disabled={status !== "enabled"}
                 href={c.href}
                 onClick={c.href ? undefined : () => setClient(c)}
               />
