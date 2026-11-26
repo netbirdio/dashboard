@@ -276,6 +276,10 @@ export const useNetBirdClient = () => {
     async (
       peerId: string,
       rules?: string[],
+      // vncSessionKey asks for the per-session keypair a NetBird VNC session
+      // authenticates with. SSH, RDP and VNC to an external server do not use
+      // it, so it is minted only on request.
+      options?: { vncSessionKey?: boolean },
     ): Promise<TemporaryConnectResult> => {
       const currentStatus = netBirdStore.getState().status;
       if (
@@ -306,7 +310,9 @@ export const useNetBirdClient = () => {
         await initialize();
         let sessionPub: string | undefined;
         let keySessionId: string | null = null;
-        const wasmGenerate = (window as any).netbirdGenerateVNCSessionKey;
+        const wasmGenerate = options?.vncSessionKey
+          ? (window as any).netbirdGenerateVNCSessionKey
+          : undefined;
         if (typeof wasmGenerate === "function") {
           const sk = wasmGenerate();
           if (

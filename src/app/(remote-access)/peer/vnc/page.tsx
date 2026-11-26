@@ -229,7 +229,9 @@ function VNCSession({
         }
       }
 
-      const result = await client.connectTemporary(peer.id!, rules);
+      const result = await client.connectTemporary(peer.id!, rules, {
+        vncSessionKey: !isExternal,
+      });
       // connectTemporary reports a client that failed to start by resolving
       // with connected: false rather than throwing.
       if (!result.connected) {
@@ -419,11 +421,16 @@ function VNCSession({
         setShowSetup(true);
       }
     }
+  }, [vnc.error, vnc.errorDetail]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Its own effect so a VNC error changing does not announce the same client
+  // error a second time.
+  useEffect(() => {
     if (client.error) {
       sendErrorNotification("NetBird Client Error", client.error);
     }
-  }, [vnc.error, vnc.errorDetail, client.error, sendErrorNotification]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  }, [client.error]);
 
   // Backing out of the password prompt returns to the connection form, which
   // is the last point the operator actually chose anything. Tearing the window
