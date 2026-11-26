@@ -38,8 +38,8 @@ export const isMobileOS = (os?: string) => {
 };
 
 const NO_REPORTED_CURSOR = new Set([
-  // Draws the cursor into the frames it captures, so asking for it again
-  // would show the viewer two.
+  // Its frames carry no pointer, and the host cannot report one separately,
+  // so the control would have nothing to switch.
   OperatingSystem.APPLE,
   // Has no pointer to report in the first place.
   OperatingSystem.ANDROID,
