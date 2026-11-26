@@ -20,7 +20,7 @@ const pinnedWasmPath = (): string => {
     "utf8",
   );
   const pinned = configSource.match(
-    /https:\/\/pkgs\.netbird\.io\/wasm\/client\/v[0-9.]+/,
+    /https:\/\/pkgs\.netbird\.io\/wasm\/client\/v[0-9][0-9A-Za-z.+-]*/,
   );
   expect(pinned, "config.ts should pin a default wasm path").not.toBeNull();
   return pinned![0];
