@@ -1,5 +1,5 @@
 import FullTooltip from "@components/FullTooltip";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Clock } from "lucide-react";
 import * as React from "react";
 import { PeerDisapprovalReason } from "@/cloud/edr/PeerDisapprovalReason";
 import { useBypassedPeers } from "@/cloud/edr/useBypass";
@@ -11,13 +11,14 @@ import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
 // that may return null) so callers can react to "has issue" before
 // committing to a layout slot.
 //
-// A single AlertTriangle conveys "needs attention"; the colour encodes
-// severity and the tooltip carries the specific message.
-//   yellow → bypassed (admin override, watch it)
-//   red    → everything else (login expired, non-compliant, approval
-//            required)
+// The icon and colour encode severity; the tooltip carries the specific
+// message.
+//   yellow clock    → login expired (routine, the user re-authenticates)
+//   yellow triangle → bypassed (admin override, watch it)
+//   red triangle    → non-compliant or approval required (admin action)
 //
-// Priority: bypassed → login_expired → non-compliant → approval_required.
+// Priority: bypassed → non-compliant → approval_required → login_expired.
+// Admin action wins over the routine re-authentication.
 export const usePeerIssueIcon = (peer: Peer): React.ReactNode | null => {
   const { isAnyIntegrationEnabled, activeIntegrationName } = useIntegrations();
   const { isBypassed: checkBypassed } = useBypassedPeers();
@@ -39,25 +40,6 @@ export const usePeerIssueIcon = (peer: Peer): React.ReactNode | null => {
         <AlertTriangle
           size={ICON_SIZE}
           className={"shrink-0 text-yellow-400 cursor-help"}
-        />
-      </FullTooltip>
-    );
-  }
-
-  if (peer.login_expired) {
-    return (
-      <FullTooltip
-        interactive={false}
-        content={
-          <div className={"text-xs max-w-xs"}>
-            This peer&apos;s login has expired. Re-authenticate from the
-            NetBird client on the device to bring it back online.
-          </div>
-        }
-      >
-        <AlertTriangle
-          size={ICON_SIZE}
-          className={"shrink-0 text-red-500 cursor-help"}
         />
       </FullTooltip>
     );
@@ -98,6 +80,25 @@ export const usePeerIssueIcon = (peer: Peer): React.ReactNode | null => {
         <AlertTriangle
           size={ICON_SIZE}
           className={"shrink-0 text-red-500 cursor-help"}
+        />
+      </FullTooltip>
+    );
+  }
+
+  if (peer.login_expired) {
+    return (
+      <FullTooltip
+        interactive={false}
+        content={
+          <div className={"text-xs max-w-xs"}>
+            This peer&apos;s login has expired. Re-authenticate from the
+            NetBird client on the device to bring it back online.
+          </div>
+        }
+      >
+        <Clock
+          size={ICON_SIZE}
+          className={"shrink-0 text-yellow-400 cursor-help"}
         />
       </FullTooltip>
     );
