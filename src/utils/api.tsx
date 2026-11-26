@@ -4,6 +4,7 @@ import {
   useOidcIdToken,
 } from "@axa-fr/react-oidc";
 import loadConfig from "@utils/config";
+import { requestGroupsWithFallback } from "@utils/groupsApi";
 import { sleep } from "@utils/helpers";
 import { usePathname } from "next/navigation";
 import { isExpired } from "react-jwt";
@@ -17,6 +18,8 @@ export type ErrorResponse = {
   code: number;
   message: string;
   requestId?: string;
+  // HTTP status of the response; the body's own `code` is absent behind proxies.
+  status?: number;
 };
 
 // Header set by newer management API servers to correlate a response with a
@@ -45,6 +48,21 @@ async function apiRequest<T>(
   data?: any,
   options?: RequestOptions,
 ) {
+  if (method !== "GET" || options?.origin) {
+    return sendRequest<T>(oidcFetch, method, url, data, options);
+  }
+  return requestGroupsWithFallback(url, (path) =>
+    sendRequest<T>(oidcFetch, method, path, data, options),
+  );
+}
+
+async function sendRequest<T>(
+  oidcFetch: (input: RequestInfo, init?: RequestInit) => Promise<Response>,
+  method: Method,
+  url: string,
+  data?: any,
+  options?: RequestOptions,
+) {
   const origin = options?.origin ? options?.origin : config.apiOrigin + "/api";
   let newUrl = mergeUrlParams(
     url,
@@ -62,7 +80,7 @@ async function apiRequest<T>(
   try {
     if (!res.ok) {
       const error = (await res.json()) as ErrorResponse;
-      return Promise.reject({ ...error, requestId });
+      return Promise.reject({ ...error, requestId, status: res.status });
     }
     if (options?.blob) return (await res.blob()) as T;
     return (await res.json()) as T;
@@ -72,6 +90,7 @@ async function apiRequest<T>(
         code: res.status,
         message: res.statusText,
         requestId,
+        status: res.status,
       } as ErrorResponse;
       return Promise.reject(error);
     }

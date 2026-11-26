@@ -20,6 +20,7 @@ import { uniqBy } from "lodash";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
+import { useGroupsOfPeer } from "@/contexts/GroupsProvider";
 import { useRoutes } from "@/contexts/RoutesProvider";
 import { Peer } from "@/interfaces/Peer";
 import { GroupedRoute, Route } from "@/interfaces/Route";
@@ -155,10 +156,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
     return !routingPeer || groups.length == 0 || !routeNetwork;
   }, [routingPeer, groups, routeNetwork]);
 
-  const singleRoutingPeerGroups = useMemo(() => {
-    if (!routingPeer) return [];
-    return routingPeer?.groups;
-  }, [routingPeer]);
+  const singleRoutingPeerGroups = useGroupsOfPeer(routingPeer?.id);
 
   return (
     <ModalContent flow="route_routing_peer" maxWidthClass={"max-w-2xl"}>

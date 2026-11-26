@@ -10,6 +10,11 @@ import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { User } from "@/interfaces/User";
 import { EditGroupNameModal } from "@/modules/groups/EditGroupNameModal";
+import {
+  addPeersToMembers,
+  groupPeerIds,
+  removePeersFromMembers,
+} from "@/modules/groups/groupMembers";
 import { useGroupIdentification } from "@/modules/groups/useGroupIdentification";
 
 type Props = {
@@ -29,7 +34,7 @@ const GroupContext = React.createContext(
     isAllowedToDelete: boolean;
     isAllowedToRename: boolean;
     openGroupRenameModal?: () => void;
-    addPeersToGroup: (peers: Peer[]) => Promise<void>;
+    addPeersToGroup: (peerIds: string[]) => Promise<void>;
     removePeersFromGroup: (peer: Peer[]) => Promise<void>;
     addUsersToGroup: (users: User[]) => Promise<void>;
     removeUsersFromGroup: (users: User[]) => Promise<void>;
@@ -92,10 +97,8 @@ export const GroupProvider = ({
   const renameGroup = (name: string) => {
     if (!isAllowedToRename) return Promise.reject("Not allowed to rename");
 
-    const currentPeerIds =
-      group.peers?.map((p) => (typeof p === "string" ? p : p.id)) || [];
     const promise = groupRequest
-      .put({ ...group, peers: currentPeerIds, name })
+      .put({ ...group, peers: groupPeerIds(group), name })
       .then(() => {
         updateGroupDropdown(group.name, { ...group, name });
         if (isDetailPage) mutate(`/groups/${group.id}`);
@@ -131,11 +134,10 @@ export const GroupProvider = ({
 
     if (!choice) return Promise.resolve();
 
-    const currentPeerIds =
-      group.peers?.map((p) => (typeof p === "string" ? p : p.id)) || [];
-    const newPeerIds = currentPeerIds.filter((pid) => {
-      return !peers.find((peer) => peer.id === pid);
-    });
+    const newPeerIds = removePeersFromMembers(
+      group.peers,
+      peers.map((peer) => peer.id as string),
+    );
     const promise = groupRequest
       .put({ ...group, peers: newPeerIds })
       .then(() => {
@@ -157,17 +159,11 @@ export const GroupProvider = ({
     return promise;
   };
 
-  const addPeersToGroup = async (peers: Peer[]) => {
+  const addPeersToGroup = async (peerIds: string[]) => {
     if (!permission?.groups?.update) return Promise.reject();
 
-    const currentPeerIds =
-      group.peers?.map((p) => (typeof p === "string" ? p : p.id)) || [];
-    const newPeerIds = [...currentPeerIds, ...peers.map((peer) => peer.id)];
-
-    const uniquePeerIds = Array.from(new Set(newPeerIds));
-
     const promise = groupRequest
-      .put({ ...group, peers: uniquePeerIds })
+      .put({ ...group, peers: addPeersToMembers(group.peers, peerIds) })
       .then(() => {
         if (isDetailPage) mutate(`/groups/${group.id}`);
         mutate("/groups");

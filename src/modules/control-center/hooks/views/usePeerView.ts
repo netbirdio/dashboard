@@ -17,8 +17,15 @@ import {
 import { addDestinationResourceNodes, ViewResult } from "./types";
 
 export function usePeerView() {
-  const { policies, peers, networks, networkResources, groups, isDataReady } =
-    useControlCenterData();
+  const {
+    policies,
+    peers,
+    networks,
+    networkResources,
+    groups,
+    groupsByPeerId,
+    isDataReady,
+  } = useControlCenterData();
   const agentNetwork = useAgentNetworkOverlay();
 
   const applyPeerView = (
@@ -33,7 +40,7 @@ export function usePeerView() {
     const peer = peers?.find((p) => p.id === peerId);
     if (!peer) return;
 
-    const peerGroups = peer.groups || [];
+    const peerGroups = groupsByPeerId.get(peerId) ?? [];
 
     const peerPolicies = sortBy(
       (policiesOverride ?? policies!).filter((p) => {

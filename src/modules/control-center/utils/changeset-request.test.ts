@@ -166,16 +166,40 @@ describe("buildChangeRequest", () => {
         {
           id: "g1",
           name: "Servers",
-          peers: [
-            { id: "p0", name: "old" },
-            { id: "p9", name: "keep" },
-          ],
+          peers: ["p0", "p9"],
         },
       ],
     };
     const body = buildChangeRequest(change, live)?.body as any;
     expect(new Set(body.peers)).toEqual(new Set(["p9", "p2"]));
     expect(body.peers).not.toContain("p0");
+  });
+
+  it("still keeps members when an older management returns objects", () => {
+    const change: UpdateGroupChange = {
+      id: "d2",
+      type: "update-group",
+      groupId: "g1",
+      name: "Servers",
+      originalName: "Servers",
+      peerIds: ["p2"],
+      resourceIds: [],
+      removedPeerIds: ["p0"],
+    };
+    const live = {
+      groups: [
+        {
+          id: "g1",
+          name: "Servers",
+          peers: [
+            { id: "p0", name: "old" },
+            { id: "p9", name: "keep" },
+          ] as unknown as string[],
+        },
+      ],
+    };
+    const body = buildChangeRequest(change, live)?.body as any;
+    expect(new Set(body.peers)).toEqual(new Set(["p9", "p2"]));
   });
 });
 
@@ -298,7 +322,7 @@ describe("changeDiffLines", () => {
         {
           id: "g1",
           name: "Servers",
-          peers: [{ id: "p9", name: "keep" }],
+          peers: ["p9"],
           resources: [{ id: "res1", type: "host" }],
         },
       ],

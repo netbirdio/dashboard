@@ -6,6 +6,7 @@ import { DataTableMultiSelectPopup } from "@components/table/DataTableMultiSelec
 import { InstallNetBirdButton } from "@components/ui/InstallNetBirdButton";
 import NoResults from "@components/ui/NoResults";
 import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
+import { toIds } from "@utils/ids";
 import { MinusCircle, PlusCircle } from "lucide-react";
 import * as React from "react";
 import { lazy, useState } from "react";
@@ -190,8 +191,7 @@ export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
               selectInitialPeers={false}
               excludedPeers={peers}
               onUpdate={(g) => {
-                let peers = g.peers as Peer[];
-                addPeersToGroup(peers).then();
+                addPeersToGroup(toIds(g.peers)).then();
               }}
             />
             {peers && peers?.length > 0 && (

@@ -2,7 +2,10 @@
 // machine had registered, with no docker and no real client. A real client
 // changes the runner's network while it starts and stops, which fails the other
 // worker's in-flight navigations with ERR_NETWORK_CHANGED. Everything else
-// (groups, policies, setup keys) stays real; only the peer list is extended.
+// (groups, policies, setup keys) stays real; only the peer list is extended and
+// the groups the peer registered with are patched to list it as a member, since
+// the API no longer sends groups on a peer and the dashboard derives them from
+// GET /api/v1alpha1/groups, or /api/groups on a management without it.
 import type { Page, Route } from "@playwright/test";
 
 type PeerGroup = { id: string; name: string };
@@ -18,7 +21,6 @@ export type MockPeer = {
   last_login: string;
   os: string;
   version: string;
-  groups: PeerGroup[];
   ssh_enabled: boolean;
   dns_label: string;
   login_expired: boolean;
@@ -33,7 +35,7 @@ export type MockPeer = {
   accessible_peers_count: number;
 };
 
-function buildPeer(name: string, groups: PeerGroup[]): MockPeer {
+function buildPeer(name: string): MockPeer {
   const now = new Date().toISOString();
   return {
     // Not a real xid, so it can never collide with a peer the account has.
@@ -47,7 +49,6 @@ function buildPeer(name: string, groups: PeerGroup[]): MockPeer {
     last_login: now,
     os: "Linux",
     version: "0.0.0-e2e",
-    groups,
     ssh_enabled: false,
     dns_label: `${name}.netbird.selfhosted`,
     login_expired: false,
@@ -64,6 +65,27 @@ function buildPeer(name: string, groups: PeerGroup[]): MockPeer {
 }
 
 const isPeerList = (url: URL) => url.pathname.endsWith("/api/peers");
+const isGroupRequest = (url: URL) =>
+  /\/api\/(v1alpha1\/)?groups(\/[^/]+)?$/.test(url.pathname);
+
+type GroupBody = {
+  id?: string;
+  peers?: (string | { id: string; name?: string })[];
+  peers_count?: number;
+};
+
+// Appends the peer in the shape the response already uses: ids from a new
+// management, {id, name} objects from one that has not changed yet.
+function withMember(group: GroupBody, peer: MockPeer): GroupBody {
+  const members = group.peers ?? [];
+  const legacy = members.some((m) => typeof m !== "string");
+  const member = legacy ? { id: peer.id, name: peer.name } : peer.id;
+  return {
+    ...group,
+    peers: [...members, member],
+    peers_count: (group.peers_count ?? members.length) + 1,
+  };
+}
 
 export type MockPeerRoute = {
   /**
@@ -77,6 +99,7 @@ export type MockPeerRoute = {
 
 export async function routeMockPeer(page: Page): Promise<MockPeerRoute> {
   let peer: MockPeer | undefined;
+  let groupIds = new Set<string>();
   let onServed: (() => void) | undefined;
 
   const handler = async (route: Route) => {
@@ -90,15 +113,34 @@ export async function routeMockPeer(page: Page): Promise<MockPeerRoute> {
   };
   await page.route(isPeerList, handler);
 
+  const groupHandler = async (route: Route) => {
+    if (route.request().method() !== "GET") return route.fallback();
+    const response = await route.fetch();
+    if (!peer || !response.ok()) return route.fulfill({ response });
+    const mock = peer;
+    const body = (await response.json()) as GroupBody | GroupBody[];
+    const patch = (g: GroupBody) =>
+      g.id && groupIds.has(g.id) ? withMember(g, mock) : g;
+    await route.fulfill({
+      response,
+      json: Array.isArray(body) ? body.map(patch) : patch(body),
+    });
+  };
+  await page.route(isGroupRequest, groupHandler);
+
   return {
     register(name, groups) {
-      const registered = buildPeer(name, groups);
+      const registered = buildPeer(name);
+      groupIds = new Set(groups.map((g) => g.id));
       const served = new Promise<MockPeer>((resolve) => {
         onServed = () => resolve(registered);
       });
       peer = registered;
       return served;
     },
-    dispose: () => page.unroute(isPeerList, handler),
+    dispose: async () => {
+      await page.unroute(isPeerList, handler);
+      await page.unroute(isGroupRequest, groupHandler);
+    },
   };
 }

@@ -1,6 +1,7 @@
 import { Node } from "@xyflow/react";
 import { describe, expect, it } from "vitest";
 import { Group } from "@/interfaces/Group";
+import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { isEmptiedPolicy } from "./change-cascade";
 import {
@@ -13,6 +14,7 @@ import {
   getGroupCountLabel,
   getIpPlaceholderFromRange,
   getPlaceholderHostname,
+  getPeersFromGroup,
   getPlaceholderPeer,
   getPlaceholderSetupKey,
   getPoliciesTargetingResources,
@@ -949,5 +951,26 @@ describe("isFocusWorthy", () => {
     const ids = focusWorthyIds(nodes, [edge]);
     expect([...ids].sort()).toEqual(["group-g1", "policy-p1"]);
     expect(focusWorthyIds(nodes.slice(0, 1), [edge]).size).toBe(0);
+  });
+});
+
+describe("getPeersFromGroup", () => {
+  const peers = [{ id: "p1" }, { id: "p2" }, { id: "p3" }] as Peer[];
+
+  it("returns the peers listed as members by id", () => {
+    const group = { id: "g1", name: "A", peers: ["p1", "p3"] } as Group;
+    expect(getPeersFromGroup(group, peers).map((p) => p.id)).toEqual([
+      "p1",
+      "p3",
+    ]);
+  });
+
+  it("accepts legacy member objects", () => {
+    const group = {
+      id: "g1",
+      name: "A",
+      peers: [{ id: "p2", name: "two" }] as unknown as string[],
+    } as Group;
+    expect(getPeersFromGroup(group, peers).map((p) => p.id)).toEqual(["p2"]);
   });
 });

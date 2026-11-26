@@ -8,6 +8,7 @@ import { Peer } from "@/interfaces/Peer";
 
 let nodes: { id: string; data: Record<string, unknown> }[] = [];
 let peers: Peer[] = [];
+let groupsByPeerId = new Map<string, { id: string }[]>();
 const markInstallPeerInstalled = vi.fn();
 const setNodes = vi.fn((fn: (prev: unknown[]) => unknown[]) => {
   nodes = fn(nodes) as typeof nodes;
@@ -25,7 +26,7 @@ vi.mock("@/modules/control-center/contexts/ControlCenterContext", () => ({
   useCanvasState: () => ({ nodes }),
 }));
 vi.mock("@/modules/control-center/hooks/useControlCenterData", () => ({
-  useControlCenterData: () => ({ peers }),
+  useControlCenterData: () => ({ peers, groupsByPeerId }),
 }));
 vi.mock("@/modules/control-center/contexts/ControlCenterPolicyModals", () => ({
   useControlCenterPolicy: () => ({ updateDraftPolicy: vi.fn() }),
@@ -72,6 +73,7 @@ beforeEach(() => {
   markInstallPeerInstalled.mockClear();
   setNodes.mockClear();
   nodes = [placeholderNode()];
+  groupsByPeerId = new Map();
 });
 
 describe("matching a waiting install to a registered peer", () => {
@@ -122,5 +124,40 @@ describe("matching a waiting install to a registered peer", () => {
     renderHook(() => useDraftPeerUpgrade());
 
     expect(markInstallPeerInstalled).not.toHaveBeenCalled();
+  });
+});
+
+describe("matching a bound-group install", () => {
+  const boundNode = () => ({
+    id: "peer-draft-1",
+    data: { ...placeholderNode().data, boundGroupId: "bound" },
+  });
+  const peerA = accountPeer({ id: "a" });
+  const peerB = accountPeer({ id: "b" });
+
+  it("selects nothing while /groups does not yet show the peer in the bound group", () => {
+    // Two same-hostname peers; B registered into the bound group, but the
+    // stale /groups has not caught up. Hostname matching would pick A.
+    nodes = [boundNode()];
+    peers = [peerA, peerB];
+    const { rerender } = renderHook(() => useDraftPeerUpgrade());
+    expect(markInstallPeerInstalled).not.toHaveBeenCalled();
+
+    groupsByPeerId = new Map([["b", [{ id: "bound" }]]]);
+    rerender();
+    expect(markInstallPeerInstalled).toHaveBeenCalledWith("draft-1", {
+      id: "b",
+      name: "laptop",
+    });
+  });
+
+  it("still matches by hostname when the placeholder has no bound group", () => {
+    nodes = [placeholderNode()];
+    peers = [peerA, peerB];
+    renderHook(() => useDraftPeerUpgrade());
+    expect(markInstallPeerInstalled).toHaveBeenCalledWith("draft-1", {
+      id: "a",
+      name: "laptop",
+    });
   });
 });

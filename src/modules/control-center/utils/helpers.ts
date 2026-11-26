@@ -10,6 +10,7 @@ import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
+import { groupPeerIds } from "@/modules/groups/groupMembers";
 
 // crypto.randomUUID is missing in non-secure contexts and older Safari.
 export const draftUid = () =>
@@ -73,10 +74,8 @@ export const withFreshGroupCounts = (group: Group, groups?: Group[]): Group => {
 };
 
 export const getPeersFromGroup = (group: Group, peers: Peer[]) => {
-  return peers.filter((peer) => {
-    const groupIds = peer.groups?.map((g) => g.id) || [];
-    return groupIds.includes(group.id);
-  });
+  const memberIds = new Set(groupPeerIds(group));
+  return peers.filter((peer) => !!peer.id && memberIds.has(peer.id));
 };
 
 export const getPolicyProtocolAndPortText = (

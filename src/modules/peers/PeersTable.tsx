@@ -44,6 +44,7 @@ import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
 import { usePathname } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
+import { usePeersWithGroups } from "@/contexts/GroupsProvider";
 import PeerProvider from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
@@ -51,7 +52,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { getOperatingSystem } from "@/hooks/useOperatingSystem";
 import { Group } from "@/interfaces/Group";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
-import { Peer, peerMacAddresses } from "@/interfaces/Peer";
+import { Peer, peerMacAddresses, PeerWithGroups } from "@/interfaces/Peer";
 import PeerActionCell from "@/modules/peers/PeerActionCell";
 import PeerAddressCell from "@/modules/peers/PeerAddressCell";
 import PeerGroupCell from "@/modules/peers/PeerGroupCell";
@@ -82,7 +83,7 @@ function peerOsKey(os: string | undefined): string {
   }
 }
 
-const PeersTableColumns: ColumnDef<Peer>[] = [
+const PeersTableColumns: ColumnDef<PeerWithGroups>[] = [
   {
     id: "select",
     meta: { fit: true },
@@ -300,7 +301,7 @@ const matchesKind = (peer: Peer, kind?: PeersTableKind) => {
 };
 
 export default function PeersTable({
-  peers,
+  peers: peersProp,
   isLoading,
   headingTarget,
   kind,
@@ -309,6 +310,7 @@ export default function PeersTable({
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
   const path = usePathname();
+  const peers = usePeersWithGroups(peersProp);
 
   // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(

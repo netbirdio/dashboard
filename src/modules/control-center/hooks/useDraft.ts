@@ -3,6 +3,7 @@ import { orderBy, sortBy } from "lodash";
 import { useEffect, useRef } from "react";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
+import { groupPeerIds } from "@/modules/groups/groupMembers";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
@@ -142,13 +143,10 @@ export function useDraft() {
       const liveNodes = liveStateRef.current?.nodes ?? nodes;
 
       const groupMembers = new Map<string, Set<string>>();
-      peers?.forEach((p) => {
-        p.groups?.forEach((g) => {
-          const gid = typeof g === "string" ? g : g.id;
-          if (!gid) return;
-          if (!groupMembers.has(gid)) groupMembers.set(gid, new Set());
-          if (p.id) groupMembers.get(gid)!.add(p.id);
-        });
+      groups?.forEach((g) => {
+        if (!g.id) return;
+        if (!groupMembers.has(g.id)) groupMembers.set(g.id, new Set());
+        groupPeerIds(g).forEach((pid) => groupMembers.get(g.id!)!.add(pid));
       });
       networkResources?.forEach((r) => {
         (r.groups as any[])?.forEach((g: any) => {

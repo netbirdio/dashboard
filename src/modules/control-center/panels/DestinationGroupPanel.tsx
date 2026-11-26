@@ -517,7 +517,12 @@ export const DestinationGroupPanel = ({
 
   const groupPeers = useMemo(() => {
     const existing =
-      peers && realGroupId ? getGroupPeers(peers, realGroupId) : [];
+      peers && realGroupId
+        ? getGroupPeers(
+            peers,
+            groups?.find((g) => g.id === realGroupId),
+          )
+        : [];
     const addedPeers = (peers ?? []).filter(
       (p) =>
         p.id && addedMembers.has(p.id) && !existing.some((e) => e.id === p.id),
@@ -525,7 +530,14 @@ export const DestinationGroupPanel = ({
     return [...existing, ...addedPeers, ...draftMemberPeers].filter(
       (p) => !removedMembers.has(p.id ?? ""),
     );
-  }, [peers, realGroupId, addedMembers, removedMembers, draftMemberPeers]);
+  }, [
+    peers,
+    groups,
+    realGroupId,
+    addedMembers,
+    removedMembers,
+    draftMemberPeers,
+  ]);
 
   const resources = useMemo(() => {
     const existing =

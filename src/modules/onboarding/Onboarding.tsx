@@ -29,6 +29,7 @@ import { OnboardingExplainPolicy } from "@/modules/onboarding/networks/Onboardin
 import { OnboardingTestResource } from "@/modules/onboarding/networks/OnboardingTestResource";
 import { OnboardingDevices } from "@/modules/onboarding/OnboardingDevices";
 import { OnboardingEnd } from "@/modules/onboarding/OnboardingEnd";
+import { shouldPollOnboardingPeers } from "@/modules/onboarding/polling";
 import { OnboardingIntent } from "@/modules/onboarding/OnboardingIntent";
 import { OnboardingSurvey } from "@/modules/onboarding/OnboardingSurvey";
 import { OnboardingExplainDefaultPolicy } from "@/modules/onboarding/p2p/OnboardingExplainDefaultPolicy";
@@ -277,20 +278,22 @@ export const Onboarding = ({
    * Polling every 5s if we are still waiting for devices to connect, in case browser focus does not trigger a refresh
    */
   useEffect(() => {
-    if (
-      (firstDevice && secondDevice) ||
-      (firstDevice && firstRoutingPeer) ||
-      !(step === 3 || step === 4 || step === 5)
-    ) {
-      return; // Stop polling if condition is met
-    }
+    const keepPolling = shouldPollOnboardingPeers({
+      isNetworks: intent === Intent.NETWORKS,
+      hasFirstDevice: !!firstDevice,
+      hasSecondDevice: !!secondDevice,
+      hasRoutingPeer: !!firstRoutingPeer,
+      step,
+    });
+    if (!keepPolling) return;
 
     const interval = setInterval(() => {
       mutate("/peers");
+      mutate("/groups");
     }, 5000);
 
     return () => clearInterval(interval); // Clean up when dependencies change
-  }, [firstDevice, secondDevice, firstRoutingPeer, step, mutate]);
+  }, [firstDevice, secondDevice, firstRoutingPeer, intent, step, mutate]);
 
   /**
    * Skip form if already submitted

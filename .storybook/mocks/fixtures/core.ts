@@ -18,7 +18,7 @@ import type { Handler, HandlerContext } from "./index";
 const byId =
   <T extends { id?: string }>(list: T[]) =>
   (ctx: HandlerContext) => {
-    const id = ctx.path.split("/")[2];
+    const id = ctx.path.split("/").at(-1);
     return list.find((item) => item.id === id) ?? list[0];
   };
 
@@ -33,6 +33,8 @@ const paginated = (data: unknown[]) => ({
 export const coreFixtures: Record<string, Handler> = {
   "GET /groups": groups,
   "GET /groups/:id": byId(groups),
+  "GET /v1alpha1/groups": groups,
+  "GET /v1alpha1/groups/:id": byId(groups),
 
   "GET /peers": peers,
   "GET /peers/:id": byId(peers),

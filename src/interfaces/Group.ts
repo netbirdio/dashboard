@@ -1,7 +1,7 @@
 export interface Group {
   id?: string;
   name: string;
-  peers?: GroupPeer[] | string[];
+  peers?: string[];
   peers_count?: number;
   resources?: GroupResource[] | string[];
   resources_count?: number;
@@ -9,11 +9,6 @@ export interface Group {
 
   // Frontend only
   keepClientState?: boolean;
-}
-
-export interface GroupPeer {
-  id: string;
-  name: string;
 }
 
 export interface GroupResource {

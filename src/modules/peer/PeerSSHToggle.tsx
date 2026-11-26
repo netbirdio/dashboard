@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
+import { useGroupsOfPeer } from "@/contexts/GroupsProvider";
 import { usePeer } from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { PeerSSHPolicyInfo } from "@/modules/peer/PeerSSHPolicyInfo";
@@ -52,8 +53,9 @@ export const PeerSSHToggle = () => {
   const isSSHDashboardEnabled = peer?.ssh_enabled;
   const isSSHClientEnabled = peer?.local_flags?.server_ssh_allowed;
 
+  const peerGroups = useGroupsOfPeer(peer?.id);
+
   const assignedPolicies = useMemo(() => {
-    const peerGroups = peer?.groups as Group[];
     return orderBy(
       policies?.filter((policy) => {
         const rule = policy?.rules?.[0];
@@ -67,14 +69,14 @@ export const PeerSSHToggle = () => {
           ?.map((rule) => rule?.destinations)
           .flat() as Group[];
         const policyGroups = [...destinationPolicyGroups];
-        return peerGroups?.some((peerGroup) =>
+        return peerGroups.some((peerGroup) =>
           policyGroups.some((policyGroup) => policyGroup?.id === peerGroup.id),
         );
       }),
       "enabled",
       "desc",
     );
-  }, [policies, peer]);
+  }, [policies, peer, peerGroups]);
 
   const enabledPolicies = assignedPolicies?.filter((policy) => policy?.enabled);
 

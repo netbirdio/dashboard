@@ -2,6 +2,7 @@ import { Edge, Node } from "@xyflow/react";
 import { Peer } from "@/interfaces/Peer";
 import { NetworkResource } from "@/interfaces/Network";
 import { Group } from "@/interfaces/Group";
+import { groupPeerIds } from "@/modules/groups/groupMembers";
 
 export function addNode(nodes: Node[], node: Node): void {
   const existing = nodes.find((n) => n.id === node.id);
@@ -27,11 +28,12 @@ export const DEFAULT_LAYOUT_CONFIG = {
   peersAndResources: { width: 1400, spacing: 80 },
 };
 
-export function getGroupPeers(peers: Peer[], groupId: string): Peer[] {
-  return peers.filter((p) => {
-    const peerGroupIds = p.groups?.map((g) => g.id) || [];
-    return peerGroupIds.includes(groupId);
-  });
+export function getGroupPeers(
+  peers: Peer[],
+  group?: Pick<Group, "peers">,
+): Peer[] {
+  const memberIds = new Set(groupPeerIds(group));
+  return peers.filter((p) => !!p.id && memberIds.has(p.id));
 }
 
 export function getGroupResources(

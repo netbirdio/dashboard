@@ -35,7 +35,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { useGroupRoute } from "@/contexts/GroupRouteProvider";
-import { useGroups } from "@/contexts/GroupsProvider";
+import { useGroups, useGroupsOfPeer } from "@/contexts/GroupsProvider";
 import { usePeers } from "@/contexts/PeersProvider";
 import { useRoutes } from "@/contexts/RoutesProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
@@ -315,10 +315,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
     }
   }, [route]);
 
-  const singleRoutingPeerGroups = useMemo(() => {
-    if (!routingPeer) return [];
-    return routingPeer?.groups;
-  }, [routingPeer]);
+  const singleRoutingPeerGroups = useGroupsOfPeer(routingPeer?.id);
 
   return (
     <ModalContent flow="route_update" maxWidthClass={"max-w-2xl"}>

@@ -3,6 +3,7 @@ import { notify } from "@components/Notification";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
+import { toIds } from "@utils/ids";
 import { Node } from "@xyflow/react";
 import {
   CircleMinusIcon,
@@ -448,8 +449,6 @@ export const NodeContextMenu = ({
         dismissOnOutsideClick: true,
       });
       if (!choice) return;
-      const toIds = (list?: (string | { id?: string })[]) =>
-        (list ?? []).map((x) => (typeof x === "string" ? x : x.id ?? ""));
       const updated = await resourceRequest.put(
         {
           name: ref.resource.name,
@@ -778,8 +777,6 @@ export const NodeContextMenu = ({
       const groupId = getNodeGroup(target)?.id;
       const group = groups?.find((g) => g.id === groupId);
       if (!group?.id) return;
-      const toIds = (list?: (string | { id?: string })[]) =>
-        (list ?? []).map((x) => (typeof x === "string" ? x : x.id ?? ""));
       // The group PUT wants resources as {id, type} objects and rejects bare
       // id strings ("could not parse json").
       await groupRequest.put(

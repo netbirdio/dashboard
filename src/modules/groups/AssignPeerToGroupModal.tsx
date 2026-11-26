@@ -15,10 +15,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { DataTable } from "@/components/table/DataTable";
+import { usePeersWithGroups } from "@/contexts/GroupsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
-import { Group, GroupPeer } from "@/interfaces/Group";
-import { Peer } from "@/interfaces/Peer";
+import { Group } from "@/interfaces/Group";
+import { Peer, PeerWithGroups } from "@/interfaces/Peer";
 import { EditGroupNameModal } from "@/modules/groups/EditGroupNameModal";
+import { groupPeerIds } from "@/modules/groups/groupMembers";
 import PeerAddressCell from "@/modules/peers/PeerAddressCell";
 import PeerNameCell from "@/modules/peers/PeerNameCell";
 import { PeerOSCell } from "@/modules/peers/PeerOSCell";
@@ -90,7 +92,8 @@ export const AssignGroupToPeerModalContent = ({
   buttonText = "Confirm Changes",
   selectInitialPeers = true,
 }: ContentProps) => {
-  const { data: peers, isLoading } = useFetchApi<Peer[]>("/peers");
+  const { data: fetchedPeers, isLoading } = useFetchApi<Peer[]>("/peers");
+  const peers = usePeersWithGroups(fetchedPeers);
   const { users } = useUsers();
   const { mutate } = useSWRConfig();
   const groupRequest = useApiCall<Group>("/groups");
@@ -121,13 +124,7 @@ export const AssignGroupToPeerModalContent = ({
     if (!selectInitialPeers) return {};
     if (!group) return undefined;
     if (!peers) return undefined;
-    let initialSelectedPeers = group?.peers
-      ?.map((p) => {
-        if (typeof p === "string") return p;
-        return p.id;
-      })
-      .filter((p) => p !== undefined) as string[];
-    if (!initialSelectedPeers) return {};
+    const initialSelectedPeers = groupPeerIds(group);
 
     // Return Record<string, boolean> for initialSelectedPeers
     return initialSelectedPeers.reduce(
@@ -144,12 +141,7 @@ export const AssignGroupToPeerModalContent = ({
       onSuccess?.({
         ...group,
         name: groupName,
-        peers: selectedPeers.map((peer) => {
-          return {
-            id: peer.id,
-            name: peer.name,
-          } as GroupPeer;
-        }),
+        peers: selectedPeers.map((peer) => peer.id as string),
         peers_count: selectedPeers.length,
         resources: group.resources,
         keepClientState: true,
@@ -338,7 +330,7 @@ export const AssignGroupToPeerModalContent = ({
   );
 };
 
-export const PeersTableColumns: ColumnDef<Peer>[] = [
+export const PeersTableColumns: ColumnDef<PeerWithGroups>[] = [
   {
     id: "select",
     header: ({ table, column }) => (
