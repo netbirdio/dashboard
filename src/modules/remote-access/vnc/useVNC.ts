@@ -80,9 +80,9 @@ const friendlyByCode: Record<string, string> = {
   [VNCRejectCode.APPROVAL_TIMEOUT]:
     "The peer's user did not answer the connection request in time.",
   [VNCRejectCode.APPROVAL_UNAVAILABLE]:
-    "The connection request could not be shown to the peer's user. Make sure the NetBird app is running on the peer.",
+    "The connection request could not be shown to the peer's user. Make sure the NetBird UI is running on the peer.",
   [VNCRejectCode.NO_APPROVER]:
-    "Approval prompt could not be delivered. Make sure the NetBird app is running on the peer.",
+    "Approval prompt could not be delivered. Make sure the NetBird UI is running on the peer.",
 };
 
 /**
