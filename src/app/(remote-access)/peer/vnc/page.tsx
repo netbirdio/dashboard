@@ -221,6 +221,7 @@ function VNCSession({
           await client.disconnect();
           grantedScope.current = null;
         } catch (error) {
+          setConnectFailed(true);
           sendErrorNotification(
             "NetBird Connection Error",
             (error as Error).message,

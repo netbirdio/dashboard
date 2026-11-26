@@ -216,12 +216,19 @@ export const useNetBirdClient = () => {
     return Promise.resolve();
   }, []);
 
+  // A terminal that mounts while another one's overlay is already up never ran
+  // initialize, so its own ref is empty; the connected client is published on
+  // window for exactly that case.
+  const connectedClient = () =>
+    netBirdClient.current ?? (window as any).netbird;
+
   const detectSSHServerType = useCallback(
     async (host: string, port: number, timeoutMs: number): Promise<boolean> => {
-      if (!netBirdClient.current?.detectSSHServerType) {
+      const goClient = connectedClient();
+      if (!goClient?.detectSSHServerType) {
         throw new Error("NetBird client not ready");
       }
-      return netBirdClient.current.detectSSHServerType(host, port, timeoutMs);
+      return goClient.detectSSHServerType(host, port, timeoutMs);
     },
     [],
   );
@@ -234,10 +241,11 @@ export const useNetBirdClient = () => {
       jwtToken?: string,
       ipVersion?: string,
     ): Promise<any> => {
-      if (!netBirdClient.current?.createSSHConnection) {
+      const goClient = connectedClient();
+      if (!goClient?.createSSHConnection) {
         throw new Error("Go client not ready");
       }
-      return netBirdClient.current.createSSHConnection(
+      return goClient.createSSHConnection(
         host,
         port,
         username,

@@ -249,6 +249,9 @@ export const useVNC = (client: VNCClient) => {
   // request, so a security failure afterwards can be attributed to the
   // password. Cleared per connect, not per request.
   const passwordSentRef = useRef(false);
+  // restartConnectTimeoutRef restarts the connect deadline of the current
+  // connection after it was paused for the credentials prompt.
+  const restartConnectTimeoutRef = useRef<(() => void) | null>(null);
 
   // errorDetail mirrors errorDetailRef for consumers. The ref stays because
   // the disconnect handler reads it synchronously to decide whether a more
@@ -366,8 +369,11 @@ export const useVNC = (client: VNCClient) => {
           rfb.qualityLevel = config.quality;
         }
 
-        const connectTimeout = setTimeout(() => {
-          if (rfbRef.current && statusRef.current !== VNCStatus.CONNECTED) {
+        const onConnectTimeout = () => {
+          if (
+            rfbRef.current === rfb &&
+            statusRef.current !== VNCStatus.CONNECTED
+          ) {
             reportError({
               message: "VNC connection timed out",
               friendly:
@@ -379,7 +385,18 @@ export const useVNC = (client: VNCClient) => {
             rfbRef.current = null;
             updateStatus(VNCStatus.DISCONNECTED);
           }
-        }, isExternal ? CONNECT_TIMEOUT_MS : NETBIRD_CONNECT_TIMEOUT_MS);
+        };
+        const connectTimeoutMs = isExternal
+          ? CONNECT_TIMEOUT_MS
+          : NETBIRD_CONNECT_TIMEOUT_MS;
+        let connectTimeout = setTimeout(onConnectTimeout, connectTimeoutMs);
+        // The timeout is paused while the operator types a password, so
+        // answering has to start it again: a server that takes the password
+        // and then goes quiet would otherwise leave the viewer connecting.
+        restartConnectTimeoutRef.current = () => {
+          clearTimeout(connectTimeout);
+          connectTimeout = setTimeout(onConnectTimeout, connectTimeoutMs);
+        };
 
         rfb.addEventListener("connect", () => {
           clearTimeout(connectTimeout);
@@ -390,6 +407,14 @@ export const useVNC = (client: VNCClient) => {
 
         rfb.addEventListener("disconnect", (e: Event) => {
           clearTimeout(connectTimeout);
+          // noVNC reports the end of a session some time after End session,
+          // by which point Reconnect may have started the next one. Only the
+          // session that still owns rfbRef (or none, after End session) may
+          // reset the shared state.
+          if (rfbRef.current !== null && rfbRef.current !== rfb) {
+            clearLastVNCCloseInfo(proxyID);
+            return;
+          }
           const detail = (e as CustomEvent<{ clean?: boolean }>).detail || {};
           // securityfailure fires before disconnect and has already set the
           // specific reason; don't overwrite it with a generic message.
@@ -441,6 +466,9 @@ export const useVNC = (client: VNCClient) => {
               message: `unsupported credentials: ${(types ?? []).join(", ")}`,
               friendly: `This VNC server asked for credentials the viewer cannot supply (${(types ?? []).join(", ")}).`,
             });
+            try {
+              rfb.disconnect();
+            } catch {}
             return;
           }
           setCredentialsRequired(true);
@@ -669,6 +697,7 @@ export const useVNC = (client: VNCClient) => {
     setCredentialsRequired(false);
     passwordSentRef.current = true;
     rfbRef.current.sendCredentials({ password });
+    restartConnectTimeoutRef.current?.();
     return true;
   }, [credentialsRequired]);
 
