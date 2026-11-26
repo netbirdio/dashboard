@@ -16,20 +16,26 @@ export const ResourceNetworkCell = ({ network }: Props) => {
   return (
     <div className={"flex gap-3"}>
       {!network.routing_peers_count && <NoRoutingPeerBadge network={network} />}
-      <Badge
-        variant={"gray"}
-        useHover={true}
-        className={"cursor-pointer min-h-[34px] font-medium"}
+      {/* A button, so the network can be reached and opened by keyboard. */}
+      <button
+        type={"button"}
+        className={"rounded-md"}
+        aria-label={`Open network ${network.name}`}
         data-testid={"resource-network"}
         onClick={(e) => {
-          e.preventDefault();
           e.stopPropagation();
           router.push(`/network?id=${network.id}`);
         }}
       >
-        <NetworkIcon size={12} className={"shrink-0"} />
-        <TextWithTooltip text={network.name} maxChars={25} />
-      </Badge>
+        <Badge
+          variant={"gray"}
+          useHover={true}
+          className={"min-h-[34px] font-medium"}
+        >
+          <NetworkIcon size={12} className={"shrink-0"} />
+          <TextWithTooltip text={network.name} maxChars={25} />
+        </Badge>
+      </button>
     </div>
   );
 };

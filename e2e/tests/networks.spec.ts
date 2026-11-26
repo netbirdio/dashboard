@@ -147,6 +147,9 @@ test.describe.serial("Networks @network", () => {
     await page.getByTestId("submit-resource").click();
     // "No policies configured" warning
     await page.getByTestId("confirmation.confirm").click();
+    // "Add Routing Peer?" prompt: this suite's network routes through an empty
+    // group, so it has no routing peer, as in addResourceToNetwork below.
+    await page.getByTestId("confirmation.cancel").click();
 
     await page.getByTestId("table-search-input").fill(name);
     const row = page.locator("tr").filter({ hasText: name });
