@@ -16,7 +16,6 @@ const VNC_SUPPORTED_OS = new Set([
   OperatingSystem.WINDOWS,
   OperatingSystem.APPLE,
   OperatingSystem.FREEBSD,
-  OperatingSystem.ANDROID,
 ]);
 
 /**
