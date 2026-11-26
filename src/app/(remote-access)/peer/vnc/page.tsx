@@ -241,16 +241,23 @@ function VNCSession({
         );
         return;
       }
-      grantedScope.current = scope;
-      // Only stash a non-null key: the early-exit path of connectTemporary
-      // returns null, and overwriting an earlier good value with null would
-      // break the X25519 identity check on the next VNC connect.
-      if (result.targetPubKey) {
+      // NetBird's own server is authenticated by the session key pair, which
+      // is only ever valid as a pair: one half from this grant combined with
+      // the other from an earlier one would fail the identity check. A client
+      // that cannot mint it (an older build without VNC support) lands here.
+      if (!isExternal) {
+        if (!result.targetPubKey || !result.keySessionId) {
+          setConnectFailed(true);
+          sendErrorNotification(
+            "NetBird Connection Error",
+            "The VNC session keys could not be obtained. The NetBird client may not support VNC.",
+          );
+          return;
+        }
         setTargetPubKey(result.targetPubKey);
-      }
-      if (result.keySessionId) {
         setKeySessionId(result.keySessionId);
       }
+      grantedScope.current = scope;
     } catch (error) {
       // Latch the failure so the auto-connect effect doesn't re-fire the
       // moment connectTemporary resets the status to DISCONNECTED, which
@@ -263,7 +270,15 @@ function VNCSession({
     } finally {
       setIsNetBirdConnecting(false);
     }
-  }, [peer?.id, client, sendErrorNotification, target, portNumber, scope]);
+  }, [
+    peer?.id,
+    client,
+    sendErrorNotification,
+    target,
+    portNumber,
+    scope,
+    isExternal,
+  ]);
 
   // Held back until the setup screen is done with, the way RDP and SSH hold
   // theirs until the credentials dialog is answered. Bringing the overlay up
