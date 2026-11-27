@@ -92,7 +92,7 @@ const loadConfig = (): Config => {
     googleTagManagerID: configJson?.googleTagManagerID || undefined,
     authServiceUrl: configJson?.authServiceUrl ?? undefined,
     wasmPath:
-      configJson?.wasmPath || "https://pkgs.netbird.io/wasm/client/v0.84.0-rc.1",
+      configJson?.wasmPath || "https://pkgs.netbird.io/wasm/client/v0.84.0",
     licensed: configJson?.licensed === "true",
     cloud: configJson?.cloud === "true",
     agentNetworkOnly: configJson?.agentNetworkOnly === "true",
