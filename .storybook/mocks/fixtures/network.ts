@@ -734,6 +734,8 @@ export const networkFixtures: Record<string, Handler> = {
   "GET /posture-checks/:id": byId(postureChecks),
   "GET /networks": networks,
   "GET /networks/resources": networkResources,
+  "GET /networks/routers": Object.values(routers).flat(),
+  "GET /networks/site-to-site": [],
   "GET /networks/:id": byId(networks),
   "GET /networks/:id/resources": ({ path }: HandlerContext) =>
     resourcesOf(path.split("/")[2]),

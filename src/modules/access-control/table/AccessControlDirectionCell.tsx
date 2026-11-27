@@ -1,8 +1,7 @@
-import Badge from "@components/Badge";
+import { PolicyDirectionBadge } from "@components/ui/PolicyDirectionBadge";
 import React, { useMemo } from "react";
-import LongArrowBidirectionalIcon from "@/assets/icons/LongArrowBidirectionalIcon";
-import LongArrowLeftIcon from "@/assets/icons/LongArrowLeftIcon";
 import { Policy } from "@/interfaces/Policy";
+import { isResourceToResource } from "@/modules/access-control/useAccessControl";
 
 type Props = {
   policy: Policy;
@@ -16,29 +15,19 @@ export default function AccessControlDirectionCell({
   }, [policy]);
 
   const bidirectional = firstRule ? firstRule.bidirectional : false;
+  // A resource only receives traffic, unless the rule runs between two
+  // network resources (site-to-site), where both sides have routing peers.
   const isSingleResource =
     !!firstRule?.destinationResource &&
-    firstRule?.destinationResource?.type !== "peer";
+    firstRule?.destinationResource?.type !== "peer" &&
+    !isResourceToResource(
+      firstRule?.sourceResource,
+      firstRule?.destinationResource,
+    );
 
   return (
     <div className={"flex h-full"}>
-      {bidirectional && !isSingleResource ? (
-        <Badge variant={"green"} className={"py-2 px-4"}>
-          <LongArrowBidirectionalIcon
-            size={60}
-            autoHeight={true}
-            className={"fill-green-600 dark:fill-green-500"}
-          />
-        </Badge>
-      ) : (
-        <Badge variant={"blueDark"} className={"py-2 px-4"}>
-          <LongArrowLeftIcon
-            size={60}
-            autoHeight={true}
-            className={"fill-sky-600 dark:fill-sky-400 rotate-180"}
-          />
-        </Badge>
-      )}
+      <PolicyDirectionBadge bidirectional={bidirectional && !isSingleResource} />
     </div>
   );
 }

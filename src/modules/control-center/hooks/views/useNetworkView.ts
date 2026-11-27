@@ -25,6 +25,15 @@ import {
   nodeYNudge,
   POLICY_COLUMN_Y_OFFSET,
 } from "@/modules/control-center/utils/layouts";
+import {
+  buildSiteToSiteDrilled,
+  isSiteToSitePolicyNode,
+  orientSiteToSiteEdges,
+  placeSiteToSitePolicies,
+  resourceNetworkIndex,
+  siteToSiteSourceNetwork,
+  widenColumnsForSiteToSite,
+} from "@/modules/control-center/utils/site-to-site";
 import { ViewResult } from "./types";
 
 export function useNetworkView() {
@@ -229,7 +238,19 @@ export function useNetworkView() {
       });
     });
 
-    return applyDrilledLayout(allNodes, allEdges);
+    const layout = applyDrilledLayout(allNodes, allEdges);
+    if (!layout) return layout;
+    const remote = buildSiteToSiteDrilled({
+      network,
+      networks: networks ?? [],
+      networkResources: networkResources ?? [],
+      policies: effectivePolicies ?? [],
+      laidOut: layout.updatedNodes,
+    });
+    return {
+      updatedNodes: [...layout.updatedNodes, ...remote.nodes],
+      updatedEdges: [...layout.updatedEdges, ...remote.edges],
+    };
   };
 
   const buildNetworksView = (
@@ -243,6 +264,7 @@ export function useNetworkView() {
     // ReactFlow needs parents first.
     const childNodes: Node[] = [];
     const enabledSourceGroupIds = new Set<string>();
+    const networkOfResource = resourceNetworkIndex(networks);
 
     networks!.forEach((network) => {
       const childResources = (network.resources ?? [])
@@ -374,6 +396,12 @@ export function useNetworkView() {
             ? peers?.find((pr) => pr.id === sourceResource.id)
             : undefined;
         const sourceIds: string[] = [];
+        const sourceNetworkId = siteToSiteSourceNetwork(
+          rule,
+          network.id,
+          networkOfResource,
+        );
+        if (sourceNetworkId) sourceIds.push(`network-${sourceNetworkId}`);
 
         ruleSourceGroups.forEach((group) => {
           addNode(allNodes, {
@@ -405,7 +433,13 @@ export function useNetworkView() {
           addNode(allNodes, {
             id: `policy-${policy.id}`,
             type: "policyNode",
-            data: { policy, enabled },
+            data: {
+              policy,
+              enabled,
+              ...(sourceNetworkId && {
+                siteToSite: { from: sourceNetworkId, to: network.id },
+              }),
+            },
             position: { x: 0, y: 0 },
           });
           sourceIds.forEach((sourceId) => {
@@ -435,7 +469,12 @@ export function useNetworkView() {
     });
 
     const frames = allNodes.filter((n) => isFrameNode(n));
-    const policyNodes = allNodes.filter((n) => n.type === "policyNode");
+    // Site-to-site policies sit between the two frames they join, not in the
+    // policy column.
+    const siteToSitePolicies = allNodes.filter((n) => isSiteToSitePolicyNode(n));
+    const policyNodes = allNodes.filter(
+      (n) => n.type === "policyNode" && !isSiteToSitePolicyNode(n),
+    );
     const sources = allNodes.filter(
       (n) => !isFrameNode(n) && n.type !== "policyNode",
     );
@@ -470,10 +509,16 @@ export function useNetworkView() {
       };
     });
     packFrameGrid(frames, FRAME_GRID_BASE_X, SOURCE_NODE_HALF_HEIGHT);
+    widenColumnsForSiteToSite(siteToSitePolicies, frames);
+    placeSiteToSitePolicies(siteToSitePolicies, frames);
 
     return {
       updatedNodes: [...allNodes, ...childNodes],
-      updatedEdges: allEdges,
+      updatedEdges: orientSiteToSiteEdges(
+        allEdges,
+        siteToSitePolicies,
+        frames,
+      ),
     };
   };
 

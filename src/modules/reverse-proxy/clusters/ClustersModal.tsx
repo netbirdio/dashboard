@@ -3,6 +3,7 @@ import { Callout } from "@components/Callout";
 import { notify } from "@components/Notification";
 import CardTable from "@components/CardTable";
 import Code from "@components/Code";
+import { renderHighlightedCommand } from "@components/ui/HighlightedCommand";
 import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
@@ -68,33 +69,6 @@ type DeployMethod =
 const DockerBrandIcon = (props: Readonly<IconProps>) => (
   <DockerIcon {...props} className={"fill-[#2496ED]"} />
 );
-
-const escapeRegExp = (value: string) =>
-  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-const renderHighlightedCommand = (command: string, highlights: string[]) => {
-  const valid = highlights.filter((h) => h && h.trim().length > 0);
-  const pattern =
-    valid.length > 0
-      ? new RegExp(`(${valid.map(escapeRegExp).join("|")})`, "g")
-      : null;
-
-  return command.split("\n").map((line, lineIndex) => (
-    <Code.Line key={lineIndex}>
-      {pattern
-        ? line.split(pattern).map((part, partIndex) =>
-            valid.includes(part) ? (
-              <span key={partIndex} className={"text-netbird"}>
-                {part}
-              </span>
-            ) : (
-              part
-            ),
-          )
-        : line}
-    </Code.Line>
-  ));
-};
 
 export const ClustersModal = ({ open, onOpenChange, onFinish }: Props) => {
   const { mutate } = useSWRConfig();

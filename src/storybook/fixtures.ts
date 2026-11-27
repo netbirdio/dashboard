@@ -16,6 +16,11 @@ export {
   USER,
 } from "../../.storybook/mocks/fixtures/ids";
 export {
+  networkResources,
+  networks,
+  policies,
+} from "../../.storybook/mocks/fixtures/network";
+export {
   distributorInfo,
   edr,
   eventStreams,

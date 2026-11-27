@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import AccessControlPage from "@/app/(dashboard)/access-control/page";
 import DashboardLayout from "@/layouts/DashboardLayout";
+import { policies } from "@/storybook/fixtures";
 import {
   clickSelector,
   clickTab,
@@ -39,6 +40,44 @@ const openPolicy = async (name: string) => {
 };
 
 export const List: Story = { play: ready };
+
+/* A site-to-site policy names a network resource on both sides. */
+const siteToSitePolicy = {
+  id: "pol-s2s-vpc-office",
+  name: "Production VPC to Office LAN",
+  description: "",
+  enabled: true,
+  source_posture_checks: [],
+  rules: [
+    {
+      name: "Production VPC to Office LAN",
+      description: "",
+      enabled: true,
+      action: "accept",
+      bidirectional: true,
+      protocol: "all",
+      ports: [],
+      sources: [],
+      destinations: [],
+      sourceResource: { id: "res-aws-vpc", type: "subnet" },
+      destinationResource: { id: "res-office-lan", type: "subnet" },
+    },
+  ],
+};
+
+export const SiteToSitePolicy: Story = {
+  parameters: { api: { "GET /policies": [...policies, siteToSitePolicy] } },
+  play: async () => {
+    await findText("Production VPC to Office LAN");
+  },
+};
+
+export const EditSiteToSitePolicy: Story = {
+  parameters: { api: { "GET /policies": [...policies, siteToSitePolicy] } },
+  play: async () => {
+    await openPolicy("Production VPC to Office LAN");
+  },
+};
 
 export const Empty: Story = {
   parameters: { api: { "GET /policies": [] } },

@@ -30,6 +30,8 @@ type Props = {
   initialPorts?: number[];
   initialSourceResource?: PolicyRuleResource;
   initialDestinationResource?: PolicyRuleResource;
+  // For a new policy only; an existing one keeps its own direction.
+  initialDirection?: Direction;
 };
 
 // TODO add reducer
@@ -46,6 +48,7 @@ export const useAccessControl = ({
   initialPorts,
   initialSourceResource,
   initialDestinationResource,
+  initialDirection,
 }: Props = {}) => {
   const { data: allPostureChecks, isLoading: isPostureChecksLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
@@ -114,7 +117,7 @@ export const useAccessControl = ({
     firstRule ? firstRule.protocol : initialProtocol ?? "all",
   );
   const [direction, setDirection] = useState<Direction>(() => {
-    if (!firstRule) return "bi";
+    if (!firstRule) return initialDirection ?? "bi";
     if (firstRule.bidirectional) return "bi";
     return "in";
   });
@@ -217,7 +220,10 @@ export const useAccessControl = ({
     } as Policy;
   };
 
-  const submit = async () => {
+  // A caller that derives the name (the site-to-site wizard proposes one from
+  // the resources picked) passes it here rather than racing setName.
+  const submit = async (overrides?: { name?: string }) => {
+    const policyName = overrides?.name ?? name;
     const g1 = getSourceGroupsToUpdate();
     const g2 = getDestinationGroupsToUpdate();
     const createOrUpdateGroups = uniqBy([...g1, ...g2], "name").map(
@@ -290,7 +296,7 @@ export const useAccessControl = ({
     }
 
     const policyObj = {
-      name,
+      name: policyName,
       description,
       enabled,
       source_posture_checks: postureChecks
@@ -300,7 +306,7 @@ export const useAccessControl = ({
         {
           bidirectional: direction == "bi",
           description,
-          name,
+          name: policyName,
           action: "accept",
           protocol,
           enabled,
@@ -344,6 +350,14 @@ export const useAccessControl = ({
 
   const isDestinationPeer = destinationResource?.type === "peer";
 
+  // A network resource on both sides is site-to-site: each side has its own
+  // routing peers, so the rule may go both ways unless the destination is a
+  // domain, which can never start a connection.
+  const resourceToResource = isResourceToResource(
+    sourceResource,
+    destinationResource,
+  );
+
   const destinationHasResources = useMemo(() => {
     if (isDestinationPeer) return false;
     if (destinationResource) return true;
@@ -361,6 +375,7 @@ export const useAccessControl = ({
 
   const destinationOnlyResources = useMemo(() => {
     if (isDestinationPeer) return false;
+    if (resourceToResource) return false;
     if (destinationResource) return true;
 
     return (
@@ -382,7 +397,12 @@ export const useAccessControl = ({
         return hasResources && !hasPeers;
       })
     );
-  }, [destinationGroups, destinationResource, isDestinationPeer]);
+  }, [
+    destinationGroups,
+    destinationResource,
+    isDestinationPeer,
+    resourceToResource,
+  ]);
 
   useEffect(() => {
     if (destinationOnlyResources && direction !== "in" && !isDestinationPeer) {
@@ -421,6 +441,7 @@ export const useAccessControl = ({
     setDestinationResource,
     destinationHasResources,
     destinationOnlyResources,
+    resourceToResource,
     hasPortSupport,
     sshAccessType,
     setSshAccessType,
@@ -459,3 +480,16 @@ export const parsePortsToStrings = (rule?: PolicyRule): string[] => {
     ["asc"],
   );
 };
+
+/** True when the rule side names a network resource rather than a peer. */
+export const isNetworkResource = (resource?: PolicyRuleResource) =>
+  !!resource?.id && resource.type !== "peer";
+
+/** A rule from one network resource to another that can start connections. */
+export const isResourceToResource = (
+  source?: PolicyRuleResource,
+  destination?: PolicyRuleResource,
+) =>
+  isNetworkResource(source) &&
+  isNetworkResource(destination) &&
+  destination?.type !== "domain";
