@@ -26,6 +26,13 @@ export const SSH_DOCS_LINK =
   "https://docs.netbird.io/how-to/browser-client#ssh-connection";
 
 const SSH_DETECTION_TIMEOUT_MS = 20000;
+// A cold peer connection (lazy wake, relay fallback) can take longer than one
+// probe, and the probe itself is what triggers it. Keep probing until the
+// budget is spent instead of guessing the server type.
+const SSH_DETECTION_BUDGET_MS = 60000;
+const SSH_DETECTION_RETRY_DELAY_MS = 1000;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const useSSH = (client: any) => {
   const [status, setStatus] = useState(SSHStatus.DISCONNECTED);
@@ -44,16 +51,27 @@ export const useSSH = (client: any) => {
       setError("");
 
       try {
-        let requiresJwt = false;
-        try {
-          requiresJwt = await client.detectSSHServerType(
-            config.hostname,
-            config.port,
-            SSH_DETECTION_TIMEOUT_MS,
-          );
-          console.log("Detection:", { requiresJwt, hasToken: !!accessToken });
-        } catch (detectionErr) {
-          console.error("Detection failed, falling back to pubkey:", detectionErr);
+        const deadline = Date.now() + SSH_DETECTION_BUDGET_MS;
+        let requiresJwt: boolean | undefined;
+        let lastErr: unknown;
+        while (requiresJwt === undefined) {
+          const remaining = deadline - Date.now();
+          if (remaining <= 0) break;
+          try {
+            requiresJwt = await client.detectSSHServerType(
+              config.hostname,
+              config.port,
+              Math.min(SSH_DETECTION_TIMEOUT_MS, remaining),
+            );
+            console.log("Detection:", { requiresJwt, hasToken: !!accessToken });
+          } catch (detectionErr) {
+            lastErr = detectionErr;
+            console.warn("Detection attempt failed:", detectionErr);
+            await sleep(SSH_DETECTION_RETRY_DELAY_MS);
+          }
+        }
+        if (requiresJwt === undefined) {
+          throw new Error(`SSH server detection failed: ${lastErr}`);
         }
 
         if (requiresJwt && !accessToken) {
