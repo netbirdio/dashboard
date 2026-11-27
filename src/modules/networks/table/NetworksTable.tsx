@@ -19,8 +19,8 @@ import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { cn } from "@utils/helpers";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
-import { usePathname } from "next/navigation";
-import React, { useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -36,7 +36,6 @@ import NetworkNameCell from "@/modules/networks/table/NetworkNameCell";
 import { NetworkPolicyCell } from "@/modules/networks/table/NetworkPolicyCell";
 import { NetworkResourceCell } from "@/modules/networks/table/NetworkResourceCell";
 import NetworkRoutingPeerCell from "@/modules/networks/table/NetworkRoutingPeerCell";
-import { GlobalSearchModal } from "@/modules/search/GlobalSearchModal";
 
 export const NetworkTableColumns: ColumnDef<Network>[] = [
   {
@@ -45,7 +44,8 @@ export const NetworkTableColumns: ColumnDef<Network>[] = [
       <DataTableHeader column={column}>Network</DataTableHeader>
     ),
     sortingFn: "text",
-    cell: ({ row }) => <NetworkNameCell network={row.original} />,
+    meta: { minWidth: 220, className: "group/name-cell" },
+    cell: ({ row }) => <NetworkNameCell network={row.original} fluid={true} />,
   },
   {
     accessorKey: "description",
@@ -81,6 +81,7 @@ export const NetworkTableColumns: ColumnDef<Network>[] = [
   {
     accessorKey: "id",
     header: "",
+    meta: { fit: true },
     cell: ({ row }) => <NetworkActionCell network={row.original} />,
   },
 ];
@@ -98,7 +99,7 @@ export default function NetworksTable({
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
-  const [searchModal, setSearchModal] = useState(false);
+  const router = useRouter();
 
   // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -142,7 +143,6 @@ export default function NetworksTable({
 
   return (
     <>
-      <GlobalSearchModal open={searchModal} setOpen={setSearchModal} />
       <NetworkAccessControlProvider>
         <NetworkProvider>
           <DataTable
@@ -163,7 +163,7 @@ export default function NetworksTable({
             aboveTable={(table) => (
               <TableFilterChips table={table} filters={filterDefs} />
             )}
-            onSearchClick={() => setSearchModal(true)}
+            onRowClick={(row) => router.push(`/network?id=${row.original.id}`)}
             getStartedCard={
               <GetStartedTest
                 icon={

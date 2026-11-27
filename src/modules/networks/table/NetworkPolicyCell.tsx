@@ -1,4 +1,5 @@
 import Badge from "@components/Badge";
+import { stopRowClick } from "@components/table/stopRowClick";
 import { ShieldIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -22,7 +23,10 @@ export const NetworkPolicyCell = ({ network }: Props) => {
       variant={"gray"}
       useHover={true}
       className={"cursor-pointer w-fit"}
-      onClick={() => router.push(`/network?id=${network.id}`)}
+      onClick={(e) => {
+        stopRowClick(e);
+        router.push(`/network?id=${network.id}`);
+      }}
     >
       <ShieldIcon size={14} className={"text-green-500"} />
       <div>

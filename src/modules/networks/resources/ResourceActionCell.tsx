@@ -9,6 +9,7 @@ import {
 import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
 import {
+  CirclePlusIcon,
   MoreVertical,
   PowerIcon,
   SquarePenIcon,
@@ -24,8 +25,13 @@ import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
 type Props = {
   resource: NetworkResource;
+  /**
+   * Adds "Expose" to the menu on screens too narrow for the table's
+   * Expose column, which is hidden at the same breakpoint.
+   */
+  onExpose?: () => void;
 };
-export const ResourceActionCell = ({ resource }: Props) => {
+export const ResourceActionCell = ({ resource, onExpose }: Props) => {
   const { permission } = usePermissions();
   const { deleteResource, network, openResourceModal } = useNetworksContext();
   const { mutate } = useSWRConfig();
@@ -51,6 +57,7 @@ export const ResourceActionCell = ({ resource }: Props) => {
           .filter((g) => g !== undefined),
         enabled: nextEnabled,
       }).then(() => {
+        mutate("/networks/resources");
         mutate(`/networks/${network?.id}/resources`);
       }),
     });
@@ -103,6 +110,21 @@ export const ResourceActionCell = ({ resource }: Props) => {
               {resource.enabled ? "Disable" : "Enable"}
             </div>
           </DropdownMenuItem>
+          {onExpose && (
+            <DropdownMenuItem
+              className={"xl:hidden"}
+              onClick={() => {
+                setOpen(false);
+                onExpose();
+              }}
+              disabled={!permission.services?.create}
+            >
+              <div className={"flex gap-3 items-center"}>
+                <CirclePlusIcon size={14} className={"shrink-0"} />
+                Expose
+              </div>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => {

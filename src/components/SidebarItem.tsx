@@ -25,10 +25,16 @@ export type SidebarItemProps = {
   labelClassName?: string;
   /**
    * Other pages this entry stands for, so it is active there too: pages
-   * reached through tabs on its page, or detail pages outside its route.
+   * reached through tabs on its page.
    * Each covers itself and the pages below it.
    */
   activeRoutes?: readonly string[];
+  /**
+   * Pages that unfold this entry's collapsible parent without making the
+   * entry active: detail pages reached from its list.
+   * Each covers itself and the pages below it.
+   */
+  openRoutes?: readonly string[];
   visible: boolean;
 };
 
@@ -61,10 +67,10 @@ export default function SidebarItem({
       if (props.href) {
         routes.push({ href: props.href, exact: !!props.exactPathMatch });
       }
-      // Pages a child stands for open the parent too, e.g. a network's
-      // detail page opens Network Routing.
-      props.activeRoutes?.forEach((route) =>
-        routes.push({ href: route, exact: false }),
+      // Pages a child stands for or leads to open the parent too, e.g. a
+      // network's detail page opens Network Routing.
+      [...(props.activeRoutes ?? []), ...(props.openRoutes ?? [])].forEach(
+        (route) => routes.push({ href: route, exact: false }),
       );
     });
     return routes;

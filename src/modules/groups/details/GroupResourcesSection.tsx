@@ -16,13 +16,18 @@ import { Group } from "@/interfaces/Group";
 import { NetworkResourceWithNetwork } from "@/interfaces/Network";
 import { GroupDetailsTableContainer } from "@/modules/groups/details/GroupDetailsTableContainer";
 import { NetworkAccessControlProvider } from "@/modules/networks/NetworkAccessControlProvider";
-import { NetworkProvider } from "@/modules/networks/NetworkProvider";
+import {
+  NetworkProvider,
+  useNetworksContext,
+} from "@/modules/networks/NetworkProvider";
 import { ResourceActionCell } from "@/modules/networks/resources/ResourceActionCell";
 import ResourceAddressCell from "@/modules/networks/resources/ResourceAddressCell";
 import { ResourceEnabledCell } from "@/modules/networks/resources/ResourceEnabledCell";
 import { ResourceGroupCell } from "@/modules/networks/resources/ResourceGroupCell";
 import ResourceNameCell from "@/modules/networks/resources/ResourceNameCell";
+import { ResourceNetworkCell } from "@/modules/networks/resources/ResourceNetworkCell";
 import { ResourcePolicyCell } from "@/modules/networks/resources/ResourcePolicyCell";
+import { ownClicks } from "@/modules/networks/resources/useResourceTable";
 
 const GroupResourcesColumns: ColumnDef<NetworkResourceWithNetwork>[] = [
   {
@@ -37,7 +42,9 @@ const GroupResourcesColumns: ColumnDef<NetworkResourceWithNetwork>[] = [
       return <DataTableHeader column={column}>Resource</DataTableHeader>;
     },
     cell: ({ row }) => {
-      return <ResourceNameCell resource={row.original} />;
+      return ownClicks(
+        <ResourceNameCell resource={row.original} inClickableRow />,
+      );
     },
   },
   {
@@ -53,7 +60,17 @@ const GroupResourcesColumns: ColumnDef<NetworkResourceWithNetwork>[] = [
       return <DataTableHeader column={column}>Address</DataTableHeader>;
     },
     cell: ({ row }) => {
-      return <ResourceAddressCell resource={row.original} />;
+      return ownClicks(<ResourceAddressCell resource={row.original} />);
+    },
+  },
+  {
+    id: "network",
+    accessorFn: (resource) => resource.network.name,
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Network</DataTableHeader>;
+    },
+    cell: ({ row }) => {
+      return ownClicks(<ResourceNetworkCell network={row.original.network} />);
     },
   },
   {
@@ -68,12 +85,8 @@ const GroupResourcesColumns: ColumnDef<NetworkResourceWithNetwork>[] = [
         </DataTableHeader>
       );
     },
-    cell: ({ row }) => (
-      <ResourceEnabledCell
-        resource={row.original}
-        mutateAllResourcesOnUpdate={true}
-      />
-    ),
+    cell: ({ row }) =>
+      ownClicks(<ResourceEnabledCell resource={row.original} />),
   },
   {
     id: "groups",
@@ -85,7 +98,7 @@ const GroupResourcesColumns: ColumnDef<NetworkResourceWithNetwork>[] = [
       return <DataTableHeader column={column}>Groups</DataTableHeader>;
     },
     cell: ({ row }) => {
-      return <ResourceGroupCell resource={row.original} />;
+      return ownClicks(<ResourceGroupCell resource={row.original} />);
     },
   },
   {
@@ -95,7 +108,7 @@ const GroupResourcesColumns: ColumnDef<NetworkResourceWithNetwork>[] = [
       return <DataTableHeader column={column}>Policies</DataTableHeader>;
     },
     cell: ({ row }) => {
-      return <ResourcePolicyCell resource={row.original} />;
+      return ownClicks(<ResourcePolicyCell resource={row.original} />);
     },
   },
   {
@@ -103,7 +116,10 @@ const GroupResourcesColumns: ColumnDef<NetworkResourceWithNetwork>[] = [
     accessorKey: "id",
     header: "",
     cell: ({ row }) => {
-      return <ResourceActionCell resource={row.original} />;
+      return ownClicks(
+        <ResourceActionCell resource={row.original} />,
+        "ml-auto",
+      );
     },
   },
 ];
@@ -113,80 +129,93 @@ type Props = {
   isLoading?: boolean;
 };
 
-export const GroupResourcesSection = ({
-  resources,
-  isLoading = true,
-}: Props) => {
+/**
+ * The provider around the table opens a resource on row click;
+ * each row has its own inside, bound to that row's network, for its cells.
+ */
+export const GroupResourcesSection = (props: Props) => (
+  <NetworkAccessControlProvider>
+    <NetworkProvider>
+      <GroupResourcesTable {...props} />
+    </NetworkProvider>
+  </NetworkAccessControlProvider>
+);
+
+const GroupResourcesTable = ({ resources, isLoading = true }: Props) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { permission } = usePermissions();
   const router = useRouter();
   const { mutate } = useSWRConfig();
+  const { openResourceModal } = useNetworksContext();
 
   return (
-    <NetworkAccessControlProvider>
-      <GroupDetailsTableContainer>
-        <DataTable
-          wrapperComponent={Card}
-          wrapperProps={{ className: "mt-6 pb-2 w-full" }}
-          sorting={sorting}
-          setSorting={setSorting}
-          minimal={true}
-          isLoading={isLoading}
-          showSearchAndFilters={true}
-          renderRow={(row, children) => (
-            <NetworkProvider
-              key={row.network.id + row.name}
-              network={row.network}
-              onResourceUpdate={() => mutate("/networks/resources")}
-              onResourceDelete={() => mutate("/networks/resources")}
-            >
-              {children}
-            </NetworkProvider>
-          )}
-          inset={false}
-          tableClassName={"mt-0"}
-          text={"Resources"}
-          columns={GroupResourcesColumns}
-          keepStateInLocalStorage={false}
-          data={resources}
-          searchPlaceholder={"Search by name, address or group..."}
-          getStartedCard={
-            <NoResults
-              className={"py-4"}
-              title={"This group has no assigned resources"}
-              description={
-                "Assign this group to your resources inside your networks to see them listed here."
-              }
-              icon={<Layers3Icon size={20} className={"text-nb-gray-300"} />}
-            >
-              {permission?.networks?.create && (
-                <>
-                  <Button
-                    variant={"primary"}
-                    className={"mt-4"}
-                    onClick={() => router.push("/networks")}
-                  >
-                    Go to Networks
-                    <ArrowUpRightIcon size={16} />
-                  </Button>
-                </>
-              )}
-            </NoResults>
-          }
-          columnVisibility={{
-            description: false,
-            id: false,
-          }}
-          paginationPaddingClassName={"px-0 pt-8"}
-        >
-          {(table) => (
-            <DataTableRowsPerPage
-              table={table}
-              disabled={!resources || resources?.length == 0}
-            />
-          )}
-        </DataTable>
-      </GroupDetailsTableContainer>
-    </NetworkAccessControlProvider>
+    <GroupDetailsTableContainer>
+      <DataTable
+        wrapperComponent={Card}
+        wrapperProps={{ className: "mt-6 pb-2 w-full" }}
+        sorting={sorting}
+        setSorting={setSorting}
+        minimal={true}
+        isLoading={isLoading}
+        showSearchAndFilters={true}
+        onRowClick={
+          permission.networks.update
+            ? (row) => openResourceModal(row.original.network, row.original)
+            : undefined
+        }
+        renderRow={(row, children) => (
+          <NetworkProvider
+            key={row.network.id + row.name}
+            network={row.network}
+            onResourceUpdate={() => mutate("/networks/resources")}
+            onResourceDelete={() => mutate("/networks/resources")}
+          >
+            {children}
+          </NetworkProvider>
+        )}
+        inset={false}
+        tableClassName={"mt-0"}
+        text={"Resources"}
+        columns={GroupResourcesColumns}
+        keepStateInLocalStorage={false}
+        data={resources}
+        searchPlaceholder={"Search by name, address, network or group..."}
+        getStartedCard={
+          <NoResults
+            className={"py-4"}
+            title={"This group has no assigned resources"}
+            description={
+              "Assign this group to your resources inside your networks to see them listed here."
+            }
+            icon={<Layers3Icon size={20} className={"text-nb-gray-300"} />}
+          >
+            {permission?.networks?.create && (
+              <>
+                <Button
+                  variant={"primary"}
+                  className={"mt-4"}
+                  onClick={() => router.push("/networks")}
+                >
+                  Go to Networks
+                  <ArrowUpRightIcon size={16} />
+                </Button>
+              </>
+            )}
+          </NoResults>
+        }
+        columnVisibility={{
+          description: false,
+          id: false,
+        }}
+        paginationPaddingClassName={"px-0 pt-8"}
+      >
+        {(table) => (
+          <DataTableRowsPerPage
+            table={table}
+            disabled={!resources || resources?.length == 0}
+          />
+        )}
+      </DataTable>
+    </GroupDetailsTableContainer>
   );
 };

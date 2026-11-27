@@ -36,10 +36,8 @@ import { NavigationUsageInfo } from "@/modules/billing/NavigationUsageInfo";
 import {
   accountPageAccess,
   agentNetworkPageAccess,
-  GROUPS_ACTIVE_ROUTES,
   hasNetworkingAccess,
   type NavSectionId,
-  PEERS_ACTIVE_ROUTES,
   USERS_ACTIVE_ROUTES,
   visibleSections,
 } from "@/modules/navigation/sections";
@@ -156,7 +154,6 @@ export default function Navigation({
                 icon={<PeerIcon />}
                 label="Peers"
                 href={"/peers"}
-                activeRoutes={PEERS_ACTIVE_ROUTES}
                 // Restricted users get the add-your-device view there, so
                 // the link stays even in the limited (user role) sidebar.
                 visible={true}
@@ -165,8 +162,8 @@ export default function Navigation({
                 icon={<TeamIcon />}
                 label="Users"
                 href={"/team/users"}
-                // Service Users is a tab on the Users page, and a user's own
-                // page sits at /team/user; Users stays active on both.
+                // Service Users is a tab on the Users page; Users stays
+                // active there.
                 activeRoutes={USERS_ACTIVE_ROUTES}
                 visible={permission.users.read}
               />
@@ -174,7 +171,6 @@ export default function Navigation({
                 icon={<GroupsIcon />}
                 label="Groups"
                 href={"/groups"}
-                activeRoutes={GROUPS_ACTIVE_ROUTES}
                 // The Groups page's own check. Both products' policies are
                 // written against groups, so Agent Network admins need it as
                 // much as network admins; the limited (user role) view keeps

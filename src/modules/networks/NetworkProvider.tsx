@@ -39,6 +39,8 @@ const NetworksContext = React.createContext(
       resource?: NetworkResource,
       initialTab?: string,
     ) => void;
+    /** Opens the add-resource modal with the network still to be picked. */
+    openNewResourceModal: (networks: Network[]) => void;
     openResourceGroupModal: (
       network: Network,
       resource?: NetworkResource,
@@ -136,8 +138,19 @@ export const NetworkProvider = ({
     initialTab?: string,
   ) => {
     setCurrentNetwork(network);
+    setSelectableNetworks(undefined);
     resource && setCurrentResource(resource);
     setResourceModalInitialTab(initialTab);
+    setResourceModal(true);
+  };
+
+  const [selectableNetworks, setSelectableNetworks] = useState<Network[]>();
+
+  const openNewResourceModal = (networks: Network[]) => {
+    setCurrentNetwork(undefined);
+    setCurrentResource(undefined);
+    setSelectableNetworks(networks);
+    setResourceModalInitialTab(undefined);
     setResourceModal(true);
   };
 
@@ -338,6 +351,7 @@ export const NetworkProvider = ({
         openEditNetworkModal,
         openCreateNetworkModal,
         openResourceModal,
+        openNewResourceModal,
         openResourceGroupModal,
         openPolicyModal,
         openEditPolicyModal,
@@ -454,47 +468,49 @@ export const NetworkProvider = ({
                 }
               }}
             />
-
-            <NetworkResourceModal
-              network={currentNetwork}
-              resource={currentResource}
-              initialTab={resourceModalInitialTab}
-              onCreated={async (r) => {
-                setResourceModal(false);
-                setCurrentResource(undefined);
-                await mutate("/networks");
-                mutate("/groups");
-                await mutate("/networks/resources");
-                if (network) {
-                  mutate(`/networks/${network.id}/resources`);
-                  mutate(`/networks/${network.id}`);
-                }
-                onResourceCreated?.(currentNetwork);
-                if (!network) {
-                  currentNetwork?.routing_peers_count === 0 &&
-                    (await askForRoutingPeer(currentNetwork));
-                }
-              }}
-              onUpdated={() => {
-                setResourceModal(false);
-                setCurrentResource(undefined);
-                mutate("/networks");
-                mutate("/groups");
-                mutate("/networks/resources");
-                if (network) {
-                  onResourceUpdate?.();
-                  mutate(`/networks/${network.id}/resources`);
-                  mutate(`/networks/${network.id}`);
-                }
-              }}
-              open={resourceModal}
-              setOpen={(state) => {
-                setCurrentResource(undefined);
-                setResourceModalInitialTab(undefined);
-                setResourceModal(state);
-              }}
-            />
           </>
+        )}
+        {(currentNetwork || selectableNetworks) && (
+          <NetworkResourceModal
+            network={currentNetwork}
+            networks={selectableNetworks}
+            resource={currentResource}
+            initialTab={resourceModalInitialTab}
+            onCreated={async (r, createdIn) => {
+              setResourceModal(false);
+              setCurrentResource(undefined);
+              await mutate("/networks");
+              mutate("/groups");
+              await mutate("/networks/resources");
+              if (network) {
+                mutate(`/networks/${network.id}/resources`);
+                mutate(`/networks/${network.id}`);
+              }
+              onResourceCreated?.(createdIn);
+              if (!network) {
+                createdIn.routing_peers_count === 0 &&
+                  (await askForRoutingPeer(createdIn));
+              }
+            }}
+            onUpdated={() => {
+              setResourceModal(false);
+              setCurrentResource(undefined);
+              mutate("/networks");
+              mutate("/groups");
+              mutate("/networks/resources");
+              if (network) {
+                onResourceUpdate?.();
+                mutate(`/networks/${network.id}/resources`);
+                mutate(`/networks/${network.id}`);
+              }
+            }}
+            open={resourceModal}
+            setOpen={(state) => {
+              setCurrentResource(undefined);
+              setResourceModalInitialTab(undefined);
+              setResourceModal(state);
+            }}
+          />
         )}
       </PoliciesProvider>
     </NetworksContext.Provider>

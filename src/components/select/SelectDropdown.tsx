@@ -55,6 +55,8 @@ interface SelectDropdownProps {
   compact?: boolean;
   // Pinned below the options, outside the scroll area and the search filter.
   footer?: (close: () => void) => React.ReactNode;
+  // Draws the line between the options and the footer.
+  footerSeparator?: boolean;
   // For dismissals the Popover's own outside-detection can't see (a ReactFlow
   // pane that stops pointer propagation).
   open?: boolean;
@@ -87,6 +89,7 @@ export function SelectDropdown({
   truncate = false,
   compact = false,
   footer,
+  footerSeparator = true,
   open: controlledOpen,
   onOpenChange,
   deferChange = false,
@@ -313,7 +316,12 @@ export function SelectDropdown({
                     </div>
                   ))
                 ) : (
-                  <div className={cn("grid grid-cols-1 gap-1 w-full", compact ? "pb-1" : "pb-2")}>
+                  <div
+                    className={cn(
+                      "grid grid-cols-1 gap-1 w-full",
+                      compact ? "pb-1" : "pb-2",
+                    )}
+                  >
                     {filteredItems.map((option) => (
                       <SelectDropdownItem
                         option={option}
@@ -329,7 +337,11 @@ export function SelectDropdown({
               </CommandGroup>
             </ScrollArea>
             {footer && (
-              <div className={"border-t dark:border-nb-gray-800/70"}>
+              <div
+                className={cn(
+                  footerSeparator && "border-t dark:border-nb-gray-800/70",
+                )}
+              >
                 {footer(() => setOpen(false))}
               </div>
             )}

@@ -115,7 +115,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
       return <DataTableHeader column={column}>Name</DataTableHeader>;
     },
     sortingFn: "text",
-    meta: { minWidth: 280 },
+    meta: { minWidth: 280, className: "group/name-cell" },
     cell: ({ row }) => <PeerNameCell peer={row.original} fluid={true} />,
   },
   {

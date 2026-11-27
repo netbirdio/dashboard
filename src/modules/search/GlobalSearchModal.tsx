@@ -68,6 +68,14 @@ const searchPredicate = (item: AnySearchResult, query: string) => {
   return false;
 };
 
+/**
+ * A spotlight-style search over networks and their resources.
+ * Nothing mounts it at the moment: it used to open from the search box of the
+ * Networks table, which the Networks and Resources pages now cover with their
+ * own table search.
+ * It is kept as the starting point for a global search opened from the
+ * navigation, where it would search every kind of object, not only these two.
+ */
 export const GlobalSearchModal = ({ open, setOpen }: Props) => {
   return open && <GlobalSearchModalContent open={open} setOpen={setOpen} />;
 };

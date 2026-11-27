@@ -35,6 +35,7 @@ export const NAV_SECTION_ROUTES: Record<NavSectionId, readonly string[]> = {
     "/posture-checks",
     "/networks",
     "/network",
+    "/resources",
     "/network-routes",
     "/reverse-proxy",
     "/dns",
@@ -46,16 +47,17 @@ export const NAV_SECTION_ROUTES: Record<NavSectionId, readonly string[]> = {
 
 /**
  * The pages an entry stands for besides its own list page, so it stays
- * active there (SidebarItem `activeRoutes`): a list's detail page, or a
- * page reached through tabs on it.
+ * active there (SidebarItem `activeRoutes`): a page reached through tabs on it.
+ * Detail pages are not among them: on a peer's, user's, group's or network's
+ * own page no entry is active, because the list it came from is not open.
  */
-export const USERS_ACTIVE_ROUTES: readonly string[] = [
-  "/team/service-users",
-  "/team/user",
-];
-export const PEERS_ACTIVE_ROUTES: readonly string[] = ["/peer"];
-export const GROUPS_ACTIVE_ROUTES: readonly string[] = ["/group"];
-export const NETWORKS_ACTIVE_ROUTES: readonly string[] = ["/network"];
+export const USERS_ACTIVE_ROUTES: readonly string[] = ["/team/service-users"];
+
+/**
+ * A network's own page highlights nothing, but still unfolds Network Routing
+ * (SidebarItem `openRoutes`), so the way back to the list stays in view.
+ */
+export const NETWORKS_OPEN_ROUTES: readonly string[] = ["/network"];
 
 /** True when `path` is `root` or a page below it. */
 export const isUnder = (path: string | null | undefined, root: string) =>

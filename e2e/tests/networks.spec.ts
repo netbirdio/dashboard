@@ -128,6 +128,66 @@ test.describe.serial("Networks @network", () => {
     networkName = newName;
   });
 
+  test("Should add a resource from the Resources page by picking its network", async ({
+    dashboardAsOwner: page,
+  }) => {
+    await navigateTo(page, "/resources");
+    const name = generateRandomName("page-resource-");
+
+    await page.getByTestId("add-resource").click();
+    await expect(page.getByTestId("resource-name-input")).toBeVisible({ timeout: 10_000 });
+    // No network yet, so the form cannot continue.
+    await page.getByTestId("resource-name-input").fill(name);
+    await page.getByTestId("resource-address-input").fill("10.60.0.1");
+    if (await page.getByTestId("resource-continue").isDisabled()) {
+      await page.getByTestId("resource-network-select").click();
+      await page.getByRole("option", { name: networkName }).click();
+    }
+    await page.getByTestId("resource-continue").click();
+    await page.getByTestId("submit-resource").click();
+    // "No policies configured" warning
+    await page.getByTestId("confirmation.confirm").click();
+    // "Add Routing Peer?" prompt: this suite's network routes through an empty
+    // group, so it has no routing peer, as in addResourceToNetwork below.
+    await page.getByTestId("confirmation.cancel").click();
+
+    await page.getByTestId("table-search-input").fill(name);
+    const row = page.locator("tr").filter({ hasText: name });
+    await expect(row).toBeVisible({ timeout: 10_000 });
+    await expect(row.getByTestId("resource-network")).toHaveText(networkName);
+  });
+
+  test("Should create a network from the resource modal and select it", async ({
+    dashboardAsOwner: page,
+  }) => {
+    await navigateTo(page, "/resources");
+    // Cleaned up with the other test networks by prefix.
+    const newNetwork = generateRandomName("test-network-");
+
+    await page.getByTestId("add-resource").click();
+    await page.getByTestId("resource-network-select").click();
+    await page.getByTestId("create-network-option").click();
+    await page.getByTestId("network-name-input").fill(newNetwork);
+    await page.getByTestId("submit-network").click();
+
+    await expect(page.getByTestId("resource-network-select")).toContainText(newNetwork);
+    await page.keyboard.press("Escape");
+  });
+
+  test("Should list the resource with its network on the Resources page", async ({
+    dashboardAsOwner: page,
+  }) => {
+    await navigateTo(page, "/resources");
+    await page.getByTestId("table-search-input").fill(resourceName);
+
+    const row = page.locator("tr").filter({ hasText: resourceName });
+    await expect(row).toBeVisible({ timeout: 10_000 });
+    await expect(row.getByTestId("resource-network")).toHaveText(networkName);
+
+    await row.getByTestId("resource-network").click();
+    await expect(page.locator('[role="tab"]').filter({ hasText: "Resource" })).toBeVisible();
+  });
+
   test("Should delete the network and clean up", async ({ dashboardAsOwner: page }) => {
     await deleteNetworksByPrefix(page, "test-network-");
     await deletePoliciesByGroupName(page, policySourceGroup);

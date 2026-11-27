@@ -12,6 +12,7 @@ import { Policy } from "@/interfaces/Policy";
 import { Route } from "@/interfaces/Route";
 import { SetupKey } from "@/interfaces/SetupKey";
 import { User } from "@/interfaces/User";
+import { resourcesWithNetwork } from "@/modules/networks/resources/resourcesWithNetwork";
 import useFetchApi from "@/utils/api";
 
 export interface GroupDetails extends Group {
@@ -115,19 +116,10 @@ export default function useGroupDetails(groupId: string) {
     const resourcesIds = (group?.resources as GroupResource[])?.map(
       (p) => p.id,
     );
-    let networkResources = resources.filter(
-      (p) => resourcesIds?.includes(p.id),
+    return resourcesWithNetwork(
+      resources.filter((p) => resourcesIds?.includes(p.id)),
+      networks,
     );
-
-    return networkResources.map((networkResource) => {
-      const network = networks?.find(
-        (n) => n.resources?.includes(networkResource.id),
-      );
-      return {
-        ...networkResource,
-        network: network,
-      } as NetworkResourceWithNetwork;
-    });
   }, [group?.resources, networks, resources]);
 
   const isLoading =
