@@ -71,9 +71,10 @@ export const applyD3HierarchicalLayout = (
   const resourceNodes = simulationNodes.filter(
     (n) => n.type === "resourceNode",
   );
-  // Providers are destinations, so they share the destination column.
+  // Providers and exit nodes are destinations, so they share the
+  // destination column.
   const providerNodes = simulationNodes.filter(
-    (n) => n.type === "providerNode",
+    (n) => n.type === "providerNode" || n.type === "exitNodeNode",
   );
   const peerNodes = simulationNodes.filter((n) => n.type === "peerNode");
   const expandedGroupPeers = simulationNodes.filter(

@@ -209,6 +209,7 @@ function ControlCenterCanvas() {
         "networkNode",
         "providerNode",
         "agentPolicyNode",
+        "exitNodeNode",
       ]);
       if (!draft.isDraft && !LIVE_MENU_TYPES.has(node.type ?? "")) return;
       event.preventDefault();

@@ -1,4 +1,5 @@
 import { AgentPolicyNode } from "@/modules/control-center/nodes/AgentPolicyNode";
+import { ExitNodeNode } from "@/modules/control-center/nodes/ExitNodeNode";
 import { GroupNode } from "@/modules/control-center/nodes/GroupNode";
 import { NetworkNode } from "@/modules/control-center/nodes/NetworkNode";
 import { PeerNode } from "@/modules/control-center/nodes/PeerNode";
@@ -27,6 +28,7 @@ export enum NodeType {
   SelectUserNode = "selectUserNode",
   AgentPolicyNode = "agentPolicyNode",
   ProviderNode = "providerNode",
+  ExitNodeNode = "exitNodeNode",
 }
 
 export const NODE_TYPES = {
@@ -46,4 +48,5 @@ export const NODE_TYPES = {
   [NodeType.SelectUserNode]: SelectUserNode,
   [NodeType.AgentPolicyNode]: AgentPolicyNode,
   [NodeType.ProviderNode]: ProviderNode,
+  [NodeType.ExitNodeNode]: ExitNodeNode,
 };

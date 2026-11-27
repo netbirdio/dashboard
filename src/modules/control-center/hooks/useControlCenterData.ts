@@ -3,11 +3,13 @@ import useFetchApi from "@utils/api";
 import { sortBy } from "lodash";
 import { LayoutGridIcon, NetworkIcon } from "lucide-react";
 import React, { useMemo } from "react";
+import { ExitNode } from "@/interfaces/ExitNode";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { User } from "@/interfaces/User";
+import { useExitNodePermissions } from "@/modules/exit-nodes/useExitNodePermissions";
 
 export function useControlCenterData() {
   const { data: policies, isLoading: isPoliciesLoading } =
@@ -31,13 +33,24 @@ export function useControlCenterData() {
     true,
   );
 
+  // Exit nodes draw exit-node policies' destinations. Optional like users:
+  // management builds without the exit nodes API answer 404, and the canvas
+  // reads fine without them (the destination shows as an unknown exit node).
+  // Their loading still counts: the live view is built once, when loading
+  // ends, and would otherwise show every exit node as unknown.
+  const canReadExitNodes = !!useExitNodePermissions()?.read;
+  const { data: exitNodes, isLoading: isExitNodesLoading } = useFetchApi<
+    ExitNode[]
+  >("/exit-nodes", true, true, canReadExitNodes);
+
   const isLoading =
     isPoliciesLoading ||
     isPeersLoading ||
     isNetworksLoading ||
     isResourcesLoading ||
     isGroupsLoading ||
-    isUsersLoading;
+    isUsersLoading ||
+    isExitNodesLoading;
 
   const networkOptions: SelectOption[] = useMemo(() => {
     const allNetworks = sortBy(
@@ -74,6 +87,7 @@ export function useControlCenterData() {
     networkResources,
     groups,
     users,
+    exitNodes,
     isPeersLoading,
     isNetworksLoading,
     isLoading,

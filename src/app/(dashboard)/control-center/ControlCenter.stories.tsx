@@ -105,3 +105,30 @@ export const NodeContextMenu: Story = {
     await byTestId("cc-node-context-menu");
   },
 };
+
+/* An exit-node policy's destination: the exit node card, with the flags of
+   the countries its traffic exits in. Hovering the flags lists the cities. */
+export const ExitNodeLocations: Story = {
+  play: async () => {
+    await liveReady();
+    const card = await byTestId("cc-exit-node");
+    const flags = card.querySelector("[aria-label]");
+    await userEvent.hover(flags ?? card);
+    // The tooltip also renders a hidden copy for screen readers.
+    await screen.findAllByText(/Traffic exits/, {}, { timeout: 10_000 });
+  },
+};
+
+export const ExitNodeContextMenu: Story = {
+  play: async () => {
+    await liveReady();
+    const card = await byTestId("cc-exit-node");
+    const rect = card.getBoundingClientRect();
+    fireEvent.contextMenu(card, {
+      clientX: rect.left + rect.width / 2,
+      clientY: rect.top + rect.height / 2,
+    });
+    await byTestId("cc-node-context-menu");
+    await screen.findByText("Edit Exit Node");
+  },
+};

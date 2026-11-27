@@ -39,6 +39,7 @@ import {
 } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useExitNodePermissions } from "@/modules/exit-nodes/useExitNodePermissions";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { GroupRenameModal } from "@/modules/control-center/draft/modals/GroupRenameModal";
 import { useCanDeleteGroup } from "@/modules/control-center/hooks/useCanDeleteGroup";
@@ -126,7 +127,9 @@ export const NodeContextMenu = ({
     setPolicyModalOpen,
     openProvider,
     openAgentPolicy,
+    openExitNode,
   } = useControlCenterPolicy();
+  const exitNodePermission = useExitNodePermissions();
   const {
     toggleProvider,
     deleteProvider: deleteAgentProvider,
@@ -807,6 +810,21 @@ export const NodeContextMenu = ({
     // Live actions hit the real account immediately, behind confirmations;
     // they never go through the changeset.
     if (!isDraft) {
+      // Exit nodes are edited on their own modal; toggles and delete stay on
+      // the Exit Nodes page for now.
+      if (node.type === "exitNodeNode") {
+        const data = node.data as { id?: string; missing?: boolean };
+        const items: MenuItem[] = [...focusItems(node)];
+        if (data?.id && !data.missing && exitNodePermission?.update) {
+          const id = data.id;
+          items.push({
+            label: "Edit Exit Node",
+            icon: <SquarePenIcon size={14} />,
+            onClick: () => openExitNode(id),
+          });
+        }
+        return items;
+      }
       if (node.type === "policyNode") {
         if (!nodePolicy?.id) return [];
         const enabled = livePolicy?.enabled ?? true;
@@ -1218,6 +1236,8 @@ export const NodeContextMenu = ({
       },
     ];
   }, [
+    openExitNode,
+    exitNodePermission,
     position,
     isDraft,
     node,

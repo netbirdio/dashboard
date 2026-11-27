@@ -13,8 +13,15 @@ import {
 import { addDestinationResourceNodes, ViewResult } from "./types";
 
 export function useUserView() {
-  const { policies, peers, networks, networkResources, groups, isDataReady } =
-    useControlCenterData();
+  const {
+    policies,
+    peers,
+    networks,
+    networkResources,
+    groups,
+    isDataReady,
+    exitNodes,
+  } = useControlCenterData();
   const agentNetwork = useAgentNetworkOverlay();
 
   const applyUserView = (
@@ -133,6 +140,7 @@ export function useUserView() {
         peers!,
         networkResources!,
         networks,
+        exitNodes,
       );
     });
 

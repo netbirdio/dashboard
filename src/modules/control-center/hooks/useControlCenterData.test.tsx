@@ -11,6 +11,11 @@ vi.mock("@utils/api", () => ({
   default: (url: string) => ({ data: responses[url], isLoading: false }),
 }));
 
+let canReadExitNodes = true;
+vi.mock("@/modules/exit-nodes/useExitNodePermissions", () => ({
+  useExitNodePermissions: () => ({ read: canReadExitNodes }),
+}));
+
 const { useControlCenterData } = await import(
   "@/modules/control-center/hooks/useControlCenterData"
 );
@@ -22,12 +27,14 @@ const allEndpoints = () => ({
   "/networks/resources": [],
   "/groups": [],
   "/users?service_user=false": [],
+  "/exit-nodes": [],
 });
 
 const subject = () => renderHook(() => useControlCenterData()).result.current;
 
 beforeEach(() => {
   responses = allEndpoints();
+  canReadExitNodes = true;
 });
 
 describe("isDataReady", () => {
@@ -44,5 +51,17 @@ describe("isDataReady", () => {
   ])("is not ready while %s has no data", (endpoint) => {
     delete responses[endpoint];
     expect(subject().isDataReady()).toBe(false);
+  });
+});
+
+describe("exit nodes", () => {
+  it("returns them", () => {
+    responses["/exit-nodes"] = [{ id: "en1" }];
+    expect(subject().exitNodes).toEqual([{ id: "en1" }]);
+  });
+
+  it("don't hold the canvas back when missing (no API, no permission)", () => {
+    delete responses["/exit-nodes"];
+    expect(subject().isDataReady()).toBe(true);
   });
 });

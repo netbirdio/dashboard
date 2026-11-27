@@ -17,8 +17,15 @@ import { useControlCenterData } from "@/modules/control-center/hooks/useControlC
 import { withFreshGroupCounts } from "@/modules/control-center/utils/helpers";
 
 export function useGroupView() {
-  const { policies, peers, networks, networkResources, groups, isDataReady } =
-    useControlCenterData();
+  const {
+    policies,
+    peers,
+    networks,
+    networkResources,
+    groups,
+    isDataReady,
+    exitNodes,
+  } = useControlCenterData();
   const agentNetwork = useAgentNetworkOverlay();
 
   // policiesOverride rebuilds from data fresher than the SWR cache.
@@ -118,7 +125,6 @@ export function useGroupView() {
             data: { group: withFreshGroupCounts(destination, groups) },
             position: { x: 0, y: 0 },
           });
-
         } else {
           allNodes.forEach((n) => {
             if (n.id === destinationNodeId) {
@@ -143,6 +149,7 @@ export function useGroupView() {
         peers!,
         networkResources!,
         networks,
+        exitNodes,
       );
     });
 
