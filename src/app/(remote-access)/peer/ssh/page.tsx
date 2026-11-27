@@ -135,6 +135,22 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
     }
   };
 
+  // Retries only the SSH step. The overlay is already up when an SSH error is
+  // shown, so connectTemporary is not repeated.
+  const handleRetry = async () => {
+    if (isSSHConnected || isSSHConnecting) return;
+    try {
+      await ssh({
+        hostname: sshHost,
+        port: Number(port),
+        username,
+        ipVersion: sshIpVersion || undefined,
+      });
+    } catch (error) {
+      console.error("Retry failed:", error);
+    }
+  };
+
   useEffect(() => {
     if (isSSHConnected || isSSHConnecting) return;
     if (isClientConnecting) return;
@@ -200,7 +216,12 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
   }
 
   if (sshError) {
-    return <ErrorMessage error={{ message: sshError, code: 0 }} />;
+    return (
+      <ErrorMessage
+        error={{ message: sshError, code: 0 }}
+        onRetry={handleRetry}
+      />
+    );
   }
 
   if (isSSHDisconnected && sshConnectedOnce.current) {
@@ -226,6 +247,7 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
 type MessageProps = {
   message?: string;
   error?: ErrorResponse;
+  onRetry?: () => void;
 };
 
 const LoadingMessage = ({ message }: MessageProps) => {
@@ -243,7 +265,7 @@ const LoadingMessage = ({ message }: MessageProps) => {
   );
 };
 
-const ErrorMessage = ({ error }: MessageProps) => {
+const ErrorMessage = ({ error, onRetry }: MessageProps) => {
   return (
     <div
       className={
@@ -253,6 +275,16 @@ const ErrorMessage = ({ error }: MessageProps) => {
       <div className="text-nb-gray-200 font-normal text-base flex gap-2 items-center justify-center">
         <CircleXIcon size={16} className={"shrink-0 text-red-500"} />
         {error?.message}
+        {onRetry && (
+          <button
+            className={
+              "underline-offset-4 items-center transition-all duration-200 inline-flex texts-inherit gap-1 text-netbird hover:underline font-normal"
+            }
+            onClick={onRetry}
+          >
+            Try again
+          </button>
+        )}
       </div>
     </div>
   );
