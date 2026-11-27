@@ -82,6 +82,12 @@ export const buttonVariants = cva(
           "bg-transparent text-nb-gray-400 border-transparent hover:text-nb-gray-50 dark:hover:text-white hover:bg-nb-gray-900/30 hover:border-nb-gray-800/50",
           "data-[state=open]:text-nb-gray-50 data-[state=open]:dark:text-white data-[state=open]:bg-nb-gray-900/30 data-[state=open]:border-nb-gray-800/50",
         ],
+        /* Looks like the red Delete item of an actions menu
+           (DropdownMenuItem variant="danger"); pair it with size="menu". */
+        "danger-menu": [
+          "bg-transparent border-transparent !shadow-none text-red-600 enabled:hover:bg-red-50 enabled:focus:bg-red-50 focus:ring-red-500/30 ring-offset-nb-gray-950/50",
+          "dark:text-red-500 enabled:dark:hover:bg-red-900/20 enabled:dark:focus:bg-red-900/20 dark:focus:ring-red-800/20",
+        ],
         danger: [
           "enabled:bg-red-600 enabled:text-white enabled:hover:bg-red-700 enabled:focus:bg-red-700 enabled:focus:ring-red-400/50 border-red-600 dark:border-transparent disabled:bg-red-300 disabled:text-white",
           "dark:focus:ring-red-700/20 dark:focus:bg-red-700 hover:dark:bg-red-700 dark:hover:border-red-800/50 dark:bg-red-600 dark:text-red-100",
@@ -93,6 +99,7 @@ export const buttonVariants = cva(
         sm: "text-sm py-2.5 px-4",
         md: "text-md py-2.5 px-4",
         lg: "text-lg py-2.5 px-4",
+        menu: "text-sm py-1.5 pl-3 pr-2",
       },
       rounded: {
         true: "rounded-md",

@@ -57,8 +57,15 @@ export const ReviewDeployModal = ({
   const { removeWithCascade, previewRemove } = useRemoveChange();
   const { deploy, isDeploying, deployStatus } = useDeployChangeset();
   const assistantBusy = useAgentBusy();
-  const { policies, groups, networks, networkResources, users, peers } =
-    useControlCenterData();
+  const {
+    policies,
+    groups,
+    networks,
+    networkResources,
+    users,
+    peers,
+    exitNodes,
+  } = useControlCenterData();
   const { providers: agentProviders, policies: agentPolicies } =
     useAIProviders();
   const { setResourceNetworkPicker, setInstallModal, setUserDeviceModal } =
@@ -76,6 +83,7 @@ export const ReviewDeployModal = ({
       peers,
       providers: agentProviders,
       agentPolicies,
+      exitNodes,
       draftChanges: changes,
     }),
     [
@@ -87,6 +95,7 @@ export const ReviewDeployModal = ({
       peers,
       agentProviders,
       agentPolicies,
+      exitNodes,
       changes,
     ],
   );

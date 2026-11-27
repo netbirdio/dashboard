@@ -823,3 +823,57 @@ describe("discarding a draft group reaches user membership", () => {
     });
   });
 });
+
+describe("exit node changes", () => {
+  const createExitNode: DraftChange = {
+    id: "id-cen",
+    type: "create-exit-node",
+    clientId: "new-en",
+    name: "EU Egress",
+    request: {
+      name: "EU Egress",
+      description: "",
+      enabled: true,
+      auto_apply: true,
+      peers: [{ peer_id: "fra", metric: 100, enabled: true }],
+    },
+  };
+  const policyTo = (exitNodeId: string): DraftChange => {
+    const base = createPolicy("new-p", [{ id: "g1", name: "Devs" }], []);
+    if (base.type !== "create-policy") throw new Error("unexpected");
+    return {
+      ...base,
+      policy: {
+        ...base.policy,
+        rules: [
+          {
+            ...base.policy.rules[0],
+            destinationResource: { id: exitNodeId, type: "exit_node" as const },
+          },
+        ],
+      },
+    };
+  };
+
+  it("discarding a draft exit node drops the policies left without a destination", () => {
+    const policy = policyTo("new-en");
+    const keep = policyTo("en-live");
+    const out = reduceRemoveChange(
+      [createExitNode, policy, { ...keep, id: "keep" }],
+      createExitNode,
+    );
+    expect(out.map((c) => c.id)).toEqual(["keep"]);
+  });
+
+  it("maps exit node changes to their card", () => {
+    expect(changeNodeId(createExitNode)).toBe("exit-node-new-en");
+    expect(
+      changeNodeId({
+        id: "d",
+        type: "delete-exit-node",
+        exitNodeId: "en1",
+        name: "EU",
+      }),
+    ).toBe("exit-node-en1");
+  });
+});

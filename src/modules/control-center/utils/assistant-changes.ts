@@ -47,6 +47,11 @@ export function changeEntityKey(change: DraftChange): string {
       return agentPolicyEntityKey(change.agentPolicyId);
     case "update-user-groups":
       return `user:${change.userId}`;
+    case "create-exit-node":
+      return `exit-node:${change.clientId}`;
+    case "update-exit-node":
+    case "delete-exit-node":
+      return `exit-node:${change.exitNodeId}`;
   }
 }
 
@@ -62,9 +67,7 @@ export function markAssistantChanges(
 ): ReadonlySet<string> {
   const inherits =
     replacedIds.size > 0 &&
-    prev.some(
-      (c) => replacedIds.has(c.id) && marked.has(changeEntityKey(c)),
-    );
+    prev.some((c) => replacedIds.has(c.id) && marked.has(changeEntityKey(c)));
   if (!assistantActing && !inherits) return marked;
   const before = new Map(prev.map((c) => [c.id, c]));
   let out: Set<string> | undefined;

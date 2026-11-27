@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import { Group } from "@/interfaces/Group";
 import { Permission } from "@/interfaces/Permission";
+import { ExitNodeRequest } from "@/interfaces/ExitNode";
 import { Policy } from "@/interfaces/Policy";
 import type {
   ProviderConnectInput,
@@ -255,6 +256,32 @@ export interface DeleteProviderChange {
   name: string;
 }
 
+// Exit nodes: a PUT replaces the whole exit node, so creates and updates
+// both carry the full request.
+export interface CreateExitNodeChange {
+  id: string;
+  type: "create-exit-node";
+  clientId: string;
+  name: string;
+  request: ExitNodeRequest;
+}
+
+export interface UpdateExitNodeChange {
+  id: string;
+  type: "update-exit-node";
+  exitNodeId: string;
+  name: string;
+  request: ExitNodeRequest;
+  origin?: "toggle" | "edit";
+}
+
+export interface DeleteExitNodeChange {
+  id: string;
+  type: "delete-exit-node";
+  exitNodeId: string;
+  name: string;
+}
+
 export interface AgentGroupDeletion {
   groupIds: string[];
   basePolicy: AgentPolicy;
@@ -320,7 +347,10 @@ export type DraftChange =
   | CreateAgentPolicyChange
   | UpdateAgentPolicyChange
   | DeleteAgentPolicyChange
-  | UpdateUserGroupsChange;
+  | UpdateUserGroupsChange
+  | CreateExitNodeChange
+  | UpdateExitNodeChange
+  | DeleteExitNodeChange;
 
 // Git-style classification for diff coloring.
 export type ChangeKind = "add" | "update" | "remove" | "install";
@@ -334,6 +364,7 @@ export const getChangeKind = (change: DraftChange): ChangeKind => {
     case "create-router":
     case "create-provider":
     case "create-agent-policy":
+    case "create-exit-node":
       return "add";
     case "delete-resource":
     case "delete-network":
@@ -341,6 +372,7 @@ export const getChangeKind = (change: DraftChange): ChangeKind => {
     case "delete-policy":
     case "delete-provider":
     case "delete-agent-policy":
+    case "delete-exit-node":
       return "remove";
     case "update-group":
     case "update-policy":
@@ -350,6 +382,7 @@ export const getChangeKind = (change: DraftChange): ChangeKind => {
     case "update-provider":
     case "update-agent-policy":
     case "update-user-groups":
+    case "update-exit-node":
       return "update";
     case "install-peer":
       return "install";
@@ -403,6 +436,12 @@ export const getChangeApiCall = (change: DraftChange): string => {
       return `DELETE /agent-network/policies/${change.agentPolicyId}`;
     case "update-user-groups":
       return `PUT /users/${change.userId}`;
+    case "create-exit-node":
+      return "POST /exit-nodes";
+    case "update-exit-node":
+      return `PUT /exit-nodes/${change.exitNodeId}`;
+    case "delete-exit-node":
+      return `DELETE /exit-nodes/${change.exitNodeId}`;
   }
 };
 
@@ -464,9 +503,12 @@ export const getChangeLabel = (
           .map((g) => (typeof g === "string" ? g : g.name))
           .join(", ");
       const source = rule?.sourceResource ? "Resource" : names(rule?.sources);
-      const destination = rule?.destinationResource
-        ? "Resource"
-        : names(rule?.destinations);
+      const destination =
+        rule?.destinationResource?.type === "exit_node"
+          ? "Exit Node"
+          : rule?.destinationResource
+          ? "Resource"
+          : names(rule?.destinations);
       return {
         title: `${
           change.type === "create-policy" ? "Create" : "Update"
@@ -551,6 +593,27 @@ export const getChangeLabel = (
       };
     case "delete-provider":
       return { title: `Delete provider “${change.name}”` };
+    case "create-exit-node": {
+      const peers = change.request.peers.length;
+      return {
+        title: `Create exit node “${change.name}”`,
+        detail: `${peers} peer${peers !== 1 ? "s" : ""}`,
+      };
+    }
+    case "update-exit-node":
+      return {
+        title:
+          change.origin === "toggle"
+            ? `${change.request.enabled ? "Enable" : "Disable"} exit node “${
+                change.name
+              }”`
+            : `Update exit node “${change.name}”`,
+      };
+    case "delete-exit-node":
+      return {
+        title: `Delete exit node “${change.name}”`,
+        detail: "its access control policies are removed too",
+      };
     case "create-agent-policy":
       return {
         title: `Create agent policy “${change.name}”`,
@@ -635,6 +698,32 @@ export const getChangeIssue = (
       resolvable: true,
     };
   }
+  // A policy pointing at an exit node this draft deletes, or at a draft exit
+  // node that left the draft: either write would be refused.
+  if (change.type === "create-policy" || change.type === "update-policy") {
+    const target = change.policy.rules?.[0]?.destinationResource;
+    if (target?.type === "exit_node") {
+      const deletion = changes.find(
+        (c): c is DeleteExitNodeChange =>
+          c.type === "delete-exit-node" && c.exitNodeId === target.id,
+      );
+      if (deletion) {
+        return {
+          label: "Exit node deleted",
+          message: `Policy “${change.name}” points at exit node “${deletion.name}”, marked for deletion in this draft. Remove the policy, or discard the deletion.`,
+        };
+      }
+      const created = changes.some(
+        (c) => c.type === "create-exit-node" && c.clientId === target.id,
+      );
+      if (target.id.startsWith("new-") && !created) {
+        return {
+          label: "Exit node missing",
+          message: `Policy “${change.name}” points at an exit node that is no longer in this draft. Remove the policy, or point it at another exit node.`,
+        };
+      }
+    }
+  }
   if (
     change.type === "create-resource" &&
     !change.networkId &&
@@ -687,7 +776,9 @@ export const getChangeIssue = (
       label: "Install",
       message: `Routing peer “${
         change.peerName ?? "peer"
-      }” must be installed before ${change.networkName} can be deployed, and it is no longer on the canvas — re-add it, or remove this routing peer.`,
+      }” must be installed before ${
+        change.networkName
+      } can be deployed, and it is no longer on the canvas — re-add it, or remove this routing peer.`,
     };
   }
   if (
@@ -775,7 +866,9 @@ export const CHANGE_PERMISSION: Record<
       | "networks"
       | "users"
       | "agent_network.providers"
-      | "agent_network.policies";
+      | "agent_network.policies"
+      // Exit nodes follow the routes permissions (useExitNodePermissions).
+      | "routes";
     action: keyof Permission;
   }
 > = {
@@ -810,6 +903,9 @@ export const CHANGE_PERMISSION: Record<
     module: "agent_network.policies",
     action: "delete",
   },
+  "create-exit-node": { module: "routes", action: "create" },
+  "update-exit-node": { module: "routes", action: "update" },
+  "delete-exit-node": { module: "routes", action: "delete" },
 };
 
 // Canonical CRUD dependency order, shared by deploy and Review & Deploy.
@@ -823,6 +919,9 @@ export const CHANGE_DEPLOY_ORDER: DraftChange["type"][] = [
   "update-resource",
   "create-router",
   "update-router",
+  // Before the policies: a new policy may point at a new exit node.
+  "create-exit-node",
+  "update-exit-node",
   "create-policy",
   "update-policy",
   "delete-policy",
@@ -832,6 +931,8 @@ export const CHANGE_DEPLOY_ORDER: DraftChange["type"][] = [
   "update-agent-policy",
   "delete-agent-policy",
   "delete-provider",
+  // After its policies' own deletions; the API deletes the rest with it.
+  "delete-exit-node",
   "delete-resource",
   // Cascades its resources/routers server-side, so it runs last.
   "delete-network",
@@ -849,9 +950,11 @@ export const getCanvasWarnings = (
 ): string[] => {
   const warnings: string[] = [];
   const trackedResourceIds = new Set(
-    changes
-      .filter((c): c is CreateResourceChange => c.type === "create-resource")
-      .map((c) => c.clientId),
+    changes.flatMap((c) =>
+      c.type === "create-resource" || c.type === "create-exit-node"
+        ? [c.clientId]
+        : [],
+    ),
   );
 
   nodes.forEach((n) => {
@@ -1032,6 +1135,16 @@ interface DraftChangesetContextType {
     origin?: "toggle" | "edit";
   }) => void;
   trackDeleteProvider: (params: { providerId: string; name: string }) => void;
+  trackCreateExitNode: (params: {
+    clientId: string;
+    request: ExitNodeRequest;
+  }) => void;
+  trackUpdateExitNode: (params: {
+    exitNodeId: string;
+    request: ExitNodeRequest;
+    origin?: "toggle" | "edit";
+  }) => void;
+  trackDeleteExitNode: (params: { exitNodeId: string; name: string }) => void;
   trackCreateAgentPolicy: (params: {
     clientId: string;
     policy: Omit<AgentPolicy, "id">;
@@ -2287,6 +2400,94 @@ export function DraftChangesetProvider({
     [],
   );
 
+  const trackCreateExitNode = useCallback(
+    ({ clientId, request }: { clientId: string; request: ExitNodeRequest }) => {
+      setChanges((prev) => [
+        ...prev,
+        {
+          id: draftUid(),
+          type: "create-exit-node",
+          clientId,
+          name: request.name,
+          request,
+        },
+      ]);
+    },
+    [],
+  );
+
+  // The request is the whole exit node: it replaces a pending one rather
+  // than merging into it.
+  const trackUpdateExitNode = useCallback(
+    ({
+      exitNodeId,
+      request,
+      origin = "edit",
+    }: {
+      exitNodeId: string;
+      request: ExitNodeRequest;
+      origin?: "toggle" | "edit";
+    }) => {
+      setChanges((prev) => {
+        const create = prev.find(
+          (c): c is CreateExitNodeChange =>
+            c.type === "create-exit-node" && c.clientId === exitNodeId,
+        );
+        if (create) {
+          return prev.map((c) =>
+            c.id === create.id ? { ...create, name: request.name, request } : c,
+          );
+        }
+        const pending = prev.find(
+          (c): c is UpdateExitNodeChange =>
+            c.type === "update-exit-node" && c.exitNodeId === exitNodeId,
+        );
+        const merged: UpdateExitNodeChange = {
+          id: pending?.id ?? draftUid(),
+          type: "update-exit-node",
+          exitNodeId,
+          name: request.name,
+          request,
+          origin: pending && pending.origin === "edit" ? "edit" : origin,
+        };
+        return pending
+          ? prev.map((c) => (c.id === pending.id ? merged : c))
+          : [...prev, merged];
+      });
+    },
+    [],
+  );
+
+  // A draft exit node takes the draft policies pointing at it along: they
+  // could never deploy without it.
+  const trackDeleteExitNode = useCallback(
+    ({ exitNodeId, name }: { exitNodeId: string; name: string }) => {
+      setChanges((prev) => {
+        if (exitNodeId.startsWith("new-")) {
+          return prev.filter(
+            (c) =>
+              !(c.type === "create-exit-node" && c.clientId === exitNodeId) &&
+              !(
+                c.type === "create-policy" &&
+                c.policy.rules?.[0]?.destinationResource?.type ===
+                  "exit_node" &&
+                c.policy.rules[0].destinationResource.id === exitNodeId
+              ),
+          );
+        }
+        const filtered = prev.filter(
+          (c) =>
+            !(c.type === "update-exit-node" && c.exitNodeId === exitNodeId),
+        );
+        return [
+          ...filtered,
+          { id: draftUid(), type: "delete-exit-node", exitNodeId, name },
+        ];
+      });
+    },
+    [],
+  );
+
   const trackCreateAgentPolicy = useCallback(
     ({
       clientId,
@@ -2527,6 +2728,9 @@ export function DraftChangesetProvider({
       trackCreateProvider,
       trackUpdateProvider,
       trackDeleteProvider,
+      trackCreateExitNode,
+      trackUpdateExitNode,
+      trackDeleteExitNode,
       trackCreateAgentPolicy,
       trackUpdateAgentPolicy,
       trackDeleteAgentPolicy,
@@ -2572,6 +2776,9 @@ export function DraftChangesetProvider({
       trackCreateProvider,
       trackUpdateProvider,
       trackDeleteProvider,
+      trackCreateExitNode,
+      trackUpdateExitNode,
+      trackDeleteExitNode,
       trackCreateAgentPolicy,
       trackUpdateAgentPolicy,
       trackDeleteAgentPolicy,

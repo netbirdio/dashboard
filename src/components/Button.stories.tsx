@@ -18,6 +18,7 @@ const variants = [
   "default-outline",
   "danger-outline",
   "danger-text",
+  "danger-menu",
   "danger",
 ] as const;
 const sizes = ["xs", "xs2", "sm", "md", "lg"] as const;
@@ -174,6 +175,18 @@ export const DangerOutline: StoryObj = {
 export const DangerText: StoryObj = {
   tags: ["capture-hover", "capture-focus"],
   render: () => one("danger-text"),
+};
+/* Matches the red Delete item of an actions menu, at the menu item's size. */
+export const DangerMenu: StoryObj = {
+  tags: ["capture-hover", "capture-focus"],
+  render: () => (
+    <Button variant={"danger-menu"} size={"menu"} data-capture={""}>
+      <div className={"flex gap-3 items-center"}>
+        <Trash2 size={14} className={"shrink-0"} />
+        Remove
+      </div>
+    </Button>
+  ),
 };
 export const Danger: StoryObj = {
   tags: ["capture-hover", "capture-focus"],

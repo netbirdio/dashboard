@@ -3,7 +3,9 @@ import { useEffect, useRef } from "react";
 import ExitNodesProvider, {
   useExitNodes,
 } from "@/modules/exit-nodes/ExitNodesProvider";
+import { ExitNode, ExitNodeRequest } from "@/interfaces/ExitNode";
 import { getPeerExitNode } from "@/modules/exit-nodes/exitNodeHelpers";
+import ExitNodeModal from "@/modules/exit-nodes/modal/ExitNodeModal";
 
 type Props = {
   peerId?: string;
@@ -86,3 +88,43 @@ const OpenById = ({
 
   return null;
 };
+
+type DraftProps = {
+  // The exit node as the draft sees it; empty to create one.
+  exitNode?: ExitNode;
+  // Every exit node in the draft, for the name and peer checks.
+  otherExitNodes: ExitNode[];
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (request: ExitNodeRequest) => void;
+};
+
+/**
+ * The exit node modal for the Control Center's draft mode: saving hands the
+ * request to the draft instead of the API.
+ */
+export function DraftExitNodeModal({
+  exitNode,
+  otherExitNodes,
+  open,
+  onClose,
+  onSubmit,
+}: Readonly<DraftProps>) {
+  if (!open) return null;
+  return (
+    <ExitNodesProvider>
+      <ExitNodeModal
+        open={true}
+        setOpen={(o) => {
+          if (!o) onClose();
+        }}
+        exitNode={exitNode}
+        otherExitNodes={otherExitNodes}
+        onDraftSubmit={(request) => {
+          onSubmit(request);
+          onClose();
+        }}
+      />
+    </ExitNodesProvider>
+  );
+}

@@ -788,3 +788,78 @@ describe("masquerade of a routing peer", () => {
     );
   });
 });
+
+describe("exit node requests", () => {
+  const request = {
+    name: "EU Egress",
+    description: "",
+    enabled: true,
+    auto_apply: true,
+    peers: [{ peer_id: "fra", metric: 100, enabled: true }],
+  };
+  const createExitNode = {
+    id: "c1",
+    type: "create-exit-node",
+    clientId: "new-en",
+    name: "EU Egress",
+    request,
+  } as DraftChange;
+
+  it("sends the exit node as is", () => {
+    expect(buildChangeRequest(createExitNode)).toEqual({
+      method: "POST",
+      path: "/exit-nodes",
+      body: request,
+    });
+  });
+
+  it("a policy to a draft exit node previews its id as a placeholder", () => {
+    const change: CreatePolicyChange = {
+      id: "c2",
+      type: "create-policy",
+      clientId: "new-p",
+      name: "P",
+      policy: policy({
+        rules: [
+          {
+            name: "P",
+            description: "",
+            enabled: true,
+            sources: [{ id: "g1", name: "Developers" }],
+            destinations: [],
+            destinationResource: { id: "new-en", type: "exit_node" },
+            bidirectional: false,
+            action: "accept",
+            protocol: "all",
+            ports: [],
+          },
+        ],
+      }),
+    };
+    const body = buildChangeRequest(change, {
+      draftChanges: [createExitNode, change],
+    })?.body as any;
+    expect(body.rules[0].destinationResource).toEqual({
+      id: "{eu_egress_exit_node_id}",
+      type: "exit_node",
+    });
+  });
+
+  it("shows the live exit node as the before side of an update", () => {
+    const update = {
+      id: "c3",
+      type: "update-exit-node",
+      exitNodeId: "en1",
+      name: "EU Egress",
+      request: { ...request, enabled: false },
+    } as DraftChange;
+    const before = buildBeforeRequest(update, {
+      exitNodes: [{ id: "en1", ...request }],
+    });
+    expect(before).toEqual({
+      method: "PUT",
+      path: "/exit-nodes/en1",
+      body: request,
+    });
+  });
+});

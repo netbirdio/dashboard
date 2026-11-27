@@ -15,7 +15,10 @@ import PoliciesProvider from "@/contexts/PoliciesProvider";
 import { ExitNode, ExitNodeRequest } from "@/interfaces/ExitNode";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
-import { getExitNodePolicies } from "@/modules/exit-nodes/exitNodeHelpers";
+import {
+  getExitNodePolicies,
+  toExitNodeRequest,
+} from "@/modules/exit-nodes/exitNodeHelpers";
 import ExitNodeModal, {
   ExitNodeModalTab,
 } from "@/modules/exit-nodes/modal/ExitNodeModal";
@@ -54,17 +57,7 @@ type ExitNodesContextValue = {
 
 const ExitNodesContext = React.createContext({} as ExitNodesContextValue);
 
-export const toExitNodeRequest = (exitNode: ExitNode): ExitNodeRequest => ({
-  name: exitNode.name,
-  description: exitNode.description,
-  enabled: exitNode.enabled,
-  auto_apply: exitNode.auto_apply,
-  peers: exitNode.peers.map(({ peer_id, metric, enabled }) => ({
-    peer_id,
-    metric,
-    enabled,
-  })),
-});
+export { toExitNodeRequest } from "@/modules/exit-nodes/exitNodeHelpers";
 
 type Props = {
   children: React.ReactNode;

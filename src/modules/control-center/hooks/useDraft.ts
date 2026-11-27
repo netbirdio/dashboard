@@ -22,6 +22,11 @@ import {
   addAgentNetworkProviderNodes,
   useAgentNetworkOverlay,
 } from "@/modules/control-center/hooks/views/agent-network-overlay";
+import {
+  buildExitNodeNodeData,
+  exitNodeNodeId,
+} from "@/modules/control-center/hooks/views/types";
+import { applyExitNodeChanges } from "@/modules/control-center/utils/exit-node-draft";
 import { applyDraftBuildLayout } from "@/modules/control-center/utils/draft-build-layout";
 import { handleDraftConnect } from "@/modules/control-center/utils/draft-connect";
 import { computeDrillDownKeepSet } from "@/modules/control-center/utils/frame-view";
@@ -87,7 +92,7 @@ export function useDraft() {
     setSelectedNetwork,
     currentView,
   } = useCanvasState();
-  const { policies, peers, networks, networkResources, groups } =
+  const { policies, peers, networks, networkResources, groups, exitNodes } =
     useControlCenterData();
   const { policies: agentPolicies } = useAIProviders();
   const { changes: draftChanges } = useDraftChangeset();
@@ -354,7 +359,28 @@ export function useDraft() {
 
         const destResource = rule.destinationResource;
         if (destResource?.id) {
-          if (destResource.type === "peer") {
+          if (destResource.type === "exit_node") {
+            // Same card and id as the live view, so it keeps its size.
+            const nodeId = exitNodeNodeId(destResource.id);
+            addNode(allNodes, {
+              id: nodeId,
+              type: "exitNodeNode",
+              // The draft's view: a re-entered draft keeps its pending edits.
+              data: buildExitNodeNodeData(
+                destResource.id,
+                applyExitNodeChanges(exitNodes, draftChanges),
+                peers,
+              ),
+              position: { x: 0, y: 0 },
+            });
+            addEdge(allEdges, {
+              id: `${policyNodeId}-${nodeId}`,
+              source: policyNodeId,
+              target: nodeId,
+              type: "smart",
+              data: { enabled, policy },
+            });
+          } else if (destResource.type === "peer") {
             const peer = peerById.get(destResource.id);
             if (peer) {
               const nodeId = `peer-${peer.id}`;

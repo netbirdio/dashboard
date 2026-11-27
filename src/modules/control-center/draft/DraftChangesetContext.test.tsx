@@ -10,6 +10,7 @@ import {
   DraftChangesetProvider,
   getCanvasWarnings,
   getChangeIssue,
+  getChangeLabel,
   hasBlockingIssues,
   InstallPeerChange,
   useDraftChangeset,
@@ -2585,5 +2586,158 @@ describe("changes made by the assistant", () => {
     act(() => result.current.replaceChanges(stale));
 
     expect(result.current.assistantChangeIds.size).toBe(0);
+  });
+});
+
+describe("exit node changes", () => {
+  const request = (name = "EU Egress") => ({
+    name,
+    description: "",
+    enabled: true,
+    auto_apply: true,
+    peers: [{ peer_id: "fra", metric: 100, enabled: true }],
+  });
+  const exitNodePolicy = (id: string, exitNodeId: string) =>
+    makePolicy(id, {
+      sources: [{ name: "Developers" } as Group],
+      destinationResource: { id: exitNodeId, type: "exit_node" },
+    });
+
+  it("folds an edit of a draft exit node into its create", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateExitNode({
+        clientId: "new-en",
+        request: request(),
+      }),
+    );
+    act(() =>
+      result.current.trackUpdateExitNode({
+        exitNodeId: "new-en",
+        request: request("EU Egress 2"),
+      }),
+    );
+    expect(result.current.changes).toHaveLength(1);
+    expect(result.current.changes[0]).toMatchObject({
+      type: "create-exit-node",
+      name: "EU Egress 2",
+      request: { name: "EU Egress 2" },
+    });
+  });
+
+  it("replaces a pending update with the latest whole exit node", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackUpdateExitNode({
+        exitNodeId: "en1",
+        request: { ...request(), enabled: false },
+        origin: "toggle",
+      }),
+    );
+    act(() =>
+      result.current.trackUpdateExitNode({
+        exitNodeId: "en1",
+        request: { ...request(), enabled: true },
+        origin: "toggle",
+      }),
+    );
+    expect(result.current.changes).toHaveLength(1);
+    expect(result.current.changes[0]).toMatchObject({
+      type: "update-exit-node",
+      origin: "toggle",
+      request: { enabled: true },
+    });
+  });
+
+  it("removing a draft exit node drops its create and the draft policies to it", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateExitNode({
+        clientId: "new-en",
+        request: request(),
+      }),
+    );
+    act(() =>
+      result.current.trackCreatePolicy({
+        clientId: "new-p",
+        policy: exitNodePolicy("new-p", "new-en"),
+      }),
+    );
+    act(() =>
+      result.current.trackDeleteExitNode({
+        exitNodeId: "new-en",
+        name: "EU Egress",
+      }),
+    );
+    expect(result.current.changes).toEqual([]);
+  });
+
+  it("deleting an existing exit node drops its pending update", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackUpdateExitNode({
+        exitNodeId: "en1",
+        request: request(),
+      }),
+    );
+    act(() =>
+      result.current.trackDeleteExitNode({
+        exitNodeId: "en1",
+        name: "EU Egress",
+      }),
+    );
+    expect(result.current.changes).toEqual([
+      expect.objectContaining({ type: "delete-exit-node", exitNodeId: "en1" }),
+    ]);
+  });
+
+  it("labels a policy's exit node destination as one", () => {
+    const change = {
+      id: "c1",
+      type: "create-policy",
+      clientId: "new-p",
+      name: "Devs exit",
+      policy: exitNodePolicy("new-p", "en1"),
+    } as DraftChange;
+    expect(getChangeLabel(change).detail).toBe("Developers → Exit Node");
+  });
+
+  it("blocks a policy to an exit node this draft deletes", () => {
+    const policy = {
+      id: "c1",
+      type: "create-policy",
+      clientId: "new-p",
+      name: "Devs exit",
+      policy: exitNodePolicy("new-p", "en1"),
+    } as DraftChange;
+    const deletion = {
+      id: "c2",
+      type: "delete-exit-node",
+      exitNodeId: "en1",
+      name: "EU Egress",
+    } as DraftChange;
+    expect(getChangeIssue(policy, [policy, deletion])?.label).toBe(
+      "Exit node deleted",
+    );
+    expect(getChangeIssue(policy, [policy])).toBeUndefined();
+  });
+
+  it("blocks a policy to a draft exit node that left the draft", () => {
+    const policy = {
+      id: "c1",
+      type: "create-policy",
+      clientId: "new-p",
+      name: "Devs exit",
+      policy: exitNodePolicy("new-p", "new-en"),
+    } as DraftChange;
+    const create = {
+      id: "c2",
+      type: "create-exit-node",
+      clientId: "new-en",
+      name: "EU Egress",
+      request: request(),
+    } as DraftChange;
+    expect(getChangeIssue(policy, [policy])?.label).toBe("Exit node missing");
+    expect(getChangeIssue(policy, [create, policy])).toBeUndefined();
   });
 });

@@ -132,3 +132,41 @@ export const ExitNodeContextMenu: Story = {
     await screen.findByText("Edit Exit Node");
   },
 };
+
+/* Draft keeps an exit-node policy's destination: the exit node card. */
+const enterDraft = async () => {
+  await liveReady();
+  await click(byTestId("cc-mode-draft"));
+  await click(byTestId("cc-draft-use-current-option"));
+  await draftReady();
+};
+
+export const DraftExitNode: Story = {
+  play: async () => {
+    await enterDraft();
+    await byTestId("cc-exit-node");
+  },
+};
+
+export const DraftExitNodesPanel: Story = {
+  play: async () => {
+    await enterDraft();
+    await click(byTestId("cc-toolbar-add"));
+    await click(byTestId("cc-category-exit-nodes"));
+    await byTestId("cc-template-exit-node");
+  },
+};
+
+export const DraftExitNodeContextMenu: Story = {
+  play: async () => {
+    await enterDraft();
+    const card = await byTestId("cc-exit-node");
+    const rect = card.getBoundingClientRect();
+    fireEvent.contextMenu(card, {
+      clientX: rect.left + rect.width / 2,
+      clientY: rect.top + rect.height / 2,
+    });
+    await byTestId("cc-node-context-menu");
+    await screen.findByText("Disable");
+  },
+};

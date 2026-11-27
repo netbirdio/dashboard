@@ -1,9 +1,12 @@
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { IconDirectionSign } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
-import { type Node } from "@xyflow/react";
+import { type Node, Position } from "@xyflow/react";
 import * as React from "react";
 import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { AllHandles } from "@/modules/control-center/handles/AllHandles";
+import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import type { ExitNodeNodeData } from "@/modules/control-center/hooks/views/types";
 import ExitNodeLocations from "@/modules/exit-nodes/ExitNodeLocations";
 
@@ -15,6 +18,7 @@ type ExitNodeNodeProps = Node<ExitNodeNodeData, "exitNodeNode">;
  */
 export const ExitNodeNode = ({ id, data }: ExitNodeNodeProps) => {
   const showHalo = useIsContextMenuTarget(id);
+  const { isDraft } = useDraftMode();
 
   return (
     <div
@@ -46,11 +50,14 @@ export const ExitNodeNode = ({ id, data }: ExitNodeNodeProps) => {
             {!data.enabled && (
               <span className={"text-nb-gray-500 text-xs"}>Disabled</span>
             )}
+            {data.id.startsWith("new-") && <SmallBadge />}
           </span>
           <ExitNodeDetails data={data} />
         </div>
       </div>
       <AllHandles />
+      {/* A destination only: sources connect to it from the left. */}
+      {isDraft && <ConnectHandle type={"source"} position={Position.Left} />}
     </div>
   );
 };

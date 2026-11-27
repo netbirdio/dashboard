@@ -7,7 +7,7 @@ import { ToggleSwitch } from "@components/ToggleSwitch";
 import { MiniTable, MiniTableHead } from "@components/ui/MiniTable";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { cn } from "@utils/helpers";
-import { ArrowDownWideNarrow, MinusIcon, PlusIcon } from "lucide-react";
+import { ArrowDownWideNarrow, PlusIcon, Trash2 } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
@@ -183,8 +183,8 @@ export default function ExitNodePeersTab({
                     <td className={"py-2 pl-2 pr-3 align-middle"}>
                       <div className={"flex justify-end"}>
                         <Button
-                          variant={"default-outline"}
-                          className={"!px-3"}
+                          variant={"danger-menu"}
+                          size={"menu"}
                           aria-label={`Remove ${name}`}
                           onClick={() =>
                             onChange(
@@ -192,7 +192,10 @@ export default function ExitNodePeersTab({
                             )
                           }
                         >
-                          <MinusIcon size={16} className={"shrink-0"} />
+                          <div className={"flex gap-3 items-center"}>
+                            <Trash2 size={14} className={"shrink-0"} />
+                            Remove
+                          </div>
                         </Button>
                       </div>
                     </td>
