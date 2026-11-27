@@ -506,8 +506,9 @@ export const useVNC = (client: VNCClient) => {
             navigator.clipboard
               .readText()
               .then((text) => {
-                if (text && rfbRef.current) {
-                  rfbRef.current.clipboardPasteFrom(text);
+                // The read can outlive the session that asked for it.
+                if (text && rfbRef.current === rfb) {
+                  rfb.clipboardPasteFrom(text);
                 }
               })
               .catch((err) => {
@@ -623,9 +624,13 @@ export const useVNC = (client: VNCClient) => {
 
   const pasteFromHostClipboard = useCallback(async (): Promise<boolean> => {
     if (!rfbRef.current || !navigator.clipboard?.readText) return false;
+    const origin = rfbRef.current;
     try {
       const text = await navigator.clipboard.readText();
       if (!text) return false;
+      // The session ended or was replaced while the read was pending, and the
+      // text must not be typed into whichever one is current now.
+      if (rfbRef.current !== origin) return false;
       return typeTextOnRemote(text);
     } catch {
       // Denied or unsupported: the paste gesture path is the way in.
