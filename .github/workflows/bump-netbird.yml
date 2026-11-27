@@ -53,7 +53,7 @@ jobs:
             exit 0
           fi
 
-          sed -i "s|https://pkgs.netbird.io/wasm/client/v[0-9.]*|https://pkgs.netbird.io/wasm/client/${TAG}|" src/utils/config.ts
+          sed -i "s|https://pkgs.netbird.io/wasm/client/v[0-9A-Za-z.+-]*|https://pkgs.netbird.io/wasm/client/${TAG}|" src/utils/config.ts
 
           branch="bump-netbird-wasm-${TAG#v}"
           echo "branch=${branch}" >> "$GITHUB_OUTPUT"

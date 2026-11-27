@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import RemoteAccessLayout from "@/app/(remote-access)/layout";
 import RDPPage from "@/app/(remote-access)/peer/rdp/page";
 import SSHPage from "@/app/(remote-access)/peer/ssh/page";
+import VNCPage from "@/app/(remote-access)/peer/vnc/page";
 import { PEER } from "@/storybook/fixtures";
 import { findText, settle } from "@/storybook/platform";
 
@@ -18,9 +19,18 @@ const rdp = (query: Record<string, string>) => ({
   nextjs: { navigation: { pathname: "/peer/rdp", query } },
 });
 
+const vnc = (query: Record<string, string>) => ({
+  nextjs: { navigation: { pathname: "/peer/vnc", query } },
+});
+
 const sshPage = () => (
   <RemoteAccessLayout>
     <SSHPage />
+  </RemoteAccessLayout>
+);
+const vncPage = () => (
+  <RemoteAccessLayout>
+    <VNCPage />
   </RemoteAccessLayout>
 );
 const rdpPage = () => (
@@ -78,5 +88,40 @@ export const SSHClientError: Story = {
   play: async () => {
     await findText(/WebAssembly|WASM|Failed/);
     await settle();
+  },
+};
+
+export const VNCNoPeer: Story = {
+  parameters: vnc({}),
+  render: vncPage,
+  play: async () => {
+    await findText(/No peer selected/);
+    await settle();
+  },
+};
+
+export const VNCPeerLoadFailed: Story = {
+  parameters: {
+    ...vnc({ id: "peer-deleted" }),
+    api: {
+      "GET /peers/:id": () => {
+        throw new Error("not found");
+      },
+    },
+  },
+  render: vncPage,
+  play: async () => {
+    await findText(/Could not load this peer/);
+    await settle();
+  },
+};
+
+/* The connection form is always shown first, before any overlay is brought up. */
+export const VNCConnect: Story = {
+  parameters: vnc({ id: PEER.webServer }),
+  render: vncPage,
+  play: async () => {
+    await findText(/via VNC/);
+    await settle(800);
   },
 };

@@ -80,6 +80,13 @@ declare global {
 
 const IRON_RDP_PKG = "/ironrdp-pkg/ironrdp_web.js";
 
+/**
+ * Builds the host:port destination for a session. An IPv6 literal is
+ * bracketed, as `fd00::1:3389` cannot be told apart from a longer address.
+ */
+export const rdpDestination = (hostname: string, port: number | string) =>
+  `${hostname.includes(":") ? `[${hostname}]` : hostname}:${port}`;
+
 // IronErrorKind values as exposed by the IronRDP wasm module's kind() method,
 // indexed by the enum's numeric value.
 const IRON_ERROR_KIND_NAMES = [
@@ -181,7 +188,7 @@ export class IronRDPWASMBridge {
       builder
         .username(username)
         .password(password)
-        .destination(`${hostname}:${port}`);
+        .destination(rdpDestination(hostname, port));
       if (config.domain) {
         builder.serverDomain(config.domain);
       }

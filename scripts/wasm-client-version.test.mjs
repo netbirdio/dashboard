@@ -1,3 +1,6 @@
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { change, newest, wasmVersion } from "./wasm-client-version.mjs";
 
@@ -102,5 +105,35 @@ describe("change", () => {
 
   it("refuses a pull request whose config names no client", () => {
     expect(() => change(config("v0.82.0"), "export default {};\n")).toThrow(/needs updating/);
+  });
+});
+
+// bumpRewrite runs the sed expression bump-netbird.yml uses on a config whose
+// default names baseVersion, and returns the version the result names.
+const bumpRewrite = (baseVersion, tag) => {
+  const workflow = readFileSync(
+    join(process.cwd(), ".github/workflows/bump-netbird.yml"),
+    "utf8",
+  );
+  const found = workflow.match(/sed -i "(s\|[^"]+)" src\/utils\/config\.ts/);
+  expect(found, "bump-netbird.yml should rewrite config.ts with sed").not.toBeNull();
+  const rewritten = execFileSync("sed", ["-e", found[1].replace("${TAG}", tag)], {
+    input: config(baseVersion),
+    encoding: "utf8",
+  });
+  return wasmVersion(rewritten);
+};
+
+describe("the bump workflow's rewrite", () => {
+  it("moves a release to the next one", () => {
+    expect(bumpRewrite("v0.83.2", "v0.84.0")).toBe("v0.84.0");
+  });
+
+  it("replaces a release candidate with its release", () => {
+    expect(bumpRewrite("v0.84.0-rc.1", "v0.84.0")).toBe("v0.84.0");
+  });
+
+  it("replaces a release candidate with a later release", () => {
+    expect(bumpRewrite("v0.84.0-rc.1", "v0.84.1")).toBe("v0.84.1");
   });
 });

@@ -44,7 +44,7 @@ export default function SSHPage() {
     <div className={"w-screen h-screen overflow-hidden"}>
       {peerId && peer && !isLoading && username && port ? (
         <SSHTerminal
-          key={peer.id}
+          key={`${peer.id}-${ipVersion ?? ""}`}
           peer={peer}
           username={username}
           port={port}
@@ -68,6 +68,18 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
   const client = useNetBirdClient();
   const connected = useRef(false);
   const sshConnectedOnce = useRef(false);
+  // The startup below awaits the overlay and the dial. A terminal that was
+  // replaced meanwhile (the IP version changed) must not leave a connection
+  // behind that nothing owns.
+  const unmounted = useRef(false);
+  // Set while the Reconnect button is bringing the overlay and the session up.
+  const reconnecting = useRef(false);
+  useEffect(() => {
+    unmounted.current = false;
+    return () => {
+      unmounted.current = true;
+    };
+  }, []);
 
   const {
     connect: ssh,
@@ -83,8 +95,14 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
   const isClientDisconnected = client.status === NetBirdStatus.DISCONNECTED;
   const isClientConnecting = client.status === NetBirdStatus.CONNECTING;
 
-  // Use the FQDN when an IP version is specified so the dialer resolves to the correct address family.
-  const sshHost = ipVersion ? peer.dns_label || peer.ip : peer.ip;
+  // Dial the IPv6 address when ip_version=6 is requested and the peer has one,
+  // IPv4 otherwise. peer.ip is always IPv4, so a request for "6" on a peer
+  // without an IPv6 address has to fall back on the version too, or the dialer
+  // is told to use a family the host doesn't belong to.
+  const requestedIPv6 = ipVersion === "6" && peer.ipv6 ? peer.ipv6 : undefined;
+  const sshHost = requestedIPv6 ?? peer.ip;
+  const sshIpVersion =
+    ipVersion === "6" ? (requestedIPv6 ? "6" : "4") : ipVersion;
 
   useEffect(() => {
     document.title = `${username}@${sshHost} - ${peer.hostname}`;
@@ -94,6 +112,7 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
     if (!peer?.id) return;
     if (isSSHConnected || isSSHConnecting) return;
     connected.current = false;
+    reconnecting.current = true;
     try {
       const aclPort = usesStandardSSHPort(peer.version) ? "22022" : port;
       const protocol = isNetbirdSSHProtocolSupported(peer.version)
@@ -101,20 +120,29 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
         : "tcp";
       const rules = [`${protocol}/${aclPort}`];
       await client?.connectTemporary(peer.id, rules);
+      if (unmounted.current) return;
       await ssh({
         hostname: sshHost,
         port: Number(port),
         username,
-        ipVersion: ipVersion || undefined,
+        ipVersion: sshIpVersion || undefined,
       });
+      if (unmounted.current) disconnect();
     } catch (error) {
       console.error("Reconnection failed:", error);
+    } finally {
+      reconnecting.current = false;
     }
   };
 
   useEffect(() => {
     if (isSSHConnected || isSSHConnecting) return;
-    if (isClientConnecting || client.status === NetBirdStatus.CONNECTED) return;
+    if (isClientConnecting) return;
+    // A terminal that replaced another one finds the overlay already up and
+    // adopts it. Once this terminal has started, or while Reconnect is
+    // bringing the overlay up itself, a connected client is left alone.
+    const overlayUp = client.status === NetBirdStatus.CONNECTED;
+    if (overlayUp && (connected.current || reconnecting.current)) return;
 
     const connect = async () => {
       if (!peer.id) return;
@@ -127,13 +155,20 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
           ? "netbird-ssh"
           : "tcp";
         const rules = [`${protocol}/${aclPort}`];
-        await client?.connectTemporary(peer.id, rules);
+        if (!overlayUp) {
+          await client?.connectTemporary(peer.id, rules);
+        }
+        if (unmounted.current) return;
         const res = await ssh({
           hostname: sshHost,
           port: Number(port),
           username,
-          ipVersion: ipVersion || undefined,
+          ipVersion: sshIpVersion || undefined,
         });
+        if (unmounted.current) {
+          disconnect();
+          return;
+        }
         if (res === SSHStatus.CONNECTED) {
           sshConnectedOnce.current = true;
         }
@@ -142,15 +177,19 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
       }
     };
 
-    if (isClientDisconnected) connect().catch(console.error);
+    if (isClientDisconnected || overlayUp) connect().catch(console.error);
   }, [
     isClientDisconnected,
     isSSHConnected,
     isSSHConnecting,
     isClientConnecting,
     peer.id,
+    peer.version,
     port,
     ssh,
+    disconnect,
+    sshHost,
+    sshIpVersion,
     username,
     client.connectTemporary,
     client.status,
@@ -168,7 +207,7 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
     return (
       <DisconnectedMessage
         username={username}
-        peerIp={peer.ip}
+        peerIp={sshHost}
         onReconnect={handleReconnect}
       />
     );
@@ -178,7 +217,7 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
     <>
       {session && <Terminal session={session} onClose={disconnect} />}
       {!isSSHConnected && (
-        <LoadingMessage message={`Connecting to ${username}@${peer.ip}...`} />
+        <LoadingMessage message={`Connecting to ${username}@${sshHost}...`} />
       )}
     </>
   );
