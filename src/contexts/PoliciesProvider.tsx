@@ -8,12 +8,18 @@ import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
-import { Policy } from "@/interfaces/Policy";
+import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { AccessControlModalContent } from "@/modules/access-control/AccessControlModal";
 import { duplicatePolicy } from "@/modules/access-control/policyDuplicate";
 
 type Props = {
   children: React.ReactNode;
+};
+
+// The destination new policies are created for: a network resource, or any
+// other resource a policy can target (e.g. an exit node).
+type PolicyTarget = Pick<NetworkResource, "id"> & {
+  type?: PolicyRuleResource["type"];
 };
 
 const PoliciesContext = React.createContext(
@@ -27,7 +33,7 @@ const PoliciesContext = React.createContext(
     createPolicy: (policy: Policy) => Promise<Policy>;
     createPoliciesForResource: (
       policies: Policy[],
-      resource: NetworkResource,
+      resource: PolicyTarget,
       knownGroups?: Group[],
     ) => Promise<void>;
     openEditPolicyModal: (policy: Policy, tab?: string) => void;
@@ -64,7 +70,7 @@ export default function PoliciesProvider({ children }: Props) {
 
   const createPolicyForResource = async (
     policy: Policy,
-    resource: NetworkResource,
+    resource: PolicyTarget,
     knownGroups?: Group[],
   ) => {
     const rule = policy.rules[0];
@@ -113,7 +119,7 @@ export default function PoliciesProvider({ children }: Props) {
 
   const createPoliciesForResource = async (
     newPolicies: Policy[],
-    resource: NetworkResource,
+    resource: PolicyTarget,
     knownGroups?: Group[],
   ) => {
     const policiesToCreate = newPolicies.filter((p) => !p.id);

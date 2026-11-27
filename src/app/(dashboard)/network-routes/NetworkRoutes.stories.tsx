@@ -100,14 +100,6 @@ export const AddRouteModal: Story = {
   },
 };
 
-export const AddExitNodeModal: Story = {
-  play: async () => {
-    await ready();
-    await clickText(/Add Exit Node|Set Up Exit Node/);
-    await findDialog();
-  },
-};
-
 export const EditRouteModal: Story = {
   play: async () => {
     await openEdit("office-lan");

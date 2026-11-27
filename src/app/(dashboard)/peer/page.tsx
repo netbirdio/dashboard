@@ -16,6 +16,7 @@ import { PageNotFound } from "@components/ui/PageNotFound";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import useRedirect from "@hooks/useRedirect";
+import { IconDirectionSign } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
 import { singularize } from "@utils/helpers";
 import dayjs from "dayjs";
@@ -62,6 +63,8 @@ import PageContainer from "@/layouts/PageContainer";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { AccessiblePeersSection } from "@/modules/peer/AccessiblePeersSection";
 import { PeerNetworkRoutesSection } from "@/modules/peer/PeerNetworkRoutesSection";
+import { PeerExitNodeSection } from "@/modules/exit-nodes/PeerExitNodeSection";
+import { useExitNodePermissions } from "@/modules/exit-nodes/useExitNodePermissions";
 import { PeerRemoteJobsSection } from "@/modules/peer/PeerRemoteJobsSection";
 import ReverseProxiesProvider, {
   flattenReverseProxies,
@@ -350,6 +353,7 @@ const PeerOverviewTabs = () => {
   const { permission } = usePermissions();
   const { reverseProxies, isLoading: isServicesLoading } = useReverseProxies();
   const { tab, setTab } = usePeerSettings();
+  const exitNodePermission = useExitNodePermissions();
 
   const flatTargets = useMemo(
     () => flattenReverseProxies({ reverseProxies, peer }),
@@ -369,10 +373,10 @@ const PeerOverviewTabs = () => {
           Overview
         </TabsTrigger>
 
-        {permission.routes.read && (
-          <TabsTrigger value={"network-routes"}>
-            <NetworkIcon size={16} />
-            Network Routes
+        {peer?.id && exitNodePermission?.read && (
+          <TabsTrigger value={"exit-node"}>
+            <IconDirectionSign size={16} />
+            Exit Node
           </TabsTrigger>
         )}
 
@@ -401,15 +405,22 @@ const PeerOverviewTabs = () => {
         )}
 
         {permission.events.read && <TrafficEventsPeerTabTrigger />}
+
+        {permission.routes.read && (
+          <TabsTrigger value={"network-routes"}>
+            <NetworkIcon size={16} />
+            Network Routes
+          </TabsTrigger>
+        )}
       </TabsList>
 
       <TabsContent value={"overview"} className={"pb-8"}>
         <PeerOverviewTabContent />
       </TabsContent>
 
-      {permission.routes.read && (
-        <TabsContent value={"network-routes"} className={"pb-8"}>
-          <PeerNetworkRoutesSection peer={peer} />
+      {peer?.id && exitNodePermission?.read && (
+        <TabsContent value={"exit-node"} className={"pb-8"}>
+          <PeerExitNodeSection peer={peer} />
         </TabsContent>
       )}
 
@@ -442,6 +453,12 @@ const PeerOverviewTabs = () => {
       {permission.events.read && (
         <TabsContent value={"traffic-events"} className={"pb-8"}>
           <TrafficEventsPeerTabContent />
+        </TabsContent>
+      )}
+
+      {permission.routes.read && (
+        <TabsContent value={"network-routes"} className={"pb-8"}>
+          <PeerNetworkRoutesSection peer={peer} />
         </TabsContent>
       )}
     </Tabs>

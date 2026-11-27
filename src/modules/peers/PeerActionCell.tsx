@@ -22,13 +22,14 @@ import {
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useBypass, useBypassedPeers } from "@/cloud/edr/useBypass";
 import { usePeer } from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
-import { ExitNodeDropdownButton } from "@/modules/exit-node/ExitNodeDropdownButton";
+import PeerExitNodeModal from "@/modules/exit-nodes/PeerExitNodeModal";
+import { PeerExitNodeMenuItem } from "@/modules/exit-nodes/PeerExitNodeMenuItem";
 import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
 import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
 import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
@@ -36,6 +37,7 @@ import InlineLink from "@components/InlineLink";
 import { useDialog } from "@/contexts/DialogProvider";
 
 export default function PeerActionCell() {
+  const [exitNodeModal, setExitNodeModal] = useState(false);
   const { peer, deletePeer, update, toggleSSH, setSSHInstructionsModal } =
     usePeer();
   const router = useRouter();
@@ -199,7 +201,12 @@ export default function PeerActionCell() {
             e.preventDefault();
           }}
         >
-          <Button variant={"secondary"} className={"!px-3 dark:border"} border={0}>
+          <Button
+            variant={"secondary"}
+            className={"!px-3 dark:border"}
+            border={0}
+            data-testid={"peer-actions"}
+          >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>
@@ -308,7 +315,10 @@ export default function PeerActionCell() {
             </DropdownMenuItem>
           )}
 
-          <ExitNodeDropdownButton peer={peer} />
+          <PeerExitNodeMenuItem
+            peer={peer}
+            onSelect={() => setExitNodeModal(true)}
+          />
 
           <DropdownMenuSeparator />
 
@@ -324,6 +334,11 @@ export default function PeerActionCell() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <PeerExitNodeModal
+        peerId={peer.id}
+        open={exitNodeModal}
+        onClose={() => setExitNodeModal(false)}
+      />
     </div>
   );
 }

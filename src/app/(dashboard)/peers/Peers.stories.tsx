@@ -129,6 +129,26 @@ export const RowActionMenu: Story = {
   },
 };
 
+// olivias-macbook-pro is in no exit node: the action sets one up with it.
+export const SetUpExitNodeFromPeer: Story = {
+  play: async () => {
+    await openRowMenu((await text("olivias-macbook-pro")).closest("tr")!);
+    await clickText("Set Up Exit Node");
+    await text("Add Exit Node");
+    await dialog();
+  },
+};
+
+// router-berlin is in "EU Egress": the action edits that exit node.
+export const EditExitNodeFromPeer: Story = {
+  play: async () => {
+    await openRowMenu(await firstRow());
+    await clickText("Edit Exit Node");
+    await text("Edit Exit Node");
+    await text("EU Egress");
+  },
+};
+
 export const BulkSelection: Story = {
   play: async () => {
     await loaded();

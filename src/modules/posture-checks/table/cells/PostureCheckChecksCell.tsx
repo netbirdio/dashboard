@@ -1,3 +1,4 @@
+import { CircleStackPill } from "@components/ui/CircleStackPill";
 import { cn } from "@utils/helpers";
 import {
   Disc3Icon,
@@ -31,15 +32,12 @@ export const PostureCheckChecksCell = ({
   onClick,
 }: Props) => {
   return (
-    <div className={"flex"} onClick={onClick}>
-      <div
-        className={cn(
-          "flex items-center gap-3 bg-nb-gray-900/80  border border-nb-gray-800/50 py-1 rounded-full px-1 transition-all",
-          !disableHover && "hover:bg-nb-gray-800",
-          className,
-        )}
-      >
-        <div className={"flex -space-x-2 text-white dark:text-inherit"}>
+    <CircleStackPill
+      onClick={onClick}
+      disableHover={disableHover}
+      className={className}
+      circles={
+        <>
           {check.checks.nb_version_check && (
             <NetBirdVersionTooltip
               version={check.checks.nb_version_check.min_version}
@@ -115,9 +113,10 @@ export const PostureCheckChecksCell = ({
               </div>
             </CertificateTooltip>
           )}
-        </div>
-        {children}
-      </div>
-    </div>
+        </>
+      }
+    >
+      {children}
+    </CircleStackPill>
   );
 };

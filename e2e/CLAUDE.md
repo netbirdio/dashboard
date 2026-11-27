@@ -132,7 +132,7 @@ const page = await context.newPage();
 - **`clearScrollLock(page)`** — Removes Radix artifacts: `data-scroll-locked`, `pointer-events: none`, stale overlay divs.
 
 ### `api.ts`
-Direct REST API helpers that extract Bearer tokens from intercepted responses. Used for cleanup (deleting test artifacts by prefix). Covers: groups, networks, policies, routes, setup keys, DNS zones, nameserver groups, notification channels, reverse proxy services, users.
+Direct REST API helpers that extract Bearer tokens from intercepted responses. Used for cleanup (deleting test artifacts by prefix). Covers: groups, networks, policies, routes, exit nodes, setup keys, DNS zones, nameserver groups, notification channels, reverse proxy services, users.
 
 Pattern: `listX(page)` / `deleteXById(page, id)` / `deleteXByPrefix(page, prefix)`
 
@@ -243,7 +243,7 @@ shared owner page must clear that key again.
 |---------|--------|----------|
 | (top) | Control Center, Peers, Users (its page has Users / Service Users tabs: `users-tab-users`, `users-tab-service-users`), Groups | — |
 | Networking | Access Control | Policies, Posture Checks |
-| Networking | Network Routing | Networks, Routes |
+| Networking | Network Routing | Networks, Exit Nodes, Routes |
 | Networking | Reverse Proxy | Services, Custom Domains, Clusters, Access Logs |
 | Networking | DNS | Nameservers, Zones, DNS Settings |
 | Networking | Traffic Events | — |
@@ -259,7 +259,7 @@ Documentation is in the header's help menu, not the sidebar.
 |------|-----------|-----|
 | Access Control | `access-control.spec.ts`, `access-control-groups.spec.ts` | `@access-control` |
 | DNS | `dns-zones.spec.ts`, `dns-nameservers.spec.ts`, `dns-settings.spec.ts` | `@dns` |
-| Networks | `networks.spec.ts`, `network-routes.spec.ts` | `@network` |
+| Networks | `networks.spec.ts`, `network-routes.spec.ts`, `exit-nodes.spec.ts` | `@network` |
 | Reverse Proxy | `reverse-proxy-services-https.spec.ts`, `reverse-proxy-services-tcp.spec.ts`, `reverse-proxy-services-tls.spec.ts`, `reverse-proxy-services-udp.spec.ts`, `reverse-proxy-custom-domains.spec.ts` | `@reverse-proxy` |
 | Settings | `settings-authentication.spec.ts`, `settings-clients.spec.ts`, `settings-groups.spec.ts`, `settings-networks.spec.ts`, `settings-permissions.spec.ts` | `@settings` |
 | Notifications | `settings-notifications-email.spec.ts`, `settings-notifications-slack.spec.ts`, `settings-notifications-webhook.spec.ts` | `@notifications` |

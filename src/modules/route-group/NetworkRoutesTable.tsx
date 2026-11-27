@@ -34,7 +34,6 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Group } from "@/interfaces/Group";
 import { GroupedRoute, Route } from "@/interfaces/Route";
-import { AddExitNodeButton } from "@/modules/exit-node/AddExitNodeButton";
 import GroupedRouteActionCell from "@/modules/route-group/GroupedRouteActionCell";
 import GroupedRouteHighAvailabilityCell from "@/modules/route-group/GroupedRouteHighAvailabilityCell";
 import GroupedRouteNameCell from "@/modules/route-group/GroupedRouteNameCell";
@@ -288,7 +287,6 @@ export default function NetworkRoutesTable({
               }
             >
               <div className={"gap-x-4 flex items-center justify-center mt-4"}>
-                <AddExitNodeButton distributionGroups={distributionGroups} />
                 <Button
                   variant={"primary"}
                   className={""}
@@ -320,7 +318,6 @@ export default function NetworkRoutesTable({
               }
               button={
                 <div className={"gap-x-4 flex items-center justify-center"}>
-                  <AddExitNodeButton distributionGroups={distributionGroups} />
                   <Button
                     variant={"primary"}
                     className={""}
@@ -354,7 +351,6 @@ export default function NetworkRoutesTable({
           <>
             {routes && routes?.length > 0 && (
               <div className={"gap-x-4 ml-auto flex"}>
-                <AddExitNodeButton distributionGroups={distributionGroups} />
                 <Button
                   variant={"primary"}
                   className={""}

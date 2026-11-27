@@ -309,6 +309,41 @@ export async function deleteRoutesByNetworkIdPrefix(
   }
 }
 
+// ── Exit Nodes ─────────────────────────────────────────────────────────
+
+type ExitNode = {
+  id: string;
+  name: string;
+};
+
+/**
+ * Whether the management build under test serves /exit-nodes. Builds without
+ * the exit nodes API answer 404 with a plain-text body.
+ */
+export async function supportsExitNodes(page: Page): Promise<boolean> {
+  const { token, origin } = await getApiContext(page);
+  const resp = await page.request.get(`${origin}/api/exit-nodes`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!resp.ok()) return false;
+  return Array.isArray(await resp.json().catch(() => null));
+}
+
+export async function listExitNodes(page: Page): Promise<ExitNode[]> {
+  return apiGet<ExitNode[]>(page, "/exit-nodes");
+}
+
+export async function deleteExitNodeById(page: Page, exitNodeId: string) {
+  await apiDelete(page, `/exit-nodes/${exitNodeId}`);
+}
+
+export async function deleteExitNodesByPrefix(page: Page, prefix: string) {
+  const exitNodes = await listExitNodes(page);
+  for (const n of exitNodes) {
+    if (n.name.startsWith(prefix)) await deleteExitNodeById(page, n.id);
+  }
+}
+
 // ── Setup Keys ─────────────────────────────────────────────────────────
 
 type SetupKey = {
