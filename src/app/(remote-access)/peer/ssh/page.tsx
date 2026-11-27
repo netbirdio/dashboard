@@ -13,7 +13,7 @@ import {
   useNetBirdClient,
 } from "@/modules/remote-access/useNetBirdClient";
 import {
-  isNativeSSHSupported,
+  usesStandardSSHPort,
   isNetbirdSSHProtocolSupported,
 } from "@utils/version";
 
@@ -95,7 +95,7 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
     if (isSSHConnected || isSSHConnecting) return;
     connected.current = false;
     try {
-      const aclPort = isNativeSSHSupported(peer.version) ? "22022" : port;
+      const aclPort = usesStandardSSHPort(peer.version) ? "22022" : port;
       const protocol = isNetbirdSSHProtocolSupported(peer.version)
         ? "netbird-ssh"
         : "tcp";
@@ -122,7 +122,7 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
       connected.current = true;
 
       try {
-        const aclPort = isNativeSSHSupported(peer.version) ? "22022" : port;
+        const aclPort = usesStandardSSHPort(peer.version) ? "22022" : port;
         const protocol = isNetbirdSSHProtocolSupported(peer.version)
           ? "netbird-ssh"
           : "tcp";
