@@ -11,6 +11,7 @@ export interface Account {
       network_traffic_logs_enabled: boolean;
       network_traffic_packet_counter_enabled: boolean;
       network_traffic_logs_groups: string[];
+      user_email_mapping_enabled?: boolean;
     };
     peer_login_expiration_enabled: boolean;
     peer_expose_enabled?: boolean;
