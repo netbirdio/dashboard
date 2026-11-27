@@ -55,17 +55,18 @@ export const useSSH = (client: any) => {
         let requiresJwt: boolean | undefined;
         let lastErr: unknown;
         while (requiresJwt === undefined) {
+          const remaining = deadline - Date.now();
+          if (remaining <= 0) break;
           try {
             requiresJwt = await client.detectSSHServerType(
               config.hostname,
               config.port,
-              SSH_DETECTION_TIMEOUT_MS,
+              Math.min(SSH_DETECTION_TIMEOUT_MS, remaining),
             );
             console.log("Detection:", { requiresJwt, hasToken: !!accessToken });
           } catch (detectionErr) {
             lastErr = detectionErr;
-            console.warn("Detection attempt failed, retrying:", detectionErr);
-            if (Date.now() >= deadline) break;
+            console.warn("Detection attempt failed:", detectionErr);
             await sleep(SSH_DETECTION_RETRY_DELAY_MS);
           }
         }

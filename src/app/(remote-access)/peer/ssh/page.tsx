@@ -140,12 +140,19 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
   const handleRetry = async () => {
     if (isSSHConnected || isSSHConnecting) return;
     try {
-      await ssh({
+      const res = await ssh({
         hostname: sshHost,
         port: Number(port),
         username,
         ipVersion: sshIpVersion || undefined,
       });
+      if (unmounted.current) {
+        disconnect();
+        return;
+      }
+      if (res === SSHStatus.CONNECTED) {
+        sshConnectedOnce.current = true;
+      }
     } catch (error) {
       console.error("Retry failed:", error);
     }
