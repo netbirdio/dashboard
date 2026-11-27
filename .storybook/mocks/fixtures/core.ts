@@ -54,6 +54,9 @@ export const coreFixtures: Record<string, Handler> = {
   "GET /setup-keys/:id": byId(setupKeys),
 
   "GET /events/audit": auditEvents,
+  "GET /mcp/.well-known/oauth-protected-resource": {
+    resource: "https://api.storybook.test/api/mcp",
+  },
   "GET /events/network-traffic": paginated(trafficEvents),
 
   "GET /locations/countries": countries,

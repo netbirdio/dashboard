@@ -52,6 +52,51 @@ export const Permissions = shows("permissions", "Permissions");
 export const Networks = shows("networks", "Networks");
 export const Clients = shows("clients", "Clients");
 export const Metrics = shows("metrics", "Metrics");
+
+export const MCP: Story = {
+  parameters: tab("mcp"),
+  play: async () => void (await role("button", "Claude Code")),
+};
+
+export const MCPClientModal: Story = {
+  parameters: tab("mcp"),
+  play: async () => {
+    await clickRole("button", "Cursor");
+    await dialog();
+  },
+};
+
+const MCP_METADATA = "GET /mcp/.well-known/oauth-protected-resource";
+const notFound = () => new Response(null, { status: 404 });
+
+export const MCPDisabled: Story = {
+  parameters: {
+    ...tab("mcp"),
+    api: { [MCP_METADATA]: notFound, "POST /mcp": notFound },
+  },
+  play: async () => void (await text(/MCP is disabled/)),
+};
+
+/* The probe never answers, so the tab stays on its skeleton. */
+export const MCPLoading: Story = {
+  parameters: {
+    ...tab("mcp"),
+    api: { [MCP_METADATA]: () => new Promise(() => {}) },
+  },
+  play: async () => void (await screen.findAllByTestId("mcp-client-skeleton")),
+};
+
+export const MCPTokenOnly: Story = {
+  parameters: {
+    ...tab("mcp"),
+    api: {
+      [MCP_METADATA]: notFound,
+      "POST /mcp": () => new Response(null, { status: 401 }),
+    },
+  },
+  play: async () => void (await text(/MCP sign-in is unavailable/)),
+};
+
 export const DangerZone = shows("danger-zone", "Delete NetBird account");
 
 export const IdentityProviders: Story = {

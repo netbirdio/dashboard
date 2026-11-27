@@ -6,13 +6,14 @@ type Props = {
   // "default" leads with the icon tile and a title in the reading size, for a
   // card summarising a capability. "plain" drops the tile and shrinks the
   // title to a label, so the detail line under it — a URL, say — is what the
-  // eye lands on.
-  variant?: "default" | "plain";
-  // Sits in the card's 40x40 tile: a logo <Image>, or a 16px icon. Unused by
-  // the plain variant.
+  // eye lands on. "option" is one choice in a grid of them: the bare icon
+  // centered above a title in regular weight, and nothing else.
+  variant?: "default" | "plain" | "option";
+  // Sits in the card's 40x40 tile: a logo <Image>, or a 16px icon. The
+  // option variant shows it without the tile, and the plain one not at all.
   icon?: React.ReactNode;
   title: React.ReactNode;
-  description: React.ReactNode;
+  description?: React.ReactNode;
   // Right end of the title row — a FeatureCardStatus pill, say.
   action?: React.ReactNode;
   // Right end of the card, centered against the icon tile rather than the
@@ -20,6 +21,10 @@ type Props = {
   trailing?: React.ReactNode;
   // Given one, the card becomes a button and picks up the hover state.
   onClick?: () => void;
+  // Given one, the card becomes a link that opens in a new tab.
+  href?: string;
+  // Greys out a clickable card and stops it from being clicked or followed.
+  disabled?: boolean;
   className?: string;
   "aria-label"?: string;
 };
@@ -50,30 +55,48 @@ export default function FeatureCard({
   action,
   trailing,
   onClick,
+  href,
+  disabled = false,
   className,
   "aria-label": ariaLabel,
 }: Readonly<Props>) {
   const plain = variant === "plain";
+  const option = variant === "option";
+
+  const interactive = !!onClick || !!href;
 
   const shell = cn(
-    "block text-left border bg-nb-gray-900/30",
-    plain ? "border-nb-gray-800 pl-4" : "border-nb-gray-900 pl-3",
-    "py-3 pr-5 rounded-lg transition-all min-w-[310px] max-w-[440px]",
-    onClick && "cursor-pointer hover:bg-nb-gray-900/50",
+    "block border bg-nb-gray-900/30 rounded-lg transition-all",
+    plain ? "border-nb-gray-800" : "border-nb-gray-900",
+    option
+      ? "w-full px-1.5 pt-6 pb-[1.125rem] text-center"
+      : cn(
+          "text-left py-3 pr-5 min-w-[310px] max-w-[440px]",
+          plain ? "pl-4" : "pl-3",
+        ),
+    interactive && !disabled && "cursor-pointer hover:bg-nb-gray-900/50",
+    interactive && disabled && "opacity-35 cursor-not-allowed",
     className,
   );
 
-  const body = (
+  const iconTile = (
+    <div
+      className={
+        "h-10 w-10 shrink-0 flex items-center justify-center rounded-md bg-nb-gray-900/70 p-2 border border-nb-gray-900/70"
+      }
+    >
+      {icon}
+    </div>
+  );
+
+  const body = option ? (
+    <div className={"flex flex-col items-center gap-2 w-full"}>
+      {icon}
+      <div className={"text-[0.8125rem] max-w-full truncate"}>{title}</div>
+    </div>
+  ) : (
     <div className={"flex items-center gap-4 w-full"}>
-      {!plain && (
-        <div
-          className={
-            "h-10 w-10 shrink-0 flex items-center justify-center rounded-md bg-nb-gray-900/70 p-2 border border-nb-gray-900/70"
-          }
-        >
-          {icon}
-        </div>
-      )}
+      {!plain && iconTile}
       <div className={"w-full min-w-0"}>
         <div className={"flex items-center gap-3 justify-between"}>
           <div
@@ -88,27 +111,50 @@ export default function FeatureCard({
           </div>
           {action}
         </div>
-        <p
-          className={cn(
-            "text-xs",
-            plain
-              ? "!text-nb-gray-100 leading-tight mt-1"
-              : "font-light !text-nb-gray-300 mt-1.5",
-          )}
-        >
-          {description}
-        </p>
+        {description && (
+          <p
+            className={cn(
+              "text-xs",
+              plain
+                ? "!text-nb-gray-100 leading-tight mt-1"
+                : "font-light !text-nb-gray-300 mt-1.5",
+            )}
+          >
+            {description}
+          </p>
+        )}
       </div>
       {trailing}
     </div>
   );
 
-  if (!onClick) return <div className={shell}>{body}</div>;
+  if (href && !disabled) {
+    return (
+      <a
+        href={href}
+        target={"_blank"}
+        rel={"noopener noreferrer"}
+        aria-label={ariaLabel}
+        className={shell}
+      >
+        {body}
+      </a>
+    );
+  }
+
+  if (!onClick) {
+    return (
+      <div className={shell} aria-disabled={interactive ? true : undefined}>
+        {body}
+      </div>
+    );
+  }
 
   return (
     <button
       type={"button"}
       onClick={onClick}
+      disabled={disabled}
       aria-label={ariaLabel}
       className={shell}
     >

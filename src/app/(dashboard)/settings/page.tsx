@@ -5,6 +5,7 @@ import { VerticalTabs } from "@components/VerticalTabs";
 import {
   AlertOctagonIcon,
   ChartNoAxesCombined,
+  CodeIcon,
   FingerprintIcon,
   FolderGit2Icon,
   KeyRound,
@@ -24,6 +25,7 @@ import AuthenticationTab from "@/modules/settings/AuthenticationTab";
 import ClientSettingsTab from "@/modules/settings/ClientSettingsTab";
 import DangerZoneTab from "@/modules/settings/DangerZoneTab";
 import IdentityProvidersTab from "@/modules/settings/IdentityProvidersTab";
+import MCPTab from "@/modules/settings/MCPTab";
 import NetworkSettingsTab from "@/modules/settings/NetworkSettingsTab";
 import PermissionsTab from "@/modules/settings/PermissionsTab";
 import SetupKeysTab from "@/modules/settings/SetupKeysTab";
@@ -113,6 +115,10 @@ export default function NetBirdSettings() {
                 <ChartNoAxesCombined size={14} />
                 Metrics
               </VerticalTabs.Trigger>
+              <VerticalTabs.Trigger value="mcp" data-testid="settings-tab-mcp">
+                <CodeIcon size={14} />
+                MCP
+              </VerticalTabs.Trigger>
             </>
           )}
           <CloudSettingsTabTrigger />
@@ -132,6 +138,7 @@ export default function NetBirdSettings() {
             {account && <NetworkSettingsTab account={account} />}
             {account && <ClientSettingsTab account={account} />}
             {account && <MetricsTab account={account} />}
+            {account && permission.settings.read && <MCPTab />}
             {account && <DangerZoneTab account={account} />}
             <CloudSettingsTabContent />
           </div>
