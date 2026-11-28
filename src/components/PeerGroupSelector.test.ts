@@ -7,7 +7,9 @@ vi.mock("@utils/config", () => ({
   default: () => ({ apiOrigin: "http://localhost", redirectURI: "/" }),
 }));
 
-const { getOpeningTab } = await import("./PeerGroupSelector");
+const { getOpeningTab, groupsSearchPredicate } = await import(
+  "./PeerGroupSelector"
+);
 
 const base = {
   currentTab: "groups" as const,
@@ -18,6 +20,26 @@ const base = {
   showResources: false,
   hideGroupsTab: false,
 };
+
+describe("groupsSearchPredicate", () => {
+  it("matches group names case-insensitively", () => {
+    expect(
+      groupsSearchPredicate({ id: "group-1", name: "Engineering" }, "ENGINE"),
+    ).toBe(true);
+  });
+
+  it("matches group ids case-insensitively", () => {
+    expect(
+      groupsSearchPredicate({ id: "ABC-123", name: "Engineering" }, "abc"),
+    ).toBe(true);
+  });
+
+  it("returns false when neither name nor id matches", () => {
+    expect(
+      groupsSearchPredicate({ id: "group-1", name: "Engineering" }, "sales"),
+    ).toBe(false);
+  });
+});
 
 describe("getOpeningTab", () => {
   it("keeps the user's last chosen tab across reopens", () => {
